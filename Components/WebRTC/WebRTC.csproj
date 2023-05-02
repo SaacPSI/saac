@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>net48</TargetFramework>
+	  <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>latest</LangVersion>
+	  <LangVersion>Preview</LangVersion>
+	  <PlatformTarget>x64</PlatformTarget>
+	  <Platforms>x64</Platforms>
+	  <UseWPF>true</UseWPF>
+	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
+	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Concentus" Version="1.1.7" />
+    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
+	<PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.18.72.1-beta" />
+	<PackageReference Include="SIPSorcery" Version="6.0.12" />
+	<PackageReference Include="SIPSorceryMedia.FFmpeg" Version="1.2.1" />
+	<PackageReference Include="SIPSorceryMedia.SDL2" Version="1.2.0" />
+  </ItemGroup>
+
+
+</Project>

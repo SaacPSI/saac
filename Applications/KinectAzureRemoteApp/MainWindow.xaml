@@ -1,0 +1,98 @@
+﻿<Window x:Class="KinectAzureRemoteApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KinectAzureRemoteApp"
+        mc:Ignorable="d"
+        Title="KinectAzureRemoteApp" Height="400" Width="300">
+    <UserControl>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="State :" FontWeight="Bold"/>
+            <Label Grid.Row="0" Grid.Column="1" Content="{Binding Path=State}" FontWeight="Bold"/>
+
+            <GroupBox Header="Synch Server" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="1" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox Grid.Row="0" Grid.Column="0" Name="SyncServerIsActive" Content="Active"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="IP :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=SynchServerIp}"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="Port :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=SynchServerPort}"/>
+                 
+                </Grid>
+            </GroupBox>
+
+            <Label Grid.Row="2" Grid.Column="0" Content="Kinect Index :" FontWeight="Bold"/>
+            <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=KinectIndex}"/>
+
+            <Label Grid.Row="3" Grid.Column="0" Content="Connection Type :" FontWeight="Bold"/>
+
+            <Grid  Grid.Row="3" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <RadioButton Grid.Column="0" Name="TCP" Content="TCP" VerticalAlignment="Center"/>
+                <RadioButton Grid.Column="1" Name="UDP" Content="UDP" VerticalAlignment="Center"/>
+            </Grid>
+
+            <Label Grid.Row="4" Grid.Column="0" Content="Remote Port :" FontWeight="Bold"/>
+            <TextBox Grid.Row="4"  Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RemotePort}"/>
+
+            <GroupBox Header="Data Type" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="5" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox Grid.Row="0" Grid.Column="0" Name="Audio" Content="Audio"/>
+                    <CheckBox Grid.Row="1" Grid.Column="0" Name="Skeleton" Content="Skeleton"/>
+                    <CheckBox Grid.Row="2" Grid.Column="0" Name="RGB" Content="RGB"/>
+                    <ComboBox Grid.Row="2" Grid.Column="1" Name="ColoRes" ItemsSource="{Binding Path=ResolutionsList}" SelectedItem="{Binding Path=ColorResolution}"/>
+                    <CheckBox Grid.Row="3" Grid.Column="0" Name="Depth" Content="Depth"/>
+                    <CheckBox Grid.Row="4" Grid.Column="0" Name="DepthCalibration" Content="DepthCalibration"/>
+                    <CheckBox Grid.Row="5" Grid.Column="0" Name="IMU" Content="IMU"/>
+                    <!--<ComboBox Grid.Row="3" Grid.Column="1" Name="DepthRes" ItemsSource="{Binding Path=ResolutionsList}" SelectedItem="{Binding Path=DepthResolution}" />-->
+                </Grid>
+            </GroupBox>
+            <Button Content="Start" Grid.Row="6" Grid.Column="0" Width="50" Click="BtnStartClick"/>
+            <Button Content="Quit" Grid.Row="6" Grid.Column="1" Width="50" Click="BtnQuitClick"/>
+
+            <Label Grid.Row="7" Grid.Column="0" Content="{Binding Path=Log}" Grid.ColumnSpan="2" />
+        </Grid>
+    </UserControl>
+</Window>
