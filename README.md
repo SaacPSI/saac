@@ -17,4 +17,4 @@ Arnaud Allemang-Trivalle arnaud.allemang-trivalle@imt-atlantique.fr
 Aurélien Milliat aurelien.milliat@imt-atlantique.fr
 
 ## License
-MIT
+CeCILL-C see LICENSE.md
