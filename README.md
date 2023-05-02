@@ -3,7 +3,7 @@
 Project using https://github.com/microsoft/psi/ framework.
 
 ## Roadmap
-The first batch of components will be released in march and a second batch before summer.
+A second batch before summer.
 
 ## Project status
 We are currently focused on finishing some developpement for our architecture. We will finalize a proper documentation and sample code before publishing components.
@@ -17,4 +17,4 @@ Arnaud Allemang-Trivalle arnaud.allemang-trivalle@imt-atlantique.fr
 Aurélien Milliat aurelien.milliat@imt-atlantique.fr
 
 ## License
-MIT
+CeCILL-C see LICENSE.md
