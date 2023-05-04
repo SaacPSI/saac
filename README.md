@@ -4,9 +4,12 @@ Project using https://github.com/microsoft/psi/ framework.
 
 Full .NET 4.8 framework projects.
 
-Two folders:
+Three folders:
 - Applications for ready to use projects.
 - Components containing projects regrouping components by dependencies or uses.
+- Interop containing projects that wrap c++ code
+
+BiopacInterop origin from : https://github.com/intelligent-human-perception-laboratory/OpenSense/tree/master/BiopacInterop
 
 
 ## Roadmap
