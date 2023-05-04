@@ -6,7 +6,7 @@ using Microsoft.Psi.Components;
 
 namespace Biopac {
     /// <summary>
-    /// StringProducer class.
+    /// Biopac communicator component class.
     /// </summary>
     public class Biopac : ISourceComponent, IProducer<int> {
 

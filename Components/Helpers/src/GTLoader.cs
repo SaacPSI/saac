@@ -6,6 +6,9 @@ using Microsoft.Psi.Data;
 
 namespace BiopacDataIntegration
 {
+    /// <summary>
+    /// Class that write biopac data from AcqKnowledge file to a store synchronising with a given stream or with a given time reference.
+    /// </summary>
     class GTLoader
     {
         private float timePerSample = 0.0f;
@@ -26,14 +29,14 @@ namespace BiopacDataIntegration
             dataset.Save();
         }
 
-        public bool LoadReferenceTime(out DateTime dateTimeReference)
+        public bool LoadReferenceTime<T>(in string refStoreName, in string refStreamName, out DateTime dateTimeReference)
         {
-            var store = new PsiStoreStreamReader("VoiceDetecion", dataPath);
+            var store = new PsiStoreStreamReader(refStoreName, dataPath);
             dateTimeReference = DateTime.MinValue;
             if (store == null)
                 return false;
             Envelope envelope;
-            var stream = store.OpenStreamIndex<bool>("VoiceDetecion", (d, e) => { envelope = e; });
+            var stream = store.OpenStreamIndex<T>(refStreamName, (d, e) => { envelope = e; });
             if (stream != null)
             {
                 dateTimeReference = stream.FirstMessageOriginatingTime;
