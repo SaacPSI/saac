@@ -3,8 +3,8 @@ using SIPSorceryMedia.Abstractions;
 using Concentus.Structs;
 using Concentus.Enums;
 using Microsoft.Extensions.Logging;
-using Microsoft.Psi;
 
+// From https://github.com/sipsorcery-org/SIPSorceryMedia.SDL2/
 namespace OpusCodec
 {
     // Based on this discussion: https://github.com/sipsorcery-org/sipsorcery/issues/518#issuecomment-888639894

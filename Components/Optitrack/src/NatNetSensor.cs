@@ -2,6 +2,10 @@ using Microsoft.Psi;
 
 namespace NatNetComponent
 {
+    /// <summary>
+    /// Optitrack component class using NatNet API.
+    /// See NatNetCoreConfiguration class for details.
+    /// </summary>
     public class NatNetSensor : Subpipeline
     {
 

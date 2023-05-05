@@ -4,10 +4,13 @@ using System.Net;
 using Microsoft.Psi.Components;
 using System.Net.WebSockets;
 using System.Text;
-using System.Windows.Media.Animation;
 
 namespace WebRTC
 {
+    /// <summary>
+    /// WebRTConnector component class only do the basic connection throught SipSorcery librairy (https://github.com/sipsorcery-org/).
+    /// See WebRTConnectorConfiguration for basic configuration details.
+    /// </summary>
     public class WebRTConnector : ISourceComponent
     {
         private const int MAX_RECEIVE_BUFFER = 8192;

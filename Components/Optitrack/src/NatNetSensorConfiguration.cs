@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.Psi;
-using NatNetML;
+﻿using NatNetML;
 
 namespace NatNetComponent
 {

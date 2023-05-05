@@ -6,6 +6,10 @@ using Microsoft.Psi.Components;
 
 namespace Nuitrack
 {
+    /// <summary>
+    /// NuitrackSensor component class, handle camera with nuitrack API.
+    /// See NuitrackSensorConfiguration class for details.
+    /// </summary>
     public class NuitrackSensor : ISourceComponent
     {
 

@@ -1,24 +1,17 @@
 ﻿using Microsoft.Psi;
 
 namespace LabJackComponent
-{
+{    
+     /// <summary>
+     /// LabJackComponent communicator component class, in input the command, one emitter for acknowledge the command and an output for values.
+     /// See LabJackCoreConfiguration class for details.
+     /// </summary>
     public class LabJackSensor : Subpipeline
     {
         public LabJackCoreConfiguration? Configuration { get; } = null;
-
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked bodies.
-        /// </summary>
         public Receiver<Commands> InCommandsReceiver { get; private set; }
 
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked bodies.
-        /// </summary>
         public Emitter<bool> OutCommandsAck { get; private set; }
-
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked bodies.
-        /// </summary>
         public Emitter<double> OutDoubleValue { get; private set; }
 
         public LabJackSensor(Pipeline pipeline, LabJackCoreConfiguration? config = null, DeliveryPolicy? defaultDeliveryPolicy = null, DeliveryPolicy? bodyTrackerDeliveryPolicy = null)

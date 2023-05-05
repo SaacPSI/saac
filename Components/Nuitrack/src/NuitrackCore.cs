@@ -4,6 +4,9 @@ using Microsoft.Psi.DeviceManagement;
 
 namespace Nuitrack
 {
+    /// <summary>
+    /// Internal Nuitrack component class.
+    /// </summary>
     internal sealed class NuitrackCore : IDisposable
     {
         static private NuitrackCore? Instance = null;

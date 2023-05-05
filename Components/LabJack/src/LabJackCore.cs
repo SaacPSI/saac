@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Psi;
+﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using LabJack.LabJackUD;
-using System.Threading;
 
 namespace LabJackComponent
 {
+     /// <summary>
+     /// Internal LabJack communicator component class.
+     /// </summary>
     internal class LabJackCore : ISourceComponent, IDisposable
     {
         //private LJUD Device;
@@ -20,23 +17,13 @@ namespace LabJackComponent
         private readonly object CommandsLock = new object();
         private bool FirstNexptOptionGetter = true;
 
-        /// <summary>
-        /// Gets the nuitrack connector of lists of currently tracked bodies.
-        /// </summary>
+
         private Connector<Commands> InCommandsReceiverConnector;
 
-        // Receiver that encapsulates the input list of Nuitrack skeletons
         public Receiver<Commands> InCommandsReceiver => InCommandsReceiverConnector.In;
 
-
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked bodies.
-        /// </summary>
         public Emitter<bool> OutCommandsAck { get; private set; }
 
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked bodies.
-        /// </summary>
         public Emitter<double> OutDoubleValue { get; private set; }
         public LabJackCore(Pipeline pipeline, LabJackCoreConfiguration? config = null)
         {

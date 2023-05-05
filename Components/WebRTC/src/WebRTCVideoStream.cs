@@ -3,15 +3,18 @@ using Microsoft.Psi;
 using SIPSorceryMedia.Abstractions;
 using SIPSorceryMedia.FFmpeg;
 using SIPSorcery.Net;
-using SIPSorceryMedia.SDL2;
 using Microsoft.Psi.Audio;
-using System.Windows.Markup;
-using Org.BouncyCastle.Bcpg;
-using System.Runtime.Remoting.Messaging;
 using WebSocketSharp;
 
 namespace WebRTC
 {
+    /// <summary>
+    /// WebRTCVideoStream component class, working for Unreal Engine PixelStreaming and Unity (package in asset folder of this project)
+    /// Use FFMPEG for codecs.
+    /// Inherit form WebRTConnector class 
+    /// </summary>
+    /// Currently Audio is not working
+
     public class WebRTCVideoStream : WebRTConnector
     {
         private FFmpegVideoEndPoint VideoDecoder;

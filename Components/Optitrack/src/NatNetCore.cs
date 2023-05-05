@@ -5,7 +5,10 @@ using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
 namespace NatNetComponent
-{
+{   
+    /// <summary>
+    /// Internal Optitrack component class.
+    /// </summary>
     internal sealed class NatNetCore : ISourceComponent, IDisposable
     {
         private readonly NatNetCoreConfiguration Configuration;

@@ -5,11 +5,12 @@ using Microsoft.Psi.Audio;
 using Microsoft.Psi.Imaging;
 using Microsoft.Azure.Kinect.Sensor;
 
-// Enum that define the type of data available.
-// Bodies give the skeletons avec the depth calibration for visualistion.
-
 namespace RemoteConnectors
 {
+    /// <summary>
+    /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.
+    /// See KinectAzureRemoteConnectorConfiguration class for details.
+    /// </summary>
     public class KinectAzureRemoteConnector : Subpipeline
     {
         /// <summary>

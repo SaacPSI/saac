@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows.Media.Animation;
-using BiopacInterop;
+﻿using BiopacInterop;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
@@ -18,9 +16,19 @@ namespace Biopac {
         private readonly Pipeline pipelineLocal;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StringProducer"/> class.
+        /// Emitter that encapsulates the string output stream.
         /// </summary>
-        /// <param name="pipeline">The pipeline.</param>
+        public Emitter<string> OutString { get; }
+
+        /// <summary>
+        /// Emitter that encapsulates the output stream.
+        /// </summary>
+        public Emitter<int> Out { get; }
+
+        /// <summary>
+        /// <param name="syncOnly">Allow to select the communication mode with AcqKnowledge. 
+        /// If true  the componant will only start & stop the acquisition, at false it will collect data throught TCP</param>
+        /// </summary>
         public Biopac(Pipeline pipeline, bool syncOnly = false)
         {
             OutString = pipeline.CreateEmitter<string>(this, nameof(OutString));
@@ -34,16 +42,6 @@ namespace Biopac {
             pipeline.ComponentCompleted += OnExitMethod;
             isSynchOnly = syncOnly;
         }
-
-        /// <summary>
-        /// Gets. Emitter that encapsulates the string output stream.
-        /// </summary>
-        public Emitter<string> OutString { get; }
-
-        /// <summary>
-        /// Gets. Emitter that encapsulates the output stream.
-        /// </summary>
-        public Emitter<int> Out { get; }
 
         private void Reset() {
             if (communicator.getAcquisitionInProgress() == 1) {
@@ -80,6 +78,9 @@ namespace Biopac {
             Reset();
         }
 
+        /// <summary>
+        /// Start implementation.
+        /// </summary>
         public void Start(Action<DateTime> notifyCompletionTime)
         {
             communicator.StartSyncedCommunication();
@@ -92,6 +93,9 @@ namespace Biopac {
             }
         }
 
+        /// <summary>
+        /// Stop implementation.
+        /// </summary>
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
             Reset();
