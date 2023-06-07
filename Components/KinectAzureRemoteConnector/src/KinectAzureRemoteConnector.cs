@@ -3,6 +3,7 @@ using Microsoft.Psi.AzureKinect;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Audio;
 using Microsoft.Psi.Imaging;
+using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Azure.Kinect.Sensor;
 
 namespace RemoteConnectors
@@ -55,58 +56,73 @@ namespace RemoteConnectors
             OutBodies = null;
             OutDepthDeviceCalibrationInfo = null;
             OutAudio = null;
+            OutIMU = null;
 
-            int count = 0;
-            while(count < Configuration.ActiveStreamNumber)
+            var client = new RendezvousClient(Configuration.Address, (int)Configuration.ServeurtPort);
+            client.Rendezvous.ProcessAdded += (_, p) =>
             {
-                int port = (int)Configuration.StartPort + count;
-                RemoteImporter importer = new RemoteImporter(parent, Configuration.Address, port);
-                if (!importer.Connected.WaitOne(-1))
+                if (p.Name == Configuration.ApplicationName)
                 {
-                    throw new Exception("Error while connecting to: " + Configuration.Address + ":" + port);
-                }
-                count++;
-
-                foreach(var stream in importer.Importer.AvailableStreams)
-                {
-                    string streamName = stream.Name;
-                    Console.WriteLine(name ?? "KinectAzureRemoteConnector : " + " Available stream: " + streamName);
-                    // Could do better probably 
-                    if(streamName.Contains("Audio"))
+                    foreach (var endpoint in p.Endpoints)
                     {
-                        OutAudio = importer.Importer.OpenStream<AudioBuffer>(streamName).Out;
-                        break;
-                    }
-                    if (streamName.Contains("Bodies"))
-                    {
-                        OutBodies = importer.Importer.OpenStream<List<AzureKinectBody>>(streamName).Out;
-                        break;
-                    }
-                    if (streamName.Contains("Calibration"))
-                    {
-                        OutDepthDeviceCalibrationInfo = importer.Importer.OpenStream<Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo>(streamName).Out;
-                        break;
-                    }
-                    if (streamName.Contains("RGB"))
-                    {
-                        Console.WriteLine(stream.TypeName);
-                        OutColorImage = importer.Importer.OpenStream<Shared<EncodedImage>>(streamName).Out;
-                        break;
-                    }
-                    if (streamName.Contains("Depth"))
-                    {
-                        Console.WriteLine(stream.TypeName);
-                        OutDepthImage = importer.Importer.OpenStream<Shared<EncodedDepthImage>>(streamName).Out;
-                        break;
-                    }
-                    if (streamName.Contains("IMU"))
-                    {
-                        Console.WriteLine(stream.TypeName);
-                        OutIMU = importer.Importer.OpenStream<ImuSample>(streamName).Out;
-                        break;
+                        if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
+                        {
+                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(parent);
+                            foreach (var stream in remoteExporterEndpoint.Streams)
+                            {
+                                if (stream.StreamName.Contains("Audio") && stream.TypeName == typeof(AudioBuffer).ToString())
+                                {
+                                    OutAudio = Connection<AudioBuffer>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                                if (stream.StreamName.Contains("Bodies") && stream.TypeName == typeof(List<AzureKinectBody>).ToString())
+                                {
+                                    OutBodies = Connection<List<AzureKinectBody>>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                                if (stream.StreamName.Contains("Calibration") && stream.TypeName == typeof(Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo).ToString())
+                                {
+                                    OutDepthDeviceCalibrationInfo = Connection<Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                                else if (stream.StreamName.Contains("RGB") && stream.TypeName == typeof(Shared<EncodedImage>).ToString())
+                                {
+                                    OutColorImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                                else if (stream.StreamName.Contains("Depth") && stream.TypeName == typeof(Shared<EncodedDepthImage>).ToString())
+                                {
+                                    OutDepthImage = Connection<Shared<EncodedDepthImage>>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                                else if (stream.StreamName.Contains("IMU") && stream.TypeName == typeof(ImuSample).ToString())
+                                {
+                                    OutIMU = Connection<ImuSample>(stream.StreamName, remoteImporter);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
+            };
+            client.Start();
+            if (!client.Connected.WaitOne())
+            {
+                throw new Exception("Error while connecting to server at " + Configuration.Address);
             }
         }
+         
+        private Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
+        {
+            if (remoteImporter.Connected.WaitOne() == false)
+            {
+                Console.WriteLine(Configuration.ApplicationName + " failed to connect stream " + name);
+                return null;
+            }
+            Console.WriteLine(Configuration.ApplicationName + " stream " + name + " connected.");
+            return remoteImporter.Importer.OpenStream<T>(name).Out;
+        }
+
     }
 }
