@@ -201,6 +201,7 @@ namespace KinectAzureRemoteApp
 
         private void PipelineSetup()
         {
+            DataFormular.IsEnabled = false;
             if (SyncServerIsActive.IsChecked == true)
             {
                 var client = new RendezvousClient(SynchServerIp, (int)synchServerPort);
@@ -294,6 +295,7 @@ namespace KinectAzureRemoteApp
             server.Start();
             pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
             State = "Running";
+
         }
 
         private void StopPipeline()
