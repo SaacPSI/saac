@@ -44,7 +44,7 @@ namespace RemoteConnectors
         /// </summary>
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
-        private KinectAzureRemoteConnectorConfiguration Configuration { get; }
+        public KinectAzureRemoteConnectorConfiguration Configuration { get; }
 
         public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
           : base(parent, name, defaultDeliveryPolicy)
@@ -70,38 +70,37 @@ namespace RemoteConnectors
                             var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(parent);
                             foreach (var stream in remoteExporterEndpoint.Streams)
                             {
-                                if (stream.StreamName.Contains("Audio") && stream.TypeName == typeof(AudioBuffer).ToString())
+                                if (stream.StreamName.Contains("Audio"))
                                 {
                                     OutAudio = Connection<AudioBuffer>(stream.StreamName, remoteImporter);
                                     break;
                                 }
-                                if (stream.StreamName.Contains("Bodies") && stream.TypeName == typeof(List<AzureKinectBody>).ToString())
+                                if (stream.StreamName.Contains("Bodies"))
                                 {
                                     OutBodies = Connection<List<AzureKinectBody>>(stream.StreamName, remoteImporter);
                                     break;
                                 }
-                                if (stream.StreamName.Contains("Calibration") && stream.TypeName == typeof(Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo).ToString())
+                                if (stream.StreamName.Contains("Calibration"))
                                 {
                                     OutDepthDeviceCalibrationInfo = Connection<Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo>(stream.StreamName, remoteImporter);
                                     break;
                                 }
-                                else if (stream.StreamName.Contains("RGB") && stream.TypeName == typeof(Shared<EncodedImage>).ToString())
+                                else if (stream.StreamName.Contains("RGB"))
                                 {
                                     OutColorImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
                                     break;
                                 }
-                                else if (stream.StreamName.Contains("Depth") && stream.TypeName == typeof(Shared<EncodedDepthImage>).ToString())
+                                else if (stream.StreamName.Contains("Depth"))
                                 {
                                     OutDepthImage = Connection<Shared<EncodedDepthImage>>(stream.StreamName, remoteImporter);
                                     break;
                                 }
-                                else if (stream.StreamName.Contains("IMU") && stream.TypeName == typeof(ImuSample).ToString())
+                                else if (stream.StreamName.Contains("IMU"))
                                 {
                                     OutIMU = Connection<ImuSample>(stream.StreamName, remoteImporter);
                                     break;
                                 }
                             }
-                            break;
                         }
                     }
                 }

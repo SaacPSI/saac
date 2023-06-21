@@ -12,6 +12,7 @@ using System.Collections.Specialized;
 using Microsoft.Psi.Interop.Transport;
 using System.Net;
 using Stride.Core.Extensions;
+using Microsoft.Psi.Diagnostics;
 
 namespace KinectAzureRemoteApp
 {
@@ -176,8 +177,6 @@ namespace KinectAzureRemoteApp
             {
                 ResolutionsList.Add(name);
             }
-            // Enabling diagnotstics !!!
-            pipeline = Pipeline.Create("WpfPipeline", enableDiagnostics: true);
             IPsList = new List<string>();
             foreach(var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             {
@@ -201,6 +200,25 @@ namespace KinectAzureRemoteApp
 
         private void PipelineSetup()
         {
+            if(Diagnostics.IsChecked == false)
+            {
+                pipeline = Pipeline.Create(KinectApplicationName, enableDiagnostics: false);
+            }
+            else
+            {
+                var config = new DiagnosticsConfiguration()
+                {
+                    TrackMessageSize = true,
+                    AveragingTimeSpan = TimeSpan.FromSeconds(2),
+                    SamplingInterval = TimeSpan.FromSeconds(10),
+                    IncludeStoppedPipelines = false,
+                    IncludeStoppedPipelineElements = false,
+                };
+                pipeline = Pipeline.Create(KinectApplicationName, enableDiagnostics: true, diagnosticsConfiguration: config);
+                var store = PsiStore.Create(pipeline, "Diagnostics", @"./");
+                pipeline.Diagnostics.Write("Diagnostics", store);
+            }
+
             DataFormular.IsEnabled = false;
             if (SyncServerIsActive.IsChecked == true)
             {
@@ -219,7 +237,7 @@ namespace KinectAzureRemoteApp
                 };
                 client.Start();
                 client.Connected.WaitOne();
-                client.Stop();
+                //client.Stop();
             }
 
             /*** KINECT SENSORS ***/
@@ -289,7 +307,7 @@ namespace KinectAzureRemoteApp
             server = new RendezvousServer((int)RemotePort);
             server.Rendezvous.TryAddProcess(
                     new Rendezvous.Process(
-                        "KinectStreaming",
+                        KinectApplicationName,
                         exporters,
                         "Version2.0"));
             server.Start();
