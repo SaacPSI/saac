@@ -65,7 +65,7 @@ namespace BiopacInterop
 
 	};
 
-	public ref class BiopacCommunicatorWrapper : ManagedObject<BiopacInterop::BiopacCommunicator>
+	public ref class BiopacCommunicatorWrapper : ManagedObject::ManagedObject<BiopacInterop::BiopacCommunicator>
 	{
 	public:
 		BiopacCommunicatorWrapper(bool isSynchOnly)

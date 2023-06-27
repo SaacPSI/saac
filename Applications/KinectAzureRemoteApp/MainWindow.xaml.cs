@@ -342,6 +342,7 @@ namespace KinectAzureRemoteApp
             Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
             Properties.Settings.Default.Save();
+            
         }
 
         private void BtnQuitClick(object sender, RoutedEventArgs e)

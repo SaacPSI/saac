@@ -27,10 +27,10 @@
     <ClInclude Include="include\Utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ManagedObject.h">
+    <ClInclude Include="include\DataQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\DataQueue.h">
+    <ClInclude Include="..\InteropHelpers\include\ManagedObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

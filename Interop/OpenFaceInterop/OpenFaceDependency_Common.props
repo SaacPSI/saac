@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  
+  <PropertyGroup Label="UserMacros" />
+  
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\boost;$(SolutionDir)\Dependencies\dlib;$(SolutionDir)\Dependencies\openblas;$(SolutionDir)\Dependencies\opencv\opencv;$(SolutionDir)\Dependencies\opencv\default\opencv\opencv;$(SolutionDir)\Dependencies\tbb;$(SolutionDir)\Dependencies\openface\openface\CameraEnumerator;$(SolutionDir)\Dependencies\openface\openface\FaceAnalyser;$(SolutionDir)\Dependencies\openface\default\openface\GazeAnalyser;$(SolutionDir)\Dependencies\openface\openface\LandmarkDetector;$(SolutionDir)\Dependencies\openface\openface\Utilities;$(SolutionDir)\Dependencies\htk\htk\htklib;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dlib.lib;openblas.lib;tbb.lib;CameraEnumerator.lib;FaceAnalyser.lib;GazeAnalyser.lib;LandmarkDetector.lib;Utilities.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  
+  <ItemGroup Condition="$(Configuration) == 'Debug'">
+    <Content Include="$(SolutionDir)\Dependencies\tbb\bin\$(Platform)\$(Configuration)\tbb.dll">
+      <Link>tbb_debug%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup Condition="$(Configuration) != 'Debug'">
+	<Content Include="$(SolutionDir)\Dependencies\tbb\bin\$(Platform)\$(Configuration)\tbb.dll">
+      <Link>tbb%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(SolutionDir)\Dependencies\openblas\bin\$(Platform)\$(Configuration)\openblas.dll">
+      <Link>%(Filename)%(Extension)</Link><!--Method to call .net functions: <Link>$([System.IO.Path]::GetFileName('%(Filename)'))%(Extension)</Link>-->
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(SolutionDir)\Dependencies\opencv\bin\$(Platform)\$(Configuration)\*">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(SolutionDir)\Dependencies\opencv\classifiers\**\*">
+      <Link>classifiers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(SolutionDir)\Dependencies\openface\openface\FaceAnalyser\predictors\**\*">
+      <Link>predictors\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(SolutionDir)\Dependencies\openface\openface\LandmarkDetector\models\**\*">
+      <Link>models\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>
