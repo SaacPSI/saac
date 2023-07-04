@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Helpers", "Components\Helpe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biopac", "Components\Biopac\Biopac.csproj", "{41FC6389-20AC-4C10-9F59-1A8636605EC6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ffmpegToStore", "Applications\ffmpegToStore\ffmpegToStore.csproj", "{0E6C5157-25E4-49E2-ADDC-BCE881416651}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,14 @@ Global
 		{41FC6389-20AC-4C10-9F59-1A8636605EC6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{41FC6389-20AC-4C10-9F59-1A8636605EC6}.Release|x64.ActiveCfg = Release|x64
 		{41FC6389-20AC-4C10-9F59-1A8636605EC6}.Release|x64.Build.0 = Release|x64
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Debug|x64.ActiveCfg = Debug|x64
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Debug|x64.Build.0 = Debug|x64
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Release|x64.ActiveCfg = Release|x64
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,6 +153,7 @@ Global
 		{2D79B73E-DCFB-42FF-9B58-27CA4F17DBFC} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{E02B63DD-1582-4E1E-A9A6-24C2E676E8F0} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{41FC6389-20AC-4C10-9F59-1A8636605EC6} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{0E6C5157-25E4-49E2-ADDC-BCE881416651} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
