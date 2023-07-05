@@ -195,7 +195,7 @@ class ffmpegToStore
             timeRatio = stream->time_base.num / (double)stream->time_base.den;
         }
 
-        //Processing
+        /// PROCESSING
         AVPacket* packet = ffmpeg.av_packet_alloc();
         while (ffmpeg.av_read_frame(formatContext, packet) >= 0)
         {
@@ -231,13 +231,9 @@ class ffmpegToStore
                         byte** convertedSamplesData = &convertedSamplesPtr;
                         int convertedSamplesCount = ffmpeg.swr_convert(audioSwrctx, convertedSamplesData, frame->nb_samples, frame->extended_data, frame->nb_samples);
 
-                        
-                        int convertedDataSize = convertedSamplesCount * 2 * audioCodecContext->channels;
-
                         DateTime dateA = startTime.AddSeconds(frame->pts * timeRatio);
                         WaveFormat wave = WaveFormat.Create16BitPcm(audioCodecContext->sample_rate, audioCodecContext->channels);
                         audioEmitter.Post(new AudioBuffer(convertedSamples, wave), dateA);
-                        //frameId++;
                     }
                 }
                 ffmpeg.av_frame_free(&frame);

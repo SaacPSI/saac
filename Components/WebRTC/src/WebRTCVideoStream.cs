@@ -74,17 +74,17 @@ namespace WebRTC
             int dataSize = rtp.Length - arg4.Header.GetBytes().Length;
             byte[] realData = rtp.SubArray(arg4.Header.Length, dataSize);
             short[] buffer = AudioDecoder.DecodeAudio(realData, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
-            WaveFormat wave = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, 1);
+            WaveFormat wave = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, 2);
             foreach (short pcm in buffer)
                 foreach (var data in BitConverter.GetBytes(pcm))
                     AudioArray.Add(data);
 
             if (AudioTimestamp.CompareTo(arg4.Header.ReceivedTime) != 0)
-            {
-                OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), wave), AudioTimestamp.ToUniversalTime());
-                AudioTimestamp = arg4.Header.ReceivedTime;
-                AudioArray.Clear();
-            }
+                AudioTimestamp = Pipeline.GetCurrentTime();
+            else
+                AudioTimestamp = AudioTimestamp.AddSeconds(1 / (double)OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.RtpClockRate);
+            OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), wave), AudioTimestamp);
+            AudioArray.Clear();
         }
 
         private void PeerConnection_OnVideoFrameReceived(System.Net.IPEndPoint arg1, uint arg2, byte[] arg3, VideoFormat arg4)
