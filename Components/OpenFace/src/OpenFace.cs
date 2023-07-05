@@ -26,17 +26,17 @@ namespace OpenFace {
         /// <summary>
         /// Gets. Emitter that encapsulates the pose data output stream.
         /// </summary>
-        public Emitter<Pose> PoseOut { get; private set; }
+        public Emitter<Pose> OutPose { get; private set; }
 
         /// <summary>
         /// Gets. Emitter that encapsulates the gaze data output stream.
         /// </summary>
-        public Emitter<Eye> EyeOut { get; private set; }
+        public Emitter<Eye> OutEyes { get; private set; }
 
         /// <summary>
         /// Gets. Emitter that encapsulates the face data output stream.
         /// </summary>
-        public Emitter<Face> FaceOut { get; private set; }
+        public Emitter<Face> OutFace { get; private set; }
 
         private CLNF? LandmarkDetector;
         private FaceDetector? FaceDetector;
@@ -60,11 +60,11 @@ namespace OpenFace {
             InConnector.Out.Do(ReceiveImage);
 
             // Pose data emitter.
-            PoseOut = pipeline.CreateEmitter<Pose>(this, nameof(PoseOut));
+            OutPose = pipeline.CreateEmitter<Pose>(this, nameof(OutPose));
             // Gaze data emitter.
-            EyeOut = pipeline.CreateEmitter<Eye>(this, nameof(EyeOut));
+            OutEyes = pipeline.CreateEmitter<Eye>(this, nameof(OutEyes));
             // Face data emitter.
-            FaceOut = pipeline.CreateEmitter<Face>(this, nameof(FaceOut));
+            OutFace = pipeline.CreateEmitter<Face>(this, nameof(OutFace));
 
             pipeline.PipelineRun += Initialize;
         }
@@ -152,7 +152,7 @@ namespace OpenFace {
                             });
 
                             var headPose = new Pose(poseData, allLandmarks, visiableLandmarks, landmarks3D, boxConverted);
-                            PoseOut.Post(headPose, envelope.OriginatingTime);
+                            OutPose.Post(headPose, envelope.OriginatingTime);
 
                             // Gaze.
                             if (GazeAnalyser != null)
@@ -187,7 +187,7 @@ namespace OpenFace {
                                         eyeLandmarks3D,
                                         gazeLinesConverted
                                     );
-                                EyeOut.Post(gaze, envelope.OriginatingTime);
+                                OutEyes.Post(gaze, envelope.OriginatingTime);
                             }
 
                             //Face
@@ -199,7 +199,7 @@ namespace OpenFace {
                                     kv => new ActionUnit(intensity: kv.Value, presence: actionUnitOccurences[kv.Key])
                                 );
                                 var face = new Face(actionUnits);
-                                FaceOut.Post(face, envelope.OriginatingTime);
+                                OutFace.Post(face, envelope.OriginatingTime);
                             }
                         }
                     }

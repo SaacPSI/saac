@@ -48,23 +48,26 @@ namespace TestingConsole
     {
         static void OpenFace(Pipeline p)
         {
-            Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
-            Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
 
-            //AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
-            //  AzureKinectSensor sensor = new AzureKinectSensor(p, configKinect);
+            var storeIn = PsiStore.Open(p, "Video", "F:\\Store\\");
+            var video = storeIn.OpenStream<Shared<EncodedImage>>("video");
+
+            ImageDecoder decoder = new ImageDecoder(p, new ImageFromBitmapStreamDecoder());
 
             OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
             configuration.Face = true;
-            configuration.Eyes = false;
+            configuration.Eyes = true;
             OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
-            webcam.Out.PipeTo(facer.In);
+            video.PipeTo(decoder.In);
+            decoder.PipeTo(facer.In);
             //sensor.ColorImage.PipeTo(facer.In);
 
             FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
-            facer.PoseOut.PipeTo(faceBlurrer.InPose);
-            webcam.Out.PipeTo(faceBlurrer.InImage);
+            facer.OutPose.PipeTo(faceBlurrer.InPose);
+            decoder.Out.PipeTo(faceBlurrer.InImage);
             //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
+            facer.OutPose.Do((image, e) => { Console.WriteLine("Pose!"); });
+            facer.OutEyes.Do((image, e) => { Console.WriteLine("Eyes!"); });
 
             var store = PsiStore.Create(p, "Blurrer", "F:\\Stores");
 
@@ -80,7 +83,7 @@ namespace TestingConsole
 
             try { 
             // RunAsync the pipeline in non-blocking mode.
-            p.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+            p.RunAsync(ReplayDescriptor.ReplayAll);
            
             }
             catch(Exception ex)
