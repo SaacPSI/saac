@@ -399,6 +399,23 @@ namespace OpenFaceInterop
 			return lines;
 		}
 
+		List<System::Tuple<System::Windows::Point, System::Windows::Point>^>^ GetBoundingBoxes(RawImage^ gray_image, float confidenceThresold)
+		{
+			std::vector<cv::Rect_<float>> bboxes;
+			std::vector<float> confidences;
+
+			::LandmarkDetector::DetectFacesMTCNN(bboxes, gray_image->Mat, clnf->face_detector_MTCNN, confidences);
+
+			auto boxe = gcnew List<System::Tuple<System::Windows::Point, System::Windows::Point>^>();
+
+			for (int iterator = 0; iterator < bboxes.size(); iterator++) {
+				if (confidences[iterator] >= confidenceThresold)
+					boxe->Add(gcnew System::Tuple<System::Windows::Point, System::Windows::Point>(System::Windows::Point(bboxes[iterator].x, bboxes[iterator].y), System::Windows::Point(bboxes[iterator].width, bboxes[iterator].height)));
+			}
+
+			return boxe;
+		}	
+
 		int GetNumPoints()
 		{
 			return clnf->pdm.NumberOfPoints();

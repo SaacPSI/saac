@@ -24,6 +24,11 @@ namespace OpenFace {
         public Receiver<Shared<Image>> In => InConnector.In;
 
         /// <summary>
+        /// Gets. Emitter that encapsulates the boundingBoxes data output stream.
+        /// </summary>
+        public Emitter<List<System.Drawing.Rectangle>> OutBoundingBoxes { get; private set; }
+
+        /// <summary>
         /// Gets. Emitter that encapsulates the pose data output stream.
         /// </summary>
         public Emitter<Pose> OutPose { get; private set; }
@@ -59,6 +64,8 @@ namespace OpenFace {
             InConnector = pipeline.CreateConnector<Shared<Image>>(nameof(In));//pipeline.CreateReceiver<Shared<Image>>(this, ReceiveImage, nameof(In));
             InConnector.Out.Do(ReceiveImage);
 
+            // BoundingBoxes data emitter.
+            OutBoundingBoxes = pipeline.CreateEmitter<List<System.Drawing.Rectangle>>(this, nameof(OutBoundingBoxes));
             // Pose data emitter.
             OutPose = pipeline.CreateEmitter<Pose>(this, nameof(OutPose));
             // Gaze data emitter.
@@ -116,10 +123,11 @@ namespace OpenFace {
                 static Vector2 tupleToVector2(Tuple<float, float> tuple) {
                     return new Vector2(tuple.Item1, tuple.Item2);
                 }
-                using (var colorSharedImage = ImagePool.GetOrCreate(width, height, input.Resource.PixelFormat))
+                using (var colorSharedImage = ImagePool.GetOrCreate(width, height, PixelFormat.RGB_24bpp))
                 using (var graySharedImage = ImagePool.GetOrCreate(width, height, PixelFormat.Gray_8bpp))
                 {
-                    input.Resource.CopyTo(colorSharedImage.Resource);
+                    //input.Resource.CopyTo(.);
+                    colorSharedImage.Resource.CopyFrom(input.Resource.Convert(PixelFormat.RGB_24bpp));
                     var colorImageBuffer = new ImageBuffer(width, height, colorSharedImage.Resource.ImageData, colorSharedImage.Resource.Stride);
                     var grayImageBuffer = new ImageBuffer(width, height, graySharedImage.Resource.ImageData, graySharedImage.Resource.Stride);
                     Methods.ToGray(colorImageBuffer, grayImageBuffer);
@@ -130,76 +138,91 @@ namespace OpenFace {
                         float Fx = input.Resource.Width / 4.0f, Fy = input.Resource.Height / 4.0f;
                         if (LandmarkDetector != null && LandmarkDetector.DetectLandmarksInVideo(colorRawImage, FaceModelParameters, grayRawImage))
                         {
-
-                            var rawAllLandmarks = LandmarkDetector.CalculateAllLandmarks();
-
-                            // Pose.
-                            var allLandmarks = rawAllLandmarks.Select(tupleToVector2);
-                            var visiableLandmarks = LandmarkDetector
-                                .CalculateVisibleLandmarks()
-                                .Select(tupleToVector2);
-                            var landmarks3D = LandmarkDetector
-                                .Calculate3DLandmarks(Fx, Fy, Cx, Cy)
-                                .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
-                            var poseData = new List<float>();
-                            LandmarkDetector.GetPose(poseData, Fx, Fy, Cx, Cy);
-                            var box = LandmarkDetector.CalculateBox(Fx, Fy,  Cx, Cy);
-                            var boxConverted = box.Select(line =>
+                            var bboxes = LandmarkDetector.GetBoundingBoxes(grayRawImage, 0.5f);
+                            List<System.Drawing.Rectangle> boundingBoxes = new List<System.Drawing.Rectangle>();
+                            foreach (var bbox in bboxes)
                             {
-                                var a = pointToVector2(line.Item1);
-                                var b = pointToVector2(line.Item2);
-                                return (a, b);
-                            });
-
-                            var headPose = new Pose(poseData, allLandmarks, visiableLandmarks, landmarks3D, boxConverted);
-                            OutPose.Post(headPose, envelope.OriginatingTime);
-
-                            // Gaze.
-                            if (GazeAnalyser != null)
-                            {
-                                GazeAnalyser.AddNextFrame(LandmarkDetector, success: true, Fx, Fy, Cx, Cy);
-                                var eyeLandmarks = LandmarkDetector
-                                    .CalculateAllEyeLandmarks()
-                                    .Select(tupleToVector2);
-                                var visiableEyeLandmarks = LandmarkDetector
-                                    .CalculateVisibleEyeLandmarks()
-                                    .Select(tupleToVector2);
-                                var eyeLandmarks3D = LandmarkDetector
-                                    .CalculateAllEyeLandmarks3D(Fx, Fy,  Cx, Cy)
-                                    .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
-                                var (leftPupil, rightPupil) = GazeAnalyser.GetGazeCamera();
-                                var (angleX, angleY) = GazeAnalyser.GetGazeAngle();//Not accurate
-                                var gazeLines = GazeAnalyser.CalculateGazeLines(Fx, Fy,  Cx, Cy);
-                                var gazeLinesConverted = gazeLines.Select(line =>
-                                {
-                                    var a = pointToVector2(line.Item1);
-                                    var b = pointToVector2(line.Item2);
-                                    return (a, b);
-                                });
-                                var gaze = new Eye(
-                                        new GazeVector(
-                                                new Vector3(leftPupil.Item1, leftPupil.Item2, leftPupil.Item3),
-                                                new Vector3(rightPupil.Item1, rightPupil.Item2, rightPupil.Item3)
-                                            ),
-                                        new Vector2(angleX, angleY),
-                                        eyeLandmarks,
-                                        visiableEyeLandmarks,
-                                        eyeLandmarks3D,
-                                        gazeLinesConverted
-                                    );
-                                OutEyes.Post(gaze, envelope.OriginatingTime);
+                                System.Drawing.Rectangle rect = new System.Drawing.Rectangle((int)bbox.Item1.X, (int)bbox.Item1.Y, (int)bbox.Item2.X, (int)bbox.Item2.Y);
+                                boundingBoxes.Add(rect);
                             }
-
-                            //Face
-                            if (FaceAnalyser != null)
+                            OutBoundingBoxes.Post(boundingBoxes, envelope.OriginatingTime);
+                        
+                            if((Configuration.Pose || Configuration.Eyes || Configuration.Face) )
                             {
-                                var (actionUnitIntensities, actionUnitOccurences) = FaceAnalyser.PredictStaticAUsAndComputeFeatures(colorRawImage, rawAllLandmarks);//image mode, so not using FaceAnalyser.AddNextFrame()
-                                var actionUnits = actionUnitIntensities.ToDictionary(
-                                    kv => kv.Key.Substring(2)/*remove prefix "AU"*/.TrimStart('0'),
-                                    kv => new ActionUnit(intensity: kv.Value, presence: actionUnitOccurences[kv.Key])
-                                );
-                                var face = new Face(actionUnits);
-                                OutFace.Post(face, envelope.OriginatingTime);
+                                var rawAllLandmarks = LandmarkDetector.CalculateAllLandmarks();
+
+                                // BoundingBoxes.
+                                var allLandmarks = rawAllLandmarks.Select(tupleToVector2);
+                                var visiableLandmarks = LandmarkDetector
+                                    .CalculateVisibleLandmarks()
+                                    .Select(tupleToVector2);
+
+                                // Pose.
+                                if (Configuration.Pose)
+                                {
+                                    var landmarks3D = LandmarkDetector
+                                      .Calculate3DLandmarks(Fx, Fy, Cx, Cy)
+                                      .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
+                                    var poseData = new List<float>();
+                                    LandmarkDetector.GetPose(poseData, Fx, Fy, Cx, Cy);
+                                    var box = LandmarkDetector.CalculateBox(Fx, Fy, Cx, Cy);
+                                    var boxConverted = box.Select(line =>
+                                    {
+                                        var a = pointToVector2(line.Item1);
+                                        var b = pointToVector2(line.Item2);
+                                        return (a, b);
+                                    });
+                                    var headPose = new Pose(poseData, allLandmarks, visiableLandmarks, landmarks3D, boxConverted);
+                                    OutPose.Post(headPose, envelope.OriginatingTime);
+                                }
+
+                                // Gaze.
+                                if (GazeAnalyser != null)
+                                {
+                                    GazeAnalyser.AddNextFrame(LandmarkDetector, success: true, Fx, Fy, Cx, Cy);
+                                    var eyeLandmarks = LandmarkDetector
+                                        .CalculateAllEyeLandmarks()
+                                        .Select(tupleToVector2);
+                                    var visiableEyeLandmarks = LandmarkDetector
+                                        .CalculateVisibleEyeLandmarks()
+                                        .Select(tupleToVector2);
+                                    var eyeLandmarks3D = LandmarkDetector
+                                        .CalculateAllEyeLandmarks3D(Fx, Fy,  Cx, Cy)
+                                        .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
+                                    var (leftPupil, rightPupil) = GazeAnalyser.GetGazeCamera();
+                                    var (angleX, angleY) = GazeAnalyser.GetGazeAngle();//Not accurate
+                                    var gazeLines = GazeAnalyser.CalculateGazeLines(Fx, Fy,  Cx, Cy);
+                                    var gazeLinesConverted = gazeLines.Select(line =>
+                                    {
+                                        var a = pointToVector2(line.Item1);
+                                        var b = pointToVector2(line.Item2);
+                                        return (a, b);
+                                    });
+                                    var gaze = new Eye(
+                                            new GazeVector(
+                                                    new Vector3(leftPupil.Item1, leftPupil.Item2, leftPupil.Item3),
+                                                    new Vector3(rightPupil.Item1, rightPupil.Item2, rightPupil.Item3)
+                                                ),
+                                            new Vector2(angleX, angleY),
+                                            eyeLandmarks,
+                                            visiableEyeLandmarks,
+                                            eyeLandmarks3D,
+                                            gazeLinesConverted
+                                        );
+                                    OutEyes.Post(gaze, envelope.OriginatingTime);
+                                }
+
+                                //Face
+                                if (FaceAnalyser != null)
+                                {
+                                    var (actionUnitIntensities, actionUnitOccurences) = FaceAnalyser.PredictStaticAUsAndComputeFeatures(colorRawImage, rawAllLandmarks);//image mode, so not using FaceAnalyser.AddNextFrame()
+                                    var actionUnits = actionUnitIntensities.ToDictionary(
+                                        kv => kv.Key.Substring(2)/*remove prefix "AU"*/.TrimStart('0'),
+                                        kv => new ActionUnit(intensity: kv.Value, presence: actionUnitOccurences[kv.Key])
+                                    );
+                                    var face = new Face(actionUnits);
+                                    OutFace.Post(face, envelope.OriginatingTime);
+                                }
                             }
                         }
                     }

@@ -49,27 +49,25 @@ namespace TestingConsole
         static void OpenFace(Pipeline p)
         {
 
-            var storeIn = PsiStore.Open(p, "Video", "F:\\Store\\");
-            var video = storeIn.OpenStream<Shared<EncodedImage>>("video");
+            //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
+            //Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
 
-            ImageDecoder decoder = new ImageDecoder(p, new ImageFromBitmapStreamDecoder());
+            AzureKinectSensor webcam = new AzureKinectSensor(p);
 
             OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
-            configuration.Face = true;
-            configuration.Eyes = true;
+            configuration.Face = false;
+            configuration.Eyes = false;
+            configuration.Pose = false;
             OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
-            video.PipeTo(decoder.In);
-            decoder.PipeTo(facer.In);
+            webcam.ColorImage.PipeTo(facer.In);
             //sensor.ColorImage.PipeTo(facer.In);
 
             FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
-            facer.OutPose.PipeTo(faceBlurrer.InPose);
-            decoder.Out.PipeTo(faceBlurrer.InImage);
+            facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
+            webcam.ColorImage.PipeTo(faceBlurrer.InImage);
             //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
-            facer.OutPose.Do((image, e) => { Console.WriteLine("Pose!"); });
-            facer.OutEyes.Do((image, e) => { Console.WriteLine("Eyes!"); });
 
-            var store = PsiStore.Create(p, "Blurrer", "F:\\Stores");
+            var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
 
             store.Write(faceBlurrer.Out.EncodeJpeg(), "Image");
         }
