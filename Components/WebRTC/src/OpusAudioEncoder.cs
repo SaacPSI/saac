@@ -36,8 +36,7 @@ namespace OpusCodec
             _audioEncoder = new AudioEncoder();
 
             // Add OPUS in the list of AudioFormat
-            _supportedFormats = new List<AudioFormat>();
-            _supportedFormats.Add(MEDIA_FORMAT_OPUS);
+            _supportedFormats = new List<AudioFormat>{ MEDIA_FORMAT_OPUS };
 
             // Add also list available in the AudioEncoder available in SIPSorcery
             _supportedFormats.AddRange(_audioEncoder.SupportedFormats);

@@ -12,6 +12,7 @@
 	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

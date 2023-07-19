@@ -7,17 +7,32 @@ namespace TestingConsole
     {   
         static void WebRTC(Pipeline p)
         {
-            WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
-            config.WebsocketAddress = System.Net.IPAddress.Loopback;
-            config.WebsocketPort = 80;
-            config.AudioStreaming = true;
-            config.PixelStreamingConnection = true;
-            config.FFMPEGFullPath = "D:\\ffmpeg\\bin";
-            WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
+            //WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
+            //config.WebsocketAddress = System.Net.IPAddress.Loopback;
+            //config.WebsocketPort = 80;
+            //config.AudioStreaming = true;
+            //config.PixelStreamingConnection = true;
+            //config.FFMPEGFullPath = "D:\\ffmpeg\\bin";
+            //WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
+            //var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
+
+            //store.Write(stream.OutImage, "Image");
+            //store.Write(stream.OutAudio, "Audio");
+
+            var emitter = new WebRTCDataChannelToEmitter<string>(p);
+
+            WebRTCDataConnectorConfiguration configuration = new WebRTCDataConnectorConfiguration();
+            configuration.WebsocketAddress = System.Net.IPAddress.Loopback;
+            configuration.WebsocketPort = 80;
+            configuration.PixelStreamingConnection = false;
+
+            configuration.OutputChannels.Add("test", emitter);
+            WebRTCDataConnector connector = new WebRTCDataConnector(p, configuration);
+
             var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
 
-            store.Write(stream.OutImage, "Image");
-            store.Write(stream.OutAudio, "Audio");
+            store.Write(emitter.Out, "string");
+
         }
 
         static void Main(string[] args)
