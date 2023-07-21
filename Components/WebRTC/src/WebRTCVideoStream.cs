@@ -11,17 +11,18 @@ namespace WebRTC
     /// <summary>
     /// WebRTCVideoStream component class, working for Unreal Engine PixelStreaming and Unity (package in asset folder of this project)
     /// Use FFMPEG for codecs.
-    /// Inherit form WebRTConnector class 
+    /// Inherit form WebRTCDataConnector class to send and recieve from datachannels 
     /// </summary>
     /// Currently Audio is not working
 
-    public class WebRTCVideoStream : WebRTConnector
+    public class WebRTCVideoStream : WebRTCDataConnector
     {
         private FFmpegVideoEndPoint VideoDecoder;
         private OpusCodec.OpusAudioEncoder AudioDecoder;
         private WebRTCVideoStreamConfiguration Configuration;
         private List<byte> AudioArray = new List<byte>(); 
         private DateTime AudioTimestamp = DateTime.Now;
+        private WaveFormat? WaveFormat = null;
 
         /// <summary>
         /// Gets the emitter images.
@@ -37,18 +38,22 @@ namespace WebRTC
             : base(parent, configuration, name, defaultDeliveryPolicy)
         {
             Configuration = configuration;
-            OutImage = parent.CreateEmitter<Shared<Image>>(this, nameof(OutImage));
+            OutImage = parent.CreateEmitter<Shared<Image>>(parent, nameof(OutImage));
             OutAudio = parent.CreateEmitter<AudioBuffer>(this, nameof(OutAudio));
-            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, configuration.FFMPEGFullPath);
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, configuration.FFMPEGFullPath, null);
             VideoDecoder = new FFmpegVideoEndPoint();
             if (configuration.AudioStreaming)
             {
                 AudioDecoder = new OpusCodec.OpusAudioEncoder();
+                WaveFormat = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ChannelCount);
             }
         }
 
         protected override void PrepareActions()
         {
+            if (PeerConnection == null)
+                return;
+            base.PrepareActions();
             MediaStreamTrack videoTrack = new MediaStreamTrack(VideoDecoder.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
             PeerConnection.addTrack(videoTrack);
             if (Configuration.AudioStreaming)
@@ -65,24 +70,24 @@ namespace WebRTC
 
         private void AudioStream_OnRtpPacketReceivedByIndex(int arg1, System.Net.IPEndPoint arg2, SDPMediaTypesEnum arg3, RTPPacket arg4)
         {
-            if (arg3 != SDPMediaTypesEnum.audio)
+            if (arg3 != SDPMediaTypesEnum.audio || WaveFormat == null)
                 return;
 
-            var rtp = arg4.GetBytes();
-            int dataSize = rtp.Length - arg4.Header.GetBytes().Length;
-            byte[] realData = rtp.SubArray(arg4.Header.Length, dataSize);
-            short[] buffer = AudioDecoder.DecodeAudio(realData, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
-            WaveFormat wave = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, 2);
+            int retValue = AudioTimestamp.CompareTo(arg4.Header.ReceivedTime);
+            if (retValue < 0)
+            {
+                OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), WaveFormat), DateTime.Now);
+                AudioArray.Clear();
+                AudioTimestamp = arg4.Header.ReceivedTime;
+            }
+            else if(retValue > 0)
+                AudioTimestamp = arg4.Header.ReceivedTime;
+
+            short[] buffer = AudioDecoder.DecodeAudio(arg4.Payload, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
             foreach (short pcm in buffer)
                 foreach (var data in BitConverter.GetBytes(pcm))
                     AudioArray.Add(data);
 
-            if (AudioTimestamp.CompareTo(arg4.Header.ReceivedTime) != 0)
-                AudioTimestamp = Pipeline.GetCurrentTime();
-            else
-                AudioTimestamp = AudioTimestamp.AddSeconds(1 / (double)OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.RtpClockRate);
-            OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), wave), AudioTimestamp);
-            AudioArray.Clear();
         }
 
         private void PeerConnection_OnVideoFrameReceived(System.Net.IPEndPoint arg1, uint arg2, byte[] arg3, VideoFormat arg4)

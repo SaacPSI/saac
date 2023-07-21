@@ -1,6 +1,5 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
-using System.Windows.Media.Animation;
 using TinyJson;
 
 namespace WebRTC
@@ -10,71 +9,108 @@ namespace WebRTC
     /// </summary>
     public class IWebRTCDataReceiverToChannel
     {
-        public delegate bool OnJsonMessageDelegate(string message, string label);
-        public OnJsonMessageDelegate? OnJSONMessage;
-        public delegate bool OnBytesMessageDelegate(byte[] message, string label);
-        public OnBytesMessageDelegate? OnBytesMessage;
+        public delegate bool OnMessageDelegate<T>(T message, string label);
+       
+        public enum MessageType { Json, Bytes };
+        public MessageType Type { get; protected set; } = MessageType.Json;
 
-        public IWebRTCDataReceiverToChannel(OnJsonMessageDelegate? onJsonMessage, OnBytesMessageDelegate? onBytesMessage)
+        public IWebRTCDataReceiverToChannel()
+        { }
+
+        public virtual void SetOnMessageDelegateJson(OnMessageDelegate<string> onMessage)
         {
-            OnJSONMessage = onJsonMessage;
-            OnBytesMessage = onBytesMessage;
+            throw new NotImplementedException();
         }
 
-        public void SetOnJsonMessageDelegate(OnJsonMessageDelegate jsonDelegate)
+        public virtual void SetOnMessageDelegateBytes(OnMessageDelegate<byte[]> onMessage)
         {
-
-            OnJSONMessage = jsonDelegate;
-        }
-
-        public void SetOnBytesMessageDelegate(OnBytesMessageDelegate bytesDelegate)
-        {
-            OnBytesMessage = bytesDelegate;
+            throw new NotImplementedException();
         }
     }
 
-    //public interface RTCDataEntity
-    //{
-    //    public byte[] ToBytes();
-    //}
-
-    public class WebRTCDataReceiverToChannel<T> : IWebRTCDataReceiverToChannel, IConsumer<T>  //where T : RTCDataEntity
+    public class WebRTCDataReceiverToChannel<T> : IWebRTCDataReceiverToChannel, IConsumer<T>
     {
         public Connector<T> InConnector { get; private set; }
         public Receiver<T> In => InConnector.In;
 
         public string Label { get; private set; }
 
-        public WebRTCDataReceiverToChannel(Pipeline parent, string label, OnJsonMessageDelegate? onJsonMessage, OnBytesMessageDelegate? onBytesMessage, DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(onJsonMessage, onBytesMessage)
+        internal WebRTCDataReceiverToChannel(Pipeline parent, string label, DeliveryPolicy? defaultDeliveryPolicy = null)
         {
             Label = label;
             InConnector = parent.CreateConnector<T>(Label);
             InConnector.Out.Do(Process, defaultDeliveryPolicy);
         }
 
-        private void Process(T message, Envelope envelope)
+        protected virtual void Process(T message, Envelope envelope)
         {
-            if(OnJSONMessage != null)
-                ProcessJson(message, envelope);
-            else if (OnBytesMessage != null)
-                ProcessBytes(message, envelope);
+            throw new NotImplementedException();
+        }
+    }
+
+    public class WebRTCDataReceiverToChannelJson<T> : WebRTCDataReceiverToChannel<T>
+    {
+        private OnMessageDelegate<string>? OnMessage;
+
+        internal WebRTCDataReceiverToChannelJson(Pipeline parent, string label, DeliveryPolicy? defaultDeliveryPolicy = null)
+            : base(parent, label, defaultDeliveryPolicy )
+        {
+            Type = MessageType.Json;
+        }
+
+        public override void SetOnMessageDelegateJson(OnMessageDelegate<string> onMessage)
+        {
+            OnMessage = onMessage;
         }
 
         private struct JSONStructT { public string Timestamp; public T Data; }
 
-        private void ProcessJson(T message, Envelope envelope)
+        protected override void Process(T message, Envelope envelope)
         {
+            if (OnMessage == null)
+                return;
             JSONStructT jSONStructT = new JSONStructT();
             jSONStructT.Data = message;
             jSONStructT.Timestamp = envelope.OriginatingTime.ToString();
-            OnJSONMessage(JSONWriter.ToJson(jSONStructT), Label);
+            OnMessage(JSONWriter.ToJson(jSONStructT), Label);
+        }
+    }
+
+    public class WebRTCDataReceiverToChannelBytes<T> : WebRTCDataReceiverToChannel<T>
+    {
+        private OnMessageDelegate<byte[]>? OnMessage;
+        private System.Reflection.MethodInfo ToBytesMethod;
+
+        internal WebRTCDataReceiverToChannelBytes(Pipeline parent, string label, System.Reflection.MethodInfo toBytesMethod, DeliveryPolicy? defaultDeliveryPolicy = null)
+             : base(parent, label, defaultDeliveryPolicy)
+        {
+            ToBytesMethod = toBytesMethod;
+            Type = MessageType.Bytes;
         }
 
-        private unsafe void ProcessBytes(T message, Envelope envelope)
+        public override void SetOnMessageDelegateBytes(OnMessageDelegate<byte[]> onMessage)
         {
-            //OnBytesMessage(message.ToBytes(), Label);
-            throw new NotImplementedException();
+            OnMessage = onMessage;
+        }
+
+        protected override void Process(T message, Envelope envelope)
+        {
+            if (OnMessage == null)
+                return;
+            byte[] buffer = (byte[])ToBytesMethod.Invoke(message, null);
+            OnMessage(buffer, Label);
+        }
+    }
+
+    public static class WebRTCDataReceiverToChannelFactory
+    {
+        public static WebRTCDataReceiverToChannel<T> Create<T>(Pipeline parent, string label, bool hasBytesMethod = false, DeliveryPolicy? defaultDeliveryPolicy = null) 
+        {
+            if (hasBytesMethod)
+                foreach (var method in typeof(T).GetMethods())
+                    if (method.ReturnType == typeof(byte[]))
+                        return new WebRTCDataReceiverToChannelBytes<T>(parent, label, method, defaultDeliveryPolicy);
+            return new WebRTCDataReceiverToChannelJson<T>(parent, label, defaultDeliveryPolicy);
         }
     }
 }

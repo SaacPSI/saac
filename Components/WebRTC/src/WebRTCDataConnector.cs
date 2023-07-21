@@ -1,10 +1,13 @@
 ﻿using Microsoft.Psi;
 using System.Text;
 using SIPSorcery.Net;
-using SIPSorcery.Media;
 
 namespace WebRTC
 {
+    /// <summary>
+    /// WebRTCDataConnector component class to send and recieve from datachannels 
+    /// </summary>
+
     public class WebRTCDataConnector : WebRTConnector
     {
         private Dictionary<string, RTCDataChannel> ChannelDictionnary;
@@ -17,8 +20,10 @@ namespace WebRTC
             ChannelDictionnary = new Dictionary<string, RTCDataChannel>();
             foreach (var channel in configuration.InputChannels)
             {
-                channel.Value.SetOnJsonMessageDelegate(this.Send);
-                channel.Value.SetOnBytesMessageDelegate(this.Send);
+                if(channel.Value.Type == IWebRTCDataReceiverToChannel.MessageType.Json) 
+                    channel.Value.SetOnMessageDelegateJson(this.Send);
+                else
+                    channel.Value.SetOnMessageDelegateBytes(this.Send);
             }
         }
 

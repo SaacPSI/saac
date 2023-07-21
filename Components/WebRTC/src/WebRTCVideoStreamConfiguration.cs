@@ -1,6 +1,6 @@
 ﻿namespace WebRTC
 {
-    public class WebRTCVideoStreamConfiguration : WebRTConnectorConfiguration
+    public class WebRTCVideoStreamConfiguration : WebRTCDataConnectorConfiguration
     {
         public string? FFMPEGFullPath { get; set; } = null;
     }

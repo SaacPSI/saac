@@ -6,7 +6,7 @@ namespace WebRTC
     {
         public uint WebsocketPort { get; set; } = 80;
         public IPAddress WebsocketAddress { get; set; } = IPAddress.Any;
-        public bool PixelStreamingConnection = true;
+        public bool PixelStreamingConnection = false;
         public bool AudioStreaming = false;
     }
 }
