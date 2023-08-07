@@ -30,6 +30,7 @@ namespace NatNetComponent
         private List<Device> mDevices = new List<Device>();
         private List<Camera> mCameras = new List<Camera>();
         private readonly object ConnexionOpenLock = new object();
+        private Pipeline Parent;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NatNetCore"/> class.
@@ -39,6 +40,7 @@ namespace NatNetComponent
         public NatNetCore(Pipeline pipeline, NatNetCoreConfiguration? config = null)
         {
             Configuration = config ?? new NatNetCoreConfiguration();
+            Parent = pipeline;
 
             //this.Bodies = pipeline.CreateEmitter<List<Skeleton>>(this, nameof(this.Bodies));
             OutRigidBodies = pipeline.CreateEmitter<List<RigidBody>>(this, nameof(this.OutRigidBodies));
@@ -135,7 +137,7 @@ namespace NatNetComponent
                         }
                     }
                 }
-                OutRigidBodies.Post(rigidBodies, Pipeline.GetCurrentTime());
+                OutRigidBodies.Post(rigidBodies, Parent.GetCurrentTime());
             }   
         }
 

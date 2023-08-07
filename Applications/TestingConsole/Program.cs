@@ -9,30 +9,32 @@ using System.Configuration;
 namespace TestingConsole
 {
     internal class Program
-    {   
-        static void OpenFace(Pipeline p)
-        {
+    {
+        //*****Uncomment OpenFace, Microsoft.Psi.Imaging and Microsoft.Psi.AzureKinect
+        //***** Add OpenFace deps
+        //   static void OpenFace(Pipeline p)
+        //    {
 
-            //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
-            //Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
+        //        //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
+        //        //Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
 
-            AzureKinectSensor webcam = new AzureKinectSensor(p);
+        //        AzureKinectSensor webcam = new AzureKinectSensor(p);
 
-            OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
-            configuration.Face = false;
-            configuration.Eyes = false;
-            configuration.Pose = false;
-            OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
-            webcam.ColorImage.PipeTo(facer.In);
-            //sensor.ColorImage.PipeTo(facer.In);
+        //        OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
+        //        configuration.Face = false;
+        //        configuration.Eyes = false;
+        //        configuration.Pose = false;
+        //        OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
+        //        webcam.ColorImage.PipeTo(facer.In);
+        //        //sensor.ColorImage.PipeTo(facer.In);
 
-            FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
-            facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
-            webcam.ColorImage.PipeTo(faceBlurrer.InImage);
-            //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
+        //        FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
+        //        facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
+        //        webcam.ColorImage.PipeTo(faceBlurrer.InImage);
+        //        //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
 
-            var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
-        }
+        //        var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
+        //    }
 
         static void WebRTC(Pipeline p)
         {

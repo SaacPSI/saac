@@ -3,7 +3,7 @@
 
 Project using https://github.com/microsoft/psi/ framework.
 
-Full .NET 4.8 framework projects.
+.NET 4.8 framework projects.
 
 Three folders:
 - Applications for ready to use projects see [Applications.md](Applications/Applications.md) for more details.

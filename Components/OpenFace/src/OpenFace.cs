@@ -1,15 +1,12 @@
-﻿using System.ComponentModel;
-using Microsoft.Psi.Components;
+﻿using Microsoft.Psi.Components;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Windows;
-using Microsoft.Extensions.Logging;
 using Microsoft.Psi;
 using Microsoft.Psi.Imaging;
 using OpenFaceInterop;
 using Helpers;
 
-// From 
+// Fromhttps://github.com/ihp-lab/OpenSense/tree/master/Components/OpenFace.Windows
 namespace OpenFace {
     public class OpenFace : IConsumer<Shared<Image>>
     {
@@ -126,7 +123,6 @@ namespace OpenFace {
                 using (var colorSharedImage = ImagePool.GetOrCreate(width, height, PixelFormat.RGB_24bpp))
                 using (var graySharedImage = ImagePool.GetOrCreate(width, height, PixelFormat.Gray_8bpp))
                 {
-                    //input.Resource.CopyTo(.);
                     colorSharedImage.Resource.CopyFrom(input.Resource.Convert(PixelFormat.RGB_24bpp));
                     var colorImageBuffer = new ImageBuffer(width, height, colorSharedImage.Resource.ImageData, colorSharedImage.Resource.Stride);
                     var grayImageBuffer = new ImageBuffer(width, height, graySharedImage.Resource.ImageData, graySharedImage.Resource.Stride);
