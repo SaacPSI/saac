@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{FC200E98-DC12-4276-A7CD-588CD9E638A7}</ProjectGuid>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>BiopacInterop</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -67,6 +67,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Interop\InteropHelpers\include;$(SolutionDir)\Dependencies\xmlrpc-c\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalManifestDependencies>
@@ -80,6 +81,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Interop\InteropHelpers\include;$(SolutionDir)\Dependencies\xmlrpc-c\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
   </ItemDefinitionGroup>
@@ -89,11 +91,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\InteropHelpers\include\ManagedObject.h" />
     <ClInclude Include="include\BiopacCommunicator.h" />
     <ClInclude Include="include\BiopacInterop.h" />
     <ClInclude Include="include\Constants.h" />
     <ClInclude Include="include\DataQueue.h" />
-    <ClInclude Include="include\ManagedObject.h" />
     <ClInclude Include="include\Utilities.h" />
   </ItemGroup>
   <ItemGroup>

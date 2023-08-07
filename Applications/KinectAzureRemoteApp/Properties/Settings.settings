@@ -32,5 +32,11 @@
     <Setting Name="IMU" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="ApplicationName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">KinectStreaming</Value>
+    </Setting>
+    <Setting Name="IpToUse" Type="System.String" Scope="User">
+      <Value Profile="(Default)">localhost</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

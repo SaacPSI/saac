@@ -18,9 +18,6 @@ namespace BiopacInterop
 		std::deque<T> data;
 	};
 
-
-
-
 	template<typename T>
 	DataQueue<T>::DataQueue()
 	{
@@ -49,10 +46,7 @@ namespace BiopacInterop
 		}
 		return lastVal;
 	}
-	struct test
-	{
-		int val = 0;
-	};
+
 	template<typename T>
 	void DataQueue<T>::push_back(T val)
 	{

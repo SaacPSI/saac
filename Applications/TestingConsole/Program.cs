@@ -1,11 +1,39 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Remoting;
 using WebRTC;
+//using Microsoft.Psi.Imaging;
+//using Microsoft.Psi.AzureKinect;
+//using OpenFace;
+using System.Configuration;
 
 namespace TestingConsole
 {
     internal class Program
     {   
+        static void OpenFace(Pipeline p)
+        {
+
+            //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
+            //Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
+
+            AzureKinectSensor webcam = new AzureKinectSensor(p);
+
+            OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
+            configuration.Face = false;
+            configuration.Eyes = false;
+            configuration.Pose = false;
+            OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
+            webcam.ColorImage.PipeTo(facer.In);
+            //sensor.ColorImage.PipeTo(facer.In);
+
+            FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
+            facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
+            webcam.ColorImage.PipeTo(faceBlurrer.InImage);
+            //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
+
+            var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
+        }
+
         static void WebRTC(Pipeline p)
         {
             RemoteClockExporter exporter = new RemoteClockExporter(11511);
@@ -66,14 +94,22 @@ namespace TestingConsole
 
             WebRTC(p);
             //testUnity(p);
+            //OpenFace(p);
 
+            try { 
             // RunAsync the pipeline in non-blocking mode.
-            p.RunAsync(ReplayDescriptor.ReplayAllRealTime);
-            // Wainting for an out key
-            Console.WriteLine("Press any key to stop the application.");
-            Console.ReadLine();
-            // Stop correctly the pipeline.
-            p.Dispose();
+            p.RunAsync(ReplayDescriptor.ReplayAll);
+           
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            // Waiting for an out key
+           Console.WriteLine("Press any key to stop the application.");
+           Console.ReadLine();
+           // Stop correctly the pipeline.
+           p.Dispose();
         }
     }
 }

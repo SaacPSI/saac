@@ -3,17 +3,17 @@
     public class KinectAzureRemoteConnectorConfiguration
     {
         /// <summary>
-        /// Get or set the list of data to connect to.
-        /// </summary>
-        public uint ActiveStreamNumber { get; set; } = 1;
-
-        /// <summary>
         /// Gets or sets port number where the iteration begin.
         /// </summary>
-        public uint StartPort { get; set; } = 11411;
+        public uint ServeurtPort { get; set; } = 13331;
 
         /// <summary>
-        /// Gets or sets the ip of the remote exporter.
+        /// Gets or sets KinectStreaming application name (if there is more than one).
+        /// </summary>
+        public string ApplicationName { get; set; } = "KinectStreaming";
+
+        /// <summary>
+        /// Gets or sets the ip of the rendez-vous server.
         /// </summary>
         public string Address { get; set; } = "localhost";
     }
