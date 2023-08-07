@@ -79,9 +79,11 @@ namespace NatNetComponent
             {
                 if (connectionTypes == null)
                 {
-                    connectionTypes = new List<string>();
-                    connectionTypes.Add(NatNetML.ConnectionType.Multicast.ToString());
-                    connectionTypes.Add(NatNetML.ConnectionType.Unicast.ToString());
+                    connectionTypes = new List<string>
+                    {
+                        NatNetML.ConnectionType.Multicast.ToString(),
+                        NatNetML.ConnectionType.Unicast.ToString()
+                    };
                 }
                 return connectionTypes;
             }

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace WebRTC
 {
@@ -7,6 +8,6 @@ namespace WebRTC
         public uint WebsocketPort { get; set; } = 80;
         public IPAddress WebsocketAddress { get; set; } = IPAddress.Any;
         public bool PixelStreamingConnection = false;
-        public bool AudioStreaming = false;
+        public LogLevel Log = LogLevel.Trace;
     }
 }

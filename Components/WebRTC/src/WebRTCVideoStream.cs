@@ -4,7 +4,6 @@ using SIPSorceryMedia.Abstractions;
 using SIPSorceryMedia.FFmpeg;
 using SIPSorcery.Net;
 using Microsoft.Psi.Audio;
-using WebSocketSharp;
 
 namespace WebRTC
 {
@@ -23,6 +22,7 @@ namespace WebRTC
         private List<byte> AudioArray = new List<byte>(); 
         private DateTime AudioTimestamp = DateTime.Now;
         private WaveFormat? WaveFormat = null;
+        private DateTime VideoTimestamp = DateTime.Now;
 
         /// <summary>
         /// Gets the emitter images.
@@ -40,11 +40,11 @@ namespace WebRTC
             Configuration = configuration;
             OutImage = parent.CreateEmitter<Shared<Image>>(parent, nameof(OutImage));
             OutAudio = parent.CreateEmitter<AudioBuffer>(this, nameof(OutAudio));
-            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, configuration.FFMPEGFullPath, null);
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_TRACE, configuration.FFMPEGFullPath, Logger);
             VideoDecoder = new FFmpegVideoEndPoint();
             if (configuration.AudioStreaming)
             {
-                AudioDecoder = new OpusCodec.OpusAudioEncoder();
+                AudioDecoder = new OpusCodec.OpusAudioEncoder(Logger);
                 WaveFormat = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ChannelCount);
             }
         }
@@ -66,6 +66,7 @@ namespace WebRTC
             PeerConnection.OnVideoFormatsNegotiated += WebRTCPeer_OnVideoFormatsNegotiated;
             PeerConnection.OnVideoFrameReceived += PeerConnection_OnVideoFrameReceived;
             VideoDecoder.OnVideoSinkDecodedSample += VideoEncoder_OnVideoSinkDecodedSample;
+            VideoDecoder.OnVideoSinkDecodedSampleFaster += VideoDecoder_OnVideoSinkDecodedSampleFaster;
         }
 
         private void AudioStream_OnRtpPacketReceivedByIndex(int arg1, System.Net.IPEndPoint arg2, SDPMediaTypesEnum arg3, RTPPacket arg4)
@@ -73,15 +74,15 @@ namespace WebRTC
             if (arg3 != SDPMediaTypesEnum.audio || WaveFormat == null)
                 return;
 
-            int retValue = AudioTimestamp.CompareTo(arg4.Header.ReceivedTime);
-            if (retValue < 0)
+            if (arg1 == 0)
             {
-                OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), WaveFormat), DateTime.Now);
-                AudioArray.Clear();
-                AudioTimestamp = arg4.Header.ReceivedTime;
+                if (AudioArray.Count > 0)
+                {
+                    OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), WaveFormat), AudioTimestamp);
+                    AudioArray.Clear();
+                }
+                AudioTimestamp = Pipeline.GetCurrentTime();
             }
-            else if(retValue > 0)
-                AudioTimestamp = arg4.Header.ReceivedTime;
 
             short[] buffer = AudioDecoder.DecodeAudio(arg4.Payload, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
             foreach (short pcm in buffer)
@@ -92,8 +93,9 @@ namespace WebRTC
 
         private void PeerConnection_OnVideoFrameReceived(System.Net.IPEndPoint arg1, uint arg2, byte[] arg3, VideoFormat arg4)
         {
-            VideoDecoder.SetVideoSourceFormat(arg4);
-            VideoDecoder.GotVideoFrame(arg1, arg2, arg3, arg4);
+           VideoTimestamp = Pipeline.GetCurrentTime();
+           VideoDecoder.SetVideoSourceFormat(arg4);
+           VideoDecoder.GotVideoFrame(arg1, arg2, arg3, arg4);
         }
 
         private void VideoEncoder_OnVideoSinkDecodedSample(byte[] sample, uint width, uint height, int stride, SIPSorceryMedia.Abstractions.VideoPixelFormatsEnum pixelFormat)
@@ -101,7 +103,7 @@ namespace WebRTC
             PixelFormat format = GetPixelFormat(pixelFormat);
             Shared<Image> imageEnc = ImagePool.GetOrCreate((int)width, (int)height, format);
             imageEnc.Resource.CopyFrom(sample);
-            OutImage.Post(imageEnc, Pipeline.GetCurrentTime());
+            OutImage.Post(imageEnc, VideoTimestamp);
         }
 
         private void VideoDecoder_OnVideoSinkDecodedSampleFaster(RawImage rawImage)
@@ -113,7 +115,7 @@ namespace WebRTC
                 imageS.Resource.CopyFrom(image);
             else
                 imageS.Resource.CopyFrom(image.Flip(FlipMode.AlongHorizontalAxis));
-            OutImage.Post(imageS, Pipeline.GetCurrentTime());
+            OutImage.Post(imageS, VideoTimestamp);
             image.Dispose();
         }
 
@@ -137,7 +139,6 @@ namespace WebRTC
         private void WebRTCPeer_OnVideoFormatsNegotiated(List<VideoFormat> obj)
         {
             VideoFormat format = obj.Last();
-
             VideoDecoder.SetVideoSourceFormat(format);
             VideoDecoder.SetVideoSinkFormat(format);
         }

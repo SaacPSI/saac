@@ -33,6 +33,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biopac", "Components\Biopac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ffmpegToStore", "Applications\ffmpegToStore\ffmpegToStore.csproj", "{0E6C5157-25E4-49E2-ADDC-BCE881416651}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unity\PsiImporterExporter.unitypackage = Components\Unity\PsiImporterExporter.unitypackage
+		PsiInUnity.md = PsiInUnity.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -154,6 +160,7 @@ Global
 		{E02B63DD-1582-4E1E-A9A6-24C2E676E8F0} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{41FC6389-20AC-4C10-9F59-1A8636605EC6} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{0E6C5157-25E4-49E2-ADDC-BCE881416651} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

@@ -18,37 +18,37 @@ namespace Nuitrack
         /// <summary>
         /// Gets the current image from the color camera.
         /// </summary>
-        public Emitter<Shared<Image>> ColorImage { get; private set; }
+        public Emitter<Shared<Image>> OutColorImage { get; private set; }
 
         /// <summary>
         /// Gets the current depth image.
         /// </summary>
-        public Emitter<Shared<DepthImage>> DepthImage { get; private set; }
+        public Emitter<Shared<DepthImage>> OutDepthImage { get; private set; }
 
         /// <summary>
         /// Gets the emitter of lists of currently tracked bodies.
         /// </summary>
-        public Emitter<List<Skeleton>> Bodies { get; private set; }
+        public Emitter<List<Skeleton>> OutBodies { get; private set; }
 
         /// <summary>
         /// Gets the emitter of lists of currently tracked hands.
         /// </summary>
-        public Emitter<List<UserHands>> Hands { get; private set; }
+        public Emitter<List<UserHands>> OutHands { get; private set; }
 
         /// <summary>
         /// Gets the emitter of lists of currently tracked users.
         /// </summary>
-        public Emitter<List<User>> Users { get; private set; }
+        public Emitter<List<User>> OutUsers { get; private set; }
 
         /// <summary>
         /// Gets the emitter of lists of currently tracked gestures.
         /// </summary>
-        public Emitter<List<UserGesturesState>> Gestures { get; private set; }
+        public Emitter<List<UserGesturesState>> OutGestures { get; private set; }
 
         /// <summary>
         /// Gets the current frames-per-second actually achieved.
         /// </summary>
-        public Emitter<double> FrameRate { get; private set; }
+        public Emitter<double> OutFrameRate { get; private set; }
         // TODO: Add more if needed and renaming properly the reciever & emitter
 
         /* End in/out puts */
@@ -70,13 +70,13 @@ namespace Nuitrack
             Core = NuitrackCore.GetNuitrackCore();
             Core.RegisterSensor(config, this);
 
-            DepthImage = pipeline.CreateEmitter<Shared<DepthImage>>(this, nameof(DepthImage));
-            ColorImage = pipeline.CreateEmitter<Shared<Image>>(this, nameof(ColorImage));
-            Bodies = pipeline.CreateEmitter<List<Skeleton>>(this, nameof(Bodies));
-            Hands = pipeline.CreateEmitter<List<UserHands>>(this, nameof(Hands));
-            Users = pipeline.CreateEmitter<List<User>>(this, nameof(Users));
-            Gestures = pipeline.CreateEmitter<List<UserGesturesState>>(this, nameof(Gestures));
-            FrameRate = pipeline.CreateEmitter<double>(this, nameof(FrameRate));
+            OutDepthImage = pipeline.CreateEmitter<Shared<DepthImage>>(this, nameof(OutDepthImage));
+            OutColorImage = pipeline.CreateEmitter<Shared<Image>>(this, nameof(OutColorImage));
+            OutBodies = pipeline.CreateEmitter<List<Skeleton>>(this, nameof(OutBodies));
+            OutHands = pipeline.CreateEmitter<List<UserHands>>(this, nameof(OutHands));
+            OutUsers = pipeline.CreateEmitter<List<User>>(this, nameof(OutUsers));
+            OutGestures = pipeline.CreateEmitter<List<UserGesturesState>>(this, nameof(OutGestures));
+            OutFrameRate = pipeline.CreateEmitter<double>(this, nameof(OutFrameRate));
         }
 
         public void Start(Action<DateTime> notifyCompletionTime)
@@ -98,7 +98,7 @@ namespace Nuitrack
                 Shared<DepthImage> image = Microsoft.Psi.Imaging.DepthImagePool.GetOrCreate(depthFrame.Cols, depthFrame.Rows);
                 DepthTimestamp = (long)depthFrame.Timestamp;
                 image.Resource.CopyFrom(depthFrame.Data);
-                DepthImage.Post(image, Pipeline.GetCurrentTime());
+                OutDepthImage.Post(image, Pipeline.GetCurrentTime());
                 depthFrame.Dispose();
             }
         }
@@ -110,7 +110,7 @@ namespace Nuitrack
                 Shared<Image> image = Microsoft.Psi.Imaging.ImagePool.GetOrCreate(colorFrame.Cols, colorFrame.Rows, Microsoft.Psi.Imaging.PixelFormat.BGR_24bpp);
                 ColorTimestamp = (long)colorFrame.Timestamp;
                 image.Resource.CopyFrom(colorFrame.Data);
-                ColorImage.Post(image, Pipeline.GetCurrentTime());
+                OutColorImage.Post(image, Pipeline.GetCurrentTime());
                 colorFrame.Dispose();
             }
         }
@@ -123,7 +123,7 @@ namespace Nuitrack
                 foreach (Skeleton body in skeletonData.Skeletons)
                     output.Add(body);
                 SkeletonTimestamp = (long)skeletonData.Timestamp;
-                Bodies.Post(output, Pipeline.GetCurrentTime());
+                OutBodies.Post(output, Pipeline.GetCurrentTime());
                 skeletonData.Dispose();
             }
         }
@@ -136,7 +136,7 @@ namespace Nuitrack
                 foreach (UserHands hand in handData.UsersHands)
                     output.Add(hand);
                 HandTimestamp = (long)handData.Timestamp;
-                Hands.Post(output, Pipeline.GetCurrentTime());
+                OutHands.Post(output, Pipeline.GetCurrentTime());
                 handData.Dispose();
             }
         }
@@ -149,7 +149,7 @@ namespace Nuitrack
                 foreach (User user in userFrame.Users)
                     output.Add(user);
                 UserTimestamp = (long)userFrame.Timestamp;
-                Users.Post(output, Pipeline.GetCurrentTime());
+                OutUsers.Post(output, Pipeline.GetCurrentTime());
                 userFrame.Dispose();
             }
         }
@@ -162,7 +162,7 @@ namespace Nuitrack
                 foreach (UserGesturesState gesture in gestureData.UserGesturesStates)
                     output.Add(gesture);
                 GestureTimestamp = (long)gestureData.Timestamp;
-                Gestures.Post(output, Pipeline.GetCurrentTime());
+                OutGestures.Post(output, Pipeline.GetCurrentTime());
                 gestureData.Dispose();
             }
         }
