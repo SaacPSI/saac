@@ -5,7 +5,7 @@ This component is based [Intelligent Human Perception Laboratory](https://www.ih
 
 We modified a few things from the OpenSense code removing emitters, forcing some pixel format and we add the heads boundingboxes emitter.
 
-This project must have a project dependency on [OpenFaceInterop](../../Interop/OpenFaceInterop) project.
+This project must have a project dependency on [OpenFaceInterop](../../Interop/OpenFaceInterop) project. It is the only project build in .Net6.0.
 
 ## Files
 * [HeadInfos](src/HeadInfos.cs) containing data structures from https://github.com/ihp-lab/OpenSense/tree/master/Components/OpenFace.Common

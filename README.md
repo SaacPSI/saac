@@ -5,10 +5,11 @@ Project using https://github.com/microsoft/psi/ framework.
 
 .NET 4.8 framework projects.
 
-Three folders:
-- Applications for ready to use projects see [Applications.md](Applications/Applications.md) for more details.
+Four folders:
+- Applications for ready to use projects see [Applications](Applications/README.md) for more details.
 - Components containing projects regrouping components by dependencies or uses.
-- Interop containing projects that wrapper of third part librairy see [Interop.md](Interop/Interop.md) for more details.
+- Interop containing projects that wrapper of third part librairy see [Interop](Interop/README.md) for more details.
+- Dependencies containing third part librairies for interop wrappers.
 
 
 ## Roadmap
