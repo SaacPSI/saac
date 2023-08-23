@@ -5,6 +5,7 @@ using WebRTC;
 //using Microsoft.Psi.AzureKinect;
 //using OpenFace;
 using System.Configuration;
+using Microsoft.Psi.Imaging;
 
 namespace TestingConsole
 {
@@ -38,19 +39,18 @@ namespace TestingConsole
 
         static void WebRTC(Pipeline p)
         {
-            RemoteClockExporter exporter = new RemoteClockExporter(11511);
             WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
             config.WebsocketAddress = System.Net.IPAddress.Loopback;
             config.WebsocketPort = 80;
-            config.AudioStreaming = true;
+            config.AudioStreaming = false;
             config.PixelStreamingConnection = false;
             config.FFMPEGFullPath = "D:\\ffmpeg\\bin";
             config.Log = Microsoft.Extensions.Logging.LogLevel.Information;
             WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
             var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
 
-            //store.Write(stream.OutImage, "Image");
-            store.Write(stream.OutAudio, "Audio");
+            store.Write(stream.OutImage.EncodeJpeg(), "Image");
+            //store.Write(stream.OutAudio, "Audio");
 
             //var emitter = new WebRTCDataChannelToEmitter<string>(p);
 

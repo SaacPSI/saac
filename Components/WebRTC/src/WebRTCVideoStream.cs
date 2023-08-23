@@ -109,10 +109,10 @@ namespace WebRTC
         private void VideoDecoder_OnVideoSinkDecodedSampleFaster(RawImage rawImage)
         {
             PixelFormat format = GetPixelFormat(rawImage.PixelFormat);
-            Image image = new Image(rawImage.Sample, (int)rawImage.Width, (int)rawImage.Height, (int)rawImage.Stride, PixelFormat.BGR_24bpp);
+            Image image = new Image(rawImage.Sample, (int)rawImage.Width, (int)rawImage.Height, (int)rawImage.Stride, format);
             Shared<Image> imageS = ImagePool.GetOrCreate((int)rawImage.Width, (int)rawImage.Height, format);
-            if(Configuration.PixelStreamingConnection)
-                imageS.Resource.CopyFrom(image);
+            if (Configuration.PixelStreamingConnection)
+                imageS.Resource.CopyFrom(rawImage.Sample);
             else
                 imageS.Resource.CopyFrom(image.Flip(FlipMode.AlongHorizontalAxis));
             OutImage.Post(imageS, VideoTimestamp);
@@ -126,9 +126,9 @@ namespace WebRTC
                 case VideoPixelFormatsEnum.Bgra:
                     return PixelFormat.BGRA_32bpp;
                 case VideoPixelFormatsEnum.Bgr:
-                    return PixelFormat.BGR_24bpp;
-                case VideoPixelFormatsEnum.Rgb:
                     return PixelFormat.RGB_24bpp;
+                case VideoPixelFormatsEnum.Rgb:
+                    return PixelFormat.BGR_24bpp;
                 default:
                 case VideoPixelFormatsEnum.NV12:
                 case VideoPixelFormatsEnum.I420:
