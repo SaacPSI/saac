@@ -16,15 +16,6 @@ using Microsoft.Psi.Diagnostics;
 
 namespace KinectAzureRemoteApp
 {
-    //public class Resolution
-    //{
-    //    public enum EResolution { Native, R1920_1080, R1280_800, R800_600 };
-
-    //    public EResolution Id { get; set; } = EResolution.Native;
-    //    public 
-    //    public Resolution() { }
-
-    //}
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml

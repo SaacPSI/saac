@@ -5,16 +5,16 @@
         /// <summary>
         /// Gets or sets port number where the iteration begin.
         /// </summary>
-        public uint ServeurtPort { get; set; } = 13331;
-
-        /// <summary>
-        /// Gets or sets KinectStreaming application name (if there is more than one).
-        /// </summary>
-        public string ApplicationName { get; set; } = "KinectStreaming";
+        public uint RendezVousServerPort { get; set; } = 13331;
 
         /// <summary>
         /// Gets or sets the ip of the rendez-vous server.
         /// </summary>
-        public string Address { get; set; } = "localhost";
+        public string RendezVousServerAddress { get; set; } = "localhost";
+
+        /// <summary>
+        /// Gets or sets KinectStreaming application name (if there is more than one).
+        /// </summary>
+        public string RendezVousApplicationName { get; set; } = "RemoteKinectAzureServer";
     }
 }

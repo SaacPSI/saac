@@ -44,6 +44,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenFace", "Components\Open
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenFaceInterop", "Interop\OpenFaceInterop\OpenFaceInterop.vcxproj", "{78196985-EE54-411F-822B-5A23EDF80642}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{9420A360-3D66-4BB7-9F34-F9762AE07578}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -164,6 +166,14 @@ Global
 		{78196985-EE54-411F-822B-5A23EDF80642}.Release|Any CPU.Build.0 = Release|x64
 		{78196985-EE54-411F-822B-5A23EDF80642}.Release|x64.ActiveCfg = Release|x64
 		{78196985-EE54-411F-822B-5A23EDF80642}.Release|x64.Build.0 = Release|x64
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|x64.Build.0 = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|x64.ActiveCfg = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -184,6 +194,7 @@ Global
 		{DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{1A72A372-4493-40C5-91FF-CE49FC367FFA} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{78196985-EE54-411F-822B-5A23EDF80642} = {B7EE8A14-5695-41E9-B67E-ACFFC30E971B}
+		{9420A360-3D66-4BB7-9F34-F9762AE07578} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
