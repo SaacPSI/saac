@@ -14,7 +14,7 @@ The unitypackage has been made with a fork from repository with the last commit 
 It includes modifications of RemoteExorter to include multi clients streaming (see [RemoteExporterModification.md](../../RemoteExporterModification.md))
 
 ## Current limitation
-At the moment, using \\psi imaging system is incompatible with Unity. This issue as not been investigate as we use WebRTC.
+At the moment, using \\psi imaging system is incompatible with Unity. This limitation as not been investigate as we use WebRTC.
 
 ## Unity Package
 The package contains dlls and 5 scripts:
