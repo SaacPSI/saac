@@ -38,7 +38,7 @@ namespace WebRTC
             : base(parent, configuration, name, defaultDeliveryPolicy)
         {
             Configuration = configuration;
-            OutImage = parent.CreateEmitter<Shared<Image>>(parent, nameof(OutImage));
+            OutImage = parent.CreateEmitter<Shared<Image>>(this, nameof(OutImage));
             OutAudio = parent.CreateEmitter<AudioBuffer>(this, nameof(OutAudio));
             FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_TRACE, configuration.FFMPEGFullPath, Logger);
             VideoDecoder = new FFmpegVideoEndPoint();

@@ -14,16 +14,14 @@
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Components\KinectAzureRemoteConnector\KinectAzureRemoteConnector.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Kinect.BodyTracking" Version="1.1.2" />
-    <PackageReference Include="Microsoft.Azure.Kinect.Sensor" Version="1.4.1" />
-    <PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Interop" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.18.72.1-beta" />
-    <PackageReference Include="VL.Core" Version="2021.4.12" />
+    <Reference Include="Microsoft.Psi">
+      <HintPath>..\..\..\psi\Sources\Runtime\Microsoft.Psi\bin\Release\netstandard2.0\Microsoft.Psi.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 

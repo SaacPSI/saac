@@ -5,7 +5,7 @@
         /// <summary>
         /// Gets or sets port number where the iteration begin.
         /// </summary>
-        public uint RendezVousServerPort { get; set; } = 13331;
+        public uint RendezVousServerPort { get; set; } = 11411;
 
         /// <summary>
         /// Gets or sets the ip of the rendez-vous server.

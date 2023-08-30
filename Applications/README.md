@@ -19,11 +19,10 @@ Tools to transfert a video file into a \\psi store including time synchronisatio
 ## KinectAzureRemoteApp
 ### Summary
 This application allow to broadcast Azure Kinect streams through a (local) network easily. It store its own configuration and can allow multiple clients with our **RemoteExporter** modification (see [Remote Exporter Modification](../RemoteExporterModification.md)). 
-To be used with [Kinect Azure Remote Connector](../Components/KinectAzureRemoteConnector/KinectAzureRemoteConnector.md).
+To be used with [Kinect Azure Remote Connector](../Components/KinectAzureRemoteConnector/README.md).
+It use RendezVous system allowing to start (and stop) kinect streams from the remote server with the given configuration.
 ### Future works
-* Cleaning the UI
 * Allowing **NamedPipes** protocol
-* Start/Stop streaming from network commands
 
 ## TestingConsole
 ### Summary

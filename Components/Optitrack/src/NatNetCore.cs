@@ -98,6 +98,7 @@ namespace NatNetComponent
         {
             mNatNet.Dispose();
         }
+
         private void fetchFrameData(NatNetML.FrameOfMocapData data, NatNetML.NatNetClientML client)
         {
 

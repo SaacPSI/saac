@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
 	  <TargetFramework>net48</TargetFramework>
@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
     <PackageReference Include="Microsoft.Psi.Interop" Version="0.18.72.1-beta" />
     <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.18.72.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.18.72.1-modifiedPipeTest3" />
   </ItemGroup>
 
  </Project>

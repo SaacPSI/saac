@@ -13,7 +13,7 @@ namespace RemoteConnectors
     /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.
     /// See KinectAzureRemoteConnectorConfiguration class for details.
     /// </summary>
-    public class KinectAzureRemoteConnector
+    public class KinectAzureRemoteConnector : Subpipeline
     {
         /// <summary>
         /// Gets the emitter of color image.
@@ -46,12 +46,11 @@ namespace RemoteConnectors
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
         public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
-        protected Pipeline ParentPipeline;
 
         public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null)
+            : base(parent)
         {
             Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
-            ParentPipeline = parent;
             OutColorImage = null;
             OutDepthImage = null;
             OutBodies = null;
@@ -81,7 +80,7 @@ namespace RemoteConnectors
                     {
                         if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
                         {
-                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(ParentPipeline);
+                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(this);
                             foreach (var stream in remoteExporterEndpoint.Streams)
                             {
                                 if (stream.StreamName.Contains("Audio"))

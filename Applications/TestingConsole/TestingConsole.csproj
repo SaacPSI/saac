@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Components\KinectAzureRemoteConnector\KinectAzureRemoteConnector.csproj" />
     <ProjectReference Include="..\..\Components\WebRTC\WebRTC.csproj" />
   </ItemGroup>
 

@@ -1,18 +1,12 @@
 ﻿using Microsoft.Psi;
-using Microsoft.Psi.AzureKinect;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Interop.Rendezvous;
-using Microsoft.Psi.Audio;
-using Microsoft.Psi.Imaging;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Configuration;
-using System.Collections.Specialized;
-using Microsoft.Psi.Interop.Transport;
 using System.Net;
-using Stride.Core.Extensions;
 using Microsoft.Psi.Diagnostics;
+using RemoteConnectors;
 
 namespace KinectAzureRemoteApp
 {
@@ -36,6 +30,8 @@ namespace KinectAzureRemoteApp
         }
         #endregion
 
+        private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration(); 
+
         private string state = "Hello";
         public string State
         {
@@ -47,59 +43,22 @@ namespace KinectAzureRemoteApp
             State = status;
         }
 
-        private string synchServerIp = "localhost";
-        public string SynchServerIp
+
+        public KinectAzureRemoteStreamsConfiguration ConfigurationUI
         {
-            get => synchServerIp;
-            set => SetProperty(ref synchServerIp, value);
-        }
-        public void DelegateMethodSynchServerIP(string ip)
-        {
-            SynchServerIp = ip;
+            get => Configuration;
+            set => SetProperty(ref Configuration, value);
         }
 
-        private uint synchServerPort = 13331;
-        public uint SynchServerPort
+        private string rendezVousServerIp = "localhost";
+        public string RendezVousServerIp
         {
-            get => synchServerPort;
-            set => SetProperty(ref synchServerPort, value);
+            get => rendezVousServerIp;
+            set => SetProperty(ref rendezVousServerIp, value);
         }
-        public void DelegateMethodSynchServerPort(uint port)
+        public void DelegateMethodRendezVousServerIP(string ip)
         {
-            SynchServerPort = port;
-        }
-
-        private uint kinectIndex = 0;
-        public uint KinectIndex
-        {
-            get => kinectIndex;
-            set => SetProperty(ref kinectIndex, value);
-        }
-        public void DelegateMethodKinect(uint index)
-        {
-            KinectIndex = index;
-        }
-
-        private string kinectApplicationName = "KinectStreaming";
-        public string KinectApplicationName
-        {
-            get => kinectApplicationName;
-            set => SetProperty(ref kinectApplicationName, value);
-        }
-        public void DelegateMethodKinect(string kinectApplicationName)
-        {
-            KinectApplicationName = kinectApplicationName;
-        }
-
-        private uint remotePort = 11411;
-        public uint RemotePort
-        {
-            get => remotePort;
-            set => SetProperty(ref remotePort, value);
-        }
-        public void DelegateMethodRemote(uint port)
-        {
-            RemotePort = port;
+            RendezVousServerIp = ip;
         }
 
         private string log = "";
@@ -114,7 +73,7 @@ namespace KinectAzureRemoteApp
         }
 
         //ToDo add more resolution definition
-        public enum Resolution{ Native, R1920_1080, R960_540, R640_360 };
+        public enum Resolution{ Native, R1920_1080, R960_540, R640_360, Custom };
         private Dictionary<Resolution, Tuple<float, float>> resolutionDictionary;
         public List<Resolution> ResolutionsList { get; }
 
@@ -129,6 +88,7 @@ namespace KinectAzureRemoteApp
             ColorResolution = val;
         }
 
+     
         public List<string> IPsList { get; }
         private string iPSelected = "localhost";
         public string IPSelected
@@ -140,19 +100,10 @@ namespace KinectAzureRemoteApp
         {
             IPSelected = val;
         }
-        //private Resolution depthResolution = Resolution.Native;
-        //public Resolution DepthResolution
-        //{
-        //    get => depthResolution;
-        //    set => SetProperty(ref depthResolution, value);
-        //}
-        //public void DelegateMethodDepthResolution(Resolution val)
-        //{
-        //    DepthResolution = val;
-        //}
 
-        private RendezvousServer? server;
-        private Pipeline pipeline;
+        private RendezvousClient? Client;
+        private Pipeline? Pipeline;
+        private KinectAzureRemoteStreams? KinectStreams;
 
         public MainWindow()
         {
@@ -162,6 +113,7 @@ namespace KinectAzureRemoteApp
                  { Resolution.R1920_1080, new Tuple<float, float>(1920.0f, 1080.0f) }
                 ,{ Resolution.R960_540, new Tuple<float, float>(960.0f, 540.0f) }
                 ,{ Resolution.R640_360, new Tuple<float, float>(640.0f, 360.0f) }
+                ,{ Resolution.Custom, new Tuple<float, float>(640.0f, 360.0f) }
             };
             ResolutionsList = new List<Resolution>();
             foreach (Resolution name in Enum.GetValues(typeof(Resolution)))
@@ -173,27 +125,103 @@ namespace KinectAzureRemoteApp
             {
                 IPsList.Add(ip.ToString()); 
             }
+            KinectStreams = null;
+            Client = null;
 
             InitializeComponent();
-            SyncServerIsActive.IsChecked = Properties.Settings.Default.synchServerIsActive; 
-            SynchServerIp = Properties.Settings.Default.synchServerIp;
-            SynchServerPort = Properties.Settings.Default.synchServerPort;
-            RemotePort = Properties.Settings.Default.remotePort;
-            Audio.IsChecked = Properties.Settings.Default.audio;
-            Skeleton.IsChecked = Properties.Settings.Default.skeleton;
-            RGB.IsChecked = Properties.Settings.Default.rgb;
-            Depth.IsChecked = Properties.Settings.Default.depth;
-            DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration;
-            IMU.IsChecked = Properties.Settings.Default.IMU;
-            kinectApplicationName = Properties.Settings.Default.ApplicationName;
-            iPSelected = Properties.Settings.Default.IpToUse;
+            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
+            ConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+
+            Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
+            Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
+            RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
+            Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
+            DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
+            IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
+            ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
+            iPSelected = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
+            Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
+            UpdateLayout();
         }
 
-        private void PipelineSetup()
+        private void RefreshUIFromConfiguration()
         {
-            if(Diagnostics.IsChecked == false)
+            ConfigurationUI.RendezVousPort = (int)Properties.Settings.Default.rendezVousServerPort;
+            Audio.IsChecked = Properties.Settings.Default.audio = Configuration.StreamAudio;
+            Skeleton.IsChecked = Properties.Settings.Default.skeleton = Configuration.StreamSkeleton;
+            RGB.IsChecked = Properties.Settings.Default.rgb = Configuration.StreamVideo;
+            Depth.IsChecked = Properties.Settings.Default.depth = Configuration.StreamDepth;
+            DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration = Configuration.StreamDepthCalibration;
+            IMU.IsChecked = Properties.Settings.Default.IMU = Configuration.StreamIMU;
+            iPSelected = Properties.Settings.Default.IpToUse = Configuration.RendezVousAddress;
+            if (Configuration.VideoResolution != null)
             {
-                pipeline = Pipeline.Create(KinectApplicationName, enableDiagnostics: false);
+                bool found = false;
+                foreach (var tuple in resolutionDictionary)
+                {
+                    if (tuple.Value.Item1 == Configuration.VideoResolution.Item1 && tuple.Value.Item2 == Configuration.VideoResolution.Item2)
+                    {
+                        Properties.Settings.Default.videoResolution = (int)(colorResolution = tuple.Key);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    resolutionDictionary[Resolution.Custom] = Configuration.VideoResolution;
+                    Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Custom);
+                }
+            }
+            else
+                Properties.Settings.Default.videoResolution = (int)(colorResolution =  Resolution.Native);
+            Properties.Settings.Default.Save();
+            UpdateLayout();
+        }
+
+        private void RefreshConfigurationFromUI()
+        {
+            Properties.Settings.Default.rendezVousServerPort = (uint)ConfigurationUI.RendezVousPort;
+
+            Configuration.StreamAudio = Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false);
+            Configuration.StreamSkeleton = Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
+            Configuration.StreamVideo = Properties.Settings.Default.rgb = (bool)(RGB.IsChecked != null ? RGB.IsChecked : false);
+            Configuration.StreamDepth = Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
+            Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
+            Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
+
+            Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse = iPSelected;
+            if (Configuration.VideoResolution != null)
+            {
+                bool found = false;
+                foreach (var tuple in resolutionDictionary)
+                {
+                    if (tuple.Value.Item1 == Configuration.VideoResolution.Item1 && tuple.Value.Item2 == Configuration.VideoResolution.Item2)
+                    {
+                        Properties.Settings.Default.videoResolution = (int)(colorResolution = tuple.Key);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    resolutionDictionary[Resolution.Custom] = Configuration.VideoResolution;
+                    Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Custom);
+                }
+            }
+            else
+                Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Native);
+            Properties.Settings.Default.Save();
+        }
+
+        private void SetupRendezVous()
+        {
+            //disable ui
+            RendezVousGrid.IsEnabled = false;
+            Client = new RendezvousClient(Configuration.RendezVousAddress, Configuration.RendezVousPort);
+            if (Diagnostics.IsChecked == false)
+            {
+                Pipeline = Pipeline.Create(Configuration.RendezVousApplicationName, enableDiagnostics: false);
             }
             else
             {
@@ -205,135 +233,134 @@ namespace KinectAzureRemoteApp
                     IncludeStoppedPipelines = false,
                     IncludeStoppedPipelineElements = false,
                 };
-                pipeline = Pipeline.Create(KinectApplicationName, enableDiagnostics: true, diagnosticsConfiguration: config);
-                var store = PsiStore.Create(pipeline, "Diagnostics", @"./");
-                pipeline.Diagnostics.Write("Diagnostics", store);
+                Pipeline = Pipeline.Create(Configuration.RendezVousApplicationName, enableDiagnostics: true, diagnosticsConfiguration: config);
+                RemoteExporter diagnosticsExporter = new RemoteExporter(Pipeline, Configuration.RendezVousPort * 2, Configuration.ConnectionType);
+                diagnosticsExporter.Exporter.Write(Pipeline.Diagnostics, $"{Configuration.RendezVousApplicationName}_Diagnostics");
+                Rendezvous.Process diagProcess = new Rendezvous.Process($"{Configuration.RendezVousApplicationName}_Diagnostics", new List<Rendezvous.Endpoint> { diagnosticsExporter.ToRendezvousEndpoint(Configuration.RendezVousAddress) });
+                Client.Rendezvous.TryAddProcess(diagProcess);
             }
 
-            DataFormular.IsEnabled = false;
-            if (SyncServerIsActive.IsChecked == true)
+            // SynchClock
+            // Might make sure that the clock of the server... check by name ?
+            Client.Rendezvous.ProcessAdded += (_, p) =>
             {
-                var client = new RendezvousClient(SynchServerIp, (int)synchServerPort);
-                State = "Waiting for synch server";
-                client.Rendezvous.ProcessAdded += (_, p) =>
+                foreach (var endpoint in p.Endpoints)
                 {
-                    foreach (var endpoint in p.Endpoints)
+                    if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
                     {
-                        if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
-                        {
-                            var remoteClockImporter = remoteClockEndpoint.ToRemoteClockImporter(pipeline);
-                            break;
-                        }
-                    } 
-                };
-                client.Start();
-                client.Connected.WaitOne();
-                //client.Stop();
-            }
-
-            /*** KINECT SENSORS ***/
-            int portCount = (int)RemotePort+1;
-            TransportKind type = UDP.IsChecked == true ? TransportKind.Udp : TransportKind.Tcp;
-
-            // Only need Skeleton for the moment.
-            AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
-            configKinect.DeviceIndex = (int)KinectIndex;
-            if (Skeleton.IsChecked == true)
-                configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
-            AzureKinectSensor sensor = new AzureKinectSensor(pipeline, configKinect);
-
-            List<Rendezvous.Endpoint> exporters = new List<Rendezvous.Endpoint>();  
-            if (Audio.IsChecked == true)
-            {
-                AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
-                AudioCapture audioCapture = new AudioCapture(pipeline, configuration);
-                RemoteExporter soundExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
-                soundExporter.Exporter.Write(audioCapture.Out, "Kinect_" + KinectIndex.ToString() + "_Audio");
-                exporters.Add(soundExporter.ToRendezvousEndpoint(iPSelected));
-            }
-            if (Skeleton.IsChecked == true)
-            {
-                RemoteExporter skeletonExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
-                skeletonExporter.Exporter.Write(sensor.Bodies, "Kinect_" + KinectIndex.ToString() + "_Bodies");
-                exporters.Add(skeletonExporter.ToRendezvousEndpoint(iPSelected));
-            }
-            if (RGB.IsChecked == true)
-            {
-                RemoteExporter imageExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
-                if (colorResolution != Resolution.Native)
-                {
-                    Tuple<float, float> res = resolutionDictionary[colorResolution];
-                    imageExporter.Exporter.Write(sensor.ColorImage.Resize(res.Item1, res.Item2).EncodeJpeg(), "Kinect_" + KinectIndex.ToString() + "_RGB");
+                        var remoteClockImporter = remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
+                        break;
+                    }
                 }
-                else
-                    imageExporter.Exporter.Write(sensor.ColorImage.EncodeJpeg(), "Kinect_" + KinectIndex.ToString() + "_RGB");
-                exporters.Add(imageExporter.ToRendezvousEndpoint(iPSelected));
-            }
-            if (Depth.IsChecked == true)
-            {
-                RemoteExporter depthExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
+            };
 
-                //if (depthResolution != Resolution.Native)
-                //{
-                //    Tuple<float, float> res = resolutionDictionary[colorResolution];
-                //    depthExporter.Exporter.Write(sensor.DepthImage.EncodePng()., "Kinect_" + KinectIndex.ToString() + "_Depth");
-                //}
-                //else
-                depthExporter.Exporter.Write(sensor.DepthImage.EncodePng(), "Kinect_" + KinectIndex.ToString() + "_Depth"); 
-                exporters.Add(depthExporter.ToRendezvousEndpoint(iPSelected));
-            }
-            if(DepthCalibration.IsChecked == true)
+            // Configuration Change
+            Client.Rendezvous.ProcessAdded += (_, p) =>
             {
-                RemoteExporter depthCalibrationExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
-                depthCalibrationExporter.Exporter.Write(sensor.DepthDeviceCalibrationInfo, "Kinect_" + KinectIndex.ToString() + "_Calibration");
-                exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(iPSelected));
-            }
-            if (IMU.IsChecked == true)
-            {
-                RemoteExporter imuExporter = new RemoteExporter(pipeline, (int)RemotePort + portCount++, type);
-                imuExporter.Exporter.Write(sensor.Imu, "Kinect_" + KinectIndex.ToString() + "_IMU");
-                exporters.Add(imuExporter.ToRendezvousEndpoint(iPSelected));
-            }
+                if (p.Name != $"{Configuration.RendezVousApplicationName}_Configuration")
+                    return;
+                foreach (var endpoint in p.Endpoints)
+                {
+                    if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
+                    {
+                        Subpipeline configurationSubpipeline = new Subpipeline(Pipeline);
+                        var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(configurationSubpipeline);
+                        foreach (var stream in remoteExporterEndpoint.Streams)
+                        {
+                            if (stream.StreamName.Contains("Configuration"))
+                            {
+                                if (remoteImporter.Connected.WaitOne() == false)
+                                {
+                                    Log += $"{Configuration.RendezVousApplicationName} failed to connect stream Configuration";
+                                    return;
+                                }
+                                Log += $"{Configuration.RendezVousApplicationName} failed to connect stream Configuration";
+                                remoteImporter.Importer.OpenStream<KinectAzureRemoteStreamsConfiguration?>("Configuration").Out.Do((c, e) =>
+                                {
+                                    //KinectConfigurationEvent.Invoke(this, c);
+                                    Application.Current.Dispatcher.Invoke(new Action(() => 
+                                    {
+                                        OnRestart(c);
+                                    }));
+                                });
+                                configurationSubpipeline.RunAsync();
+                                return;
+                            }
+                        }
+                    }
+                };
+            };
 
-            server = new RendezvousServer((int)RemotePort);
-            server.Rendezvous.TryAddProcess(
-                    new Rendezvous.Process(
-                        KinectApplicationName,
-                        exporters,
-                        "Version2.0"));
-            server.Start();
-            pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+            State = "Waiting for server";
+            Client.Start();
+            Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+            State = "Ready to start Kinect";
+        }
+
+        private void SetupKinect()
+        {
+            if (Pipeline == null || Client == null)
+                SetupRendezVous();
+
+            //disable ui
+            DataFormular.IsEnabled = false;
+
+            KinectStreams = new KinectAzureRemoteStreams(Pipeline, Configuration);
+            Client.Rendezvous.TryAddProcess(KinectStreams.GenerateProcess());
+            KinectStreams.RunAsync();
             State = "Running";
-
         }
 
         private void StopPipeline()
         {
-            // Stop correctly the pipeline.
+            // Stop correctly the everything.
             State = "Stopping";
-            pipeline.Dispose();
+            if (Client != null)
+            {
+                Client.Stop();
+                Client.Rendezvous.TryRemoveProcess(Configuration.RendezVousApplicationName);
+                if(Diagnostics.IsChecked == true)
+                    Client.Rendezvous.TryRemoveProcess($"{Configuration.RendezVousApplicationName}_Diagnostics");
+                Client.Dispose();
+            }
+            if(Pipeline != null)
+                Pipeline.Dispose();
+        }
+
+        private void StopKinect()
+        {
+            State = "Stopping Kinect";
+            if (KinectStreams != null && KinectStreams.Sensor != null)
+            {
+                if(!Client.Rendezvous.TryRemoveProcess(Configuration.RendezVousApplicationName))
+                    Console.WriteLine("error remove rendezvous");
+                try
+                {
+                    KinectStreams.Dispose();
+                }
+                catch(Exception ex) 
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+            }
+        }
+
+        protected void OnRestart(KinectAzureRemoteStreamsConfiguration? e)
+        {
+            StopKinect();
+            if (e != null)
+            {
+                Configuration = e;
+                RefreshUIFromConfiguration();
+                SetupKinect();
+            }
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            if(server != null)
-                server.Stop();
             StopPipeline();
+            RefreshConfigurationFromUI();
             base.OnClosing(e);
-            Properties.Settings.Default.synchServerIsActive = (bool)(SyncServerIsActive.IsChecked != null ? SyncServerIsActive.IsChecked : false);
-            Properties.Settings.Default.synchServerIp = synchServerIp;
-            Properties.Settings.Default.synchServerPort = synchServerPort;
-            Properties.Settings.Default.remotePort = remotePort;
-            Properties.Settings.Default.IpToUse = iPSelected;
-            Properties.Settings.Default.ApplicationName = kinectApplicationName;
-            Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false); 
-            Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
-            Properties.Settings.Default.rgb = (bool)(RGB.IsChecked != null ? RGB.IsChecked : false);
-            Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
-            Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
-            Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
-            Properties.Settings.Default.Save();
-            
         }
 
         private void BtnQuitClick(object sender, RoutedEventArgs e)
@@ -342,10 +369,25 @@ namespace KinectAzureRemoteApp
             Close();
         }
 
-        private void BtnStartClick(object sender, RoutedEventArgs e)
+        private void BtnStartRendezVous(object sender, RoutedEventArgs e)
         {
-            State = "Initializing";
-            PipelineSetup();
+            State = "Initializing RendezVous";
+            RefreshConfigurationFromUI();
+            SetupRendezVous();
+        }
+
+        private void BtnStartAll(object sender, RoutedEventArgs e)
+        {
+            State = "Initializing Kinect";
+            RefreshConfigurationFromUI();
+            SetupKinect();
+        }
+
+        private void BtnStopClick(object sender, RoutedEventArgs e)
+        {
+            StopPipeline();
+            DataFormular.IsEnabled = true;
+            RendezVousGrid.IsEnabled = true;
         }
     }
 }

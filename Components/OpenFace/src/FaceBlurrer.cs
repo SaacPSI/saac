@@ -7,7 +7,7 @@ using System.Numerics;
 
 namespace OpenFace
 {
-    public class FaceBlurrer : Subpipeline
+    public class FaceBlurrer : IProducer<Shared<Microsoft.Psi.Imaging.Image>>
     {
         /// <summary>
         /// Gets. Connector that encapsulates the shared image input stream.
@@ -45,13 +45,13 @@ namespace OpenFace
         /// </summary>
         public Emitter<Shared<Microsoft.Psi.Imaging.Image>> Out { get; private set; }
 
-        public FaceBlurrer(Pipeline parent, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null) : base(parent, name, defaultDeliveryPolicy)
+        public FaceBlurrer(Pipeline parent)
         {
             InImageConnector = parent.CreateConnector<Shared<Microsoft.Psi.Imaging.Image>>(nameof(InImage));
             InPoseConnector = parent.CreateConnector<Pose>(nameof(InPose));
             InBBoxesConnector = parent.CreateConnector<List<Rectangle>>(nameof(InBBoxesConnector));
 
-            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(parent, nameof(Out));
+            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(this, nameof(Out));
 
             InPoseConnector.Pair(InImageConnector, DeliveryPolicy.LatestMessage).Do(Process);
             InImageConnector.Fuse(InBBoxesConnector, Reproducible.Exact<List<Rectangle>>(), DeliveryPolicy.Throttle).Do(Process);

@@ -2,7 +2,7 @@
 
 namespace RemoteConnectors
 {
-    public class KinectAzureRemoteServerConfiguration
+    public class KinectAzureRemoteStreamsConfiguration
     {
         public int KinectDeviceIndex { get; set; } = 0;
 

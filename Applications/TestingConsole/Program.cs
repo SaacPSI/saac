@@ -6,6 +6,9 @@ using WebRTC;
 //using OpenFace;
 using System.Configuration;
 using Microsoft.Psi.Imaging;
+using RemoteConnectors;
+using Microsoft.Psi.Interop.Rendezvous;
+using static Microsoft.Psi.DeviceManagement.CameraDeviceInfo;
 
 namespace TestingConsole
 {
@@ -47,9 +50,9 @@ namespace TestingConsole
             config.FFMPEGFullPath = "D:\\ffmpeg\\bin";
             config.Log = Microsoft.Extensions.Logging.LogLevel.Information;
             WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
-            var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
+            //var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
 
-            store.Write(stream.OutImage.EncodeJpeg(), "Image");
+            //store.Write(stream.OutImage.EncodeJpeg(), "Image");
             //store.Write(stream.OutAudio, "Audio");
 
             //var emitter = new WebRTCDataChannelToEmitter<string>(p);
@@ -88,13 +91,44 @@ namespace TestingConsole
             remoteExporter.Exporter.Write(pos, "Position2");
         }
 
+        static bool alternate = true; 
+        static void testKinectRemote(Pipeline p)
+        {
+            RendezvousServer server = new RendezvousServer(11411);
+            KinectAzureRemoteConnector receiver = new KinectAzureRemoteConnector(p);
+            server.Rendezvous.ProcessAdded += receiver.GenerateProcess();
+
+            var emitter = p.CreateEmitter<KinectAzureRemoteStreamsConfiguration?>(p, "config");
+            var timer = Timers.Timer(p, TimeSpan.FromSeconds(15));
+            RemoteExporter exporter = new RemoteExporter(p, 11511, TransportKind.Tcp);
+            KinectAzureRemoteStreamsConfiguration cfg = new KinectAzureRemoteStreamsConfiguration();
+            cfg.StreamVideo = cfg.StreamSkeleton = false;
+            timer.Out.Do(t => 
+            {
+                if (alternate)
+                    emitter.Post(cfg, p.GetCurrentTime());
+                else
+                    emitter.Post(null, p.GetCurrentTime());
+                alternate = !alternate;
+                Console.WriteLine("Post");
+            });
+            exporter.Exporter.Write(emitter, "Configuration");
+            if(!server.Rendezvous.TryAddProcess(new Rendezvous.Process("KinectStreaming_Configuration", new List<Rendezvous.Endpoint> { exporter.ToRendezvousEndpoint("10.44.192.131") })))
+                Console.WriteLine("failed");
+            server.Start();
+            Console.WriteLine("start");
+            //var store = PsiStore.Create(p, "testKinectRemote", "D:\\Stores");
+
+        }
+
+
         static void Main(string[] args)
         {
             // Enabling diagnotstics !!!
             Pipeline p = Pipeline.Create(enableDiagnostics: true);
 
-
-            WebRTC(p);
+            testKinectRemote(p);
+            //WebRTC(p);
             //testUnity(p);
             //OpenFace(p);
 

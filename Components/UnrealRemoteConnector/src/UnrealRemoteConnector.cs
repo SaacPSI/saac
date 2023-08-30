@@ -8,7 +8,7 @@ namespace RemoteConnectors
     /// Unreal communication component class throught HTTP request.
     /// See UnrealRemoteConnectorConfiguration and UnrealActionRequest class for details.
     /// </summary>
-    public class UnrealRemoteConnector : Subpipeline
+    public class UnrealRemoteConnector : IProducer<UnrealActionRequest>
     {
         /// <summary>
         /// Emitter of unreal request with response included.
@@ -21,17 +21,18 @@ namespace RemoteConnectors
         protected Connector<UnrealActionRequest> InActionRequestConnector;
         public Receiver<UnrealActionRequest> InActionRequest => InActionRequestConnector.In;
 
+        public Emitter<UnrealActionRequest> Out => OutActionRequest;
+
         private UnrealRemoteConnectorConfiguration Configuration;
         private HttpClient Client;
 
-        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-          : base(parent, name, defaultDeliveryPolicy)
+        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null)
         {
             Configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
             Client = new HttpClient();
 
-            OutActionRequest = CreateEmitter<UnrealActionRequest>(parent, nameof(OutActionRequest));
-            InActionRequestConnector = CreateInputConnectorFrom<UnrealActionRequest>(parent, nameof(InActionRequestConnector));
+            OutActionRequest = parent.CreateEmitter<UnrealActionRequest>(this, nameof(OutActionRequest));
+            InActionRequestConnector = parent.CreateConnector<UnrealActionRequest>(nameof(InActionRequestConnector));
 
             InActionRequestConnector.Do(Process);
         }

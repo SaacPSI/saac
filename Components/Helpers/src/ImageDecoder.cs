@@ -5,11 +5,11 @@ using Microsoft.Psi.Imaging;
 using Microsoft.SqlServer.Server;
 
 namespace Helpers
-{  
+{
     /// <summary>
     /// Class that decode image.
     /// </summary>
-    public class ImageDecoder : Subpipeline
+    public class ImageDecoder : IConsumerProducer<Shared<EncodedImage>, Shared<Image>>
     {
         /// <summary>
         /// Encoded Image connector
@@ -25,10 +25,9 @@ namespace Helpers
         /// Image emitter
         /// </summary>
         public Emitter<Shared<Image>> Out;
-
+        Emitter<Shared<Image>> IProducer<Shared<Image>>.Out => Out;
 
         public ImageDecoder(Pipeline parent, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(parent, name, defaultDeliveryPolicy)
         {
            
             InConnector = parent.CreateConnector<Shared<EncodedImage>>(nameof(In));

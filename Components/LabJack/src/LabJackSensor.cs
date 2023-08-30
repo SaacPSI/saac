@@ -15,7 +15,7 @@ namespace LabJackComponent
         public Emitter<double> OutDoubleValue { get; private set; }
 
         public LabJackSensor(Pipeline pipeline, LabJackCoreConfiguration? config = null, DeliveryPolicy? defaultDeliveryPolicy = null, DeliveryPolicy? bodyTrackerDeliveryPolicy = null)
-     : base(pipeline, nameof(LabJackSensor), defaultDeliveryPolicy ?? DeliveryPolicy.LatestMessage)
+            : base(pipeline, nameof(LabJackSensor), defaultDeliveryPolicy ?? DeliveryPolicy.LatestMessage)
         {
 
             this.Configuration = config ?? new LabJackCoreConfiguration();

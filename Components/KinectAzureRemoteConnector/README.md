@@ -1,13 +1,19 @@
-﻿# Kinect Azure Remote Connecter
+﻿# Kinect Azure Remote Connector
 
 ## Summary
-To use with the [Kinect Azure Remote App](../../Applications/KinectAzureRemoteApp).
+Project including some components to handle Kinect Azure cameras. 
 
 ## Files
-* [KinectAzureRemoteConnectorConfiguration](src/KinectAzureRemoteConnectorConfiguration.cs) include informations to connect to the remote application.
-* [KinectAzureRemoteConnector](src/KinectAzureRemoteConnector.cs) is the component that do the communication with the remote application.
+* [KinectAzureRemoteConnectorConfiguration](src/KinectAzureRemoteConnectorConfiguration.cs) include informations to connect to the kinect application.
+* [KinectAzureRemoteConnector](src/KinectAzureRemoteConnector.cs) is a subpipline that manage the process for a RendezVous with the remote application. 
+* [KinectAzureRemoteConnectorComponent](src/KinectAzureRemoteConnectorComponent.cs) is the component that integrate a RendezVous client to be used with [KinectAzureRemoteServerComponent](src/KinectAzureRemoteServerComponent.cs).
+* [KinectAzureRemoteStreamsConfiguration](src/KinectAzureRemoteStreamsConfiguration.cs) include informations to connect to the kinect and configuring streams.
+* [KinectAzureRemoteStreams](src/KinectAzureRemoteStreams.cs) is subpipline that manage the process for a RendezVous for the kinect.
+* [KinectAzureRemoteStreamsConfiguration](src/KinectAzureRemoteStreamsConfiguration.cs) is the component that integrate a RendezVous server to be used with [KinectAzureRemoteConnectorComponent](src/KinectAzureRemoteConnectorComponent.cs).
+
+## Package /psi
+ [Microsoft.Psi.Runtime.0.18.72.1-modifiedPipeline](nugetPackage/Microsoft.Psi.Runtime.0.18.72.1-modifiedPipeline.nupkg) is a modified version of /psi allowing to remove a subpipline from a parent pipline without stoping the whole application.
 
 ## Curent issues
 
 ## Future works
-* Do we keep the RendezVous system ?

@@ -6,13 +6,12 @@ namespace KinectAzureRemoteConsole
 {
     internal class Program
     {
-        static void PipelineSetup(Pipeline pipeline, KinectAzureRemoteServerConfiguration config, string clockAddress, int clockPort)
+        static void PipelineSetup(Pipeline pipeline, KinectAzureRemoteStreamsConfiguration config, string clockAddress, int clockPort)
         {
             Console.WriteLine("Wait RemoteClockImporter connection");
             RemoteClockImporter clockImporter = new RemoteClockImporter(pipeline, clockAddress, clockPort);
-            if(clockImporter.Connected.WaitOne(-1))
+            if(clockImporter.Connected.WaitOne())
             {
-
                 Console.WriteLine("RemoteClockImporter connection failed");
                 return;
             }
@@ -29,7 +28,7 @@ namespace KinectAzureRemoteConsole
             try
             {
                 Pipeline p = Pipeline.Create(enableDiagnostics: false);
-                KinectAzureRemoteServerConfiguration config = new KinectAzureRemoteServerConfiguration();
+                KinectAzureRemoteStreamsConfiguration config = new KinectAzureRemoteStreamsConfiguration();
                 string clockAddress = args[0];
                 int clockPort = int.Parse(args[1]);
                 config.KinectDeviceIndex = int.Parse(args[2]);
