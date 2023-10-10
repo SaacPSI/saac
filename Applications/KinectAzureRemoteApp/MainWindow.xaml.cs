@@ -104,6 +104,7 @@ namespace KinectAzureRemoteApp
         private RendezvousClient? Client;
         private Pipeline? Pipeline;
         private KinectAzureRemoteStreams? KinectStreams;
+        private Pipeline? KinectStreamsPipline;
 
         public MainWindow()
         {
@@ -292,7 +293,7 @@ namespace KinectAzureRemoteApp
             };
 
             State = "Waiting for server";
-            Client.Start();
+            //Client.Start();
             Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
             State = "Ready to start Kinect";
         }
@@ -304,10 +305,10 @@ namespace KinectAzureRemoteApp
 
             //disable ui
             DataFormular.IsEnabled = false;
-
-            KinectStreams = new KinectAzureRemoteStreams(Pipeline, Configuration);
+            KinectStreamsPipline = Pipeline.CreateSynchedPipeline(Pipeline);
+            KinectStreams = new KinectAzureRemoteStreams(KinectStreamsPipline, Configuration);
             Client.Rendezvous.TryAddProcess(KinectStreams.GenerateProcess());
-            KinectStreams.RunAsync();
+            KinectStreamsPipline.RunAsync();
             State = "Running";
         }
 
@@ -336,7 +337,7 @@ namespace KinectAzureRemoteApp
                     Console.WriteLine("error remove rendezvous");
                 try
                 {
-                    KinectStreams.Dispose();
+                    KinectStreamsPipline.Dispose();
                 }
                 catch(Exception ex) 
                 {
@@ -385,7 +386,7 @@ namespace KinectAzureRemoteApp
 
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
-            StopPipeline();
+            StopKinect();
             DataFormular.IsEnabled = true;
             RendezVousGrid.IsEnabled = true;
         }
