@@ -1,11 +1,15 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Remoting;
+using Microsoft.Psi.Interop.Rendezvous;
 using WebRTC;
 //using Microsoft.Psi.Imaging;
 //using Microsoft.Psi.AzureKinect;
 //using OpenFace;
 using System.Configuration;
 using Microsoft.Psi.Imaging;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using Microsoft.Psi.Components;
 
 namespace TestingConsole
 {
@@ -37,7 +41,7 @@ namespace TestingConsole
         //        var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
         //    }
 
-        static void WebRTC(Pipeline p)
+        static void WebRTCVideoAudio(Pipeline p)
         {
             WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
             config.WebsocketAddress = System.Net.IPAddress.Loopback;
@@ -50,42 +54,89 @@ namespace TestingConsole
             var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
 
             store.Write(stream.OutImage.EncodeJpeg(), "Image");
-            //store.Write(stream.OutAudio, "Audio");
-
-            //var emitter = new WebRTCDataChannelToEmitter<string>(p);
-
-            //WebRTCDataConnectorConfiguration configuration = new WebRTCDataConnectorConfiguration();
-            //configuration.WebsocketAddress = System.Net.IPAddress.Loopback;
-            //configuration.WebsocketPort = 80;
-            //configuration.PixelStreamingConnection = false;
-
-            //configuration.OutputChannels.Add("test", emitter);
-            //var incoming = WebRTCDataReceiverToChannelFactory.Create<TimeSpan>(p, "timing");
-            //configuration.InputChannels.Add("timing", incoming);
-            //WebRTCDataConnector connector = new WebRTCDataConnector(p, configuration);
-            //var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            //timer.Out.PipeTo(incoming.In);
-
-            //store.Write(emitter.Out, "string");
-
+            store.Write(stream.OutAudio, "Audio");
         }
 
-        static void testUnity(Pipeline p)
+        static void FullWebRTC(Pipeline p)
         {
+            WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
+            config.WebsocketAddress = System.Net.IPAddress.Parse("127.0.0.1");
+            config.WebsocketPort = 80;
+            config.AudioStreaming = false;
+            config.PixelStreamingConnection = false;
+            config.FFMPEGFullPath = "D:\\ffmpeg\\bin\\";
+            config.Log = Microsoft.Extensions.Logging.LogLevel.Information;
+
+            var emitter = new WebRTCDataChannelToEmitter<string>(p);
+            var incoming = WebRTCDataReceiverToChannelFactory.Create<TimeSpan>(p, "timing");
+            config.OutputChannels.Add("Events", emitter);
+            config.InputChannels.Add("Timing", incoming);
+
+            WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
+            var store = PsiStore.Create(p, "WebRTC", "D:\\Stores");
+
+            store.Write(stream.OutImage.EncodeJpeg(), "Image");
+            store.Write(stream.OutAudio, "Audio");
+            store.Write(emitter.Out, "Events");
+
+            var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            timer.Out.PipeTo(incoming.In);    
+        }
+
+        static void UnityDemo(Pipeline p)
+        {
+            string host = "127.0.0.1";
+            var server = new RendezvousServer();
+            var process = new Rendezvous.Process("Console");
+
             RemoteClockExporter exporter = new RemoteClockExporter(11511);
-            
-            RemoteImporter posImp = new RemoteImporter(p, "localhost", 11411);
-            if (!posImp.Connected.WaitOne(-1))
-            {
-                throw new Exception("could not connect to server");
-            }
-            while (posImp.Importer.AvailableStreams.Count() == 0)
-                Thread.Sleep(500);
-            var pos = posImp.Importer.OpenStream<System.Numerics.Vector3>("Position");
-            pos.Do(vec => Console.WriteLine("posImp : " + vec.ToString()));
+            process.AddEndpoint(exporter.ToRendezvousEndpoint(host));
 
             RemoteExporter remoteExporter = new RemoteExporter(p, 11412, TransportKind.Tcp);
-            remoteExporter.Exporter.Write(pos, "Position2");
+            var timer = Timers.Timer(p, TimeSpan.FromSeconds(5));
+            remoteExporter.Exporter.Write(timer.Out, "PingInter");
+            process.AddEndpoint(remoteExporter.ToRendezvousEndpoint(host));
+
+            server.Rendezvous.ProcessAdded += (_, process) =>
+            {
+                Console.WriteLine($"Process added: {process.Name}");
+                if (process.Name.Contains("Console"))
+                    return;
+                Subpipeline subP = new Subpipeline(p, process.Name);
+                Rendezvous.Process? processF = null;
+                var clone = process.Endpoints.DeepClone();
+                foreach (var endpoint in clone)
+                {
+                    if (endpoint is Rendezvous.RemoteExporterEndpoint remoteEndpoint)
+                    {
+                        RemoteImporter remoteImporter = remoteEndpoint.ToRemoteImporter(subP);
+                        if (remoteImporter.Connected.WaitOne() == false)
+                            continue;
+                        foreach (Rendezvous.Stream stream in remoteEndpoint.Streams)
+                        {
+                            Console.WriteLine($"Stream : {stream.StreamName}");
+                            if (stream.StreamName is "Position")
+                            {
+                                var pos = remoteImporter.Importer.OpenStream<Vector3>("Position");
+
+                                var emiOut = subP.CreateEmitter<Vector3>(pos, "modificator"); 
+                                pos.Do((vec, env) => { Console.WriteLine("posImp : " + vec.ToString()); emiOut.Post(vec + Vector3.One, env.OriginatingTime); }) ;
+                                processF = new Rendezvous.Process("ConsoleForward");
+                                RemoteExporter remoteF = new RemoteExporter(p, 11420, TransportKind.Tcp);
+                                
+                                remoteF.Exporter.Write(emiOut, "PositionModified");
+                                processF.AddEndpoint(remoteF.ToRendezvousEndpoint(host));
+                            }
+                        }
+                    }
+                }
+                if(processF != null)
+                    server.Rendezvous.TryAddProcess(processF);
+                subP.RunAsync();
+            };
+
+            server.Rendezvous.TryAddProcess(process);
+            server.Start();
         }
 
         static void Main(string[] args)
@@ -93,9 +144,8 @@ namespace TestingConsole
             // Enabling diagnotstics !!!
             Pipeline p = Pipeline.Create(enableDiagnostics: true);
 
-
-            WebRTC(p);
-            //testUnity(p);
+            //FullWebRTC(p);
+            UnityDemo(p);
             //OpenFace(p);
 
             try { 

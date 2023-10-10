@@ -36,7 +36,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1}"
 	ProjectSection(SolutionItems) = preProject
 		Components\Unity\PsiImporterExporter.unitypackage = Components\Unity\PsiImporterExporter.unitypackage
-		PsiInUnity.md = PsiInUnity.md
 		Components\Unity\README.md = Components\Unity\README.md
 	EndProjectSection
 EndProject
