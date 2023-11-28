@@ -1,5 +1,5 @@
 # SAAC
-(Software As A Collaborator)
+(System As A Collaborator)
 
 Project using https://github.com/microsoft/psi/ framework.
 
