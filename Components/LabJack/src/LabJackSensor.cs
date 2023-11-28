@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 
-namespace LabJackComponent
+namespace SAAC.LabJackComponent
 {    
      /// <summary>
      /// LabJackComponent communicator component class, in input the command, one emitter for acknowledge the command and an output for values.

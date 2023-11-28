@@ -1,6 +1,6 @@
 using Microsoft.Psi;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {
     /// <summary>
     /// Optitrack component class using NatNet API.

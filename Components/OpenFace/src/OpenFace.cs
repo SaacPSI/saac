@@ -4,10 +4,11 @@ using System.Windows;
 using Microsoft.Psi;
 using Microsoft.Psi.Imaging;
 using OpenFaceInterop;
-using Helpers;
+using SAAC.Helpers;
 
 // Fromhttps://github.com/ihp-lab/OpenSense/tree/master/Components/OpenFace.Windows
-namespace OpenFace {
+namespace SAAC.OpenFace
+{
     public class OpenFace : IConsumer<Shared<Image>>
     {
         /// <summary>

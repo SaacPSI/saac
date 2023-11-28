@@ -2,38 +2,34 @@
 using Microsoft.Psi.Components;
 using System.Net.Http;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     /// <summary>
     /// Unreal communication component class throught HTTP request.
     /// See UnrealRemoteConnectorConfiguration and UnrealActionRequest class for details.
     /// </summary>
-    public class UnrealRemoteConnector : Subpipeline
+    public class UnrealRemoteConnector : IConsumerProducer<UnrealActionRequest, UnrealActionRequest>
     {
         /// <summary>
         /// Emitter of unreal request with response included.
         /// </summary>
-        public Emitter<UnrealActionRequest> OutActionRequest { get; private set; }
+        public Emitter<UnrealActionRequest> Out { get; private set; }
 
         /// <summary>
-        /// Connector in case it receives actions from another component in the pipeline.
+        /// Reciever in case it receives actions from another component in the pipeline.
         /// </summary>
-        protected Connector<UnrealActionRequest> InActionRequestConnector;
-        public Receiver<UnrealActionRequest> InActionRequest => InActionRequestConnector.In;
+        public Receiver<UnrealActionRequest> In { get; private set; }
 
         private UnrealRemoteConnectorConfiguration Configuration;
         private HttpClient Client;
 
-        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-          : base(parent, name, defaultDeliveryPolicy)
+        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null)
         {
             Configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
             Client = new HttpClient();
 
-            OutActionRequest = CreateEmitter<UnrealActionRequest>(parent, nameof(OutActionRequest));
-            InActionRequestConnector = CreateInputConnectorFrom<UnrealActionRequest>(parent, nameof(InActionRequestConnector));
-
-            InActionRequestConnector.Do(Process);
+            Out = parent.CreateEmitter<UnrealActionRequest>(parent, nameof(Out));
+            In = parent.CreateReceiver<UnrealActionRequest>(parent, Process, nameof(In));
         }
 
         private void Process(UnrealActionRequest request, Envelope envelope)
@@ -57,7 +53,7 @@ namespace RemoteConnectors
                     request.Response = Client.GetStringAsync(Configuration.Address + request.Path + request.Object).Result;
                     break;
             }
-            OutActionRequest.Post(request, DateTime.UtcNow);
+            Out.Post(request, DateTime.UtcNow);
         }
     }
 }

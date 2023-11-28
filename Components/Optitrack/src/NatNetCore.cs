@@ -4,7 +4,7 @@ using MathNet.Spatial.Euclidean;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {   
     /// <summary>
     /// Internal Optitrack component class.

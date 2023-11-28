@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace OpenFace
+namespace SAAC.OpenFace
 {
     public class OpenFaceConfiguration
     {

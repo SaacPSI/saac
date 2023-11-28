@@ -4,7 +4,7 @@ using DepthImage = Microsoft.Psi.Imaging.DepthImage;
 using Image = Microsoft.Psi.Imaging.Image;
 using Microsoft.Psi.Components;
 
-namespace Nuitrack
+namespace SAAC.Nuitrack
 {
     /// <summary>
     /// NuitrackSensor component class, handle camera with nuitrack API.

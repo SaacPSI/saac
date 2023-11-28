@@ -2,7 +2,7 @@
 using System.Text;
 using SIPSorcery.Net;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// WebRTCDataConnector component class to send and recieve from datachannels 

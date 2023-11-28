@@ -2,7 +2,7 @@
 using nuitrack.device;
 using Microsoft.Psi.DeviceManagement;
 
-namespace Nuitrack
+namespace SAAC.Nuitrack
 {
     /// <summary>
     /// Internal Nuitrack component class.

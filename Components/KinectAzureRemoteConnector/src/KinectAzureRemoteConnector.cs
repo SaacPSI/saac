@@ -6,7 +6,7 @@ using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Azure.Kinect.Sensor;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     /// <summary>
     /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.

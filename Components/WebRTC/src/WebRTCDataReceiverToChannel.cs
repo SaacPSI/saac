@@ -2,7 +2,7 @@
 using Microsoft.Psi.Components;
 using TinyJson;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// Small delegate implementation for WebRTCDataReceiverToChannel class

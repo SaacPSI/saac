@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     public class WebRTConnectorConfiguration
     {

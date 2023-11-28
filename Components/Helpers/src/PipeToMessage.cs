@@ -1,7 +1,7 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace Helpers
+namespace SAAC.Helpers
 {
     /// <summary>
     /// Class that transform pipeline data to message forwarded to the delegate given.

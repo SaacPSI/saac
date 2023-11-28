@@ -4,7 +4,7 @@ using System.Numerics;
 
 ///From OpenSense : https://github.com/intelligent-human-perception-laboratory/OpenSense
 // Nuget for HashCode => Microsoft.Bcl.HashCode
-namespace Helpers
+namespace SAAC.Helpers
 {
     public class ActionUnit : IEquatable<ActionUnit>
     {

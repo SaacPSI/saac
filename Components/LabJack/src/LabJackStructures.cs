@@ -1,6 +1,6 @@
 ﻿using LabJack.LabJackUD;
 
-namespace LabJackComponent
+namespace SAAC.LabJackComponent
 {
     public struct PutCommand
     {

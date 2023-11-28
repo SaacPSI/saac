@@ -5,7 +5,7 @@ using SIPSorceryMedia.FFmpeg;
 using SIPSorcery.Net;
 using Microsoft.Psi.Audio;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// WebRTCVideoStream component class, working for Unreal Engine PixelStreaming and Unity (package in asset folder of this project)

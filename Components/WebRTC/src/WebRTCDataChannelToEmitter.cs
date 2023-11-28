@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using TinyJson;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// Empty Interface class allowing to use specialized template class

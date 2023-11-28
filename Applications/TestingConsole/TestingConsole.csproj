@@ -20,7 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\WebRTC\WebRTC.csproj" />
+    <ProjectReference Include="..\..\Components\Ollama\Ollama.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="nuitrack.net">
+      <HintPath>..\..\..\PsiWorks\PsiComponents\Nuitrack\nuitrack.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 

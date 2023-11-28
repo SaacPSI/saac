@@ -1,11 +1,11 @@
-﻿using Helpers;
+﻿using SAAC.Helpers;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Imaging;
 using System.Drawing;
 using System.Numerics;
 
-namespace OpenFace
+namespace SAAC.OpenFace
 {
     public class FaceBlurrer : Subpipeline
     {

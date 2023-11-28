@@ -4,7 +4,7 @@ using Microsoft.Psi.Components;
 using Microsoft.Psi.Imaging;
 using Microsoft.SqlServer.Server;
 
-namespace Helpers
+namespace SAAC.Helpers
 {  
     /// <summary>
     /// Class that decode image.

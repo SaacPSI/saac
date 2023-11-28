@@ -5,7 +5,7 @@ using Concentus.Enums;
 using Microsoft.Extensions.Logging;
 
 // From https://github.com/sipsorcery-org/SIPSorceryMedia.SDL2/
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     namespace OpusCodec
     {

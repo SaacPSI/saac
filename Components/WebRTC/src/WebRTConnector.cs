@@ -6,7 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// WebRTConnector component class only do the basic connection throught SipSorcery librairy (https://github.com/sipsorcery-org/).

@@ -2,7 +2,6 @@
 
 ## Summary
 This project allow the use of WebRTC protocol to stream from Unity and Unreal Engine.
-We provide 
 
 ## Files
 * [OpusAudioEncoder](src/OpusAudioEncoder.cs) from https://github.com/sipsorcery-org/SIPSorceryMedia.SDL2 repository. We have modified it in order to use it with our log system for WebRTC and add float encoding method for Unity. 

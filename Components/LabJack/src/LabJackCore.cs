@@ -2,7 +2,7 @@
 using Microsoft.Psi.Components;
 using LabJack.LabJackUD;
 
-namespace LabJackComponent
+namespace SAAC.LabJackComponent
 {
      /// <summary>
      /// Internal LabJack communicator component class.

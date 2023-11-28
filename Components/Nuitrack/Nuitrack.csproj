@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <Reference Include="nuitrack.net">
-      <HintPath>dep\nuitrack.net.dll</HintPath>
+      <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
     </Reference>
   </ItemGroup>
 

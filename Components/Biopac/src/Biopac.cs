@@ -2,7 +2,7 @@
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace Biopac {
+namespace SAAC.Biopac {
     /// <summary>
     /// Biopac communicator component class.
     /// </summary>
