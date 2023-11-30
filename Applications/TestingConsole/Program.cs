@@ -12,7 +12,12 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Microsoft.Psi.Components;
 using SAAC;
-using SAAC.Ollama;
+//using SAAC.Ollama;
+using SAAC.Whisper;
+using Microsoft.Psi.Data;
+using Microsoft.Psi.Audio;
+using Microsoft.Psi.Speech;
+using Microsoft.Psi.Diagnostics;
 
 namespace TestingConsole
 {
@@ -192,14 +197,52 @@ namespace TestingConsole
         //    });
         //}
 
-        static void testOllama(Pipeline p)
-        {
-            OllamaConectorConfiguration config = new OllamaConectorConfiguration();
-            OllamaConnector ollama = new OllamaConnector(p, config);
-            KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
+        //static void testOllama(Pipeline p)
+        //{
+        //    OllamaConectorConfiguration config = new OllamaConectorConfiguration();
+        //    OllamaConnector ollama = new OllamaConnector(p, config);
+        //    KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
-            reader.Out.PipeTo(ollama.In);
-            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+        //    reader.Out.PipeTo(ollama.In);
+        //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+        //}
+
+        static void testWhisper(Pipeline p)
+        {
+            //var listargs = args[0].Split('.');
+            var listargs = new List<string> { @"somewhere", "TestWhisper2", "C", "1", @"somewhere" };
+
+            Emitter<AudioBuffer> audio1Out, audio2Out;
+            Emitter<bool> vad1Out, vad2Out;
+            Emitter<IStreamingSpeechRecognitionResult> stt1Out, stt2Out;
+
+            var config = new DiagnosticsConfiguration()
+            {
+                TrackMessageSize = true,
+                AveragingTimeSpan = TimeSpan.FromSeconds(2),
+                SamplingInterval = TimeSpan.FromSeconds(10),
+                IncludeStoppedPipelines = true,
+                IncludeStoppedPipelineElements = true,
+            };
+
+            var audioStoreRaw = new PsiStoreStreamReader("audioRaw", listargs[0]);
+            var audioStoreRawOpen = PsiStore.Open(p, "audioRaw", listargs[0]);
+
+
+
+            //Client1
+            var audio1 = audioStoreRawOpen.OpenStream<AudioBuffer>("audio2");//audio1 / AudioP1
+            var vadP1 = new SystemVoiceActivityDetector(p, new SystemVoiceActivityDetectorConfiguration { Language = "fr-FR" });
+            audio1.PipeTo(vadP1);
+            var whisper1 = new WhisperSpeechRecognizer(p, new WhisperSpeechRecognizerConfiguration { language = Language.French, modelType = Whisper.net.Ggml.GgmlType.Base, quantizationType = Whisper.net.Ggml.QuantizationType.NoQuantization /*modelDirectory = @"D:\These\DataAnalysisGitHub\WhisperPsi\medium.pt" */});
+            var annotatedAudioWhisperP1 = audio1.Join(vadP1);
+            annotatedAudioWhisperP1.PipeTo(whisper1);
+            var finalWhisperResultsP1 = whisper1.FinalOut.Where(result => result.IsFinal).Do((m, e) => { Console.WriteLine(m?.ToString()); });
+
+
+            //Client2
+            //var audio2 = audioStoreRawOpen.OpenStream<AudioBuffer>("audio2");//audio2 / AudioP2
+            
         }
 
         static void Main(string[] args)
@@ -211,7 +254,8 @@ namespace TestingConsole
             //UnityDemo(p);
             //OpenFace(p);
             //testBodies(p);
-            testOllama(p);
+            //testOllama(p);
+            testWhisper(p);
             try { 
             // RunAsync the pipeline in non-blocking mode.
             p.Run(ReplayDescriptor.ReplayAll);

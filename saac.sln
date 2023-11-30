@@ -47,6 +47,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bodies", "Components\Bodies
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ollama", "Components\Ollama\Ollama.csproj", "{C9071A95-D624-448D-AD6F-2F844AE5A769}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Whisper", "Components\Whisper\Whisper.csproj", "{B147B765-BECF-4229-89FA-E82971784E85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,14 @@ Global
 		{C9071A95-D624-448D-AD6F-2F844AE5A769}.Release|Any CPU.Build.0 = Release|x64
 		{C9071A95-D624-448D-AD6F-2F844AE5A769}.Release|x64.ActiveCfg = Release|x64
 		{C9071A95-D624-448D-AD6F-2F844AE5A769}.Release|x64.Build.0 = Release|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Debug|Any CPU.Build.0 = Debug|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Debug|x64.ActiveCfg = Debug|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Debug|x64.Build.0 = Debug|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Release|Any CPU.ActiveCfg = Release|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Release|Any CPU.Build.0 = Release|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Release|x64.ActiveCfg = Release|x64
+		{B147B765-BECF-4229-89FA-E82971784E85}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -205,6 +215,7 @@ Global
 		{78196985-EE54-411F-822B-5A23EDF80642} = {B7EE8A14-5695-41E9-B67E-ACFFC30E971B}
 		{A49FCC5E-541C-456E-B33F-4979B3C7157C} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{C9071A95-D624-448D-AD6F-2F844AE5A769} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{B147B765-BECF-4229-89FA-E82971784E85} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
