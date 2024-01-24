@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.Kinect.BodyTracking;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class LearnedBody
     {

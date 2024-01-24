@@ -4,7 +4,7 @@ using Microsoft.Psi.AzureKinect;
 using MathNet.Spatial.Euclidean;
 using nuitrack;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class BodiesConverter : IProducer<List<SimplifiedBody>>
     {

@@ -5,7 +5,7 @@ using Microsoft.Psi.Components;
 using System.IO;
 using MathNet.Numerics.Statistics;
 
-namespace Bodies.Statistics
+namespace SAAC.Bodies.Statistics
 {
     public class BodiesStatisticsConfiguration
     {

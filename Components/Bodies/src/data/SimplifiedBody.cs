@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Kinect.BodyTracking;
 using MathNet.Spatial.Euclidean;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class SimplifiedBody
     {

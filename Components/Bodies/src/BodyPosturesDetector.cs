@@ -4,7 +4,7 @@ using Microsoft.Azure.Kinect.BodyTracking;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace Bodies 
+namespace SAAC.Bodies 
 {
     public class BodyPosturesDetector : IConsumerProducer<List<SimplifiedBody>, Dictionary<uint, List<BodyPosturesDetector.Posture>>>
     {

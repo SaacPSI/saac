@@ -1,6 +1,6 @@
 ﻿using nuitrack;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class SimpleBodiesPositionExtractionConfiguration
     {
