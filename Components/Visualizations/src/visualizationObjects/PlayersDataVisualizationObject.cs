@@ -1,28 +1,14 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+﻿using System.ComponentModel;
+using System.Runtime.Serialization;
+using System.Windows;
+using Microsoft.Psi.Visualization.Helpers;
+using Microsoft.Psi.Visualization.Views.Visuals2D;
+using Microsoft.Psi.Visualization.VisualizationPanels;
+using Microsoft.Psi.Visualization.VisualizationObjects;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
-#pragma warning disable
-
-namespace Microsoft.Psi.Visualization.VisualizationObjects
+namespace SAAC.Visualizations
 {
-    using System;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Linq;
-    using System.Numerics;
-    using System.Runtime.Serialization;
-    using System.Security.Cryptography;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Windows;
-    using System.Windows.Media.Animation;
-    using System.Windows.Media.Imaging;
-    using Microsoft.Psi.Visualization.Data;
-    using Microsoft.Psi.Visualization.Helpers;
-    using Microsoft.Psi.Visualization.Summarizers;
-    using Microsoft.Psi.Visualization.Views.Visuals2D;
-    using Microsoft.Psi.Visualization.VisualizationPanels;
-
     /// <summary>
     /// Implements a visualization object for PlayersData.
     /// </summary>
@@ -35,23 +21,17 @@ namespace Microsoft.Psi.Visualization.VisualizationObjects
         private string sceneImage = "";
         private RotationAngleEnum currentRotation = RotationAngleEnum.Angle0;
 
+        public PlayersDataVisualizationObject()
+        {
+            this.Position = new LabeledPoint2DVisualizationObject();
+            this.Rotation = new LabeledLine2DVisualizationObject();
+        }
+
         /// <inheritdoc/>
         [IgnoreDataMember]
         public override DataTemplate DefaultViewTemplate => XamlHelper.CreateTemplate(this.GetType(), typeof(PlayersDataVisualizationObjectView));
 
         // On update
-        protected override void OnPropertyChanging(object sender, PropertyChangingEventArgs e)
-        {
-            base.OnPropertyChanging(sender, e);
-
-            if (e.PropertyName == nameof(this.CurrentValue))
-            {
-                this.RaisePropertyChanging(nameof(this.Players));
-                this.RaisePropertyChanging(nameof(this.ShowPlayersName));
-                this.RaisePropertyChanging(nameof(this.ShowPlayersObjectView));
-            }
-        }
-
         protected override void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(this.CurrentValue))
@@ -59,6 +39,9 @@ namespace Microsoft.Psi.Visualization.VisualizationObjects
                 this.RaisePropertyChanged(nameof(this.Players));
                 this.RaisePropertyChanged(nameof(this.ShowPlayersName));
                 this.RaisePropertyChanged(nameof(this.ShowPlayersObjectView));
+
+                //this.Position.CurrentValue = this.CurrentValue.position; 
+                //this.Rotation.CurrentValue = this.CurrentValue.rotation;
             }
 
             base.OnPropertyChanged(sender, e);
@@ -87,6 +70,26 @@ namespace Microsoft.Psi.Visualization.VisualizationObjects
                 return new List<PlayersData>();
             }
         }
+
+        /// <summary>
+        /// Gets the Position.
+        /// </summary>
+        [DataMember]
+        [PropertyOrder(1)]
+        [DisplayName("Position")]
+        [Description("The Position properties.")]
+        public LabeledPoint2DVisualizationObject Position { get; private set; }
+
+        /// <summary>
+        /// Gets the Rotation.
+        /// </summary>
+        [ExpandableObject]
+        [DataMember]
+        [PropertyOrder(2)]
+        [DisplayName("Rotation")]
+        [Description("The Rotation properties.")]
+        public LabeledLine2DVisualizationObject Rotation { get; private set; }
+
 
         [DataMember]
         [DisplayName("Show players name")]

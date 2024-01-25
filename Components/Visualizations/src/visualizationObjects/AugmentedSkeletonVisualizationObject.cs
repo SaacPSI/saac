@@ -20,14 +20,5 @@ namespace SAAC.Visualizations
         [PropertyOrder(5)]
         [Description("Display confidence level to joint.")]
         public bool DisplayConfidence { get; set; }
-
-        ///// <summary>
-        ///// Gets or sets the basic display of confidence.
-        ///// </summary>
-        //[DataMember]
-        //[PropertyOrder(5)]
-        //[Description("Display confidence level to joint.")]
-        //public bool DisplayConfidence { get; set; }
-
     }
 }
