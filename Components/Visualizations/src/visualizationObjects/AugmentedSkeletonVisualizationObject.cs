@@ -18,7 +18,8 @@ namespace SAAC.Visualizations
         /// </summary>
         [DataMember]
         [PropertyOrder(5)]
+        [DisplayName("Display confidence")]
         [Description("Display confidence level to joint.")]
-        public bool DisplayConfidence { get; set; }
+        public bool DisplayConfidence { get; set; } = true;
     }
 }

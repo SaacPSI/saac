@@ -15,14 +15,14 @@ namespace SAAC.Visualizations
     /// Implements a visualization object for simplified flock group.
     /// </summary>
     [VisualizationObject("Simplified Flock Group")]
-    public class SimplifiedFlockGroupsVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Groups.SimplifiedFlockGroup>
+    public class SimplifiedFlockGroupVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Groups.SimplifiedFlockGroup>
     {
         private double billboardHeightCm = 100;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimplifiedFlockGroupsVisualizationObject"/> class.
+        /// Initializes a new instance of the <see cref="SimplifiedFlockGroupVisualizationObject"/> class.
         /// </summary>
-        public SimplifiedFlockGroupsVisualizationObject()
+        public SimplifiedFlockGroupVisualizationObject()
         {
             this.GroupVolume = new Rect3DVisualizationObject();
             this.GroupVolume.RegisterChildPropertyChangedNotifications(this, nameof(this.GroupVolume));

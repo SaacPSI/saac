@@ -12,7 +12,12 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Microsoft.Psi.Components;
 using SAAC;
-using SAAC.Ollama;
+using SAAC.Bodies;
+using Microsoft.Azure.Kinect.BodyTracking;
+using Microsoft.Azure.Kinect.Sensor;
+using System.Text;
+using SAAC.Groups;
+//using SAAC.Ollama;
 
 namespace TestingConsole
 {
@@ -126,7 +131,7 @@ namespace TestingConsole
         //                        pos.Do((vec, env) => { Console.WriteLine("posImp : " + vec.ToString()); emiOut.Post(vec + Vector3.One, env.OriginatingTime); }) ;
         //                        processF = new Rendezvous.Process("ConsoleForward");
         //                        RemoteExporter remoteF = new RemoteExporter(p, 11420, TransportKind.Tcp);
-                                
+
         //                        remoteF.Exporter.Write(emiOut, "PositionModified");
         //                        processF.AddEndpoint(remoteF.ToRendezvousEndpoint(host));
         //                    }
@@ -192,14 +197,47 @@ namespace TestingConsole
         //    });
         //}
 
-        static void testOllama(Pipeline p)
-        {
-            OllamaConectorConfiguration config = new OllamaConectorConfiguration();
-            OllamaConnector ollama = new OllamaConnector(p, config);
-            KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
+        //static void testOllama(Pipeline p)
+        //{
+        //    OllamaConectorConfiguration config = new OllamaConectorConfiguration();
+        //    OllamaConnector ollama = new OllamaConnector(p, config);
+        //    KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
-            reader.Out.PipeTo(ollama.In);
-            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+        //    reader.Out.PipeTo(ollama.In);
+        //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+        //}
+
+        static void testGroups(Pipeline p)
+        {
+            var azureConfig = new AzureKinectSensorConfiguration();
+            azureConfig.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+            azureConfig.BodyTrackerConfiguration.CpuOnlyMode = false;
+            var azureKinect = new AzureKinectSensor(p, azureConfig);
+
+
+        
+            // Create the store component
+            var store = PsiStore.Create(p, "Azure", "D:\\Stores");
+
+            // Write incoming data in the store
+            //store.Write(azureKinect.ColorImage, "Color");
+            //store.Write(azureKinect.DepthImage, "Depth");
+            store.Write(azureKinect.Bodies, "Bodies");
+            store.Write(azureKinect.Imu, "Imu");
+
+            BodiesConverter converter = new BodiesConverter(p);
+            azureKinect.Bodies.PipeTo(converter.InBodiesAzure);
+            store.Write(converter.Out, "BodiesS");
+            converter.Out.Do((d, e) => { Console.WriteLine("c"); });
+
+            SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
+            azureKinect.Bodies.PipeTo(extractor.InBodiesAzure);
+
+            SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
+            extractor.Out.PipeTo(groupsDetector.In);
+
+            store.Write(groupsDetector.Out, "Groups");
+            groupsDetector.Out.Do((d,e) => { Console.WriteLine("g"); });
         }
 
         static void Main(string[] args)
@@ -211,10 +249,11 @@ namespace TestingConsole
             //UnityDemo(p);
             //OpenFace(p);
             //testBodies(p);
-            testOllama(p);
+            //testOllama(p);
+            testGroups(p);
             try { 
             // RunAsync the pipeline in non-blocking mode.
-            p.Run(ReplayDescriptor.ReplayAll);
+            p.RunAsync(ReplayDescriptor.ReplayAll);
            
             }
             catch(Exception ex)

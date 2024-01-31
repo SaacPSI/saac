@@ -16,6 +16,33 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="src\Views\PlayersDataVisualizationObjectView.xaml.cs" />
+    <Compile Remove="src\Views\PositionDataVisualizationObjectView.xaml.cs" />
+    <Compile Remove="src\Views\RotationDataVisualizationObjectView.xaml.cs" />
+    <Compile Remove="src\VisualizationObjects\PlayersDataVisualizationObject.cs" />
+    <Compile Remove="src\VisualizationObjects\PositionDataVisualizationObject.cs" />
+    <Compile Remove="src\VisualizationObjects\RotationDataVisualizationObject.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="src\Views\PlayersDataVisualizationObjectView.xaml" />
+    <Page Remove="src\Views\PositionDataVisualizationObjectView.xaml" />
+    <Page Remove="src\Views\RotationDataVisualizationObjectView.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="src\Views\PlayersDataVisualizationObjectView.xaml" />
+    <None Include="src\Views\PlayersDataVisualizationObjectView.xaml.cs" />
+    <None Include="src\Views\PositionDataVisualizationObjectView.xaml" />
+    <None Include="src\Views\PositionDataVisualizationObjectView.xaml.cs" />
+    <None Include="src\Views\RotationDataVisualizationObjectView.xaml" />
+    <None Include="src\Views\RotationDataVisualizationObjectView.xaml.cs" />
+    <None Include="src\VisualizationObjects\PlayersDataVisualizationObject.cs" />
+    <None Include="src\VisualizationObjects\PositionDataVisualizationObject.cs" />
+    <None Include="src\VisualizationObjects\RotationDataVisualizationObject.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Extended.Wpf.Toolkit" Version="4.6.0" />
     <PackageReference Include="HelixToolkit.Wpf" Version="2.24.0" />
     <PackageReference Include="Microsoft.Psi.Data" Version="0.18.72.1-beta" />

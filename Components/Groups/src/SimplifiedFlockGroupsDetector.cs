@@ -43,11 +43,14 @@ namespace SAAC.Groups
 
         private void Process(Dictionary<uint, Vector3D> skeletons, Envelope envelope)
         {
+            if(skeletons.Count == 0)
+                return;
             UpdateMemory(skeletons);
             Dictionary<uint, (Vector2D, double, Vector2D)> rawData = new Dictionary<uint, (Vector2D, double, Vector2D)>();
             foreach (var body in BodiesMemory)
             {
                 var means = MeanVectors(body.Value, Configuration.QueueMaxCount/2);
+                if (means.Count < 2) continue;
                 var (velocities, directions) = CalculateDistancesAndDirections(means);
                 rawData.Add(body.Key,(means.First(), velocities.First(), directions.First())); 
             }

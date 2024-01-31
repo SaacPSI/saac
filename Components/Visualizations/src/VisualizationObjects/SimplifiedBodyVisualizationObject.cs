@@ -14,16 +14,16 @@ namespace SAAC.Visualizations
     /// Implements a visualization object for simplified bodies.
     /// </summary>
     [VisualizationObject("Simplified Body")]
-    public class SimplifiedBodyBodyVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Bodies.SimplifiedBody>
+    public class SimplifiedBodyVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Bodies.SimplifiedBody>
     {
         private static readonly Dictionary<(JointId ChildJoint, JointId ParentJoint), bool> AzureKinectBodyGraph = AzureKinectBody.Bones.ToDictionary(j => j, j => true);
 
         private double billboardHeightCm = 100;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimplifiedBodyBodyVisualizationObject"/> class.
+        /// Initializes a new instance of the <see cref="SimplifiedBodyVisualizationObject"/> class.
         /// </summary>
-        public SimplifiedBodyBodyVisualizationObject()
+        public SimplifiedBodyVisualizationObject()
         {
             this.Skeleton = new AugmentedSkeletonVisualizationObject<JointId>(
                 nodeVisibilityFunc:
@@ -121,7 +121,7 @@ namespace SAAC.Visualizations
         [PropertyOrder(2)]
         [DisplayName("Billboard")]
         [Description("The billboard properties.")]
-        public BillboardTextVisualizationObject Billboard { get; private set; }
+        public BillboardTextVisualizationObject Billboard { get; set; }
 
         /// <summary>
         /// Gets the skeleton visualization object for the body.
@@ -131,7 +131,7 @@ namespace SAAC.Visualizations
         [PropertyOrder(3)]
         [DisplayName("Skeleton")]
         [Description("The body's skeleton properties.")]
-        public AugmentedSkeletonVisualizationObject<JointId> Skeleton { get; private set; }
+        public AugmentedSkeletonVisualizationObject<JointId> Skeleton { get; set; }
 
         /// <inheritdoc/>
         public override void UpdateData()
