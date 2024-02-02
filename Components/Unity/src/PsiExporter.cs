@@ -1,17 +1,12 @@
 using UnityEngine;
 using Microsoft.Psi;
-using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Interop.Transport;
 using System;
-using System.Reflection;
-using System.Reflection.Emit;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
     public string TopicName = "Topic";
-    public TransportKind TransportType = TransportKind.Tcp;
-    public int Port = 11411;
-
+    public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
+        
     private PsiPipelineManager PsiManager;
     protected Emitter<T> Out;
     Emitter<T> IProducer<T>.Out => ((IProducer<T>)Out).Out;
@@ -29,14 +24,15 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         }
         try
         {
+#if HOLOLENS
             //Hololens Version
-            //TcpWriter<T> tcpWriter = new TcpWriter<T>(PsiManager.GetPipeline(), Port, GetSerializer(), TopicName);
-            //Out.PipeTo(tcpWriter);
-            //PsiManager.RegisterTCPWriter(tcpWriter, TopicName);
-            RemoteExporter exporter = new RemoteExporter(PsiManager.GetPipeline(), Port, TransportType);
+            TcpWriter<T> tcpWriter = new TcpWriter<T>(PsiManager.GetPipeline(), Port, GetSerializer(), TopicName);
+            Out.PipeTo(tcpWriter);
+            PsiManager.RegisterTCPWriter(tcpWriter, TopicName);
+#endif
+
             Out = PsiManager.GetPipeline().CreateEmitter<T>(this, TopicName);
-            exporter.Exporter.Write(Out, TopicName);
-            PsiManager.RegisterExporter(exporter);
+            PsiManager.GetRemoteExporter(ExportType).Exporter.Write(Out, TopicName);
             IsInitialized = true;
         }
         catch (Exception e)
@@ -64,5 +60,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         }
     }
 
+#if HOLOLENS
     protected abstract Microsoft.Psi.Interop.Serialization.IFormatSerializer GetSerializer();
+#endif
 }

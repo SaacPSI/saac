@@ -7,9 +7,12 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using System.Threading;
+using System.Linq;
+using Unity.VisualScripting;
 
 public class PsiPipelineManager : MonoBehaviour
 {
+    public enum ExportType { LowFrequency, HighFrequency, Unknow };
     public delegate void ConnectToImporterEndPoint(RemoteImporter importer);
 
     private RendezvousClient RendezVousClient;
@@ -21,11 +24,16 @@ public class PsiPipelineManager : MonoBehaviour
     private List<string> LogBuffer;
     private TMP_Text Text;
     private Thread ConnectionThread;
+    private int ExporterCount;
+    private RemoteExporter EventExporter;
 
     public string RendezVousServerAddress = "";
     public int RendezVousServerPort = 13331;
     public string RendezVousAppName = "Unity";
-    public GameObject TextObject;
+    public TransportKind ExportersTransportType = TransportKind.Tcp;
+    public int ExportersStartingPort = 11411;
+    public int ExportersMaxLowFrequencyStreams = 12;
+    public GameObject TextLogObject;
 
 
     public bool IsRunning { private set; get; } = false;
@@ -36,6 +44,8 @@ public class PsiPipelineManager : MonoBehaviour
         ImporterDelegates = new Dictionary<string, ConnectToImporterEndPoint>();
         RemoteImporters = new Dictionary<string, RemoteImporter>();
         LogBuffer = new List<string>();
+        ExporterCount = 0;
+        EventExporter = null;
     }
 
     public void RegisterComponentImporter(string streamName, ConnectToImporterEndPoint connectionDelegate)
@@ -100,8 +110,6 @@ public class PsiPipelineManager : MonoBehaviour
 
             RendezVousClient.Error += RendezVousClient_Error;
             HostAddress = RendezVousClient.ClientAddress;
-            Process = new Rendezvous.Process(RendezVousAppName, "1.0");
-            AddLog("PsiPipelineManager : Process created!");
             IsInitialized = true;
         }
         catch (Exception e)
@@ -115,14 +123,39 @@ public class PsiPipelineManager : MonoBehaviour
         AddLog("ERROR: " + e.Message);
     }
 
+    protected RemoteExporter CreateRemoteExporter()
+    {
+        return new RemoteExporter(GetPipeline(), ExportersStartingPort + ExporterCount++, ExportersTransportType);
+    }
+
+    public RemoteExporter GetRemoteExporter(ExportType type) 
+    {
+        RemoteExporter exporter = null;
+        switch (type)
+        {
+            case ExportType.LowFrequency:
+                {
+                    if(EventExporter != null && EventExporter.Exporter.Metadata.Count() >= ExportersMaxLowFrequencyStreams)
+                        return EventExporter;
+                    EventExporter = exporter = CreateRemoteExporter();
+                }
+                break;
+            default:
+                exporter = CreateRemoteExporter();
+                break;
+        }
+        RegisterExporter(exporter);
+        return exporter;
+    }
+
     public void RegisterExporter(RemoteExporter exporter)
     {
-        Process.AddEndpoint(exporter.ToRendezvousEndpoint(HostAddress));
+        GetProcess().AddEndpoint(exporter.ToRendezvousEndpoint(HostAddress));
     }
 
     public void RegisterTCPWriter<T>(TcpWriter<T> writer, string topic)
     {
-        Process.AddEndpoint(writer.ToRendezvousEndpoint<T>(HostAddress, topic));
+        GetProcess().AddEndpoint(writer.ToRendezvousEndpoint<T>(HostAddress, topic));
     }
 
     public Pipeline GetPipeline()
@@ -132,20 +165,28 @@ public class PsiPipelineManager : MonoBehaviour
         return Pipeline;
     }
 
+    public Rendezvous.Process GetProcess()
+    {
+        if (Process == null)
+            Process = new Rendezvous.Process(RendezVousAppName, "1.0");
+        return Process;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         if (!IsInitialized)
         {
-            if (TextObject != null)
+            if (TextLogObject != null)
             {
-                Text = TextObject.GetComponent<TMP_Text>();
+                Text = TextLogObject.GetComponent<TMP_Text>();
                 if (Text != null)
                     Text.text = "Hello! Log:\n";
             }
             else
                 Text = null;
             GetPipeline();
+            
             RendezVousClient = new RendezvousClient(RendezVousServerAddress, RendezVousServerPort);
             ConnectionThread = new Thread(SyncServerConnection);
             ConnectionThread.Start();
@@ -156,7 +197,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         if(IsInitialized && !IsRunning)
         {
-            RendezVousClient.Rendezvous.TryAddProcess(Process);
+            RendezVousClient.Rendezvous.TryAddProcess(GetProcess());
             IsRunning = true;
             Pipeline.RunAsync();
             AddLog("PsiPipelineManager : Pipeline running");

@@ -55,6 +55,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B28D807F-13D
 		Components\Unity\src\PsiExporter.cs = Components\Unity\src\PsiExporter.cs
 		Components\Unity\src\PsiImporter.cs = Components\Unity\src\PsiImporter.cs
 		Components\Unity\src\PsiPingImporter.cs = Components\Unity\src\PsiPingImporter.cs
+		PsiMultiExporters.cs = PsiMultiExporters.cs
 		Components\Unity\src\PsiPipelineManager.cs = Components\Unity\src\PsiPipelineManager.cs
 		Components\Unity\src\PsiPositionExporter.cs = Components\Unity\src\PsiPositionExporter.cs
 		Components\Unity\src\PsiPositionImporter.cs = Components\Unity\src\PsiPositionImporter.cs

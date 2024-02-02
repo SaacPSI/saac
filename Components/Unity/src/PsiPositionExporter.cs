@@ -14,12 +14,12 @@ public class PsiPositionExporter : PsiExporter<System.Numerics.Vector3>
         var position = gameObject.transform.position;
         if (CanSend() && Timestamp != now && position != PreviousPosition)
         {
-            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), DateTime.UtcNow);
+            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), now);
             Timestamp = now;
             PreviousPosition = position;
         }
     }
-
+#if HOLOLENS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer GetSerializer()
     { 
         return new Format<System.Numerics.Vector3>(WritePosition3D, ReadPosition3D);
@@ -39,4 +39,5 @@ public class PsiPositionExporter : PsiExporter<System.Numerics.Vector3>
         float z = (float)reader.ReadDouble();
         return new System.Numerics.Vector3(x, y, z);
     }
+#endif
 }
