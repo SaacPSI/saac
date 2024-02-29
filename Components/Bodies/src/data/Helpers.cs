@@ -2,7 +2,7 @@
 using MathNet.Numerics.LinearAlgebra;
 using System.IO;
 
-namespace Helpers
+namespace SAAC.Bodies.Helpers
 {
     /// <summary>
     /// Helpers class for bodies components, containing static methods used across components.

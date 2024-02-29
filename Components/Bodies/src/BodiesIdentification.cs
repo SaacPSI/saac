@@ -3,7 +3,6 @@ using MathNet.Numerics.Statistics;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Azure.Kinect.BodyTracking;
-using Helpers;
 
 namespace SAAC.Bodies
 {
