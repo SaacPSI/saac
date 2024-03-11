@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Kinect.BodyTracking;
 using MathNet.Numerics.Statistics;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class LearningBody
     {

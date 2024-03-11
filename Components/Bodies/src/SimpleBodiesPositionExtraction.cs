@@ -4,7 +4,7 @@ using Microsoft.Psi.AzureKinect;
 using MathNet.Spatial.Euclidean;
 using nuitrack;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     /// <summary>
     /// Simple component that extract the position of a joint from bodies given.

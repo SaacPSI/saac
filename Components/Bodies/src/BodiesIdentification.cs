@@ -3,9 +3,8 @@ using MathNet.Numerics.Statistics;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Azure.Kinect.BodyTracking;
-using Helpers;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class BodiesIdentification : IConsumer<List<SimplifiedBody>>
     {

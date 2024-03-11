@@ -3,7 +3,7 @@ using Microsoft.Azure.Kinect.BodyTracking;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace Bodies 
+namespace SAAC.Bodies 
 {
     /// <summary>
     /// Simple component that extract the position of a joint from given bodies .

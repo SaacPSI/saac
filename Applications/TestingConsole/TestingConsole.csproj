@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\Whisper\Whisper.csproj" />
+    <ProjectReference Include="..\..\Components\Ollama\Ollama.csproj" />
   </ItemGroup>
 
   <ItemGroup>

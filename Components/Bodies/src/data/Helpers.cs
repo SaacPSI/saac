@@ -2,7 +2,7 @@
 using MathNet.Numerics.LinearAlgebra;
 using System.IO;
 
-namespace Helpers
+namespace SAAC.Bodies.Helpers
 {
     /// <summary>
     /// Helpers class for bodies components, containing static methods used across components.
@@ -14,22 +14,6 @@ namespace Helpers
             if (array.Select(j => j.Item1).Any(c => c <= minimumConfidenceLevel))
                 return false;
             return true;
-        }
-
-        static public uint CantorPairing(uint k1, uint k2)
-        {
-            return (uint)(0.5 * (k1 + k2) * (k1 + k2 + 1) + k2);
-        }
-
-        static public uint CantorParingSequence(List<uint> set)
-        {
-            uint value = set.ElementAt(0);
-            for (int iterator = 1; iterator < set.Count(); iterator++)
-            {
-                uint value2 = set[iterator];
-                value = CantorPairing(value, value2);
-            }
-            return value;
         }
 
         static public Vector3D NuitrackToMathNet(nuitrack.Vector3 vect)

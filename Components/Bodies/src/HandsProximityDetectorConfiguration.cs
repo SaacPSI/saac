@@ -2,7 +2,7 @@
 using Microsoft.Psi;
 using Microsoft.Azure.Kinect.BodyTracking;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class HandsProximityDetectorConfiguration 
     {

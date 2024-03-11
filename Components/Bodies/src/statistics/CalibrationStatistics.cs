@@ -6,7 +6,7 @@ using Microsoft.Psi.Components;
 using Microsoft.Azure.Kinect.BodyTracking;
 using System.IO;
 
-namespace Bodies.Statistics
+namespace SAAC.Bodies.Statistics
 {
     public class CalibrationStatisticsConfiguration
     {

@@ -4,7 +4,7 @@ using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Azure.Kinect.BodyTracking;
 
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class CalibrationByBodies : IProducer<Matrix<double>>
     {

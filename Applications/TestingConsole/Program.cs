@@ -12,12 +12,12 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Microsoft.Psi.Components;
 using SAAC;
+using SAAC.Bodies;
+using Microsoft.Azure.Kinect.BodyTracking;
+using Microsoft.Azure.Kinect.Sensor;
+using System.Text;
+using SAAC.Groups;
 //using SAAC.Ollama;
-using SAAC.Whisper;
-using Microsoft.Psi.Data;
-using Microsoft.Psi.Audio;
-using Microsoft.Psi.Speech;
-using Microsoft.Psi.Diagnostics;
 
 namespace TestingConsole
 {
@@ -131,7 +131,7 @@ namespace TestingConsole
         //                        pos.Do((vec, env) => { Console.WriteLine("posImp : " + vec.ToString()); emiOut.Post(vec + Vector3.One, env.OriginatingTime); }) ;
         //                        processF = new Rendezvous.Process("ConsoleForward");
         //                        RemoteExporter remoteF = new RemoteExporter(p, 11420, TransportKind.Tcp);
-                                
+
         //                        remoteF.Exporter.Write(emiOut, "PositionModified");
         //                        processF.AddEndpoint(remoteF.ToRendezvousEndpoint(host));
         //                    }
@@ -207,42 +207,37 @@ namespace TestingConsole
         //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
         //}
 
-        static void testWhisper(Pipeline p)
+        static void testGroups(Pipeline p)
         {
-            //var listargs = args[0].Split('.');
-            var listargs = new List<string> { @"somewhere", "TestWhisper2", "C", "1", @"somewhere" };
-
-            Emitter<AudioBuffer> audio1Out, audio2Out;
-            Emitter<bool> vad1Out, vad2Out;
-            Emitter<IStreamingSpeechRecognitionResult> stt1Out, stt2Out;
-
-            var config = new DiagnosticsConfiguration()
-            {
-                TrackMessageSize = true,
-                AveragingTimeSpan = TimeSpan.FromSeconds(2),
-                SamplingInterval = TimeSpan.FromSeconds(10),
-                IncludeStoppedPipelines = true,
-                IncludeStoppedPipelineElements = true,
-            };
-
-            var audioStoreRaw = new PsiStoreStreamReader("audioRaw", listargs[0]);
-            var audioStoreRawOpen = PsiStore.Open(p, "audioRaw", listargs[0]);
+            var azureConfig = new AzureKinectSensorConfiguration();
+            azureConfig.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+            azureConfig.BodyTrackerConfiguration.CpuOnlyMode = false;
+            var azureKinect = new AzureKinectSensor(p, azureConfig);
 
 
+        
+            // Create the store component
+            var store = PsiStore.Create(p, "Azure", "D:\\Stores");
 
-            //Client1
-            var audio1 = audioStoreRawOpen.OpenStream<AudioBuffer>("audio2");//audio1 / AudioP1
-            var vadP1 = new SystemVoiceActivityDetector(p, new SystemVoiceActivityDetectorConfiguration { Language = "fr-FR" });
-            audio1.PipeTo(vadP1);
-            var whisper1 = new WhisperSpeechRecognizer(p, new WhisperSpeechRecognizerConfiguration { language = Language.French, modelType = Whisper.net.Ggml.GgmlType.Base, quantizationType = Whisper.net.Ggml.QuantizationType.NoQuantization /*modelDirectory = @"D:\These\DataAnalysisGitHub\WhisperPsi\medium.pt" */});
-            var annotatedAudioWhisperP1 = audio1.Join(vadP1);
-            annotatedAudioWhisperP1.PipeTo(whisper1);
-            var finalWhisperResultsP1 = whisper1.FinalOut.Where(result => result.IsFinal).Do((m, e) => { Console.WriteLine(m?.ToString()); });
+            // Write incoming data in the store
+            //store.Write(azureKinect.ColorImage, "Color");
+            //store.Write(azureKinect.DepthImage, "Depth");
+            store.Write(azureKinect.Bodies, "Bodies");
+            store.Write(azureKinect.Imu, "Imu");
 
+            BodiesConverter converter = new BodiesConverter(p);
+            azureKinect.Bodies.PipeTo(converter.InBodiesAzure);
+            store.Write(converter.Out, "BodiesS");
+            converter.Out.Do((d, e) => { Console.WriteLine("c"); });
 
-            //Client2
-            //var audio2 = audioStoreRawOpen.OpenStream<AudioBuffer>("audio2");//audio2 / AudioP2
-            
+            SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
+            azureKinect.Bodies.PipeTo(extractor.InBodiesAzure);
+
+            SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
+            extractor.Out.PipeTo(groupsDetector.In);
+
+            store.Write(groupsDetector.Out, "Groups");
+            groupsDetector.Out.Do((d,e) => { Console.WriteLine("g"); });
         }
 
         static void Main(string[] args)
@@ -255,10 +250,10 @@ namespace TestingConsole
             //OpenFace(p);
             //testBodies(p);
             //testOllama(p);
-            testWhisper(p);
+            testGroups(p);
             try { 
             // RunAsync the pipeline in non-blocking mode.
-            p.Run(ReplayDescriptor.ReplayAll);
+            p.RunAsync(ReplayDescriptor.ReplayAll);
            
             }
             catch(Exception ex)

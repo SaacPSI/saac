@@ -1,6 +1,6 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using Microsoft.Azure.Kinect.BodyTracking;
-namespace Bodies
+namespace SAAC.Bodies
 {
     public class BodiesSelectionConfiguration
     {
