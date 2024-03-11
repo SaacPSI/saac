@@ -23,7 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\Groups\Groups.csproj" />
-
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.Psi.Visualization.Windows">

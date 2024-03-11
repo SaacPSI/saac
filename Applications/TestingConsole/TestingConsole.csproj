@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\Ollama\Ollama.csproj" />
+    <ProjectReference Include="..\..\Components\Bodies\Bodies.csproj" />
+    <ProjectReference Include="..\..\Components\Groups\Groups.csproj" />
   </ItemGroup>
 
   <ItemGroup>

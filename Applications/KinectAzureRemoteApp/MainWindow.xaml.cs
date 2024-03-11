@@ -184,18 +184,18 @@ namespace KinectAzureRemoteApp
             }
 
             InitializeComponent();
-            SyncServerIsActive.IsChecked = Properties.Settings.Default.synchServerIsActive; 
-            SynchServerIp = Properties.Settings.Default.synchServerIp;
-            SynchServerPort = Properties.Settings.Default.synchServerPort;
-            RemotePort = Properties.Settings.Default.remotePort;
-            Audio.IsChecked = Properties.Settings.Default.audio;
-            Skeleton.IsChecked = Properties.Settings.Default.skeleton;
-            RGB.IsChecked = Properties.Settings.Default.rgb;
-            Depth.IsChecked = Properties.Settings.Default.depth;
-            DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration;
-            IMU.IsChecked = Properties.Settings.Default.IMU;
-            kinectApplicationName = Properties.Settings.Default.ApplicationName;
-            iPSelected = Properties.Settings.Default.IpToUse;
+            SyncServerIsActive.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerIsActive; 
+            SynchServerIp = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerIp;
+            SynchServerPort = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerPort;
+            RemotePort = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.remotePort;
+            Audio.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.audio;
+            Skeleton.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.skeleton;
+            RGB.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.rgb;
+            Depth.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.depth;
+            DepthCalibration.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.depthCalibration;
+            IMU.IsChecked = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.IMU;
+            kinectApplicationName = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.ApplicationName;
+            iPSelected = SAAC.KinectAzureRemoteApp.Properties.Settings.Default.IpToUse;
         }
 
         private void PipelineSetup()
@@ -329,19 +329,19 @@ namespace KinectAzureRemoteApp
                 server.Stop();
             StopPipeline();
             base.OnClosing(e);
-            Properties.Settings.Default.synchServerIsActive = (bool)(SyncServerIsActive.IsChecked != null ? SyncServerIsActive.IsChecked : false);
-            Properties.Settings.Default.synchServerIp = synchServerIp;
-            Properties.Settings.Default.synchServerPort = synchServerPort;
-            Properties.Settings.Default.remotePort = remotePort;
-            Properties.Settings.Default.IpToUse = iPSelected;
-            Properties.Settings.Default.ApplicationName = kinectApplicationName;
-            Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false); 
-            Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
-            Properties.Settings.Default.rgb = (bool)(RGB.IsChecked != null ? RGB.IsChecked : false);
-            Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
-            Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
-            Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
-            Properties.Settings.Default.Save();
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerIsActive = (bool)(SyncServerIsActive.IsChecked != null ? SyncServerIsActive.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerIp = synchServerIp;
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.synchServerPort = synchServerPort;
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.remotePort = remotePort;
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.IpToUse = iPSelected;
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.ApplicationName = kinectApplicationName;
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false); 
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.rgb = (bool)(RGB.IsChecked != null ? RGB.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
+            SAAC.KinectAzureRemoteApp.Properties.Settings.Default.Save();
             
         }
 
