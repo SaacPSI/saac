@@ -23,3 +23,8 @@ The package contains dlls and 5 scripts:
 * PsiPositionExporter : example of exporter to send position of the gameobject.
 * PsiPositionImporter : example of importer to set position of the gameobject.
 * PsiPiplineManager : required component for scripts to work, can synchronise with other \\psi piplines through a **RemoteClockImporter**.
+
+In Unity dlls should be configured as : ![Psi Overview](./docs/dlls_configuration.jpg) 
+
+Special case for Microsoft.BCL :
+![Psi Overview](./docs/bcl_configuration.jpg) 
