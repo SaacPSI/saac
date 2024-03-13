@@ -28,3 +28,42 @@ Project containing components related to body tracking. We have tried to set a n
 * Integrate more than two cameras for [Bodies Selection](src/BodiesSelection.cs), [Calibration By Bodies](src/CalibrationByBodies.cs) and [Calibration Statistics](src/statistics/CalibrationStatistics.cs)
 * Add high level movement detection.
 * Add more postures detection.
+
+## Example
+        static void testBodies(Pipeline p)
+        {
+            AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
+            configKinect.DeviceIndex = 0;
+            configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+            AzureKinectSensor sensor = new AzureKinectSensor(p, configKinect);
+
+            Bodies.BodiesConverter bodiesConverter = new Bodies.BodiesConverter(p);
+
+            Bodies.HandsProximityDetectorConfiguration configHands = new Bodies.HandsProximityDetectorConfiguration();
+            configHands.IsPairToCheckGiven = false;
+            Bodies.HandsProximityDetector detector = new Bodies.HandsProximityDetector(p, configHands);
+
+
+            Bodies.BodyPosturesDetectorConfiguration configPostures = new Bodies.BodyPosturesDetectorConfiguration();
+            Bodies.BodyPosturesDetector postures = new Bodies.BodyPosturesDetector(p, configPostures);
+
+            sensor.Bodies.PipeTo(bodiesConverter.InBodiesAzure);
+
+            bodiesConverter.Out.PipeTo(detector.In);
+            bodiesConverter.Out.PipeTo(postures.In);
+
+            detector.Out.Do((m, e) => { 
+                foreach (var data in m)
+                {
+                    foreach(var item in data.Value)
+                        Console.WriteLine($"{data.Key} - {item}");
+                } });
+
+            postures.Out.Do((m, e) => {
+                foreach (var data in m)
+                {
+                    foreach (var item in data.Value)
+                        Console.WriteLine($"{data.Key} - {item}");
+                }
+            });
+        }

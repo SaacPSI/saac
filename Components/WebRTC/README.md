@@ -32,3 +32,31 @@ A unity package is in the *asset* folder containg scripts and dlls.
 
 ## WebRTC with Unreal Engine
 Our components can be used with PixelStreaming, with H264 encoding. We have not tested data channels as we used directly [HTTP Request](../UnrealRemoteConnector). 
+
+## Example
+
+        static void FullWebRTC(Pipeline p)
+        {
+            WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
+            config.WebsocketAddress = System.Net.IPAddress.Parse("127.0.0.1");
+            config.WebsocketPort = 80;
+            config.AudioStreaming = false;
+            config.PixelStreamingConnection = false;
+            config.FFMPEGFullPath = "D:\\ffmpeg\\bin\\";
+            config.Log = Microsoft.Extensions.Logging.LogLevel.Information;
+
+            var emitter = new WebRTCDataChannelToEmitter<string>(p);
+            var incoming = WebRTCDataReceiverToChannelFactory.Create<TimeSpan>(p, "timing");
+            config.OutputChannels.Add("Events", emitter);
+            config.InputChannels.Add("Timing", incoming);
+
+            WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
+            var store = PsiStore.Create(p, "WebRTC", "D:\\Stores");
+
+            store.Write(stream.OutImage.EncodeJpeg(), "Image");
+            store.Write(stream.OutAudio, "Audio");
+            store.Write(emitter.Out, "Events");
+
+            var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            timer.Out.PipeTo(incoming.In);    
+        }

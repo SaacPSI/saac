@@ -12,3 +12,14 @@ This project allow the use of [Ollama](https://github.com/jmorganca/ollama) as a
 ## Curent issues
 
 ## Future works
+
+## Example
+        static void testOllama(Pipeline p)
+        {
+            OllamaConectorConfiguration config = new OllamaConectorConfiguration();
+            OllamaConnector ollama = new OllamaConnector(p, config);
+            KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
+
+            reader.Out.PipeTo(ollama.In);
+            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+        }
