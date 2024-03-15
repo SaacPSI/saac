@@ -52,13 +52,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Whisper", "Components\Whisp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}"
 	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\PsiAddedSerializer.cs = Components\Unity\src\PsiAddedSerializer.cs
+		Components\Unity\src\PsiASerializer.cs = Components\Unity\src\PsiASerializer.cs
 		Components\Unity\src\PsiExporter.cs = Components\Unity\src\PsiExporter.cs
+		Components\Unity\src\PsiFormatBoolean.cs = Components\Unity\src\PsiFormatBoolean.cs
+		Components\Unity\src\PsiFormatDateTime.cs = Components\Unity\src\PsiFormatDateTime.cs
+		Components\Unity\src\PsiFormatPositionAndOrientation.cs = Components\Unity\src\PsiFormatPositionAndOrientation.cs
+		Components\Unity\src\PsiFormatString.cs = Components\Unity\src\PsiFormatString.cs
+		Components\Unity\src\PsiFormatVector3.cs = Components\Unity\src\PsiFormatVector3.cs
 		Components\Unity\src\PsiImporter.cs = Components\Unity\src\PsiImporter.cs
-		PsiMultiExporters.cs = PsiMultiExporters.cs
 		Components\Unity\src\PsiPingImporter.cs = Components\Unity\src\PsiPingImporter.cs
 		Components\Unity\src\PsiPipelineManager.cs = Components\Unity\src\PsiPipelineManager.cs
 		Components\Unity\src\PsiPositionExporter.cs = Components\Unity\src\PsiPositionExporter.cs
 		Components\Unity\src\PsiPositionImporter.cs = Components\Unity\src\PsiPositionImporter.cs
+		Components\Unity\src\PsiPositionOrientationExporter.cs = Components\Unity\src\PsiPositionOrientationExporter.cs
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Groups", "Components\Groups\Groups.csproj", "{65613648-C5B7-4AD1-9FA2-6816C54239E9}"
@@ -68,7 +75,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2F15214A-C326-43F2-B84A-6F19AD7E9D84}"
 	ProjectSection(SolutionItems) = preProject
 		Components\Unity\docs\bcl_configuration.jpg = Components\Unity\docs\bcl_configuration.jpg
-		Components\Unity\docs\dlls_configuration.jpg = Components\Unity\docs\dlls_configuration.jpg
+		Components\Unity\docs\pipeline_manager.jpg = Components\Unity\docs\pipeline_manager.jpg
 	EndProjectSection
 EndProject
 Global

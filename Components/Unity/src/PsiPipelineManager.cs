@@ -116,7 +116,6 @@ public class PsiPipelineManager : MonoBehaviour
                 return;
             }
             AddLog("PsiPipelineManager : Connected!");
-            IsInitialized = true;
             RendezVousClient.Rendezvous.ProcessRemoved += (_, p) =>
             {
                 AddLog("PsiPipelineManager : ProcessRemoved!");
@@ -166,7 +165,8 @@ public class PsiPipelineManager : MonoBehaviour
                     }
 #endif
                 }
-            }; 
+            };
+            IsInitialized = true;
         }
         catch (Exception e)
         {
