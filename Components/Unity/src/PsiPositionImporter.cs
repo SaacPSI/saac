@@ -24,4 +24,11 @@ public class PsiPositionImporter : PsiImporter<System.Numerics.Vector3>
             Buffer.Clear();
         }
     }
+
+#if PLATFORM_ANDROID
+    protected override Microsoft.Psi.Interop.Serialization.IFormatDeserializer<System.Numerics.Vector3> GetDeserializer()
+    {
+        return PsiFormatVector3.GetFormat(); 
+    }
+#endif
 }

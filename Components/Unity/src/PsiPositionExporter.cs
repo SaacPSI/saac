@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using Microsoft.Psi.Interop.Serialization;
 using UnityEngine;
 
 public class PsiPositionExporter : PsiExporter<System.Numerics.Vector3>
@@ -19,25 +17,11 @@ public class PsiPositionExporter : PsiExporter<System.Numerics.Vector3>
             PreviousPosition = position;
         }
     }
-#if HOLOLENS
-    protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer GetSerializer()
+
+#if PLATFORM_ANDROID
+    protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<System.Numerics.Vector3> GetSerializer()
     { 
-        return new Format<System.Numerics.Vector3>(WritePosition3D, ReadPosition3D);
-    }
-
-    public void WritePosition3D(System.Numerics.Vector3 point3D, BinaryWriter writer)
-    {
-        writer.Write(point3D.X);
-        writer.Write(point3D.Y);
-        writer.Write(point3D.Z);
-    }
-
-    public System.Numerics.Vector3 ReadPosition3D(BinaryReader reader)
-    {
-        float x = (float)reader.ReadDouble();
-        float y = (float)reader.ReadDouble();
-        float z = (float)reader.ReadDouble();
-        return new System.Numerics.Vector3(x, y, z);
+        return PsiFormatVector3.GetFormat();
     }
 #endif
 }

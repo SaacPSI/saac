@@ -23,4 +23,11 @@ public class PsiPingImporter : PsiImporter<System.DateTime>
             Buffer.Clear();
         }
     }
+
+#if PLATFORM_ANDROID
+    protected override Microsoft.Psi.Interop.Serialization.IFormatDeserializer<System.DateTime> GetDeserializer()
+    {
+        return PsiFormatDateTime.GetFormat();
+    }
+#endif
 }
