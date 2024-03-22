@@ -16,6 +16,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="asset\src\OpusAudioEncoder.cs" />
+    <Compile Remove="asset\src\SipSorceryWebRTCDataPeer.cs" />
+    <Compile Remove="asset\src\SipSorceryWebRTCPeer.cs" />
+    <Compile Remove="asset\src\WebRTCUnityLogger.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="asset\src\OpusAudioEncoder.cs" />
+    <None Include="asset\src\SipSorceryWebRTCDataPeer.cs" />
+    <None Include="asset\src\SipSorceryWebRTCPeer.cs" />
+    <None Include="asset\src\WebRTCUnityLogger.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Concentus" Version="1.1.7" />
     <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
 	<PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.18.72.1-beta" />
