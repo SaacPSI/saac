@@ -14,7 +14,7 @@ namespace SAAC.Visualizations
     /// Implements a visualization object for simplified bodies.
     /// </summary>
     [VisualizationObject("Simplified Body")]
-    public class SimplifiedBodyVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Bodies.SimplifiedBody>
+    public class SimplifiedBodyVisualizationObject : ModelVisual3DValueVisualizationObject<SAAC.Bodies.SimplifiedBody>
     {
         private static readonly Dictionary<(JointId ChildJoint, JointId ParentJoint), bool> AzureKinectBodyGraph = AzureKinectBody.Bones.ToDictionary(j => j, j => true);
 
@@ -134,7 +134,7 @@ namespace SAAC.Visualizations
         public AugmentedSkeletonVisualizationObject<JointId> Skeleton { get; set; }
 
         /// <inheritdoc/>
-        public override void UpdateData()
+        public override void UpdateVisual3D()
         {
             if (this.CurrentData != null)
             {
@@ -187,8 +187,8 @@ namespace SAAC.Visualizations
         {
             bool childrenVisible = this.Visible && this.CurrentData != default;
 
-            this.UpdateChildVisibility(this.Skeleton.ModelView, childrenVisible);
-            this.UpdateChildVisibility(this.Billboard.ModelView, childrenVisible);
+            this.UpdateChildVisibility(this.Skeleton.ModelVisual3D, childrenVisible);
+            this.UpdateChildVisibility(this.Billboard.ModelVisual3D, childrenVisible);
         }
     }
 }

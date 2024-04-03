@@ -15,7 +15,7 @@ namespace SAAC.Visualizations
     /// Implements a visualization object for simplified flock group.
     /// </summary>
     [VisualizationObject("Simplified Flock Group")]
-    public class SimplifiedFlockGroupVisualizationObject : ModelVisual3DVisualizationObject<SAAC.Groups.SimplifiedFlockGroup>
+    public class SimplifiedFlockGroupVisualizationObject : ModelVisual3DValueVisualizationObject<SAAC.Groups.SimplifiedFlockGroup>
     {
         private double billboardHeightCm = 100;
 
@@ -80,7 +80,7 @@ namespace SAAC.Visualizations
         public Ray3DVisualizationObject GroupDirection { get; private set; }
 
         /// <inheritdoc/>
-        public override void UpdateData()
+        public override void UpdateVisual3D()
         {
             if (this.CurrentData != null)
             {
@@ -144,9 +144,9 @@ namespace SAAC.Visualizations
         {
             bool childrenVisible = this.Visible && this.CurrentData != default;
 
-            this.UpdateChildVisibility(this.GroupVolume.ModelView, childrenVisible);
-            this.UpdateChildVisibility(this.GroupDirection.ModelView, childrenVisible);
-            this.UpdateChildVisibility(this.Billboard.ModelView, childrenVisible);
+            this.UpdateChildVisibility(this.GroupVolume.ModelVisual3D, childrenVisible);
+            this.UpdateChildVisibility(this.GroupDirection.ModelVisual3D, childrenVisible);
+            this.UpdateChildVisibility(this.Billboard.ModelVisual3D, childrenVisible);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace SAAC.Visualizations
     /// Implements a visualization object for azure bodies with confidence color on joint.
     /// </summary>
     [VisualizationObject("Augmented Azure Body")]
-    public class AugmentedBodyVisualizationObject : ModelVisual3DVisualizationObject<AzureKinectBody>
+    public class AugmentedBodyVisualizationObject : ModelVisual3DValueVisualizationObject<AzureKinectBody>
     {
         private static readonly Dictionary<(JointId ChildJoint, JointId ParentJoint), bool> AzureKinectBodyGraph = AzureKinectBody.Bones.ToDictionary(j => j, j => true);
 
@@ -134,7 +134,7 @@ namespace SAAC.Visualizations
         public AugmentedSkeletonVisualizationObject<JointId> Skeleton { get; private set; }
 
         /// <inheritdoc/>
-        public override void UpdateData()
+        public override void UpdateVisual3D()
         {
             if (this.CurrentData != null)
             {
@@ -187,8 +187,8 @@ namespace SAAC.Visualizations
         {
             bool childrenVisible = this.Visible && this.CurrentData != default;
 
-            this.UpdateChildVisibility(this.Skeleton.ModelView, childrenVisible);
-            this.UpdateChildVisibility(this.Billboard.ModelView, childrenVisible);
+            this.UpdateChildVisibility(this.Skeleton.ModelVisual3D, childrenVisible);
+            this.UpdateChildVisibility(this.Billboard.ModelVisual3D, childrenVisible);
         }
     }
 }

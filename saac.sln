@@ -57,6 +57,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B28D807F-13D
 		Components\Unity\src\PsiExporter.cs = Components\Unity\src\PsiExporter.cs
 		Components\Unity\src\PsiFormatBoolean.cs = Components\Unity\src\PsiFormatBoolean.cs
 		Components\Unity\src\PsiFormatDateTime.cs = Components\Unity\src\PsiFormatDateTime.cs
+		Components\Unity\src\PsiFormatInteger.cs = Components\Unity\src\PsiFormatInteger.cs
 		Components\Unity\src\PsiFormatPositionAndOrientation.cs = Components\Unity\src\PsiFormatPositionAndOrientation.cs
 		Components\Unity\src\PsiFormatString.cs = Components\Unity\src\PsiFormatString.cs
 		Components\Unity\src\PsiFormatVector3.cs = Components\Unity\src\PsiFormatVector3.cs

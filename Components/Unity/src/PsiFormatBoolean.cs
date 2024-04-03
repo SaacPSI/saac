@@ -18,4 +18,3 @@ public class PsiFormatBoolean
         return reader.ReadBoolean();
     }
 }
-

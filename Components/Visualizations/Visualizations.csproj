@@ -17,7 +17,8 @@
 	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Visualization.Windows" Version="0.18.72.1-beta" />
+    <PackageReference Include="Microsoft.Msagl.WpfGraphControl" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Visualization.Windows" Version="0.19.100.1-beta" />
   </ItemGroup>
 
   <ItemGroup>
