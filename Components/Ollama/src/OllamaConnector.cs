@@ -12,17 +12,22 @@ namespace SAAC.Ollama
         private OllamaConectorConfiguration Configuration;
         private OllamaApiClient Ollama;
         private ConversationContextWithResponse? Context;
+        private string name;
 
-        public OllamaConnector(Pipeline parent, OllamaConectorConfiguration configuration)
+        public OllamaConnector(Pipeline parent, OllamaConectorConfiguration configuration, string name = nameof(OllamaConnector))
         {
+            this.name = name;
             Configuration = configuration ?? new OllamaConectorConfiguration();
-            In = parent.CreateReceiver<string>(parent, Process, nameof(In));
-            Out = parent.CreateEmitter<string>(parent, nameof(Out));
+            In = parent.CreateReceiver<string>(parent, Process, $"{name}-In");
+            Out = parent.CreateEmitter<string>(parent, $"{name}-Out");
 
             Ollama = new OllamaApiClient(Configuration.OllamaAddress);
             Context = null;
             LoadOllamaModel(Configuration.Model);
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(string message, Envelope envelope) 
         {

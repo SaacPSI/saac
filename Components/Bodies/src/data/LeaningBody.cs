@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Kinect.BodyTracking;
-using MathNet.Numerics.Statistics;
 
 namespace SAAC.Bodies
 {

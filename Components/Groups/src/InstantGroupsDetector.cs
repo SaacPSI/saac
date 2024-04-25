@@ -11,25 +11,25 @@ namespace SAAC.Groups
         /// </summary>
         public Emitter<Dictionary<uint, List<uint>>> Out { get; private set; }
 
-        /// <summary>
-        /// Gets the  connector of lists of currently tracked bodies.
-        /// </summary>
-        private Connector<Dictionary<uint, Vector3D>> InConnector;
-        
+
         /// <summary>
         /// Receiver that encapsulates the input list of skeletons
         /// </summary>
-        public Receiver<Dictionary<uint, Vector3D>> In => InConnector.In;
+        public Receiver<Dictionary<uint, Vector3D>> In { get; private set; }
 
-        
-        private InstantGroupsDetectorConfiguration Configuration { get; }
-        public InstantGroupsDetector(Pipeline parent, InstantGroupsDetectorConfiguration? configuration = null) 
+        public InstantGroupsDetectorConfiguration configuration;
+        private string name;
+
+        public InstantGroupsDetector(Pipeline parent, InstantGroupsDetectorConfiguration? configuration = null, string name = nameof(InstantGroupsDetector)) 
         {
-            Configuration = configuration ?? new  InstantGroupsDetectorConfiguration();
-            InConnector = parent.CreateConnector<Dictionary<uint, Vector3D>>(nameof(InConnector));
-            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, nameof(Out));
-            InConnector.Out.Do(Process);
+            this.name = name;
+            this.configuration = configuration ?? new InstantGroupsDetectorConfiguration();
+            In = parent.CreateReceiver<Dictionary<uint, Vector3D>>(this, Process, $"{name}-In");
+            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, $"{name}-Out");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(Dictionary<uint, Vector3D> skeletons, Envelope envelope)
         {
@@ -41,7 +41,7 @@ namespace SAAC.Groups
                     uint idBody1 = skeletons.ElementAt(iterator1).Key;
                     uint idBody2 = skeletons.ElementAt(iterator2).Key;
                     double distance = MathNet.Numerics.Distance.Euclidean(skeletons.ElementAt(iterator1).Value.ToVector(), skeletons.ElementAt(iterator2).Value.ToVector());
-                    if (distance > Configuration.DistanceThreshold)
+                    if (distance > configuration.DistanceThreshold)
                         continue;
 
                     if (rawGroups.ContainsKey(idBody1))
@@ -69,7 +69,7 @@ namespace SAAC.Groups
             {
                 rawGroup.Value.Sort();
                 List<uint> group = rawGroup.Value.Distinct().ToList();
-                uint uid = Helpers.Helpers.CantorParingSequence(group);
+                uint uid = GroupsHelpers.CantorParingSequence(group);
                 outData.Add(uid, group);
             }
             Out.Post(outData, envelope.OriginatingTime);

@@ -3,48 +3,41 @@ using Microsoft.Psi.Components;
 
 namespace SAAC.Groups
 {
-    public class EntryGroupsDetector : Subpipeline
+    public class EntryGroupsDetector : IConsumerProducer<Dictionary<uint, List<uint>>, Dictionary<uint, List<uint>>>
     {
         /// <summary>
         /// Gets the emitter of groups detected.
         /// </summary>
-        public Emitter<Dictionary<uint, List<uint>>> OutFormedEntryGroups { get; private set; }
-
-        /// <summary>
-        /// Gets list of instant groups.
-        /// </summary>
-        private Connector<Dictionary<uint, List<uint>>> InInstantGroupsConnector;
+        public Emitter<Dictionary<uint, List<uint>>> Out { get; private set; }
 
         /// <summary>
         /// Receiver that encapsulates the instant groups
         /// </summary>
-        public Receiver<Dictionary<uint, List<uint>>> InInstantGroups => InInstantGroupsConnector.In;
-
-        /// <summary>
-        ///Gets the nuitrack connector of lists of removed skeletons 
-        /// </summary>
-        private Connector<List<uint>> InRemovedBodiesConnector;
+        public Receiver<Dictionary<uint, List<uint>>> In { get; private set; }
 
         /// <summary>
         /// Receiver that encapsulates the input list of Nuitrack skeletons
         /// </summary>
-        public Receiver<List<uint>> InRemovedBodies => InRemovedBodiesConnector.In;
+        public Receiver<List<uint>> InRemovedBodies { get; private set; }
 
-        private EntryGroupsDetectorConfiguration Configuration { get; }
-        public EntryGroupsDetector(Pipeline parent, EntryGroupsDetectorConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(parent, name, defaultDeliveryPolicy)
+        private EntryGroupsDetectorConfiguration configuration;
+        private Dictionary<uint, DateTime> groupDateTime = new Dictionary<uint, DateTime>();
+        private Dictionary<uint, List<uint>> formedEntryGroups = new Dictionary<uint, List<uint>>();
+        private List<uint> fixedBodies = new List<uint>();
+        private string name;
+
+        public EntryGroupsDetector(Pipeline parent, EntryGroupsDetectorConfiguration? configuration = null, string name = nameof(EntryGroupsDetector))
         {
-            Configuration = configuration ?? new EntryGroupsDetectorConfiguration();
-            InInstantGroupsConnector = CreateInputConnectorFrom<Dictionary<uint, List<uint>>>(parent, nameof(InInstantGroupsConnector));
-            InRemovedBodiesConnector = CreateInputConnectorFrom<List<uint>>(parent, nameof(InRemovedBodiesConnector));
-            OutFormedEntryGroups = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, nameof(OutFormedEntryGroups));
-            InInstantGroupsConnector.Out.Do(Process);
-            InRemovedBodiesConnector.Do(ProcessBodiesRemoving);
+            this.name = name;
+            this.configuration = configuration ?? new EntryGroupsDetectorConfiguration();
+            In = parent.CreateReceiver<Dictionary<uint, List<uint>>>(this, Process, $"{name}-In");
+            InRemovedBodies = parent.CreateReceiver<List<uint>>(this, ProcessBodiesRemoving, $"{name}-InRemovedBodies");
+            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, $"{name}-Out");
         }
 
-        private Dictionary<uint, DateTime> GroupDateTime = new Dictionary<uint, DateTime>();
-        private Dictionary<uint, List<uint>> FormedEntryGroups = new Dictionary<uint, List<uint>>();
-        private List<uint> FixedBodies = new List<uint>();
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
+
         private void Process(Dictionary<uint, List<uint>> instantGroups, Envelope envelope)
         {
             // Entry algo:
@@ -53,13 +46,13 @@ namespace SAAC.Groups
             // Check if groups exists and if it's stable enough set it as formed
             foreach (var group in instantGroups)
             {
-                if (GroupDateTime.ContainsKey(group.Key))
+                if (groupDateTime.ContainsKey(group.Key))
                 {
-                    if (!FormedEntryGroups.ContainsKey(group.Key) && (FixedBodies.Intersect(group.Value).Count() == 0) && ((envelope.OriginatingTime - GroupDateTime[group.Key]) > Configuration.GroupFormationDelay))
+                    if (!formedEntryGroups.ContainsKey(group.Key) && (fixedBodies.Intersect(group.Value).Count() == 0) && ((envelope.OriginatingTime - groupDateTime[group.Key]) > configuration.GroupFormationDelay))
                     {
                         foreach (var body in group.Value)
-                            FixedBodies.Add(body);
-                        FormedEntryGroups.Add(group.Key, group.Value.DeepClone());
+                            fixedBodies.Add(body);
+                        formedEntryGroups.Add(group.Key, group.Value.DeepClone());
                     }
                 }
                 else
@@ -68,18 +61,18 @@ namespace SAAC.Groups
                     bool noCollision = true;
                     foreach (uint body in group.Value)
                     {
-                        if (FixedBodies.Contains(body))
+                        if (fixedBodies.Contains(body))
                         {
                             noCollision = false;
                             break;
                         }
                     }
                     if (noCollision)
-                        GroupDateTime.Add(group.Key, envelope.OriginatingTime);
+                        groupDateTime.Add(group.Key, envelope.OriginatingTime);
                 }
             }
             
-            OutFormedEntryGroups.Post(FormedEntryGroups, envelope.OriginatingTime);
+            Out.Post(formedEntryGroups, envelope.OriginatingTime);
         }
         private void ProcessBodiesRemoving(List<uint> idsToRemove, Envelope envelope)
         {
@@ -87,11 +80,11 @@ namespace SAAC.Groups
             {
                 foreach(uint id in idsToRemove)
                 {
-                    if (!FixedBodies.Contains(id))
+                    if (!fixedBodies.Contains(id))
                         continue;
-                    FixedBodies.Remove(id);
+                    fixedBodies.Remove(id);
                     uint groupId = 0;
-                    foreach (var group in FormedEntryGroups)
+                    foreach (var group in formedEntryGroups)
                     {
                         if (group.Value.Contains(id))
                         {
@@ -99,12 +92,12 @@ namespace SAAC.Groups
                             break;
                         }
                     }
-                    FormedEntryGroups[groupId].Remove(id);
-                    if (FormedEntryGroups[groupId].Count <= 1)
+                    formedEntryGroups[groupId].Remove(id);
+                    if (formedEntryGroups[groupId].Count <= 1)
                     {
-                        FixedBodies.Remove(FormedEntryGroups[groupId].ElementAt(0));
-                        FormedEntryGroups.Remove(groupId);
-                        GroupDateTime.Remove(groupId);
+                        fixedBodies.Remove(formedEntryGroups[groupId].ElementAt(0));
+                        formedEntryGroups.Remove(groupId);
+                        groupDateTime.Remove(groupId);
                     }
                 }
             }

@@ -20,26 +20,24 @@ namespace SAAC.Groups
         public Emitter<Dictionary<uint, SimplifiedFlockGroup>> Out { get; private set; }
 
         /// <summary>
-        /// Gets the  connector of lists of currently tracked bodies.
-        /// </summary>
-        private Connector<Dictionary<uint, Vector3D>> InConnector;
-
-        /// <summary>
         /// Receiver that encapsulates the input list of skeletons
         /// </summary>
-        public Receiver<Dictionary<uint, Vector3D>> In => InConnector.In;
+        public Receiver<Dictionary<uint, Vector3D>> In { get; private set; }
 
-        public SimplifiedFlockGroupsDetectorConfiguration Configuration { get; set; }
-        private Dictionary<uint, Queue<Vector2D>> BodiesMemory;
+        private SimplifiedFlockGroupsDetectorConfiguration configuration;
+        private Dictionary<uint, Queue<Vector2D>> bodiesMemory;
+        private string name;
 
-        public SimplifiedFlockGroupsDetector(Pipeline parent, SimplifiedFlockGroupsDetectorConfiguration? configuration = null)
+        public SimplifiedFlockGroupsDetector(Pipeline parent, SimplifiedFlockGroupsDetectorConfiguration? configuration = null, string name = nameof(SimplifiedFlockGroupsDetector))
         {
-            BodiesMemory = new Dictionary<uint, Queue<Vector2D>>();
-            Configuration = configuration ?? new SimplifiedFlockGroupsDetectorConfiguration();
-            InConnector = parent.CreateConnector<Dictionary<uint, Vector3D>>(nameof(InConnector));
-            Out = parent.CreateEmitter<Dictionary<uint, SimplifiedFlockGroup>>(this, nameof(Out));
-            InConnector.Out.Do(Process);
+            this.name = name;  
+            bodiesMemory = new Dictionary<uint, Queue<Vector2D>>();
+            this.configuration = configuration ?? new SimplifiedFlockGroupsDetectorConfiguration();
+            In = parent.CreateReceiver<Dictionary<uint, Vector3D>>(this, Process, $"{name}-In");
+            Out = parent.CreateEmitter<Dictionary<uint, SimplifiedFlockGroup>>(this, $"{name}-Out");
         }
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(Dictionary<uint, Vector3D> skeletons, Envelope envelope)
         {
@@ -47,9 +45,9 @@ namespace SAAC.Groups
                 return;
             UpdateMemory(skeletons);
             Dictionary<uint, (Vector2D, double, Vector2D)> rawData = new Dictionary<uint, (Vector2D, double, Vector2D)>();
-            foreach (var body in BodiesMemory)
+            foreach (var body in bodiesMemory)
             {
-                var means = MeanVectors(body.Value, Configuration.QueueMaxCount/2);
+                var means = MeanVectors(body.Value, configuration.QueueMaxCount/2);
                 if (means.Count < 2) continue;
                 var (velocities, directions) = CalculateDistancesAndDirections(means);
                 rawData.Add(body.Key,(means.First(), velocities.First(), directions.First())); 
@@ -72,12 +70,12 @@ namespace SAAC.Groups
                     // Direction
                     double direction = rawData[idBody1].Item3.AngleTo(rawData[idBody2].Item3).Radians;
 
-                    double distanceComponent = Configuration.DistanceWeigth * CalculateBaseModelComponent(distance);
-                    double velocityComponent = Configuration.VelocityWeigth * CalculateBaseModelComponent(velocity);
-                    double directionComponent = Configuration.DirectionWeigth * CalculateBaseModelComponent(direction);
+                    double distanceComponent = configuration.DistanceWeigth * CalculateBaseModelComponent(distance);
+                    double velocityComponent = configuration.VelocityWeigth * CalculateBaseModelComponent(velocity);
+                    double directionComponent = configuration.DirectionWeigth * CalculateBaseModelComponent(direction);
                     var modelValue = distanceComponent + velocityComponent + directionComponent;
 
-                    if (modelValue < Configuration.ModelThreshold)
+                    if (modelValue < configuration.ModelThreshold)
                         continue;
 
                     if (rawGroups.ContainsKey(idBody1))
@@ -130,11 +128,11 @@ namespace SAAC.Groups
             // Adding this might raise to much the complexity.
             foreach (var skeleton in skeletons)
             {
-                if (!BodiesMemory.ContainsKey(skeleton.Key))
-                    BodiesMemory.Add(skeleton.Key, new Queue<Vector2D>());
-                BodiesMemory[skeleton.Key].Enqueue(new Vector2D(skeleton.Value.X, skeleton.Value.Z));
-                while (BodiesMemory[skeleton.Key].Count > Configuration.QueueMaxCount)
-                    BodiesMemory[skeleton.Key].Dequeue();
+                if (!bodiesMemory.ContainsKey(skeleton.Key))
+                    bodiesMemory.Add(skeleton.Key, new Queue<Vector2D>());
+                bodiesMemory[skeleton.Key].Enqueue(new Vector2D(skeleton.Value.X, skeleton.Value.Z));
+                while (bodiesMemory[skeleton.Key].Count > configuration.QueueMaxCount)
+                    bodiesMemory[skeleton.Key].Dequeue();
             }
         }
 

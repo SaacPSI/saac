@@ -25,39 +25,34 @@ namespace SAAC.Groups
         public Emitter<Dictionary<uint, List<uint>>> Out { get; private set; }
 
         /// <summary>
-        /// Gets list of instant groups.
-        /// </summary>
-        private Connector<Dictionary<uint, List<uint>>> InConnector;
-        /// <summary>
         /// Receiver that encapsulates the instant groups
         /// </summary>
-        public Receiver<Dictionary<uint, List<uint>>> In => InConnector.In;
+        public Receiver<Dictionary<uint, List<uint>>> In { get; private set; }
 
-        /// <summary>
-        ///Gets the nuitrack connector of lists of removed skeletons 
-        /// </summary>
-        private Connector<List<uint>> InRemovedBodiesConnector;
         /// <summary>
         /// Receiver that encapsulates the input list of Nuitrack skeletons
         /// </summary>
-        public Receiver<List<uint>> InRemovedBodies => InRemovedBodiesConnector.In;
+        public Receiver<List<uint>> InRemovedBodies { get; private set; }
 
-        private IntegratedGroupsDetectorConfiguration Configuration { get; }
-        public IntegratedGroupsDetector(Pipeline parent, IntegratedGroupsDetectorConfiguration? configuration = null)
-        {
-            Configuration = configuration ?? new IntegratedGroupsDetectorConfiguration();
-            InConnector = parent.CreateConnector<Dictionary<uint, List<uint>>>(nameof(InConnector));
-            InRemovedBodiesConnector = parent.CreateConnector<List<uint>>(nameof(InRemovedBodiesConnector));
-            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, nameof(Out));
-            InConnector.Out.Do(Process);
-            InRemovedBodiesConnector.Do(ProcessBodiesRemoving);
-        }
-
-        private Dictionary<uint, uint> GroupPairing= new Dictionary<uint, uint>();
+        private IntegratedGroupsDetectorConfiguration configuration;
+        private Dictionary<uint, uint> GroupPairing = new Dictionary<uint, uint>();
         private Dictionary<uint, DateTime> BodyDateTime = new Dictionary<uint, DateTime>();
         private Dictionary<uint, List<uint>> GroupsParameters = new Dictionary<uint, List<uint>>();
         private Dictionary<uint, Dictionary<uint, double>> BodyToWeightedGroups = new Dictionary<uint, Dictionary<uint, double>>();
         private List<uint> BodyRemoved = new List<uint>();
+        private string name;
+
+        public IntegratedGroupsDetector(Pipeline parent, IntegratedGroupsDetectorConfiguration? configuration = null, string name = nameof(IntegratedGroupsDetector))
+        {
+            this.name = name;
+            this.configuration = configuration ?? new IntegratedGroupsDetectorConfiguration();
+            In = parent.CreateReceiver<Dictionary<uint, List<uint>>>(this, Process, $"{name}-In");
+            InRemovedBodies = parent.CreateReceiver<List<uint>>(this, ProcessBodiesRemoving, $"{name}-InRemovedBodies");
+            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, $"{name}-Out");
+        }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(Dictionary<uint, List<uint>> instantGroups, Envelope envelope)
         {
@@ -73,7 +68,7 @@ namespace SAAC.Groups
                         if (newGroup.Value.Count <= group.Value.Count)
                             continue;
                         var intersection = group.Value.Intersect(newGroup.Value);
-                        if(intersection.Any() && (group.Value.Count/intersection.Count()) >= Configuration.IntersectionPercentage)
+                        if(intersection.Any() && (group.Value.Count/intersection.Count()) >= configuration.IntersectionPercentage)
                         {
                             if(groupsToRemove.ContainsKey(newGroup.Key))
                                 groupsToRemove[newGroup.Key].Add(group.Key);
@@ -110,24 +105,24 @@ namespace SAAC.Groups
                         {
                             TimeSpan span = envelope.OriginatingTime - BodyDateTime[body];
                             if (BodyToWeightedGroups[body].ContainsKey(group.Key))
-                                BodyToWeightedGroups[body][group.Key] += Math.Pow(span.TotalMilliseconds, Configuration.IncreaseWeightFactor);
+                                BodyToWeightedGroups[body][group.Key] += Math.Pow(span.TotalMilliseconds, configuration.IncreaseWeightFactor);
                             else
-                                BodyToWeightedGroups[body].Add(group.Key, Math.Pow(span.TotalMilliseconds, Configuration.IncreaseWeightFactor /** BodyToWeightedGroups[body].Count == 0 ? 10.0 :1.0 */));
+                                BodyToWeightedGroups[body].Add(group.Key, Math.Pow(span.TotalMilliseconds, configuration.IncreaseWeightFactor /** BodyToWeightedGroups[body].Count == 0 ? 10.0 :1.0 */));
                             if(GroupPairing.ContainsKey(group.Key) && BodyToWeightedGroups[body].ContainsKey(GroupPairing[group.Key]))
-                                BodyToWeightedGroups[body][GroupPairing[group.Key]] += Math.Pow(span.TotalMilliseconds, Configuration.IncreaseWeightFactor);
+                                BodyToWeightedGroups[body][GroupPairing[group.Key]] += Math.Pow(span.TotalMilliseconds, configuration.IncreaseWeightFactor);
                             for (uint iterator = 0; iterator < BodyToWeightedGroups[body].Count; iterator++)
                             {
                                 uint Key = BodyToWeightedGroups[body].ElementAt((int)iterator).Key;
                                 if (Key == group.Key)
                                     continue;
-                                BodyToWeightedGroups[body][Key] -= Math.Pow(span.TotalMilliseconds, Configuration.DecreaseWeightFactor);
+                                BodyToWeightedGroups[body][Key] -= Math.Pow(span.TotalMilliseconds, configuration.DecreaseWeightFactor);
                             }
                             BodyDateTime[body] = envelope.OriginatingTime;
                         }
                         else
                         {
                             Dictionary<uint, double> nDic = new Dictionary<uint, double>();
-                            nDic.Add(group.Key, Configuration.IncreaseWeightFactor);
+                            nDic.Add(group.Key, configuration.IncreaseWeightFactor);
                             BodyToWeightedGroups.Add(body, nDic);
                             BodyDateTime.Add(body, envelope.OriginatingTime);
                         }

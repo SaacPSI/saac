@@ -32,11 +32,11 @@ namespace SAAC.Bodies
         /// </summary>
         public Receiver<List<SimplifiedBody>> InBodiesSimplified;
 
-        private SimpleBodiesPositionExtractionConfiguration Configuration { get; }
+        private SimpleBodiesPositionExtractionConfiguration configuration;
 
         public SimpleBodiesPositionExtraction(Pipeline parent, SimpleBodiesPositionExtractionConfiguration? configuration = null)
         {
-            Configuration = configuration ?? new SimpleBodiesPositionExtractionConfiguration();
+            this.configuration = configuration ?? new SimpleBodiesPositionExtractionConfiguration();
             InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(parent, Process, nameof(InBodiesNuitrack));
             InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(parent, Process, nameof(InBodiesAzure));
             InBodiesSimplified = parent.CreateReceiver<List<SimplifiedBody>>(parent, Process, nameof(InBodiesSimplified));
@@ -48,7 +48,7 @@ namespace SAAC.Bodies
             Dictionary<uint, Vector3D> skeletons = new Dictionary<uint, Vector3D>();
 
             foreach (var skeleton in bodies)
-                skeletons.Add((uint)skeleton.ID, Helpers.Helpers.NuitrackToMathNet(skeleton.GetJoint(Configuration.NuitrackJointAsPosition).Real));
+                skeletons.Add((uint)skeleton.ID, Helpers.Helpers.NuitrackToMathNet(skeleton.GetJoint(configuration.NuitrackJointAsPosition).Real));
             Out.Post(skeletons, envelope.OriginatingTime);
         }
 
@@ -57,7 +57,7 @@ namespace SAAC.Bodies
             Dictionary<uint, Vector3D> skeletons = new Dictionary<uint, Vector3D>();
 
             foreach (var skeleton in bodies)
-                skeletons.Add(skeleton.TrackingId, skeleton.Joints[Configuration.GeneralJointAsPosition].Pose.Origin.ToVector3D());
+                skeletons.Add(skeleton.TrackingId, skeleton.Joints[configuration.GeneralJointAsPosition].Pose.Origin.ToVector3D());
             Out.Post(skeletons, envelope.OriginatingTime);
         }
 
@@ -67,7 +67,7 @@ namespace SAAC.Bodies
 
             foreach (var skeleton in bodies)
                 if(!skeletons.ContainsKey(skeleton.Id))
-                    skeletons.Add(skeleton.Id, skeleton.Joints[Configuration.GeneralJointAsPosition].Item2);
+                    skeletons.Add(skeleton.Id, skeleton.Joints[configuration.GeneralJointAsPosition].Item2);
             Out.Post(skeletons, envelope.OriginatingTime);
         }
     }

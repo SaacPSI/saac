@@ -14,6 +14,7 @@ namespace SAAC.Biopac {
         private bool shutdown = false;
         private bool isSynchOnly;
         private readonly Pipeline pipelineLocal;
+        private string name;
 
         /// <summary>
         /// Emitter that encapsulates the string output stream.
@@ -29,18 +30,20 @@ namespace SAAC.Biopac {
         /// <param name="syncOnly">Allow to select the communication mode with AcqKnowledge. 
         /// If true  the componant will only start & stop the acquisition, at false it will collect data throught TCP</param>
         /// </summary>
-        public Biopac(Pipeline pipeline, bool syncOnly = false)
+        public Biopac(Pipeline pipeline, bool syncOnly = false, string name = nameof(Biopac))
         {
-            OutString = pipeline.CreateEmitter<string>(this, nameof(OutString));
-            Out = pipeline.CreateEmitter<int>(this, nameof(Out));
+            OutString = pipeline.CreateEmitter<string>(this, $"{name}-OutString");
+            Out = pipeline.CreateEmitter<int>(this, $"{name}-Out");
 
             pipelineLocal = pipeline;
+            this.name = name;
 
             communicator = new BiopacCommunicatorWrapper(syncOnly);
 
             // Application exit callback
             pipeline.ComponentCompleted += OnExitMethod;
             isSynchOnly = syncOnly;
+            this.name = name;
         }
 
         private void Reset() {
@@ -50,6 +53,9 @@ namespace SAAC.Biopac {
                 }
             }
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         /// <summary>
         /// Generates and time-stamps a data from Biopac.

@@ -33,15 +33,15 @@ namespace SAAC.Bodies
         /// </summary>
         public Emitter<Dictionary<(uint, uint), List<HandsProximity>>> Out { get; }
 
-        public HandsProximityDetectorConfiguration Configuration { get; private set; }
+        private HandsProximityDetectorConfiguration configuration;
 
         public HandsProximityDetector(Pipeline pipeline, HandsProximityDetectorConfiguration configuration = null)
         {
-            Configuration = configuration ?? new HandsProximityDetectorConfiguration();
+            this.configuration = configuration ?? new HandsProximityDetectorConfiguration();
             InConnector = pipeline.CreateConnector<List<SimplifiedBody>>(nameof(In));
             InPairConnector = pipeline.CreateConnector<List<(uint, uint)>>(nameof(InPair));
             Out = pipeline.CreateEmitter<Dictionary<(uint, uint), List<HandsProximity>>>(this, nameof(Out));
-            if (Configuration.IsPairToCheckGiven)
+            if (this.configuration.IsPairToCheckGiven)
                 InConnector.Out.Pair(InPairConnector, DeliveryPolicy.LatestMessage, DeliveryPolicy.LatestMessage).Do(Process);
             else
                 InConnector.Out.Do(Process);
@@ -119,7 +119,7 @@ namespace SAAC.Bodies
         {    
             var handLeft = bodie.Joints[JointId.HandLeft];
             var handRight = bodie.Joints[JointId.HandRight];
-            if (new[] { handLeft, handRight}.Select(j => j.Item1).Any(c => (int)c <= (int)Configuration.MinimumConfidenceLevel))
+            if (new[] { handLeft, handRight}.Select(j => j.Item1).Any(c => (int)c <= (int)configuration.MinimumConfidenceLevel))
             {
                 left_right = (new Point3D(), new Point3D());
                 return false;
@@ -131,7 +131,7 @@ namespace SAAC.Bodies
 
         private bool ProcessPoints(in Point3D origin, in Point3D target)
         {
-            return origin.DistanceTo(target) <= Configuration.MinimumDistanceThreshold;
+            return origin.DistanceTo(target) <= configuration.MinimumDistanceThreshold;
         }
     }
 }

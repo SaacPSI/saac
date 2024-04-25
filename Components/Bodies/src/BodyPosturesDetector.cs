@@ -16,11 +16,11 @@ namespace SAAC.Bodies
 
         public Emitter<Dictionary<uint, List<Posture>>> Out { get; }
 
-        private BodyPosturesDetectorConfiguration Configuration;
+        private BodyPosturesDetectorConfiguration configuration;
 
         public BodyPosturesDetector(Pipeline pipeline, BodyPosturesDetectorConfiguration? configuration = null) 
         {
-            Configuration = configuration ?? new BodyPosturesDetectorConfiguration();
+            this.configuration = configuration ?? new BodyPosturesDetectorConfiguration();
             In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, Process, nameof(In));
             Out = pipeline.CreateEmitter<Dictionary<uint, List<BodyPosturesDetector.Posture>>>(this, nameof(Out));
         }
@@ -53,7 +53,7 @@ namespace SAAC.Bodies
 
             var neck = body.Joints[JointId.Neck];
             var pelvis = body.Joints[JointId.Pelvis];
-            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { neck, pelvis }, Configuration.MinimumConfidenceLevel))
+            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { neck, pelvis }, configuration.MinimumConfidenceLevel))
                 return postures;
 
             Line3D reference = new Line3D(pelvis.Item2.ToPoint3D(), neck.Item2.ToPoint3D());
@@ -74,7 +74,7 @@ namespace SAAC.Bodies
             var rightWrist = body.Joints[JointId.WristRight];
             var rightElbow = body.Joints[JointId.ElbowRight];
 
-            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftWrist, leftElbow, rightWrist, rightElbow }, Configuration.MinimumConfidenceLevel))
+            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftWrist, leftElbow, rightWrist, rightElbow }, configuration.MinimumConfidenceLevel))
                 return false;
 
             Line3D left = new Line3D(leftWrist.Item2.ToPoint3D(), leftElbow.Item2.ToPoint3D());
@@ -82,7 +82,7 @@ namespace SAAC.Bodies
 
             var (pOnLine1, pOnLine2) = left.ClosestPointsBetween(right, mustBeOnSegments: false);
             var (pOnSeg1, pOnSeg2) = left.ClosestPointsBetween(right, mustBeOnSegments: true);
-            return pOnLine1.Equals(pOnSeg1, tolerance: Configuration.MinimumDistanceThreshold) && pOnLine2.Equals(pOnSeg2, tolerance: Configuration.MinimumDistanceThreshold);
+            return pOnLine1.Equals(pOnSeg1, tolerance: configuration.MinimumDistanceThreshold) && pOnLine2.Equals(pOnSeg2, tolerance: configuration.MinimumDistanceThreshold);
         }
 
         private bool CheckSittings(in SimplifiedBody body, in Line3D reference)
@@ -92,12 +92,12 @@ namespace SAAC.Bodies
             var rightKnee = body.Joints[JointId.KneeRight];
             var rightHip = body.Joints[JointId.HipRight];
 
-            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftKnee, leftHip, rightKnee, rightHip }, Configuration.MinimumConfidenceLevel))
+            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftKnee, leftHip, rightKnee, rightHip }, configuration.MinimumConfidenceLevel))
                 return false;
 
             Line3D left = new Line3D(leftKnee.Item2.ToPoint3D(), leftHip.Item2.ToPoint3D());
             Line3D right = new Line3D(rightKnee.Item2.ToPoint3D(), rightHip.Item2.ToPoint3D());
-            return AngleToDegrees(reference, left) > Configuration.MinimumSittingDegrees && AngleToDegrees(reference, right) > Configuration.MinimumSittingDegrees;
+            return AngleToDegrees(reference, left) > configuration.MinimumSittingDegrees && AngleToDegrees(reference, right) > configuration.MinimumSittingDegrees;
         }
 
         private bool CheckStanding(in SimplifiedBody body, in Line3D reference)
@@ -107,13 +107,13 @@ namespace SAAC.Bodies
             var rightAnkle = body.Joints[JointId.AnkleRight];
             var rightHip = body.Joints[JointId.HipRight];
 
-            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftAnkle, leftHip, rightAnkle, rightHip }, Configuration.MinimumConfidenceLevel))
+            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { leftAnkle, leftHip, rightAnkle, rightHip }, configuration.MinimumConfidenceLevel))
                 return false;
      
             Line3D left = new Line3D(leftAnkle.Item2.ToPoint3D(), leftHip.Item2.ToPoint3D());
             Line3D right = new Line3D(rightAnkle.Item2.ToPoint3D(), rightHip.Item2.ToPoint3D());
 
-            return AngleToDegrees(reference, left) < Configuration.MaximumStandingDegrees && AngleToDegrees(reference, right) < Configuration.MaximumStandingDegrees;
+            return AngleToDegrees(reference, left) < configuration.MaximumStandingDegrees && AngleToDegrees(reference, right) < configuration.MaximumStandingDegrees;
         }
 
         private bool CheckPointingRight(in SimplifiedBody body)
@@ -128,13 +128,13 @@ namespace SAAC.Bodies
 
         private bool CheckPointing(in Tuple<JointConfidenceLevel,MathNet.Spatial.Euclidean.Vector3D> wrist, in Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D> elbow, in Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D> shoulder)
         {
-            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { wrist, elbow, shoulder }, Configuration.MinimumConfidenceLevel))
+            if (!Helpers.Helpers.CheckConfidenceLevel(new[] { wrist, elbow, shoulder }, configuration.MinimumConfidenceLevel))
                 return false;
 
             Line3D Forarm = new Line3D(wrist.Item2.ToPoint3D(), elbow.Item2.ToPoint3D());
             Line3D Arm = new Line3D(wrist.Item2.ToPoint3D(), shoulder.Item2.ToPoint3D());
 
-            return AngleToDegrees(Arm, Forarm) < Configuration.MaximumPointingDegrees;
+            return AngleToDegrees(Arm, Forarm) < configuration.MaximumPointingDegrees;
         }
 
         private double AngleToDegrees(in Line3D origin, in Line3D target) 

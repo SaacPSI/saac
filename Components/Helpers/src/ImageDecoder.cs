@@ -1,40 +1,36 @@
-﻿using System;
-using Microsoft.Psi;
+﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Imaging;
-using Microsoft.SqlServer.Server;
 
 namespace SAAC.Helpers
 {  
     /// <summary>
     /// Class that decode image.
     /// </summary>
-    public class ImageDecoder : Subpipeline
+    public class ImageDecoder : IConsumerProducer<Shared<EncodedImage>, Shared<Image>>
     {
-        /// <summary>
-        /// Encoded Image connector
-        /// </summary>
-        private Connector<Shared<EncodedImage>> InConnector;
 
         /// <summary>
         /// Encoded Image receiver
         /// </summary>
-        public Receiver<Shared<EncodedImage>> In => InConnector.In;
+        public Receiver<Shared<EncodedImage>> In { get; private set; }
 
         /// <summary>
         /// Image emitter
         /// </summary>
-        public Emitter<Shared<Image>> Out;
+        public Emitter<Shared<Image>> Out { get; private set; }
 
+        private string name;
 
-        public ImageDecoder(Pipeline parent, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(parent, name, defaultDeliveryPolicy)
+        public ImageDecoder(Pipeline parent, string name = nameof(ImageDecoder))
         {
-           
-            InConnector = parent.CreateConnector<Shared<EncodedImage>>(nameof(In));
+            this.name = name;
+            In = parent.CreateReceiver<Shared<EncodedImage>>(this, Process, $"{name}-In");
             Out = parent.CreateEmitter<Shared<Image>>(parent, nameof(Out));
-            InConnector.Out.Do(Process);
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(Shared<EncodedImage> data, Envelope envelope)
         {

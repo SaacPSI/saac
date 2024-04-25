@@ -23,13 +23,13 @@ namespace SAAC.Bodies
         /// </summary>
         public Receiver<List<AzureKinectBody>> InBodiesAzure;
 
-        private Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> NuiToAzure;
+        private Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> nuiToAzure;
         public BodiesConverter(Pipeline parent)
         {
             InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(this, Process, nameof(InBodiesNuitrack));
             InBodiesAzure= parent.CreateReceiver<List<AzureKinectBody>>(this, Process, nameof(InBodiesAzure));
             Out = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(Out));
-            NuiToAzure = new Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> {
+            nuiToAzure = new Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> {
                 { JointType.Head, Microsoft.Azure.Kinect.BodyTracking.JointId.Head },
                 { JointType.Neck, Microsoft.Azure.Kinect.BodyTracking.JointId.Neck },
                 { JointType.Torso, Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest },
@@ -63,8 +63,8 @@ namespace SAAC.Bodies
             {
                 SimplifiedBody body = new SimplifiedBody(SimplifiedBody.SensorOrigin.Azure, (uint)skeleton.ID);
                 foreach (var joint in skeleton.Joints)
-                    if (NuiToAzure.ContainsKey(joint.Type))
-                        body.Joints.Add(NuiToAzure[joint.Type], new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
+                    if (nuiToAzure.ContainsKey(joint.Type))
+                        body.Joints.Add(nuiToAzure[joint.Type], new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
                             (Helpers.Helpers.FloatToConfidence(joint.Confidence), Helpers.Helpers.NuitrackToMathNet(joint.Real)));
                 CompleteBody(ref body);
                 returnedBodies.Add(body);

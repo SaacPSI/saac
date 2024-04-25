@@ -25,11 +25,11 @@ namespace SAAC.Whisper
         /// </remarks>
         private const int GapSampleThreshold = 1;
 
-        private readonly List<Section> _sections = new();
+        private readonly List<Section> sections;
 
-        private readonly List<SegmentData> _segments = new();
+        private readonly List<SegmentData> segments;
 
-        private readonly Lazy<WhisperProcessor> _processor;
+        private readonly Lazy<WhisperProcessor> processor;
 
         #region Options
         /*private string modelDirectory = "";
@@ -157,23 +157,29 @@ namespace SAAC.Whisper
 
         private string? modelFilename;
         private WhisperSpeechRecognizerConfiguration configuration;
-
         private TimeSpan bufferedDuration = TimeSpan.Zero;
-
         private TimeSpan lastPartialDuration = TimeSpan.Zero;
+        private string name;
 
-        public WhisperSpeechRecognizer(Pipeline pipeline, WhisperSpeechRecognizerConfiguration config) {
-            _processor = new Lazy<WhisperProcessor>(LazyInitialize);
+        public WhisperSpeechRecognizer(Pipeline pipeline, WhisperSpeechRecognizerConfiguration config, string name = nameof(WhisperSpeechRecognizer)) 
+        {
+            this.name = name;
+            processor = new Lazy<WhisperProcessor>(LazyInitialize); 
+            sections = new List<Section>();
+            segments = new List<SegmentData>();
 
-            In = pipeline.CreateReceiver<(AudioBuffer, bool)>(this, Process, nameof(In));
-            PartialOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, nameof(PartialOut));
-            FinalOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, nameof(FinalOut));
-            Out = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, nameof(Out));
+            In = pipeline.CreateReceiver<(AudioBuffer, bool)>(this, Process, $"{name}-In");
+            PartialOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, $"{name}-PartialOut");
+            FinalOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, $"{name}-FinalOut");
+            Out = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, $"{name}-Out");
 
             configuration = config;
 
             pipeline.PipelineRun += OnPipelineRun;
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void OnPipelineRun(object sender, PipelineRunEventArgs args) {
             using var tokenSource = new CancellationTokenSource(/*-1*/);
@@ -209,7 +215,7 @@ namespace SAAC.Whisper
                 }
             }
             if (!configuration.lazyInitialization) {
-                _ = _processor.Value;
+                _ = processor.Value;
             }
         }
 
@@ -285,8 +291,8 @@ namespace SAAC.Whisper
             if (data.Format.BitsPerSample != 16) {
                 throw new Exception("Only 16-bit PCM audio is currently supported.");//TODO: 24-bit on demand
             }
-            if (_sections.Count > 0) {
-                var format = _sections[0].Buffer.Format;
+            if (sections.Count > 0) {
+                var format = sections[0].Buffer.Format;
                 if (!data.Format.Equals(format)) {
                     throw new Exception("Audio format mismatch.");
                 }
@@ -295,14 +301,14 @@ namespace SAAC.Whisper
             var newSection = new Section(data.DeepClone(), timestamp, data.Duration);
 
             /* Fill Gap */
-            if (_sections.Count > 0) {
-                var last = _sections.Last();
+            if (sections.Count > 0) {
+                var last = sections.Last();
                 var blankTime = inputTimeMode switch {
                     TimestampMode.AtEnd => (newSection.OriginatingTime - newSection.Buffer.Duration) - last.OriginatingTime,
                     TimestampMode.AtStart => newSection.OriginatingTime - (last.OriginatingTime + last.Buffer.Duration),
                     _ => throw new InvalidOperationException(),
                 };
-                var format = _sections[0].Buffer.Format;
+                var format = sections[0].Buffer.Format;
                 var missedSamples = (int)(blankTime.TotalSeconds * format.SamplesPerSec);
                 if (missedSamples > GapSampleThreshold) {
                     var factor = format.Channels * format.BitsPerSample / 8;
@@ -315,32 +321,32 @@ namespace SAAC.Whisper
                     };
                     var gapSection = new Section(gap, gapTimestamp, gap.Duration);
 
-                    _sections.Add(gapSection);
+                    sections.Add(gapSection);
                     bufferedDuration += gapSection.Buffer.Duration;
                 }
             }
 
-            _sections.Add(newSection);
+            sections.Add(newSection);
             bufferedDuration += newSection.Buffer.Duration;
 
             Debug.Assert(bufferedDuration <= TimeSpan.FromSeconds(30));//TODO: we haven't tested what will happen if we feed more than 30 seconds of audio
         }
 
         private void ProcessAndPost(bool isFinal) {
-            if (_sections.Count <= 0) {
+            if (sections.Count <= 0) {
                 return;
             }
             var inputTimeMode = configuration.inputTimestampMode;
             var outputTimeMode = configuration.outputTimestampMode;
-            var processor = _processor.Value;//Lazy initialize, but before data pre-processing
-            var format = _sections[0].Buffer.Format;
+            var processorValue = processor.Value;//Lazy initialize, but before data pre-processing
+            var format = sections[0].Buffer.Format;
             var factor = format.Channels * format.BitsPerSample / 8;
-            var size = _sections.Sum(s => s.Buffer.Length) / factor;
+            var size = sections.Sum(s => s.Buffer.Length) / factor;
             var samples = ArrayPool<float>.Shared.Rent(size);
             try {
                 /* Merge */
                 var sampleOffset = 0;
-                foreach (var section in _sections) {
+                foreach (var section in sections) {
                     var bufferOffset = 0;
                     while (bufferOffset < section.Buffer.Length) {
                         var channelIdx = 0;
@@ -365,15 +371,15 @@ namespace SAAC.Whisper
 
                 /* Process */
                 var valid = samples.AsSpan(0, size);
-                processor.Process(valid);
+                processorValue.Process(valid);
 
                 /* Output */
-                if (_segments.Count == 0) {
+                if (segments.Count == 0) {
                     return;
                 }
-                var firstSection = _sections.First();
-                Debug.Assert(Math.Abs(bufferedDuration.TotalMilliseconds - _sections.Aggregate(TimeSpan.Zero, (v, s) => v + s.Buffer.Duration).TotalMilliseconds) < 1);
-                foreach (var segment in _segments) {
+                var firstSection = sections.First();
+                Debug.Assert(Math.Abs(bufferedDuration.TotalMilliseconds - sections.Aggregate(TimeSpan.Zero, (v, s) => v + s.Buffer.Duration).TotalMilliseconds) < 1);
+                foreach (var segment in segments) {
                     /* Basic Info */
                     var text = segment.Text;
                     var confidence = segment.Probability;
@@ -383,7 +389,7 @@ namespace SAAC.Whisper
                     if (!configuration.outputAudio) {
                         audio = null;
                     } else {
-                        var audioBuffer = SegmentAudioBuffer(segment, format, _sections);
+                        var audioBuffer = SegmentAudioBuffer(segment, format, sections);
                         audio = new AudioBuffer(audioBuffer, format);
                     }
                     var result = new StreamingSpeechRecognitionResult(isFinal, text, confidence, Enumerable.Empty<SpeechRecognitionAlternate>(), audio, duration);
@@ -410,15 +416,15 @@ namespace SAAC.Whisper
             } finally {
                 ArrayPool<float>.Shared.Return(samples);
                 if (isFinal) {
-                    _sections.Clear();
+                    sections.Clear();
                     bufferedDuration = TimeSpan.Zero;
                 }
-                _segments.Clear();
+                segments.Clear();
             }
         }
 
         private void OnSegment(SegmentData segment) {
-            _segments.Add(segment);
+            segments.Add(segment);
         }
 
         private void OnProgress(int progress) {
@@ -606,8 +612,8 @@ namespace SAAC.Whisper
             }
             disposed = true;
 
-            if (_processor.IsValueCreated) {
-                _processor.Value.Dispose();
+            if (processor.IsValueCreated) {
+                processor.Value.Dispose();
             }
         }
         #endregion

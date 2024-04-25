@@ -20,10 +20,16 @@ namespace SAAC.WebRTC
     {
         public Emitter<T> Out { get; private set; }
 
-        public WebRTCDataChannelToEmitter(Pipeline parent, string name = nameof(WebRTCDataChannelToEmitter<T>), DeliveryPolicy? defaultDeliveryPolicy = null)
+        private string name;
+
+        public WebRTCDataChannelToEmitter(Pipeline parent, string name = nameof(WebRTCDataChannelToEmitter<T>))
         {
-            Out = parent.CreateEmitter<T>(parent, name);
+            this.name = name;  
+            Out = parent.CreateEmitter<T>(parent, $"{name}-Out");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private struct JSONStructT{ public string Timestamp; public T Data; }
 

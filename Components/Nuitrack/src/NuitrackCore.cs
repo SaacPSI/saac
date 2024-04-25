@@ -9,39 +9,39 @@ namespace SAAC.Nuitrack
     /// </summary>
     internal sealed class NuitrackCore : IDisposable
     {
-        static private NuitrackCore? Instance = null;
+        static private NuitrackCore? instance = null;
 
         private static List<CameraDeviceInfo>? allDevices = null;
 
-        private bool NuitrackInit = false;
-        private bool NuitrackRelease = false;
+        private bool nuitrackInit = false;
+        private bool nuitrackRelease = false;
         private Thread? CaptureThread = null;
 
-        private Dictionary<string, ColorSensor> ColorSensors = new Dictionary<string, ColorSensor>();
+        private Dictionary<string, ColorSensor> colorSensors = new Dictionary<string, ColorSensor>();
         private Dictionary<string, DepthSensor> DepthSensors = new Dictionary<string, DepthSensor>();
         private Dictionary<string, SkeletonTracker> SkeletonTrackers = new Dictionary<string, SkeletonTracker>();
-        private Dictionary<string, HandTracker> HandTrackers = new Dictionary<string, HandTracker>();
-        private Dictionary<string, UserTracker> UserTrackers = new Dictionary<string, UserTracker>();
-        private Dictionary<string, GestureRecognizer> GestureRecognizers = new Dictionary<string, GestureRecognizer>();
-        private List<NuitrackDevice> Devices = new List<NuitrackDevice>();
-        private List<Tuple<NuitrackSensorConfiguration, NuitrackSensor>> Configurations = new List<Tuple<NuitrackSensorConfiguration, NuitrackSensor>>();
+        private Dictionary<string, HandTracker> handTrackers = new Dictionary<string, HandTracker>();
+        private Dictionary<string, UserTracker> userTrackers = new Dictionary<string, UserTracker>();
+        private Dictionary<string, GestureRecognizer> gestureRecognizers = new Dictionary<string, GestureRecognizer>();
+        private List<NuitrackDevice> devices = new List<NuitrackDevice>();
+        private List<Tuple<NuitrackSensorConfiguration, NuitrackSensor>> configurations = new List<Tuple<NuitrackSensorConfiguration, NuitrackSensor>>();
         private List<Module> waitingModule = new List<Module>();
 
 
-        private bool IsStarted = false;
-        private bool Shutdown = false;
+        private bool isStarted = false;
+        private bool shutdown = false;
 
         /// <summary>
         /// The underlying Nuitrack device.
         /// </summary>
         /// 
-        private readonly object CameraOpenLock = new object();
+        private readonly object cameraOpenLock = new object();
 
         static public ref NuitrackCore GetNuitrackCore()
         {
-            if(Instance == null)
-                Instance = new NuitrackCore();
-            return ref Instance;
+            if(instance == null)
+                instance = new NuitrackCore();
+            return ref instance;
         }
 
         private NuitrackCore()
@@ -50,7 +50,7 @@ namespace SAAC.Nuitrack
 
         public void RegisterSensor(NuitrackSensorConfiguration configuration, NuitrackSensor sensor)
         {
-            Configurations.Add(new Tuple<NuitrackSensorConfiguration, NuitrackSensor>(configuration, sensor));
+            configurations.Add(new Tuple<NuitrackSensorConfiguration, NuitrackSensor>(configuration, sensor));
         }
 
         /// <summary>
@@ -59,16 +59,16 @@ namespace SAAC.Nuitrack
         /// <returns>Number of available devices.</returns>
         public int GetInstalledCount()
         {
-            return Devices.Count;
+            return devices.Count;
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (Devices.Count > 0)
+            if (devices.Count > 0)
             {
                 Release();
-                Devices.Clear();
+                devices.Clear();
             }
         }
 
@@ -84,16 +84,16 @@ namespace SAAC.Nuitrack
         {
             // notify that this is an infinite source component
             notifyCompletionTime(DateTime.MaxValue);
-            if (IsStarted)
+            if (isStarted)
                 return false;
-            IsStarted = true;
+            isStarted = true;
 
             // Prevent device open race condition.
-            lock (CameraOpenLock)
+            lock (cameraOpenLock)
             {
                 Initialize();
                 List<NuitrackDevice> devices = nuitrack.Nuitrack.GetDeviceList();
-                foreach(var pair in Configurations)
+                foreach(var pair in configurations)
                 {
                     NuitrackDevice? found = null;
                     foreach (NuitrackDevice device in devices)
@@ -106,7 +106,7 @@ namespace SAAC.Nuitrack
                     if(found == null)
                         throw new ArgumentException("Failed to retrieve device: "+ pair.Item1.DeviceSerialNumber + "!");
                     nuitrack.Nuitrack.SetDevice(found);
-                    Devices.Add(found);
+                    this.devices.Add(found);
                     try
                     {
                         Module? WaitingObject = null;
@@ -123,7 +123,7 @@ namespace SAAC.Nuitrack
                         {
                             var colorSensor = ColorSensor.Create();
                             colorSensor.OnUpdateEvent += pair.Item2.onColorSensorUpdate;
-                            ColorSensors.Add(pair.Item1.DeviceSerialNumber, colorSensor);
+                            colorSensors.Add(pair.Item1.DeviceSerialNumber, colorSensor);
                             WaitingObject = colorSensor;
                         }
 
@@ -148,21 +148,21 @@ namespace SAAC.Nuitrack
                         {
                             var handTracker = HandTracker.Create();
                             handTracker.OnUpdateEvent += pair.Item2.onHandUpdate;
-                            HandTrackers.Add(pair.Item1.DeviceSerialNumber, handTracker);
+                            handTrackers.Add(pair.Item1.DeviceSerialNumber, handTracker);
                         }
 
                         if (pair.Item1.OutputUserTracking)
                         {
                             var userTracker = UserTracker.Create();
                             userTracker.OnUpdateEvent += pair.Item2.onUserUpdate;
-                            UserTrackers.Add(pair.Item1.DeviceSerialNumber, userTracker);
+                            userTrackers.Add(pair.Item1.DeviceSerialNumber, userTracker);
                         }
 
                         if (pair.Item1.OutputGestureRecognizer)
                         {
                             var gestureRecognizer = GestureRecognizer.Create();
                             gestureRecognizer.OnUpdateEvent += pair.Item2.onGestureUpdate;
-                            GestureRecognizers.Add(pair.Item1.DeviceSerialNumber, gestureRecognizer);
+                            gestureRecognizers.Add(pair.Item1.DeviceSerialNumber, gestureRecognizer);
                         }
                         if (WaitingObject != null)
                             waitingModule.Add(WaitingObject);
@@ -182,9 +182,9 @@ namespace SAAC.Nuitrack
         /// <inheritdoc/>
         public bool Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
-            if (Shutdown)
+            if (shutdown)
                 return false;
-            Shutdown = true;
+            shutdown = true;
             Release();
             TimeSpan waitTime = TimeSpan.FromSeconds(1);
             if (CaptureThread != null && CaptureThread.Join(waitTime) != true)
@@ -197,7 +197,7 @@ namespace SAAC.Nuitrack
         {
             if(waitingModule.Count == 0)
                 throw new ArgumentException("No tracker available");
-            while (!Shutdown)
+            while (!shutdown)
             {
                 foreach(var waitingObject in waitingModule)
                     nuitrack.Nuitrack.WaitUpdate(waitingObject);
@@ -206,17 +206,17 @@ namespace SAAC.Nuitrack
 
         private void Initialize()
         {
-            if (NuitrackInit)
+            if (nuitrackInit)
                 return;
-            NuitrackInit = true;
+            nuitrackInit = true;
             nuitrack.Nuitrack.Init();
         }
 
         private void Release()
         {
-            if (NuitrackRelease)
+            if (nuitrackRelease)
                 return;
-            NuitrackRelease = true;
+            nuitrackRelease = true;
             nuitrack.Nuitrack.Release();
         }
 

@@ -40,13 +40,13 @@ namespace SAAC.Bodies
         private CalibrationByBodiesConfiguration Configuration { get; }
 
         //Calibration stuff
-        private Tuple<Emgu.CV.Structure.MCvPoint3D32f[], Emgu.CV.Structure.MCvPoint3D32f[]> CalibrationJoints;
-        private DateTime? CalibrationTime = null;
-        private int JointAddedCount = 0;
+        private Tuple<Emgu.CV.Structure.MCvPoint3D32f[], Emgu.CV.Structure.MCvPoint3D32f[]> calibrationJoints;
+        private DateTime? calibrationTime = null;
+        private int jointAddedCount = 0;
         private enum ECalibrationState { Idle, Running, Testing };
-        private ECalibrationState CalibrationState = ECalibrationState.Running;
-        Matrix<double> TransformationMatrix = Matrix<double>.Build.Dense(1,1);
-        private Tuple<List<double>, List<double>> TestingArray;
+        private ECalibrationState calibrationState = ECalibrationState.Running;
+        private Matrix<double> transformationMatrix = Matrix<double>.Build.Dense(1,1);
+        private Tuple<List<double>, List<double>> testingArray;
 
         public CalibrationByBodies(Pipeline parent, CalibrationByBodiesConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
         {
@@ -63,8 +63,8 @@ namespace SAAC.Bodies
 
             Emgu.CV.Structure.MCvPoint3D32f[] camera1 = new Emgu.CV.Structure.MCvPoint3D32f[(int)Configuration.NumberOfJointForCalibration];
             Emgu.CV.Structure.MCvPoint3D32f[] camera2 = new Emgu.CV.Structure.MCvPoint3D32f[(int)Configuration.NumberOfJointForCalibration];
-            CalibrationJoints = new Tuple<Emgu.CV.Structure.MCvPoint3D32f[], Emgu.CV.Structure.MCvPoint3D32f[]>(camera1, camera2);
-            TestingArray = new Tuple<List<double>, List<double>>(new List<double>(), new List<double>());
+            calibrationJoints = new Tuple<Emgu.CV.Structure.MCvPoint3D32f[], Emgu.CV.Structure.MCvPoint3D32f[]>(camera1, camera2);
+            testingArray = new Tuple<List<double>, List<double>>(new List<double>(), new List<double>());
             SetStatus("Collecting data...");
         }
 
@@ -75,15 +75,15 @@ namespace SAAC.Bodies
 
         private void Process((List<SimplifiedBody>, List<SimplifiedBody>) bodies, Envelope envelope)
         {
-            switch(CalibrationState)
+            switch(calibrationState)
             {
                 case ECalibrationState.Running:
                     if (bodies.Item1.Count == bodies.Item2.Count && bodies.Item1.Count == 1)
-                        CalibrationState = DoCalibration(bodies.Item1[0], bodies.Item2[0], envelope.OriginatingTime);
+                        calibrationState = DoCalibration(bodies.Item1[0], bodies.Item2[0], envelope.OriginatingTime);
                     break;
                 case ECalibrationState.Testing:
                     if (bodies.Item1.Count == bodies.Item2.Count && bodies.Item1.Count == 1)
-                        CalibrationState = DoTesting(bodies.Item1[0], bodies.Item2[0], envelope.OriginatingTime);
+                        calibrationState = DoTesting(bodies.Item1[0], bodies.Item2[0], envelope.OriginatingTime);
                     break;
             }
         }
@@ -91,34 +91,34 @@ namespace SAAC.Bodies
         private ECalibrationState DoCalibration(SimplifiedBody camera1, SimplifiedBody camera2, DateTime time)
         {
             //Wait 5 seconds
-            if (CalibrationTime != null)
+            if (calibrationTime != null)
             {
-                TimeSpan interval = (TimeSpan)(time - CalibrationTime);
+                TimeSpan interval = (TimeSpan)(time - calibrationTime);
                 if (interval.TotalMilliseconds < 5)
                     return ECalibrationState.Running;
             }
-            CalibrationTime = time;
+            calibrationTime = time;
             for (JointId iterator = JointId.Pelvis; iterator < JointId.Count; iterator++)
             {
                 if (camera1.Joints[iterator].Item1 >= Configuration.ConfidenceLevelForCalibration &&
                     camera2.Joints[iterator].Item1 >= Configuration.ConfidenceLevelForCalibration)
                 {
-                    if (JointAddedCount >= Configuration.NumberOfJointForCalibration)
+                    if (jointAddedCount >= Configuration.NumberOfJointForCalibration)
                         break;
-                    CalibrationJoints.Item1[JointAddedCount] = VectorToCVPoint(camera1.Joints[iterator].Item2);
-                    CalibrationJoints.Item2[JointAddedCount] = VectorToCVPoint(camera2.Joints[iterator].Item2);
-                    JointAddedCount++;
+                    calibrationJoints.Item1[jointAddedCount] = VectorToCVPoint(camera1.Joints[iterator].Item2);
+                    calibrationJoints.Item2[jointAddedCount] = VectorToCVPoint(camera2.Joints[iterator].Item2);
+                    jointAddedCount++;
                 }
             }
-            SetStatus("Calibration running:  " + JointAddedCount.ToString() + "/" + Configuration.NumberOfJointForCalibration.ToString());
-            if (JointAddedCount >= Configuration.NumberOfJointForCalibration)
+            SetStatus("Calibration running:  " + jointAddedCount.ToString() + "/" + Configuration.NumberOfJointForCalibration.ToString());
+            if (jointAddedCount >= Configuration.NumberOfJointForCalibration)
             {
                 Emgu.CV.UMat outputArray = new Emgu.CV.UMat();
                 Emgu.CV.UMat inliers = new Emgu.CV.UMat();
                 Emgu.CV.Util.VectorOfPoint3D32F v1 = new Emgu.CV.Util.VectorOfPoint3D32F();
                 Emgu.CV.Util.VectorOfPoint3D32F v2 = new Emgu.CV.Util.VectorOfPoint3D32F();
-                v1.Push(CalibrationJoints.Item1);
-                v2.Push(CalibrationJoints.Item2);
+                v1.Push(calibrationJoints.Item1);
+                v2.Push(calibrationJoints.Item2);
                 int retval = Emgu.CV.CvInvoke.EstimateAffine3D(v2, v1, outputArray, inliers);
 
                 double[] tempArray = new double[12];
@@ -134,7 +134,7 @@ namespace SAAC.Bodies
                 outputArray.GetOutputArray().Dispose();
                 outputArray.Dispose();
                 dArray[3, 3] = 1;
-                TransformationMatrix = Matrix<double>.Build.DenseOfArray(dArray);
+                transformationMatrix = Matrix<double>.Build.DenseOfArray(dArray);
                 CleanIteratorsAndCounters();
                 if(Configuration.TestMatrixBeforeSending)
                 {
@@ -143,9 +143,9 @@ namespace SAAC.Bodies
                 }
                 else
                 {
-                    Out.Post(TransformationMatrix, time);
+                    Out.Post(transformationMatrix, time);
                     SetStatus("Calibration Done");
-                    Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, TransformationMatrix);
+                    Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, transformationMatrix);
                     return ECalibrationState.Idle;
                 }
             }
@@ -154,34 +154,34 @@ namespace SAAC.Bodies
 
         private ECalibrationState DoTesting(SimplifiedBody camera1, SimplifiedBody camera2, DateTime time)
         {
-            if (CalibrationTime != null)
+            if (calibrationTime != null)
             {
-                TimeSpan interval = (TimeSpan)(time - CalibrationTime);
+                TimeSpan interval = (TimeSpan)(time - calibrationTime);
                 if (interval.TotalMilliseconds < 5)
                     return ECalibrationState.Testing;
             }
-            CalibrationTime = time;
+            calibrationTime = time;
             for (JointId iterator = JointId.Pelvis; iterator < JointId.Count; iterator++)
             {
                 if (camera1.Joints[iterator].Item1 >= Configuration.ConfidenceLevelForCalibration && camera2.Joints[iterator].Item1 >= Configuration.ConfidenceLevelForCalibration)
                 {
-                    if (JointAddedCount >= Configuration.NumberOfJointForTesting)
+                    if (jointAddedCount >= Configuration.NumberOfJointForTesting)
                         break;
-                    Helpers.Helpers.PushToList(camera2.Joints[iterator].Item2, TransformationMatrix, ref TestingArray);
-                    JointAddedCount++;
+                    Helpers.Helpers.PushToList(camera2.Joints[iterator].Item2, transformationMatrix, ref testingArray);
+                    jointAddedCount++;
                 }
             }
-            SetStatus("Checking: " + JointAddedCount.ToString() + "/" + Configuration.NumberOfJointForTesting.ToString());
+            SetStatus("Checking: " + jointAddedCount.ToString() + "/" + Configuration.NumberOfJointForTesting.ToString());
 
-            if (JointAddedCount >= Configuration.NumberOfJointForTesting)
+            if (jointAddedCount >= Configuration.NumberOfJointForTesting)
             {
-                double RMSE = Helpers.Helpers.CalculateRMSE(ref TestingArray);
+                double RMSE = Helpers.Helpers.CalculateRMSE(ref testingArray);
                 CleanIteratorsAndCounters();
                 if (RMSE < Configuration.AllowedMaxRMSE)
                 {
                     SetStatus("Calibration done! RMSE: " + RMSE.ToString());
-                    Out.Post(TransformationMatrix, time);
-                    Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, TransformationMatrix);
+                    Out.Post(transformationMatrix, time);
+                    Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, transformationMatrix);
                     return ECalibrationState.Idle;
                 }
                 else
@@ -201,10 +201,10 @@ namespace SAAC.Bodies
 
         private void CleanIteratorsAndCounters()
         {
-            CalibrationTime = null;
-            JointAddedCount = 0;
-            TestingArray.Item1.Clear();
-            TestingArray.Item2.Clear();
+            calibrationTime = null;
+            jointAddedCount = 0;
+            testingArray.Item1.Clear();
+            testingArray.Item2.Clear();
         }
 
         private void SetStatus(string message)

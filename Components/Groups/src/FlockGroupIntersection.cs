@@ -13,21 +13,21 @@ namespace SAAC.Groups
         public Emitter<Dictionary<(uint, uint), double>> Out { get; private set; }
 
         /// <summary>
-        /// Gets the connector of lists of flock groups.
-        /// </summary>
-        private Connector<Dictionary<uint, SimplifiedFlockGroup>> InConnector;
-
-        /// <summary>
         /// Receiver that encapsulates the input list of groups
         /// </summary>
-        public Receiver<Dictionary<uint, SimplifiedFlockGroup>> In => InConnector.In;
+        public Receiver<Dictionary<uint, SimplifiedFlockGroup>> In { get; private set; }
 
-        public FlockGroupIntersection(Pipeline parent)
+        private string name;
+
+        public FlockGroupIntersection(Pipeline parent, string name = nameof(FlockGroupIntersection))
         {
-            InConnector = parent.CreateConnector<Dictionary<uint, SimplifiedFlockGroup>>(nameof(InConnector));
-            Out = parent.CreateEmitter<Dictionary<(uint, uint), double>>(this, nameof(Out));
-            InConnector.Out.Do(Process);
+            this.name = name;
+            In = parent.CreateReceiver<Dictionary<uint, SimplifiedFlockGroup>>(this, Process, $"{name}-In");
+            Out = parent.CreateEmitter<Dictionary<(uint, uint), double>>(this, $"{name}-Out");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(Dictionary<uint, SimplifiedFlockGroup> groups, Envelope envelope)
         {

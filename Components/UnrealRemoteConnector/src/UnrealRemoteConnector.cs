@@ -20,17 +20,22 @@ namespace SAAC.RemoteConnectors
         /// </summary>
         public Receiver<UnrealActionRequest> In { get; private set; }
 
-        private UnrealRemoteConnectorConfiguration Configuration;
-        private HttpClient Client;
+        private UnrealRemoteConnectorConfiguration configuration;
+        private HttpClient client;
+        private string name;
 
-        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null)
+        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null, string name = nameof(UnrealRemoteConnector))
         {
-            Configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
-            Client = new HttpClient();
+            this.name = name;
+            this.configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
+            client = new HttpClient();
 
-            Out = parent.CreateEmitter<UnrealActionRequest>(parent, nameof(Out));
-            In = parent.CreateReceiver<UnrealActionRequest>(parent, Process, nameof(In));
+            Out = parent.CreateEmitter<UnrealActionRequest>(parent, $"{name}-Out");
+            In = parent.CreateReceiver<UnrealActionRequest>(parent, Process, $"{name}-In");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(UnrealActionRequest request, Envelope envelope)
         {
@@ -42,15 +47,15 @@ namespace SAAC.RemoteConnectors
             switch (request.Method)
             {
                 case UnrealActionRequest.EMethod.POST:
-                    request.Response = Client.PostAsync(Configuration.Address, request.ToHttpContent()).Result.Content.ReadAsStringAsync().Result;
+                    request.Response = client.PostAsync(configuration.Address, request.ToHttpContent()).Result.Content.ReadAsStringAsync().Result;
                     break;
 
                 case UnrealActionRequest.EMethod.PUT:
-                    request.Response = Client.PutAsync(Configuration.Address, request.ToStringContent()).Result.Content.ReadAsStringAsync().Result;
+                    request.Response = client.PutAsync(configuration.Address, request.ToStringContent()).Result.Content.ReadAsStringAsync().Result;
                     break;
 
                 case UnrealActionRequest.EMethod.GET:
-                    request.Response = Client.GetStringAsync(Configuration.Address + request.Path + request.Object).Result;
+                    request.Response = client.GetStringAsync(configuration.Address + request.Path + request.Object).Result;
                     break;
             }
             Out.Post(request, DateTime.UtcNow);

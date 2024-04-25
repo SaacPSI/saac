@@ -18,8 +18,8 @@ namespace SAAC.WebRTC
 
             private ILogger log = SIPSorcery.LogFactory.CreateLogger<OpusAudioEncoder>();
 
-            private AudioEncoder _audioEncoder; // The AudioEncoder available in SIPSorcery
-            private List<AudioFormat> _supportedFormats;
+            private AudioEncoder audioEncoder; // The AudioEncoder available in SIPSorcery
+            private List<AudioFormat> supportedFormats;
 
             private const int FRAME_SIZE_MILLISECONDS = 20;
             private const int MAX_DECODED_FRAME_SIZE_MULT = 6;
@@ -27,46 +27,46 @@ namespace SAAC.WebRTC
             public const int MAX_FRAME_SIZE = MAX_DECODED_FRAME_SIZE_MULT * 960;
             private const int SAMPLE_RATE = 48000;
 
-            private int _channels = 1;
-            private short[] _shortBuffer;
-            private byte[] _byteBuffer;
+            private int channels = 1;
+            private short[] shortBuffer;
+            private byte[] byteBuffer;
 
-            private OpusEncoder _opusEncoder;
-            private OpusDecoder _opusDecoder;
+            private OpusEncoder opusEncoder;
+            private OpusDecoder opusDecoder;
 
             public OpusAudioEncoder(ILogger logger = null)
             {
                 log = logger ?? SIPSorcery.LogFactory.CreateLogger<OpusAudioEncoder>();
 
-                _audioEncoder = new AudioEncoder();
+                audioEncoder = new AudioEncoder();
 
                 // Add OPUS in the list of AudioFormat
-                _supportedFormats = new List<AudioFormat> { MEDIA_FORMAT_OPUS };
+                supportedFormats = new List<AudioFormat> { MEDIA_FORMAT_OPUS };
 
                 // Add also list available in the AudioEncoder available in SIPSorcery
-                _supportedFormats.AddRange(_audioEncoder.SupportedFormats);
+                supportedFormats.AddRange(audioEncoder.SupportedFormats);
             }
 
-            public List<AudioFormat> SupportedFormats => _supportedFormats;
+            public List<AudioFormat> SupportedFormats => supportedFormats;
 
             public short[] DecodeAudio(byte[] encodedSample, AudioFormat format)
             {
                 if (format.FormatName == "opus")
                 {
-                    if (_opusDecoder == null)
+                    if (opusDecoder == null)
                     {
-                        _opusDecoder = OpusDecoder.Create(SAMPLE_RATE, _channels);
-                        _shortBuffer = new short[MAX_FRAME_SIZE * _channels];
+                        opusDecoder = OpusDecoder.Create(SAMPLE_RATE, channels);
+                        shortBuffer = new short[MAX_FRAME_SIZE * channels];
                     }
 
                     try
                     {
-                        int numSamplesDecoded = _opusDecoder.Decode(encodedSample, 0, encodedSample.Length, _shortBuffer, 0, _shortBuffer.Length, false);
+                        int numSamplesDecoded = opusDecoder.Decode(encodedSample, 0, encodedSample.Length, shortBuffer, 0, shortBuffer.Length, false);
 
                         if (numSamplesDecoded >= 1)
                         {
                             var buffer = new short[numSamplesDecoded];
-                            Array.Copy(_shortBuffer, 0, buffer, 0, numSamplesDecoded);
+                            Array.Copy(shortBuffer, 0, buffer, 0, numSamplesDecoded);
                             log.LogTrace($"OpusAudioEncoder -> DecodeAudio : DecodedShort:[{numSamplesDecoded}] - EncodedByte.Length:[{encodedSample.Length}]");
                             return buffer;
                         }
@@ -78,29 +78,29 @@ namespace SAAC.WebRTC
                     return new short[0];
                 }
                 else
-                    return _audioEncoder.DecodeAudio(encodedSample, format);
+                    return audioEncoder.DecodeAudio(encodedSample, format);
             }
 
             public byte[] EncodeAudio(float[] pcm, AudioFormat format)
             {
                 if (format.FormatName == "opus")
                 {
-                    if (_opusEncoder == null)
+                    if (opusEncoder == null)
                     {
-                        _opusEncoder = OpusEncoder.Create(SAMPLE_RATE, _channels, OpusApplication.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
-                        _opusEncoder.ForceMode = OpusMode.MODE_AUTO;
-                        _byteBuffer = new byte[MAX_PACKET_SIZE];
+                        opusEncoder = OpusEncoder.Create(SAMPLE_RATE, channels, OpusApplication.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
+                        opusEncoder.ForceMode = OpusMode.MODE_AUTO;
+                        byteBuffer = new byte[MAX_PACKET_SIZE];
                     }
 
                     try
                     {
                         int frameSize = GetFrameSize();
-                        int size = _opusEncoder.Encode(pcm, 0, frameSize, _byteBuffer, 0, _byteBuffer.Length);
+                        int size = opusEncoder.Encode(pcm, 0, frameSize, byteBuffer, 0, byteBuffer.Length);
 
                         if (size > 1)
                         {
                             byte[] result = new byte[size];
-                            Array.Copy(_byteBuffer, 0, result, 0, size);
+                            Array.Copy(byteBuffer, 0, result, 0, size);
 
                             log.LogTrace($"OpusAudioEncoder -> EncodeAudio : frameSize:[{frameSize}] - DecodedFloat:[{pcm.Length}] - EncodedByte.Length:[{result.Length}]");
                             return result;
@@ -120,22 +120,22 @@ namespace SAAC.WebRTC
             {
                 if (format.FormatName == "opus")
                 {
-                    if (_opusEncoder == null)
+                    if (opusEncoder == null)
                     {
-                        _opusEncoder = OpusEncoder.Create(SAMPLE_RATE, _channels, OpusApplication.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
-                        _opusEncoder.ForceMode = OpusMode.MODE_AUTO;
-                        _byteBuffer = new byte[MAX_PACKET_SIZE];
+                        opusEncoder = OpusEncoder.Create(SAMPLE_RATE, channels, OpusApplication.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
+                        opusEncoder.ForceMode = OpusMode.MODE_AUTO;
+                        byteBuffer = new byte[MAX_PACKET_SIZE];
                     }
 
                     try
                     {
                         int frameSize = GetFrameSize();
-                        int size = _opusEncoder.Encode(pcm, 0, frameSize, _byteBuffer, 0, _byteBuffer.Length);
+                        int size = opusEncoder.Encode(pcm, 0, frameSize, byteBuffer, 0, byteBuffer.Length);
 
                         if (size > 1)
                         {
                             byte[] result = new byte[size];
-                            Array.Copy(_byteBuffer, 0, result, 0, size);
+                            Array.Copy(byteBuffer, 0, result, 0, size);
 
                             log.LogTrace($"OpusAudioEncoder -> EncodeAudio : frameSize:[{frameSize}] - DecodedShort:[{pcm.Length}] - EncodedByte.Length:[{result.Length}]");
                             return result;
@@ -148,7 +148,7 @@ namespace SAAC.WebRTC
                     return new byte[0];
                 }
                 else
-                    return _audioEncoder.EncodeAudio(pcm, format);
+                    return audioEncoder.EncodeAudio(pcm, format);
             }
 
             public int GetFrameSize()

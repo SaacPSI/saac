@@ -20,24 +20,28 @@ namespace SAAC.Bodies.Statistics
         public string StoringPath { get; set; } = "./Stats.csv";
     }
 
-    public class BodiesStatistics : Subpipeline
+    public class BodiesStatistics : IConsumer<List<SimplifiedBody>>, IDisposable
     {
-        protected Connector<List<SimplifiedBody>> InBodiesConnector;
-        public Receiver<List<SimplifiedBody>> InBodies => InBodiesConnector.In;
+        public Receiver<List<SimplifiedBody>> In { get; }
 
         protected string StatsCount = "";
 
         protected Dictionary<uint, StatisticBody> Data = new Dictionary<uint, StatisticBody>();
 
         protected BodiesStatisticsConfiguration Configuration;
-        public BodiesStatistics(Pipeline pipeline, BodiesStatisticsConfiguration? configuration, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null) : base(pipeline, name, defaultDeliveryPolicy)
+        private string name;
+
+        public BodiesStatistics(Pipeline pipeline, BodiesStatisticsConfiguration? configuration, string name = nameof(BodiesStatistics), DeliveryPolicy? defaultDeliveryPolicy = null)
         {
+            this.name = name;
             Configuration = configuration ?? new BodiesStatisticsConfiguration();
-            InBodiesConnector = CreateInputConnectorFrom<List<SimplifiedBody>>(pipeline, nameof(InBodies));
-            InBodiesConnector.Out.Do(Process);
+            In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, Process, $"{name}-In");
         }
 
-        public override void Dispose()
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
+
+        public void Dispose()
         {
             StatsCount = "body_id;bone_id;count;mean;std_dev;var\n";
             foreach (var body in Data)
@@ -53,8 +57,8 @@ namespace SAAC.Bodies.Statistics
             }
 
             File.WriteAllText(Configuration.StoringPath, StatsCount);
-            base.Dispose();
         }
+
         private void Process(List<SimplifiedBody> bodies, Envelope envelope)
         {
             foreach (SimplifiedBody body in bodies)

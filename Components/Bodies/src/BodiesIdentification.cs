@@ -26,21 +26,19 @@ namespace SAAC.Bodies
         /// <summary>
         /// Receiver that encapsulates the input list of skeletons
         /// </summary>
-        public Receiver<List<SimplifiedBody>> In;
+        public Receiver<List<SimplifiedBody>> In { get; private set; }
 
-        Receiver<List<SimplifiedBody>> IConsumer<List<SimplifiedBody>>.In => In;
+        private BodiesIdentificationConfiguration configuration;
 
-        private BodiesIdentificationConfiguration Configuration { get; }
-
-        private Dictionary<uint, uint> CorrespondanceMap = new Dictionary<uint, uint>();
-        private Dictionary<uint, LearnedBody> LearnedBodies = new Dictionary<uint, LearnedBody>();
-        private Dictionary<uint, LearningBody> LearningBodies = new Dictionary<uint, LearningBody>();
-        private List<LearnedBody> NewLearnedBodies = new List<LearnedBody>();
+        private Dictionary<uint, uint> correspondanceMap = new Dictionary<uint, uint>();
+        private Dictionary<uint, LearnedBody> learnedBodies = new Dictionary<uint, LearnedBody>();
+        private Dictionary<uint, LearningBody> learningBodies = new Dictionary<uint, LearningBody>();
+        private List<LearnedBody> newLearnedBodies = new List<LearnedBody>();
 
 
         public BodiesIdentification(Pipeline parent, BodiesIdentificationConfiguration? configuration = null)
         {
-            Configuration = configuration ?? new BodiesIdentificationConfiguration();
+            this.configuration = configuration ?? new BodiesIdentificationConfiguration();
             In = parent.CreateReceiver<List<SimplifiedBody>>(this, Process, nameof(In));
             OutBodiesIdentified = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(OutBodiesIdentified));
             OutLearnedBodies = parent.CreateEmitter<List<LearnedBody>>(this, nameof(OutLearnedBodies));
@@ -58,23 +56,23 @@ namespace SAAC.Bodies
             foreach (var body in bodies)
             {
                 idsBodiesforCollision.Add(body.Id);
-                if (CorrespondanceMap.ContainsKey(body.Id))
+                if (correspondanceMap.ContainsKey(body.Id))
                 {
-                    idsBodies.Add(CorrespondanceMap[body.Id]);
+                    idsBodies.Add(correspondanceMap[body.Id]);
                     idsBodies.Add(body.Id);
-                    body.Id = CorrespondanceMap[body.Id];
-                    LearnedBodies[body.Id].LastSeen = envelope.OriginatingTime;
-                    LearnedBodies[body.Id].LastPosition = body.Joints[JointId.Pelvis].Item2;
+                    body.Id = correspondanceMap[body.Id];
+                    learnedBodies[body.Id].LastSeen = envelope.OriginatingTime;
+                    learnedBodies[body.Id].LastPosition = body.Joints[JointId.Pelvis].Item2;
                     identifiedBodies.Add(body);
                     foundBodies.Add(body.Id);
                     continue;
                 }
-                else if (LearnedBodies.ContainsKey(body.Id))
+                else if (learnedBodies.ContainsKey(body.Id))
                 {
-                    if (envelope.OriginatingTime - LearnedBodies[body.Id].LastSeen < Configuration.MaximumLostTime || LearnedBodies[body.Id].SeemsTheSame(body, Configuration.MaximumDeviationAllowed, Configuration.MinimumConfidenceLevelForLearning))
+                    if (envelope.OriginatingTime - learnedBodies[body.Id].LastSeen < configuration.MaximumLostTime || learnedBodies[body.Id].SeemsTheSame(body, configuration.MaximumDeviationAllowed, configuration.MinimumConfidenceLevelForLearning))
                     {
-                        LearnedBodies[body.Id].LastSeen = envelope.OriginatingTime;
-                        LearnedBodies[body.Id].LastPosition = body.Joints[JointId.Pelvis].Item2;
+                        learnedBodies[body.Id].LastSeen = envelope.OriginatingTime;
+                        learnedBodies[body.Id].LastPosition = body.Joints[JointId.Pelvis].Item2;
                         identifiedBodies.Add(body);
                         foundBodies.Add(body.Id);
                         idsBodies.Add(body.Id);
@@ -91,10 +89,10 @@ namespace SAAC.Bodies
             foreach (var body in bodies)
                 if (!foundBodies.Contains(body.Id))
                     ProcessLearningBody(body, envelope.OriginatingTime, idsBodies);
-            if(NewLearnedBodies.Count > 0)
+            if(newLearnedBodies.Count > 0)
             {
-                OutLearnedBodies.Post(NewLearnedBodies, envelope.OriginatingTime);
-                NewLearnedBodies.Clear();
+                OutLearnedBodies.Post(newLearnedBodies, envelope.OriginatingTime);
+                newLearnedBodies.Clear();
             }
             CheckCorrespondanceCollision(ref idsBodiesforCollision);
             OutBodiesIdentified.Post(identifiedBodies, envelope.OriginatingTime);
@@ -102,44 +100,44 @@ namespace SAAC.Bodies
 
         private void CheckCorrespondanceCollision(ref List<uint> idsBodies)
         {
-            var intersection = idsBodies.Intersect(CorrespondanceMap.Keys);
+            var intersection = idsBodies.Intersect(correspondanceMap.Keys);
             if(intersection.Count() > 0 )
                 foreach(var body in intersection)
-                    if (idsBodies.Contains(CorrespondanceMap[body]))
-                        CorrespondanceMap.Remove(body);
+                    if (idsBodies.Contains(correspondanceMap[body]))
+                        correspondanceMap.Remove(body);
         }
 
         private bool ProcessLearningBody(SimplifiedBody body, DateTime timestamp, List<uint> idsBodies)
         {
            
-            if (!LearningBodies.ContainsKey(body.Id))
-                LearningBodies.Add(body.Id, new LearningBody(body.Id, timestamp, Configuration.BonesUsedForCorrespondence));
+            if (!learningBodies.ContainsKey(body.Id))
+                learningBodies.Add(body.Id, new LearningBody(body.Id, timestamp, configuration.BonesUsedForCorrespondence));
 
-            if (LearningBodies[body.Id].StillLearning(timestamp, Configuration.MaximumIdentificationTime, Configuration.MinimumBonesForIdentification))
-                ProcessLearning(ref body, LearningBodies[body.Id]);
+            if (learningBodies[body.Id].StillLearning(timestamp, configuration.MaximumIdentificationTime, configuration.MinimumBonesForIdentification))
+                ProcessLearning(ref body, learningBodies[body.Id]);
             else
             {
                 List<LearnedBody> learnedBodiesNotVisible = new List<LearnedBody>();
-                foreach (var learnedBody in LearnedBodies)
+                foreach (var learnedBody in learnedBodies)
                 {
                     if (idsBodies.Contains(learnedBody.Key))
                         continue;
-                    //if (timestamp - learnedBody.Value.LastSeen > Configuration.MinimumIdentificationTime)
+                    //if (timestamp - learnedBody.Value.LastSeen > configuration.MinimumIdentificationTime)
                     learnedBodiesNotVisible.Add(learnedBody.Value);
                 }
-                LearnedBody newLearnedBody = LearningBodies[body.Id].GeneratorLearnedBody(Configuration.MaximumDeviationAllowed);
-                NewLearnedBodies.Add(newLearnedBody);
+                LearnedBody newLearnedBody = learningBodies[body.Id].GeneratorLearnedBody(configuration.MaximumDeviationAllowed);
+                newLearnedBodies.Add(newLearnedBody);
                 newLearnedBody.LastSeen = timestamp;
                 newLearnedBody.LastPosition = body.Joints[JointId.Pelvis].Item2;
-                LearningBodies.Remove(body.Id);
+                learningBodies.Remove(body.Id);
                 uint correspondanceId = 0;
                 if (learnedBodiesNotVisible.Count > 0)
-                    correspondanceId = newLearnedBody.FindClosest(learnedBodiesNotVisible, Configuration.MaximumDeviationAllowed);
+                    correspondanceId = newLearnedBody.FindClosest(learnedBodiesNotVisible, configuration.MaximumDeviationAllowed);
                 if (correspondanceId > 0)
-                    CorrespondanceMap[body.Id] = correspondanceId;
+                    correspondanceMap[body.Id] = correspondanceId;
                 else
                 {
-                    LearnedBodies.Add(body.Id, newLearnedBody);
+                    learnedBodies.Add(body.Id, newLearnedBody);
                     idsBodies.Add(body.Id);
                 }
                 return false;
@@ -149,17 +147,17 @@ namespace SAAC.Bodies
 
         private void ProcessLearning(ref SimplifiedBody body, LearningBody learningBody)
         {
-            foreach (var bone in Configuration.BonesUsedForCorrespondence)
+            foreach (var bone in configuration.BonesUsedForCorrespondence)
             {
-                if(body.Joints[bone.ParentJoint].Item1 >= Configuration.MinimumConfidenceLevelForLearning && body.Joints[bone.ChildJoint].Item1 >= Configuration.MinimumConfidenceLevelForLearning)
+                if(body.Joints[bone.ParentJoint].Item1 >= configuration.MinimumConfidenceLevelForLearning && body.Joints[bone.ChildJoint].Item1 >= configuration.MinimumConfidenceLevelForLearning)
                     learningBody.LearningBones[bone].Add(MathNet.Numerics.Distance.Euclidean(body.Joints[bone.ParentJoint].Item2.ToVector(), body.Joints[bone.ChildJoint].Item2.ToVector()));
             }
         }
 
         private void RemoveOldIds(DateTime current, ref List<uint> idsToRemove)
         {
-            foreach (var body in LearnedBodies)
-                if((current - body.Value.LastSeen) > Configuration.MaximumLostTime)
+            foreach (var body in learnedBodies)
+                if((current - body.Value.LastSeen) > configuration.MaximumLostTime)
                     idsToRemove.Add(body.Key);
 
             RemoveIds(idsToRemove);
@@ -169,13 +167,13 @@ namespace SAAC.Bodies
         {
             foreach (uint id in ids)
             {
-                LearnedBodies.Remove(id);
-                CorrespondanceMap.Remove(id);
-                foreach (var iterator in CorrespondanceMap)
+                learnedBodies.Remove(id);
+                correspondanceMap.Remove(id);
+                foreach (var iterator in correspondanceMap)
                 {
                     if (iterator.Value == id)
                     {
-                        CorrespondanceMap.Remove(iterator.Key);
+                        correspondanceMap.Remove(iterator.Key);
                         break;
                     }
                 }

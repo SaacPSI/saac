@@ -15,10 +15,7 @@ namespace SAAC.Bodies
         {
             Origin = origin;
             Id = id;
-            if(joints == null)
-                Joints = new Dictionary<JointId, Tuple<JointConfidenceLevel, Vector3D>>();
-            else
-                Joints = joints;
+            Joints = joints ?? new Dictionary<JointId, Tuple<JointConfidenceLevel, Vector3D>>();
         }
     }
 }
