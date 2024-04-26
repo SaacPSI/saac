@@ -1,4 +1,7 @@
 ﻿
+using Microsoft.Psi.Interop.Serialization;
+using System.IO;
+
 namespace SAAC.RendezVousPipelineServices
 {
     public class RendezVousPipelineConfiguration
@@ -14,5 +17,12 @@ namespace SAAC.RendezVousPipelineServices
         public string SessionName = "";
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
+
+        public RendezVousPipelineConfiguration() 
+        {
+            TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());
+            TypesSerializers.Add(typeof(char), new PsiFormaChar());
+            TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatPositionAndOrientation());
+        }
     }
 }
