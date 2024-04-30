@@ -98,6 +98,9 @@ namespace SAAC.RendezVousPipelineServices
         private void AddedProcess(object? sender, Process process)
         {
             log($"Process {process.Name}");
+            if (isClockServer && process.Name == configuration.ClockConfiguration?.ClockProcessName)
+                return;
+            int elementAdded=0;
             Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
             Session session = Dataset.AddEmptySession(configuration.SessionName + process.Name);
             foreach (var endpoint in process.Endpoints)
@@ -120,9 +123,17 @@ namespace SAAC.RendezVousPipelineServices
                             if (!configuration.TypesSerializers.ContainsKey(type))
                                 throw new Exception($"Missing serializer of type {type} in configuration.");
                             Connection(stream.StreamName, session, source, processSubPipeline, configuration.TypesSerializers[type].GetFormat());
+                            elementAdded++;
                         }
                     }
                 }
+            }
+            log($"Process {process.Name} sources added : {elementAdded}");
+            if (elementAdded == 0)
+            {
+                processSubPipeline.Dispose();
+                Dataset.RemoveSession(session);
+                return;
             }
             if(this.configuration.AutomaticPipelineRun)
                 processSubPipeline.RunAsync();
