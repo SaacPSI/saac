@@ -64,6 +64,8 @@ namespace SAAC.RendezVousPipelineServices
                 return;
             if(configuration.Diagnostics)
                 CreateStore(pipeline, Dataset.AddEmptySession(configuration.SessionName + "_Diagnostics"), "Diagnostics", pipeline.Diagnostics);
+            if (this.configuration.AutomaticPipelineRun)
+                RunPipeline();
             if (isClockServer)
             {
                 var remoteClock = new RemoteClockExporter(configuration.ClockConfiguration.ClockPort);
@@ -74,8 +76,6 @@ namespace SAAC.RendezVousPipelineServices
             server.Start();
             log("server started!");
             isStarted = true;
-            if (this.configuration.AutomaticPipelineRun)
-                RunPipeline();
         }
 
         public void Stop()
