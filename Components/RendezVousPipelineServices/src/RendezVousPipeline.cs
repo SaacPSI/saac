@@ -13,8 +13,8 @@ namespace SAAC.RendezVousPipelineServices
     public class RendezVousPipeline
     {
         public Dataset Dataset { get; private set; }
-        public Dictionary<string, ConnectorInfo> Connectors { get; private set; }
-        public EventHandler<(string, Dictionary<string, ConnectorInfo>)>? NewProcess;
+        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
+        public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public delegate void LogStatus(string log);
 
         protected LogStatus log;
@@ -23,6 +23,7 @@ namespace SAAC.RendezVousPipelineServices
         private RendezvousServer server;
         private bool isStarted;
         private bool isPipelineRunning;
+        private bool isClockServer;
 
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, LogStatus? log = null)
         {
@@ -30,7 +31,10 @@ namespace SAAC.RendezVousPipelineServices
             this.log = log ?? ((log) => { Console.WriteLine(log); });
             pipeline = Pipeline.Create(enableDiagnostics: this.configuration.Diagnostics);
             server = new RendezvousServer(this.configuration.RendezVousPort);
-            Connectors = new Dictionary<string, ConnectorInfo>();
+            Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
+            isClockServer = this.configuration.ClockConfiguration != null && this.configuration.ClockConfiguration.ClockPort != 0;
+            if (this.configuration.AutomaticPipelineRun && !isClockServer)
+                throw new Exception("It is not possible to have AutomaticPipelineRun without ClockServer.");
             if (File.Exists(this.configuration.DatasetPath + this.configuration.DatasetName))
                 Dataset = Dataset.Load(this.configuration.DatasetPath + this.configuration.DatasetName);
             else
@@ -60,14 +64,18 @@ namespace SAAC.RendezVousPipelineServices
                 return;
             if(configuration.Diagnostics)
                 CreateStore(pipeline, Dataset.AddEmptySession(configuration.SessionName + "_Diagnostics"), "Diagnostics", pipeline.Diagnostics);
-            var remoteClock = new RemoteClockExporter(configuration.ClockPort);
-            server.Rendezvous.TryAddProcess(new Rendezvous.Process(configuration.ClockProcessName, new[] { remoteClock.ToRendezvousEndpoint(configuration.RendezVousHost) }));
+            if (isClockServer)
+            {
+                var remoteClock = new RemoteClockExporter(configuration.ClockConfiguration.ClockPort);
+                server.Rendezvous.TryAddProcess(new Rendezvous.Process(configuration.ClockConfiguration.ClockProcessName, new[] { remoteClock.ToRendezvousEndpoint(configuration.RendezVousHost) }));
+            }
             server.Rendezvous.ProcessAdded += AddedProcess;
             server.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
             server.Start();
             log("server started!");
             isStarted = true;
-            pipeline.RunAsync();
+            if (this.configuration.AutomaticPipelineRun)
+                RunPipeline();
         }
 
         public void Stop()
@@ -90,10 +98,14 @@ namespace SAAC.RendezVousPipelineServices
         private void AddedProcess(object? sender, Process process)
         {
             log($"Process {process.Name}");
-            Subpipeline questSubPipeline = new Subpipeline(pipeline, process.Name);
+            Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
             Session session = Dataset.AddEmptySession(configuration.SessionName + process.Name);
             foreach (var endpoint in process.Endpoints)
             {
+                if (isClockServer == false && process.Name == configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
+                {
+                    var remoteClockImporter = remoteClockEndpoint.ToRemoteClockImporter(pipeline);
+                }
                 if (endpoint is Rendezvous.TcpSourceEndpoint)
                 {
                     TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
@@ -107,12 +119,13 @@ namespace SAAC.RendezVousPipelineServices
                             Type type = configuration.TopicsTypes[stream.StreamName];
                             if (!configuration.TypesSerializers.ContainsKey(type))
                                 throw new Exception($"Missing serializer of type {type} in configuration.");
-                            Connection(stream.StreamName, session, source, questSubPipeline, configuration.TypesSerializers[type].GetFormat());
+                            Connection(stream.StreamName, session, source, processSubPipeline, configuration.TypesSerializers[type].GetFormat());
                         }
                     }
                 }
             }
-            questSubPipeline.RunAsync();
+            if(this.configuration.AutomaticPipelineRun)
+                processSubPipeline.RunAsync();
             Dataset.Save();
             NewProcess?.Invoke(this, (process.Name, Connectors));
         }
@@ -123,7 +136,9 @@ namespace SAAC.RendezVousPipelineServices
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, sourceName);
             if(configuration.Debug)
                 tcpSource.Do((d, e) => { log($"Recieve {sourceName} data @{e} : {d}"); });
-            Connectors.Add(sourceName, new ConnectorInfo(name, session.Name, typeof(T), tcpSource));
+            if (!Connectors.ContainsKey(session.Name))
+                Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
+            Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), tcpSource));
             CreateStore(p, session, name, tcpSource);
         }
 

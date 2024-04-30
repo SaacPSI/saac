@@ -65,12 +65,12 @@ namespace SaaCPsiStudio
         // ClockPort
         public int ClockPort
         {
-            get => configuration.ClockPort;
-            set => SetProperty(ref configuration.ClockPort, value);
+            get => configuration.ClockConfiguration.ClockPort;
+            set => SetProperty(ref configuration.ClockConfiguration.ClockPort, value);
         }
         public void DelegateMethodClockPort(int port)
         {
-            configuration.ClockPort = port;
+            configuration.ClockConfiguration.ClockPort = port;
         }
 
         // DatasetPath
