@@ -24,9 +24,9 @@ namespace SAAC.RendezVousPipelineServices
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
 
-        public RendezVousPipelineConfiguration(bool addRegulatSerializer = true) 
+        public RendezVousPipelineConfiguration(bool addRegularSerializers = true) 
         {
-            if(addRegulatSerializer)
+            if(addRegularSerializers)
             {
                 TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());
                 TypesSerializers.Add(typeof(char), new PsiFormaChar());

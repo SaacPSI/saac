@@ -113,7 +113,7 @@ namespace SAAC.RendezVousPipelineServices
                 {
                     TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
                     if (source == null)
-                        return;
+                        continue;
                     foreach (var stream in endpoint.Streams)
                     {
                         log($"\tStream {stream.StreamName}");
@@ -135,8 +135,11 @@ namespace SAAC.RendezVousPipelineServices
                 Dataset.RemoveSession(session);
                 return;
             }
-            if(this.configuration.AutomaticPipelineRun)
+            if (this.configuration.AutomaticPipelineRun)
+            {
                 processSubPipeline.RunAsync();
+                log($"SubPipeline {process.Name} started.");
+            }
             Dataset.Save();
             NewProcess?.Invoke(this, (process.Name, Connectors));
         }
