@@ -141,7 +141,8 @@ namespace SAAC.RendezVousPipelineServices
             if (elementAdded == 0)
             {
                 processSubPipeline.Dispose();
-                Dataset.RemoveSession(session);
+                if(session.Partitions.Count() == 0)
+                    Dataset.RemoveSession(session);
                 return;
             }
             if (this.configuration.AutomaticPipelineRun)
