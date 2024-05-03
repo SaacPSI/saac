@@ -98,7 +98,7 @@ namespace SAAC.Visualizations
         {
             if (this.CurrentData != null)
             {
-                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Y, this.CurrentData.Item1.Z);
+                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Z, this.CurrentData.Item1.Y);
                 MathNet.Spatial.Euclidean.CoordinateSystem rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X), MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y), MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
                 MathNet.Spatial.Euclidean.CoordinateSystem newValue = new MathNet.Spatial.Euclidean.CoordinateSystem(origin, rot.XAxis, rot.YAxis, rot.ZAxis);
                 this.System.SetCurrentValue(this.SynthesizeMessage(newValue));
@@ -110,8 +110,8 @@ namespace SAAC.Visualizations
             if (this.CurrentData != null)
             {
                 var origin = this.CurrentData.Item1;
-                var pos = new Win3D.Point3D(origin.X, origin.Y, origin.Z + (this.BillboardHeightCm / 100.0));
-                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"Ref: ?")));
+                var pos = new Win3D.Point3D(origin.X, origin.Z, origin.Y + (this.BillboardHeightCm / 100.0));
+                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"{SourceStreamName}")));
             }
         }
 

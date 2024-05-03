@@ -18,6 +18,7 @@ namespace SAAC.RendezVousPipelineServices
         public bool Diagnostics = false;
         public bool Debug = false;
         public bool AutomaticPipelineRun = false;
+        public bool UniqueSession = false;
         public string DatasetPath = "";
         public string DatasetName = "";
         public string SessionName = "";

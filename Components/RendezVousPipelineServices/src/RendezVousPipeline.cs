@@ -102,7 +102,11 @@ namespace SAAC.RendezVousPipelineServices
                 return;
             int elementAdded=0;
             Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
-            Session session = Dataset.AddEmptySession(configuration.SessionName + process.Name);
+            Session session;
+            if (configuration.UniqueSession)
+                session = CreateNewSession(configuration.SessionName);
+            else
+                session = CreateNewSession(configuration.SessionName + process.Name);
             foreach (var endpoint in process.Endpoints)
             {
                 if (isClockServer == false && process.Name == configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
@@ -161,6 +165,14 @@ namespace SAAC.RendezVousPipelineServices
             var store = PsiStore.Create(pipeline, name, $"{configuration.DatasetPath}/{session.Name}/");
             store.Write(source, name);
             session.AddPartitionFromPsiStoreAsync(name, $"{configuration.DatasetPath}/{session.Name}/");
+        }
+
+        private Session CreateNewSession(string sessionName)
+        {
+            foreach (var session in Dataset.Sessions)
+                if (session != null && session.Name == sessionName)
+                    return session;
+            return Dataset.AddEmptySession(sessionName);
         }
     }
 }
