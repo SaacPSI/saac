@@ -121,12 +121,17 @@ namespace SAAC.RendezVousPipelineServices
                     foreach (var stream in endpoint.Streams)
                     {
                         log($"\tStream {stream.StreamName}");
+                        string streamName;
+                        if (configuration.UniqueSession)
+                            streamName = $"{process.Name}-{stream.StreamName}";
+                        else
+                            streamName = stream.StreamName;
                         if (configuration.TopicsTypes.ContainsKey(stream.StreamName))
                         {
                             Type type = configuration.TopicsTypes[stream.StreamName];
                             if (!configuration.TypesSerializers.ContainsKey(type))
                                 throw new Exception($"Missing serializer of type {type} in configuration.");
-                            Connection(stream.StreamName, session, source, processSubPipeline, configuration.TypesSerializers[type].GetFormat());
+                            Connection(streamName, session, source, processSubPipeline, configuration.TypesSerializers[type].GetFormat());
                             elementAdded++;
                         }
                     }
