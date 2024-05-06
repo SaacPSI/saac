@@ -38,10 +38,15 @@ public class PsiPipelineManager : MonoBehaviour
     private TMP_Text Text;
     private Thread ConnectionThread;
     private int ExporterCount;
+    private int WaitedRendezVousCount;
 
     public string RendezVousServerAddress = "";
     public int RendezVousServerPort = 13331;
     public string RendezVousAppName = "Unity";
+    public List<string> WaitedRendezVousApp; 
+    public delegate void PsiEvent();
+    public static PsiEvent onInitiazed;
+
 #if !PLATFORM_ANDROID
     public TransportKind ExportersTransportType = TransportKind.Tcp;
     public int ExportersMaxLowFrequencyStreams = 12;
@@ -63,8 +68,9 @@ public class PsiPipelineManager : MonoBehaviour
         SourceDelegates = new Dictionary<string, ConnectToSourceEndPoint>();
         SourceEndpoint = new Dictionary<string, Rendezvous.TcpSourceEndpoint>();
 #endif
+        WaitedRendezVousApp = new List<string>();
         LogBuffer = new List<string>();
-        ExporterCount = 0;
+        ExporterCount = WaitedRendezVousCount = 0;
         Serializers = KnownSerializers.GetKnownSerializers();
         InitializeSerializer(Serializers);
     }
@@ -125,7 +131,7 @@ public class PsiPipelineManager : MonoBehaviour
             RendezVousClient.Error += RendezVousClient_Error;
             RendezVousClient.Rendezvous.ProcessAdded += (_, p) =>
             {
-                if (p.Name.Equals(RendezVousAppName))
+                if (!WaitedRendezVousApp.Contains(p.Name))
                     return;
 
                 AddLog($"PsiPipelineManager : Remote App found: {p.Name}");
@@ -164,9 +170,12 @@ public class PsiPipelineManager : MonoBehaviour
                         }
                     }
 #endif
+                    WaitedRendezVousCount++;
                 }
-            };
-            IsInitialized = true;
+                IsInitialized = WaitedRendezVousCount == WaitedRendezVousApp.Count;
+                if(IsInitialized && onInitiazed != null) 
+                    onInitiazed();
+            }; 
         }
         catch (Exception e)
         {
@@ -245,7 +254,7 @@ public class PsiPipelineManager : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    public void Initialize()
     {
         if (!IsInitialized)
         {
@@ -259,7 +268,7 @@ public class PsiPipelineManager : MonoBehaviour
             else
                 Text = null;
             GetPipeline();
-            
+
             RendezVousClient = new RendezvousClient(RendezVousServerAddress, RendezVousServerPort);
             ConnectionThread = new Thread(SyncServerConnection);
             ConnectionThread.Start();
