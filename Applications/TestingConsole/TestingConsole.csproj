@@ -12,6 +12,7 @@
     <Platforms>x64</Platforms>
 	  <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,8 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\Bodies\Bodies.csproj" />
-    <ProjectReference Include="..\..\Components\Groups\Groups.csproj" />
+    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

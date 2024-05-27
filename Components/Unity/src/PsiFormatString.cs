@@ -18,4 +18,4 @@ public class PsiFormatString
     {
         return reader.ReadString();
     }
-}
+} 

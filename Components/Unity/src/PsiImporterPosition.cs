@@ -2,7 +2,7 @@ using Microsoft.Psi;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PsiPositionImporter : PsiImporter<System.Numerics.Vector3>
+public class PsiImporterPosition : PsiImporter<System.Numerics.Vector3>
 {
     private List<System.Numerics.Vector3> Buffer = new List<System.Numerics.Vector3>();
 

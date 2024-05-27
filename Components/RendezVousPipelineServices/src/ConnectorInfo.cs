@@ -17,9 +17,9 @@ namespace SAAC.RendezVousPipelineServices
             this.source = source;
         }
 
-        public dynamic CreateBridge(Pipeline pipeline)
+        public dynamic CreateBridge<T>(Pipeline pipeline)
         {
-            return source.BridgeTo(pipeline, $"{SourceName}->{pipeline.Name}");
+            return Microsoft.Psi.Operators.BridgeTo(source, pipeline, $"{SourceName}->{pipeline.Name}");
         }
     }
 }

@@ -14,19 +14,24 @@ It includes modifications of RemoteExorter to include multi clients streaming (s
 At the moment, using \\psi imaging system is incompatible with Unity. This limitation as not been investigate as we use WebRTC.
 
 ## Unity Package
-The package contains dlls and 14 scripts:
+The package contains dlls and scripts:
 * PsiExporter : base script to inherit from for exporter scripts.
 * PsiImporter : base script to inherit from for importer scripts.
-* PsiPositionExporter : example of exporter to send position of the gameobject.
-* PsiPositionOrientationExporter : example of exporter to send position \& rotation of the gameobject.
-* PsiPositionImporter : example of importer to set position of the gameobject.
-* PsiPingImporter : example of importer to handle ping from server.
+* PsiExporterPosition : example of exporter to send position of the gameobject.
+* PsiExporterPositionOrientation : example of exporter to send position \& rotation of the gameobject.
+* PsiExporterPosition : exporter to send image of the camera.
+* PsiExporterPosition : exporter to send image of the camera as bytes stream.
+* PsiImportePositionr : example of importer to set position of the gameobject.
+* PsiImporterPing : example of importer to handle ping from server.
 * PsiPiplineManager : required component for scripts to work, can synchronise with other \\psi piplines through a **RemoteClockImporter**.
 * PsiFormatVector3 : (De)Serialization for Vector3 used in PsiPositionExporter \& PsiPositionImporter. 
 * PsiFormatString : (De)Serialization for string. 
 * PsiFormatPositionAndOrientation : (De)Serialization for a tuple of Vector3 used in PsiPositionOrientationExporter. 
 * PsiFormatDateTime : (De)Serialization for DateTime. 
 * PsiFormatBoolean : (De)Serialization for boolean. 
+* PsiFormatImage : (De)Serialization for image. 
+* PsiFormatString : (De)Serialization for string. 
+* PsiFormatInteger : (De)Serialization for int and enum. 
 * PsiASerializer : base class for KnowSerializer classes.
 * PsiAddedSerializer : file with serializers for KnownSerializer.
 

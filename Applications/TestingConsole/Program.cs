@@ -3,24 +3,163 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Interop.Rendezvous;
 //using WebRTC;
 using Microsoft.Psi.Imaging;
-using Microsoft.Psi.AzureKinect;
+//using Microsoft.Psi.AzureKinect;
 //using Bodies;
 //using OpenFace;
 using System.Configuration;
-using Microsoft.Psi.Imaging;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Microsoft.Psi.Components;
 using SAAC;
-using SAAC.Bodies;
-using Microsoft.Azure.Kinect.BodyTracking;
-using Microsoft.Azure.Kinect.Sensor;
+//using SAAC.Bodies;
 using System.Text;
-using SAAC.Groups;
+//using SAAC.Groups;
+using Microsoft.Psi.Interop.Serialization;
+using Microsoft.Psi.Interop.Transport;
+using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
+using System.IO;
+using SAAC.RendezVousPipelineServices;
+using System.Diagnostics;
+using RendezVousPipelineServices;
 //using SAAC.Ollama;
 
 namespace TestingConsole
 {
+    public class PsiFormatBoolean
+    {
+        public static Format<bool> GetFormat()
+        {
+            return new Format<bool>(WriteBoolean, ReadBoolean);
+        }
+
+        public static void WriteBoolean(bool boolean, BinaryWriter writer)
+        {
+            writer.Write(boolean);
+        }
+
+        public static bool ReadBoolean(BinaryReader reader)
+        {
+            return reader.ReadBoolean();
+        }
+    }
+
+    public class PsiFormaChar
+    {
+        public static Format<char> GetFormat()
+        {
+            return new Format<char>(WriteChar, ReadChar);
+        }
+
+        public static void WriteChar(char character, BinaryWriter writer)
+        {
+            writer.Write(character);
+        }
+
+        public static char ReadChar(BinaryReader reader)
+        {
+            return reader.ReadChar();
+        }
+    }
+
+    public class PsiFormatString
+    {
+        public static Format<string> GetFormat()
+        {
+            return new Format<string>(WriteString, ReadSring);
+        }
+
+        public static void WriteString(string data, BinaryWriter writer)
+        {
+            writer.Write(data);
+        }
+
+        public static string ReadSring(BinaryReader reader)
+        {
+            return reader.ReadString();
+        }
+    }
+    public class PsiFormatPositionAndOrientation
+    {
+        public static Format<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetFormat()
+        {
+            return new Format<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>(WritePositionOrientation, ReadPositionOrientation);
+        }
+
+        public static void WritePositionOrientation(Tuple<System.Numerics.Vector3, System.Numerics.Vector3> point3D, BinaryWriter writer)
+        {
+            writer.Write((double)point3D.Item1.X);
+            writer.Write((double)point3D.Item1.Y);
+            writer.Write((double)point3D.Item1.Z);
+            writer.Write((double)point3D.Item2.X);
+            writer.Write((double)point3D.Item2.Y);
+            writer.Write((double)point3D.Item2.Z);
+        }
+
+        public static Tuple<System.Numerics.Vector3, System.Numerics.Vector3> ReadPositionOrientation(BinaryReader reader)
+        {
+            return new Tuple<System.Numerics.Vector3, System.Numerics.Vector3>(new System.Numerics.Vector3((float)reader.ReadDouble(), (float)reader.ReadDouble(), (float)reader.ReadDouble()),
+                            new System.Numerics.Vector3((float)reader.ReadDouble(), (float)reader.ReadDouble(), (float)reader.ReadDouble()));
+        }
+    }
+
+    public class PsiFormatImage
+    {
+        public static Format<Image> GetFormat()
+        {
+            return new Format<Image>(WriteImage, ReadImage);
+        }
+
+        public static void WriteImage(Image image, BinaryWriter writer)
+        {
+            int bytesPerPixel = image.BitsPerPixel / 8;
+            writer.Write(image.Width);
+            writer.Write(image.Height);
+            writer.Write((int)image.PixelFormat);
+            writer.Write(bytesPerPixel);
+            writer.Write(image.ReadBytes(image.Width * image.Height * bytesPerPixel));
+        }
+
+        public static Image ReadImage(BinaryReader reader)
+        {
+            int width = reader.ReadInt32();
+            int height = reader.ReadInt32();
+            PixelFormat format = (PixelFormat)reader.ReadInt32();
+            int bytesPerPixel = reader.ReadInt32();
+            byte[] data = reader.ReadBytes(width * height * bytesPerPixel);
+            Microsoft.Psi.Imaging.Image image = null;
+            unsafe
+            {
+                fixed (byte* p = data)
+                {
+                    IntPtr ptr = (IntPtr)p;
+                    image = new Microsoft.Psi.Imaging.Image(ptr, width, height, width * bytesPerPixel, format);
+                }
+            }
+            return image;
+        }
+    }
+
+    public class PsiFormatBytes
+    {
+        public static Format<byte[]> GetFormat()
+        {
+            return new Format<byte[]>(WriteBytes, ReadBytes);
+        }
+
+        public static void WriteBytes(byte[] image, BinaryWriter writer)
+        {
+            writer.Write(image.Length);
+            writer.Write(image);
+        }
+
+        public static byte[] ReadBytes(BinaryReader reader)
+        {
+            int length = reader.ReadInt32();
+            byte[] data = reader.ReadBytes(length);
+            return data;
+        }
+    }
+
     internal class Program
     {
         //*****Uncomment OpenFace, Microsoft.Psi.Imaging and Microsoft.Psi.AzureKinect
@@ -207,64 +346,183 @@ namespace TestingConsole
         //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
         //}
 
-        static void testGroups(Pipeline p)
+        //static void testGroups(Pipeline p)
+        //{
+        //    var azureConfig = new AzureKinectSensorConfiguration();
+        //    azureConfig.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+        //    azureConfig.BodyTrackerConfiguration.CpuOnlyMode = false;
+        //    var azureKinect = new AzureKinectSensor(p, azureConfig);
+
+
+
+        //    // Create the store component
+        //    var store = PsiStore.Create(p, "Azure", "D:\\Stores");
+
+        //    // Write incoming data in the store
+        //    //store.Write(azureKinect.ColorImage, "Color");
+        //    //store.Write(azureKinect.DepthImage, "Depth");
+        //    store.Write(azureKinect.Bodies, "Bodies");
+        //    store.Write(azureKinect.Imu, "Imu");
+
+        //    BodiesConverter converter = new BodiesConverter(p);
+        //    azureKinect.Bodies.PipeTo(converter.InBodiesAzure);
+        //    store.Write(converter.Out, "BodiesS");
+        //    converter.Out.Do((d, e) => { Console.WriteLine("c"); });
+
+        //    SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
+        //    azureKinect.Bodies.PipeTo(extractor.InBodiesAzure);
+
+        //    SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
+        //    extractor.Out.PipeTo(groupsDetector.In);
+
+        //    store.Write(groupsDetector.Out, "Groups");
+        //    groupsDetector.Out.Do((d,e) => { Console.WriteLine("g"); });
+        //}
+
+        //static private void Connection<T>(string name, TcpSourceEndpoint? source, Pipeline p, Format<T> deserializer)
+        //{
+        //    source?.ToTcpSource<T>(p, deserializer, null, true, name).Do((d, e) => { Console.WriteLine($"Recieve {name} data @{e} : {d}"); });
+        //}
+
+        //static void Quest2Demo(Pipeline p)
+        //{
+        //    //var host = "192.168.1.191";
+        //    var host = "10.44.192.131";
+        //    var remoteClock = new RemoteClockExporter(port: 11510);
+
+        //    //Light
+        //    Emitter<bool> lightEmitter = p.CreateEmitter<bool>(p, "lightEmitter");
+        //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
+        //    bool alternate = false;
+        //    timer.Out.Do(t =>
+        //    {
+        //        Console.WriteLine($"Send {alternate}");
+        //        lightEmitter.Post(alternate, p.GetCurrentTime());
+        //        alternate = !alternate;
+        //    });
+        //    TcpWriter<bool> tcpWiter = new TcpWriter<bool>(p, 11511, PsiFormatBoolean.GetFormat(), "Light");
+        //    lightEmitter.PipeTo(tcpWiter);
+
+        //    bool canStart = false;
+        //    var process = new Rendezvous.Process("Server", new[] { remoteClock.ToRendezvousEndpoint(host), tcpWiter.ToRendezvousEndpoint<bool>(host, "Light") });
+        //    var server = new RendezvousServer();
+        //    server.Rendezvous.TryAddProcess(process);
+        //    server.Rendezvous.ProcessAdded += (_, pr) =>
+        //    {
+        //        Console.WriteLine($"Process {pr.Name}");
+        //        if (pr.Name == "Unity")
+        //        {
+        //            foreach (var endpoint in pr.Endpoints)
+        //            {
+        //                if (endpoint is Rendezvous.TcpSourceEndpoint)
+        //                {
+        //                    TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
+        //                    foreach (var stream in endpoint.Streams)
+        //                    {
+        //                        Console.WriteLine($"\tStream {stream.StreamName}");
+        //                        switch (stream.StreamName)
+        //                        {
+        //                            case "PositionLeft":
+        //                            case "PositionRight":
+        //                            case "Left":
+        //                            case "Right":
+        //                            case "Player":
+        //                                Connection<Tuple<Vector3, Vector3>>(stream.StreamName, source, p, PsiFormatPositionAndOrientation.GetFormat());
+        //                                break;
+        //                            case "OutDigiCode":
+        //                                Connection<char>(stream.StreamName, source, p, PsiFormaChar.GetFormat());
+        //                                break;
+        //                            case "IsSuccess":
+        //                                Connection<bool>(stream.StreamName, source, p, PsiFormatBoolean.GetFormat());
+        //                                break;
+        //                            case "Area":
+        //                                Connection<string>(stream.StreamName, source, p, PsiFormatString.GetFormat());
+        //                                break;
+        //                            case "Camera":
+        //                                Connection<byte[]>(stream.StreamName, source, p, PsiFormatBytes.GetFormat());
+        //                                //Connection<Image>(stream.StreamName, source, p, PsiFormatImage.GetFormat());
+        //                                break;
+        //                        }
+        //                    }
+        //                }
+        //                canStart = true;
+        //            }
+        //        }
+        //    };
+        //    server.Error += (s, e) => { Console.WriteLine(e.Message); Console.WriteLine(e.HResult); };
+        //    server.Start();
+        //    while (!canStart) Thread.Sleep(500);
+        //    Thread.Sleep(500);
+        //}
+
+
+        private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
         {
-            var azureConfig = new AzureKinectSensorConfiguration();
-            azureConfig.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
-            azureConfig.BodyTrackerConfiguration.CpuOnlyMode = false;
-            var azureKinect = new AzureKinectSensor(p, azureConfig);
-
-
-        
-            // Create the store component
-            var store = PsiStore.Create(p, "Azure", "D:\\Stores");
-
-            // Write incoming data in the store
-            //store.Write(azureKinect.ColorImage, "Color");
-            //store.Write(azureKinect.DepthImage, "Depth");
-            store.Write(azureKinect.Bodies, "Bodies");
-            store.Write(azureKinect.Imu, "Imu");
-
-            BodiesConverter converter = new BodiesConverter(p);
-            azureKinect.Bodies.PipeTo(converter.InBodiesAzure);
-            store.Write(converter.Out, "BodiesS");
-            converter.Out.Do((d, e) => { Console.WriteLine("c"); });
-
-            SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
-            azureKinect.Bodies.PipeTo(extractor.InBodiesAzure);
-
-            SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
-            extractor.Out.PipeTo(groupsDetector.In);
-
-            store.Write(groupsDetector.Out, "Groups");
-            groupsDetector.Out.Do((d,e) => { Console.WriteLine("g"); });
+            RendezVousPipeline? parent = sender as RendezVousPipeline;
+            if (parent == null)
+                return;
+            var newStreams = e.Item2[e.Item1];
+            foreach (var stream in newStreams) 
+            { 
+                if (stream.Key == "Image")
+                {
+                    var subP = parent.CreateSubpipeline($"{e.Item1}-ImageProcessing");
+                    var producer = stream.Value.CreateBridge<byte[]>(subP);
+                    BytesStreamToImage processor = new BytesStreamToImage(subP);
+                    Microsoft.Psi.Operators.PipeTo(producer.Out, processor.In);
+                    Microsoft.Psi.Data.Session? session = parent.GetSession(stream.Value.SessionName);
+                    if(session != null)
+                        parent.CreateStore(subP, session, "ImageProcessing", processor);
+                    subP.RunAsync();
+                    parent.Dataset.Save();
+                    return;
+                }
+            }
         }
 
         static void Main(string[] args)
         {
-            // Enabling diagnotstics !!!
-            Pipeline p = Pipeline.Create(enableDiagnostics: true);
+            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            configuration.AutomaticPipelineRun = true;
+            configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
+            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.RendezVousHost = "192.168.1.191";
+            configuration.NotStoredTopics.Add("Image");
+            configuration.TopicsTypes.Add("Image", typeof(byte[]));
+            configuration.TopicsTypes.Add("Head", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
+            configuration.TopicsTypes.Add("PositionLeft", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
+            configuration.TopicsTypes.Add("PositionRight", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
+            RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-            //FullWebRTC(p);
-            //UnityDemo(p);
-            //OpenFace(p);
-            //testBodies(p);
-            //testOllama(p);
-            testGroups(p);
-            try { 
-            // RunAsync the pipeline in non-blocking mode.
-            p.RunAsync(ReplayDescriptor.ReplayAll);
-           
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            // Waiting for an out key
-           Console.WriteLine("Press any key to stop the application.");
-           Console.ReadLine();
-           // Stop correctly the pipeline.
-           p.Dispose();
+            pipeline.NewProcess += OnNewProcess;
+
+            pipeline.Start();
+            pipeline.RunPipeline();
+            // // Enabling diagnotstics !!!
+            // Pipeline p = Pipeline.Create(enableDiagnostics: false);
+
+            // //FullWebRTC(p);
+            // //UnityDemo(p);
+            // //OpenFace(p);
+            // //testBodies(p);
+            // //testOllama(p);
+            // Quest2Demo(p);
+            // try { 
+            // // RunAsync the pipeline in non-blocking mode.
+            // p.RunAsync(ReplayDescriptor.ReplayAll);
+
+            // }
+            // catch(Exception ex)
+            // {
+            //     Console.WriteLine(ex.Message);
+            // }
+            // // Waiting for an out key
+            Console.WriteLine("Press any key to stop the application.");
+            Console.ReadLine();
+            pipeline.Stop();
+            //// Stop correctly the pipeline.
+            //p.Dispose();
         }
+
     }
 }

@@ -2,7 +2,7 @@ using Microsoft.Psi;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PsiPingImporter : PsiImporter<System.DateTime>
+public class PsiImporterPing : PsiImporter<System.DateTime>
 {
     private List<System.DateTime> Buffer = new List<System.DateTime>();
 

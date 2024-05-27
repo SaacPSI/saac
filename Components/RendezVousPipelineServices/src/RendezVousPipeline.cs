@@ -5,6 +5,8 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
+using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Components;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -90,6 +92,21 @@ namespace SAAC.RendezVousPipelineServices
             isStarted = isPipelineRunning = false;
         }
 
+        public Session? GetSession(string sessionName)
+        {
+            foreach (var session in Dataset.Sessions)
+                if (session != null && session.Name == sessionName)
+                    return session;
+            return null;
+        }
+
+        public void CreateStore<T>(Pipeline pipeline, Session session, string name, IProducer<T> source)
+        {
+            var store = PsiStore.Create(pipeline, name, $"{configuration.DatasetPath}/{session.Name}/");
+            store.Write(source, name);
+            session.AddPartitionFromPsiStoreAsync(name, $"{configuration.DatasetPath}/{session.Name}/");
+        }
+
         public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
         {
             return new Subpipeline(pipeline, name);
@@ -104,9 +121,9 @@ namespace SAAC.RendezVousPipelineServices
             Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
             Session session;
             if (configuration.UniqueSession)
-                session = CreateNewSession(configuration.SessionName);
+                session = CreateOrGetSession(configuration.SessionName);
             else
-                session = CreateNewSession(configuration.SessionName + process.Name);
+                session = CreateOrGetSession(configuration.SessionName + process.Name);
             foreach (var endpoint in process.Endpoints)
             {
                 if (isClockServer == false && process.Name == configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
@@ -131,9 +148,25 @@ namespace SAAC.RendezVousPipelineServices
                             Type type = configuration.TopicsTypes[stream.StreamName];
                             if (!configuration.TypesSerializers.ContainsKey(type))
                                 throw new Exception($"Missing serializer of type {type} in configuration.");
-                            Connection(streamName, session, source, processSubPipeline, configuration.TypesSerializers[type].GetFormat());
+                            Connection(streamName, session, source, processSubPipeline, !this.configuration.NotStoredTopics.Contains(stream.StreamName), configuration.TypesSerializers[type].GetFormat());
                             elementAdded++;
                         }
+                    }
+                }
+                else if (endpoint is Rendezvous.RemoteExporterEndpoint)
+                {
+                    RemoteExporterEndpoint? source = endpoint as RemoteExporterEndpoint;
+                    if (source == null)
+                        continue;
+                    foreach (var stream in endpoint.Streams)
+                    {
+                        log($"\tStream {stream.StreamName}");
+                        string streamName;
+                        if (configuration.UniqueSession)
+                            streamName = $"{process.Name}-{stream.StreamName}";
+                        else
+                            streamName = stream.StreamName;
+                        elementAdded += Connection(streamName, session, source, processSubPipeline, !this.configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
                     }
                 }
             }
@@ -154,26 +187,44 @@ namespace SAAC.RendezVousPipelineServices
             NewProcess?.Invoke(this, (process.Name, Connectors));
         }
 
-        private void Connection<T>(string name, Session session, TcpSourceEndpoint source, Pipeline p, Format<T> deserializer)
+        private void Connection<T>(string name, Session session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer)
         {
             string sourceName = $"{session.Name}-{name}";
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, sourceName);
-            if(configuration.Debug)
+            if (configuration.Debug)
                 tcpSource.Do((d, e) => { log($"Recieve {sourceName} data @{e} : {d}"); });
             if (!Connectors.ContainsKey(session.Name))
                 Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
             Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), tcpSource));
-            CreateStore(p, session, name, tcpSource);
+            if (storeSteam)
+                CreateStore(p, session, name, tcpSource); 
         }
 
-        private void CreateStore<T>(Pipeline pipeline, Session session, string name, IProducer<T> source)
+        private bool Connection(string name, Session session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
         {
-            var store = PsiStore.Create(pipeline, name, $"{configuration.DatasetPath}/{session.Name}/");
-            store.Write(source, name);
-            session.AddPartitionFromPsiStoreAsync(name, $"{configuration.DatasetPath}/{session.Name}/");
+            string sourceName = $"{session.Name}-{name}";
+            var importer = source.ToRemoteImporter(p);
+            if (!importer.Connected.WaitOne())
+            {
+                log($"Failed to connect to {sourceName}");
+                return false;
+            }
+            foreach (var streamInfo in importer.Importer.AvailableStreams)
+            {
+                Type type = Type.GetType(streamInfo.TypeName);
+                var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
+                if (configuration.Debug)
+                    stream.Do((d, e) => { log($"Recieve {sourceName}-{streamInfo.Name} data @{e} : {d}"); });
+                if (!Connectors.ContainsKey(session.Name))
+                    Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
+                Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, type, stream));
+                if (storeSteam)
+                    CreateStore(p, session, $"{name}-{streamInfo.Name}", stream);
+            } 
+            return true;
         }
 
-        private Session CreateNewSession(string sessionName)
+        private Session CreateOrGetSession(string sessionName)
         {
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name == sessionName)

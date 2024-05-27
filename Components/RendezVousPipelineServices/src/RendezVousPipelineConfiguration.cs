@@ -23,14 +23,18 @@ namespace SAAC.RendezVousPipelineServices
         public string DatasetName = "";
         public string SessionName = "";
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
+        public Dictionary<string, Type> Filters = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
+        public List<string> NotStoredTopics = new List<string>();
 
         public RendezVousPipelineConfiguration(bool addRegularSerializers = true) 
         {
-            if(addRegularSerializers)
+            if (addRegularSerializers)
             {
                 TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());
                 TypesSerializers.Add(typeof(char), new PsiFormaChar());
+                TypesSerializers.Add(typeof(string), new PsiFormatString());
+                TypesSerializers.Add(typeof(byte[]), new PsiFormatBytes());
                 TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatPositionAndOrientation());
             }
         }

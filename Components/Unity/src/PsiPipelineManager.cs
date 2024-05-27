@@ -106,6 +106,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         serializers.Register<bool, BoolSerializer>();
         serializers.Register<char, CharSerializer>();
+        serializers.Register<byte[], BytesSerializer>();
         serializers.Register<System.Numerics.Vector3, Vector3Serializer>();
         serializers.Register<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>, TupleOfVector3Serializer>();
     }

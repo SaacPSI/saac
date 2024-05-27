@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
 
-public class PsiPositionOrientationExporter : PsiExporter<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>
+public class PsiExporterPositionOrientation
+    : PsiExporter<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>
 {
     private DateTime Timestamp = DateTime.UtcNow;
     private UnityEngine.Vector3 PreviousPosition = Vector3.down;
