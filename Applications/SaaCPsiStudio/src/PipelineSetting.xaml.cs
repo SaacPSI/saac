@@ -117,6 +117,7 @@ namespace SaaCPsiStudio
             configuration.DatasetName = "SAAC.pds";
             //configuration.TopicsTypes.Add();
             //configuration.TypesSerializers.Add();
+            //configuration.NotStoredTopics.Add();
 
             InitializeComponent();
         }
@@ -128,7 +129,7 @@ namespace SaaCPsiStudio
 
         public void RunPipeline()
         {
-            RunPipeline();
+            server?.RunPipeline();
         }
 
         public void StopPipeline()
