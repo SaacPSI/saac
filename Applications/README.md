@@ -25,6 +25,11 @@ To be used with [Kinect Azure Remote Connector](../Components/KinectAzureRemoteC
 * Allowing **NamedPipes** protocol
 * Start/Stop streaming from network commands
 
+## SaaCPsiStudio
+### Summary
+This is a template to execute \psi pipeline in PsiStudio from our [fork](https://github.com/SaacPSI/psi), branch PsiStudio. It use [Rendez Vous Pipeline](../Components/RendezVousPipelineServices/src/RendezVousPipeline.cs) as main context for executing the pipeline.
+
+
 ## TestingConsole
 ### Summary
 This is our testing application, it might have some working example code to test (in the master branch)!
