@@ -40,10 +40,11 @@ public class PsiPipelineManager : MonoBehaviour
     private int WaitedRendezVousCount;
 
     public bool AutoStartPsi = true;
+    public int StreamNumberExpectedAtStart = 0;
     public string RendezVousServerAddress = "";
     public int RendezVousServerPort = 13331;
     public string RendezVousAppName = "Unity";
-    public string HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+    public string HostAddress;
     public List<string> WaitedRendezVousApp;
     public delegate void PsiEvent();
     public static PsiEvent onInitiazed;
@@ -212,6 +213,8 @@ public class PsiPipelineManager : MonoBehaviour
         
     public void RegisterExporter(ref RemoteExporter exporter)
     {
+        if (HostAddress == null)
+            HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         if (ExportersRegistered.Contains(exporter) == false)
         {
             ExportersRegistered.Add(exporter);
@@ -229,6 +232,8 @@ public class PsiPipelineManager : MonoBehaviour
 
     public void RegisterTCPWriter<T>(TcpWriter<T> writer, string topic)
     {
+        if (HostAddress == null)
+            HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         AddLog($"PsiPipelineManager : Add {topic} endpoint to process.");
         GetProcess().AddEndpoint(writer.ToRendezvousEndpoint(HostAddress, topic));
     }
@@ -236,7 +241,11 @@ public class PsiPipelineManager : MonoBehaviour
     public Pipeline GetPipeline()
     {
         if (Pipeline == null)
+        {
             Pipeline = Pipeline.Create("UnityPipeline");
+            if (HostAddress == null)
+                HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+        }
         return Pipeline;
     }
 
@@ -247,13 +256,21 @@ public class PsiPipelineManager : MonoBehaviour
         return Process;
     }
 
-    public void StartPsi()
+    public int GetEndpointsCount()
+    {
+       return GetProcess().Endpoints.Count();
+    }
+
+    public void StartPipeline()
     {
         if (IsInitialized && !IsRunning)
         {
             Rendezvous.Process proc = GetProcess();
+            int count = proc.Endpoints.Count();
+            if (StreamNumberExpectedAtStart != 0 && count != StreamNumberExpectedAtStart)
+                return;
             RendezVousClient.Rendezvous.TryAddProcess(proc);
-            AddLog($"PsiPipelineManager : Add process with {proc.Endpoints.Count()} endpoints.");
+            AddLog($"PsiPipelineManager : Add process with {count} endpoints.");
             IsRunning = true;
             Pipeline.PipelineExceptionNotHandled += (_, ex) =>
             {
@@ -266,8 +283,7 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void StartPsi()
     {
         if (!IsInitialized)
         {
@@ -287,10 +303,17 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
+    // Start is called before the first frame update
+    void Start()
+    {
+        if (AutoStartPsi)
+            StartPsi();
+    }
+
     void Update()
     {
         if (AutoStartPsi && !IsRunning)
-            StartPsi();
+            StartPipeline();
         if (LogBuffer.Count > 0)
         {
             string logBuffer = "";
