@@ -5,8 +5,6 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
-using Microsoft.Psi.Interop.Transport;
-using Microsoft.Psi.Components;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -112,6 +110,11 @@ namespace SAAC.RendezVousPipelineServices
             return new Subpipeline(pipeline, name);
         }
 
+        public void TriggerNewProcessEvent(string name)
+        {
+            NewProcess?.Invoke(this, (name, Connectors));
+        }
+
         private void AddedProcess(object? sender, Process process)
         {
             log($"Process {process.Name}");
@@ -184,7 +187,7 @@ namespace SAAC.RendezVousPipelineServices
                 log($"SubPipeline {process.Name} started.");
             }
             Dataset.Save();
-            NewProcess?.Invoke(this, (process.Name, Connectors));
+            TriggerNewProcessEvent(process.Name);
         }
 
         private void Connection<T>(string name, Session session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer)
