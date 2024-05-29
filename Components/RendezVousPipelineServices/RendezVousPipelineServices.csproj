@@ -18,7 +18,6 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-mod" />
     <PackageReference Include="Microsoft.Psi.Spatial.Euclidean" Version="0.19.100.1-beta" />

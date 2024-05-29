@@ -19,8 +19,7 @@ using Microsoft.Psi.Interop.Transport;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
 using SAAC.RendezVousPipelineServices;
-using System.Diagnostics;
-using RendezVousPipelineServices;
+using SAAC.Helpers;
 //using SAAC.Ollama;
 
 namespace TestingConsole
