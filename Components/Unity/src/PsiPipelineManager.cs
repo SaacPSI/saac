@@ -44,7 +44,7 @@ public class PsiPipelineManager : MonoBehaviour
     public string RendezVousServerAddress = "";
     public int RendezVousServerPort = 13331;
     public string RendezVousAppName = "Unity";
-    public string HostAddress;
+    public string HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
     public List<string> WaitedRendezVousApp;
     public delegate void PsiEvent();
     public static PsiEvent onInitiazed;
@@ -213,7 +213,7 @@ public class PsiPipelineManager : MonoBehaviour
         
     public void RegisterExporter(ref RemoteExporter exporter)
     {
-        if (HostAddress == null)
+        if (HostAddress.Length == 0)
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         if (ExportersRegistered.Contains(exporter) == false)
         {
@@ -232,7 +232,7 @@ public class PsiPipelineManager : MonoBehaviour
 
     public void RegisterTCPWriter<T>(TcpWriter<T> writer, string topic)
     {
-        if (HostAddress == null)
+        if (HostAddress.Length == 0)
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         AddLog($"PsiPipelineManager : Add {topic} endpoint to process.");
         GetProcess().AddEndpoint(writer.ToRendezvousEndpoint(HostAddress, topic));
@@ -243,7 +243,7 @@ public class PsiPipelineManager : MonoBehaviour
         if (Pipeline == null)
         {
             Pipeline = Pipeline.Create("UnityPipeline");
-            if (HostAddress == null)
+            if (HostAddress.Length == 0)
                 HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         }
         return Pipeline;
