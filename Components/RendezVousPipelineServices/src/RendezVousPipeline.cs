@@ -101,6 +101,14 @@ namespace SAAC.RendezVousPipelineServices
             return null;
         }
 
+        public Session CreateOrGetSession(string sessionName)
+        {
+            foreach (var session in Dataset.Sessions)
+                if (session != null && session.Name == sessionName)
+                    return session;
+            return Dataset.AddEmptySession(sessionName);
+        }
+
         public void CreateStore<T>(Pipeline pipeline, Session session, string name, IProducer<T> source)
         {
             var store = PsiStore.Create(pipeline, name, $"{Configuration.DatasetPath}/{session.Name}/");
@@ -238,14 +246,6 @@ namespace SAAC.RendezVousPipelineServices
             Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, type, stream));
             if (storeSteam)
                 CreateStore(p, session, storeName, stream);
-        }
-
-        private Session CreateOrGetSession(string sessionName)
-        {
-            foreach (var session in Dataset.Sessions)
-                if (session != null && session.Name == sessionName)
-                    return session;
-            return Dataset.AddEmptySession(sessionName);
         }
     }
 }
