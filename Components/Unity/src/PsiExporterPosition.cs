@@ -4,17 +4,14 @@ using UnityEngine;
 public class PsiExporterPosition
     : PsiExporter<System.Numerics.Vector3>
 {
-    private DateTime Timestamp = DateTime.UtcNow;
     private UnityEngine.Vector3 PreviousPosition = Vector3.down;
     
     void Update()
     {
-        var now = GetCurrentTime();
         var position = gameObject.transform.position;
-        if (CanSend() && Timestamp != now && position != PreviousPosition)
+        if (CanSend() && position != PreviousPosition)
         {
-            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), now);
-            Timestamp = now;
+            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), GetCurrentTime());
             PreviousPosition = position;
         }
     }

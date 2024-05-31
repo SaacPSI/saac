@@ -8,6 +8,7 @@ using Microsoft.Psi.Components;
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
     public string TopicName = "Topic";
+    public float DataPerSecond = 0.0f;
 
 #if !PLATFORM_ANDROID
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
@@ -18,10 +19,13 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
     Emitter<T> IProducer<T>.Out => ((IProducer<T>)Out).Out;
 
     protected bool IsInitialized = false;
+    protected float DataTime;
+    protected DateTime Timestamp = DateTime.UtcNow;
 
     // Start is called before the first frame update
     public virtual void Start()
     {
+        DataTime = DataPerSecond == 0.0f ? 0.0f : 1.0f / DataPerSecond;
         PsiManager = GameObject.FindAnyObjectByType<PsiPipelineManager>();
         if (PsiManager == null)
         {
@@ -47,7 +51,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 
     protected bool CanSend()
     {
-        return IsInitialized && PsiManager.IsRunning;
+        return IsInitialized && PsiManager.IsRunning && (DataTime == 0.0f || GetCurrentTime().Subtract(Timestamp).TotalSeconds) > DataTime && Timestamp = GetCurrentTime()));
     }
 
     protected DateTime GetCurrentTime()

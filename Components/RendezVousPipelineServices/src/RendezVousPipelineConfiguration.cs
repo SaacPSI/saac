@@ -32,7 +32,8 @@ namespace SAAC.RendezVousPipelineServices
             if (addRegularSerializers)
             {
                 TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());
-                TypesSerializers.Add(typeof(char), new PsiFormaChar());
+                TypesSerializers.Add(typeof(char), new PsiFormatChar());
+                TypesSerializers.Add(typeof(int), new PsiFormatInt());
                 TypesSerializers.Add(typeof(string), new PsiFormatString());
                 TypesSerializers.Add(typeof(byte[]), new PsiFormatBytes());
                 TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatPositionAndOrientation());

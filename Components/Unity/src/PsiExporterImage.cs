@@ -5,8 +5,6 @@ using Microsoft.Psi;
 
 public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
 {
-    public float FramePerSecond = 15.0f;
-    private DateTime Timestamp = DateTime.UtcNow; 
     private Texture2D _CameraTexture2D;
     private UnityEngine.Camera Camera;
     // Start is called before the first frame update
@@ -19,8 +17,7 @@ public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
 
     void OnRenderObject()
     {
-        var now = GetCurrentTime();
-        if (CanSend() && Timestamp != now && (1.0f / (now.Subtract(Timestamp).TotalSeconds) > FramePerSecond))
+        if (CanSend())
         {
             RenderTexture.active = Camera.activeTexture;
             _CameraTexture2D.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
@@ -53,8 +50,7 @@ public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
             Microsoft.Psi.Imaging.Image image = new Microsoft.Psi.Imaging.Image(Screen.width, Screen.height, PixelFormat.BGRA_32bpp);
  
             if (image != null)
-                Out.Post(image, now);
-            Timestamp = now;
+                Out.Post(image, GetCurrentTime());
         }
     }
 
