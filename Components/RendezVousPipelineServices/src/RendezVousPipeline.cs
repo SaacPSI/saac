@@ -201,7 +201,7 @@ namespace SAAC.RendezVousPipelineServices
                 Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
             if (transformerType != null)
             {
-                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_tranformer" ]);
+                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_transformer" ]);
                 Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
                 Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), transformer));
                 if (storeSteam)
