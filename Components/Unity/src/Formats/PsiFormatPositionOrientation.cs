@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-public class PsiFormatPositionAndOrientation
+public class PsiFormatPositionOrientation
 {
     public static Format<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetFormat()
     {

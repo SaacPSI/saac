@@ -51,7 +51,12 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 
     protected bool CanSend()
     {
-        return IsInitialized && PsiManager.IsRunning && (DataTime == 0.0f || GetCurrentTime().Subtract(Timestamp).TotalSeconds) > DataTime && Timestamp = GetCurrentTime()));
+        if (IsInitialized && PsiManager.IsRunning && (DataTime == 0.0f || GetCurrentTime().Subtract(Timestamp).TotalSeconds > DataTime))
+        {
+            Timestamp = GetCurrentTime();
+            return true; 
+        }
+        return false;
     }
 
     protected DateTime GetCurrentTime()

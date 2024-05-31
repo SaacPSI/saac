@@ -23,7 +23,7 @@ namespace SAAC.RendezVousPipelineServices
         public string DatasetName = "";
         public string SessionName = "";
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
-        public Dictionary<string, Type> Filters = new Dictionary<string, Type>();
+        public Dictionary<string, Type> Transformers = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
         public List<string> NotStoredTopics = new List<string>();
 

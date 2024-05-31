@@ -22,7 +22,7 @@ public class PsiExporterPositionOrientation
 #if PLATFORM_ANDROID
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetSerializer()
     {
-        return PsiFormatPositionAndOrientation.GetFormat();
+        return PsiFormatPositionOrientation.GetFormat();
     }
 #endif
 }

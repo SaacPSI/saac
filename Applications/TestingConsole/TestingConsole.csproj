@@ -10,7 +10,7 @@
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
-	  <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

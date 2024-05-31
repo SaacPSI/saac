@@ -5,6 +5,7 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
+using Microsoft.Psi.Components;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -151,7 +152,7 @@ namespace SAAC.RendezVousPipelineServices
                             Type type = configuration.TopicsTypes[stream.StreamName];
                             if (!configuration.TypesSerializers.ContainsKey(type))
                                 throw new Exception($"Missing serializer of type {type} in configuration.");
-                            Connection(streamName, session, source, processSubPipeline, !this.configuration.NotStoredTopics.Contains(stream.StreamName), configuration.TypesSerializers[type].GetFormat());
+                            Connection(streamName, session, source, processSubPipeline, !this.configuration.NotStoredTopics.Contains(stream.StreamName), configuration.TypesSerializers[type].GetFormat(), configuration.Transformers.ContainsKey(stream.StreamName) ? configuration.Transformers[stream.StreamName] : null);
                             elementAdded++;
                         }
                     }
@@ -190,7 +191,7 @@ namespace SAAC.RendezVousPipelineServices
             TriggerNewProcessEvent(process.Name);
         }
 
-        private void Connection<T>(string name, Session session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer)
+        private void Connection<T>(string name, Session session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
             string sourceName = $"{session.Name}-{name}";
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, sourceName);
@@ -198,9 +199,20 @@ namespace SAAC.RendezVousPipelineServices
                 tcpSource.Do((d, e) => { log($"Recieve {sourceName} data @{e} : {d}"); });
             if (!Connectors.ContainsKey(session.Name))
                 Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
-            Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), tcpSource));
-            if (storeSteam)
-                CreateStore(p, session, name, tcpSource); 
+            if (transformerType != null)
+            {
+                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_tranformer" ]);
+                Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
+                Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), transformer));
+                if (storeSteam)
+                    CreateStore(p, session, name, transformer);
+            }
+            else
+            {
+                Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, typeof(T), tcpSource));
+                if (storeSteam)
+                    CreateStore(p, session, name, tcpSource);
+            }
         }
 
         private bool Connection(string name, Session session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)

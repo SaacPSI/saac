@@ -20,3 +20,4 @@ namespace SAAC.RendezVousPipelineServices
             return reader.ReadChar();
         }
     }
+}

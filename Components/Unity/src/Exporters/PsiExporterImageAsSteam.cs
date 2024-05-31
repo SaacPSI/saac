@@ -4,7 +4,6 @@ using UnityEngine;
 public class PsiImageExporterAsStream : PsiExporter<byte[]>
 {
     public int JpegEncodingLevel = 50;
-    private DateTime Timestamp = DateTime.UtcNow;
     private Texture2D CameraTexture2D;
     private UnityEngine.Camera Camera;
     // Start is called before the first frame update

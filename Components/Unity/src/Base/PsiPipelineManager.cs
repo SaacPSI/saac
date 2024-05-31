@@ -105,6 +105,7 @@ public class PsiPipelineManager : MonoBehaviour
         serializers.Register<byte[], BytesSerializer>();
         serializers.Register<System.Numerics.Vector3, Vector3Serializer>();
         serializers.Register<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>, TupleOfVector3Serializer>();
+        serializers.Register<System.Numerics.Matrix4x4,  Matrix4x4Serializer >();
     }
 
     void SyncServerConnection()

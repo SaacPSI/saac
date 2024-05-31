@@ -485,15 +485,19 @@ namespace TestingConsole
             configuration.AutomaticPipelineRun = true;
             configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "192.168.1.191";
-            configuration.NotStoredTopics.Add("Image");
+            configuration.RendezVousHost = "10.142.1.159";
+            //configuration.NotStoredTopics.Add("Image");
             configuration.TopicsTypes.Add("Image", typeof(byte[]));
-            configuration.TopicsTypes.Add("Head", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
-            configuration.TopicsTypes.Add("PositionLeft", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
-            configuration.TopicsTypes.Add("PositionRight", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
+            configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
+            configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
+            configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
+            configuration.Transformers.Add("Image", typeof(BytesStreamToImage));
+            configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
+            configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
+            configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-            pipeline.NewProcess += OnNewProcess;
+           // pipeline.NewProcess += OnNewProcess;
 
             pipeline.Start();
             pipeline.RunPipeline();
