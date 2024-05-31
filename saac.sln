@@ -51,6 +51,42 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Whisper", "Components\Whisp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Importers", "Importers", "{64BC8755-826A-4608-8729-9FB9E2DC16BC}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Importers\PsiImporterPing.cs = Components\Unity\src\Importers\PsiImporterPing.cs
+		Components\Unity\src\Importers\PsiImporterPosition.cs = Components\Unity\src\Importers\PsiImporterPosition.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C65B-4C2F-BE66-56913FB65E7A}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Base\PsiExporter.cs = Components\Unity\src\Base\PsiExporter.cs
+		Components\Unity\src\Base\PsiImporter.cs = Components\Unity\src\Base\PsiImporter.cs
+		Components\Unity\src\Base\PsiPipelineManager.cs = Components\Unity\src\Base\PsiPipelineManager.cs
+		Components\Unity\src\Base\PsiSerializerReflexion.cs = Components\Unity\src\Base\PsiSerializerReflexion.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Exporters\PsiExporterImage.cs = Components\Unity\src\Exporters\PsiExporterImage.cs
+		Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs = Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs
+		Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs = Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs
+		Components\Unity\src\Exporters\PsiExporterPosition.cs = Components\Unity\src\Exporters\PsiExporterPosition.cs
+		Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs = Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Formats", "Formats", "{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Formats\PsiFormatBoolean.cs = Components\Unity\src\Formats\PsiFormatBoolean.cs
+		Components\Unity\src\Formats\PsiFormatBytes.cs = Components\Unity\src\Formats\PsiFormatBytes.cs
+		Components\Unity\src\Formats\PsiFormatDateTime.cs = Components\Unity\src\Formats\PsiFormatDateTime.cs
+		Components\Unity\src\Formats\PsiFormatImage.cs = Components\Unity\src\Formats\PsiFormatImage.cs
+		Components\Unity\src\Formats\PsiFormatInteger.cs = Components\Unity\src\Formats\PsiFormatInteger.cs
+		Components\Unity\src\Formats\PsiFormatMatrix4x4.cs = Components\Unity\src\Formats\PsiFormatMatrix4x4.cs
+		Components\Unity\src\Formats\PsiFormatPositionOrientation.cs = Components\Unity\src\Formats\PsiFormatPositionOrientation.cs
+		Components\Unity\src\Formats\PsiFormatString.cs = Components\Unity\src\Formats\PsiFormatString.cs
+		Components\Unity\src\Formats\PsiFormatVector3.cs = Components\Unity\src\Formats\PsiFormatVector3.cs
+	EndProjectSection
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Groups", "Components\Groups\Groups.csproj", "{65613648-C5B7-4AD1-9FA2-6816C54239E9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Visualizations", "Components\Visualizations\Visualizations.csproj", "{1FC1038C-8DC8-46E7-A2D4-BCA4F74EF0B4}"
@@ -301,6 +337,10 @@ Global
 		{C9071A95-D624-448D-AD6F-2F844AE5A769} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{B147B765-BECF-4229-89FA-E82971784E85} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{B28D807F-13DB-4BEB-8CB9-62F71B0E5A36} = {DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1}
+		{64BC8755-826A-4608-8729-9FB9E2DC16BC} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
+		{9100B002-C65B-4C2F-BE66-56913FB65E7A} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
+		{FE0BD672-6853-4E38-B553-80C84C992E15} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
+		{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
 		{65613648-C5B7-4AD1-9FA2-6816C54239E9} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{1FC1038C-8DC8-46E7-A2D4-BCA4F74EF0B4} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{2F15214A-C326-43F2-B84A-6F19AD7E9D84} = {DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1}
