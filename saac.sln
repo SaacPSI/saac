@@ -101,42 +101,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SaaCPsiStudio", "Applicatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RendezVousPipelineServices", "Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj", "{934AF3B8-E8E9-4F06-92F4-E07213A606BF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Importers", "Importers", "{64BC8755-826A-4608-8729-9FB9E2DC16BC}"
-	ProjectSection(SolutionItems) = preProject
-		Components\Unity\src\Importers\PsiImporterPing.cs = Components\Unity\src\Importers\PsiImporterPing.cs
-		Components\Unity\src\Importers\PsiImporterPosition.cs = Components\Unity\src\Importers\PsiImporterPosition.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C65B-4C2F-BE66-56913FB65E7A}"
-	ProjectSection(SolutionItems) = preProject
-		Components\Unity\src\Base\PsiExporter.cs = Components\Unity\src\Base\PsiExporter.cs
-		Components\Unity\src\Base\PsiImporter.cs = Components\Unity\src\Base\PsiImporter.cs
-		Components\Unity\src\Base\PsiPipelineManager.cs = Components\Unity\src\Base\PsiPipelineManager.cs
-		Components\Unity\src\Base\PsiSerializerReflexion.cs = Components\Unity\src\Base\PsiSerializerReflexion.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"
-	ProjectSection(SolutionItems) = preProject
-		Components\Unity\src\Exporters\PsiExporterImage.cs = Components\Unity\src\Exporters\PsiExporterImage.cs
-		Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs = Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs
-		Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs = Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs
-		Components\Unity\src\Exporters\PsiExporterPosition.cs = Components\Unity\src\Exporters\PsiExporterPosition.cs
-		Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs = Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Formats", "Formats", "{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0}"
-	ProjectSection(SolutionItems) = preProject
-		Components\Unity\src\Formats\PsiFormatBoolean.cs = Components\Unity\src\Formats\PsiFormatBoolean.cs
-		Components\Unity\src\Formats\PsiFormatBytes.cs = Components\Unity\src\Formats\PsiFormatBytes.cs
-		Components\Unity\src\Formats\PsiFormatDateTime.cs = Components\Unity\src\Formats\PsiFormatDateTime.cs
-		Components\Unity\src\Formats\PsiFormatImage.cs = Components\Unity\src\Formats\PsiFormatImage.cs
-		Components\Unity\src\Formats\PsiFormatInteger.cs = Components\Unity\src\Formats\PsiFormatInteger.cs
-		Components\Unity\src\Formats\PsiFormatString.cs = Components\Unity\src\Formats\PsiFormatString.cs
-		Components\Unity\src\Formats\PsiFormatMatrix4x4.cs = Components\Unity\src\Formats\PsiFormatMatrix4x4.cs
-		Components\Unity\src\Formats\PsiFormatPositionOrientation.cs = Components\Unity\src\Formats\PsiFormatPositionOrientation.cs
-		Components\Unity\src\Formats\PsiFormatVector3.cs = Components\Unity\src\Formats\PsiFormatVector3.cs
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -346,10 +310,6 @@ Global
 		{2F15214A-C326-43F2-B84A-6F19AD7E9D84} = {DF8FE09D-E1FD-4BC9-B1F9-E20366CA06C1}
 		{501E57D8-CFB0-4F4B-AFA5-D81ED31C7C92} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{934AF3B8-E8E9-4F06-92F4-E07213A606BF} = {D2F89990-8127-4341-A73F-9B035978187A}
-		{64BC8755-826A-4608-8729-9FB9E2DC16BC} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
-		{9100B002-C65B-4C2F-BE66-56913FB65E7A} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
-		{FE0BD672-6853-4E38-B553-80C84C992E15} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
-		{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0} = {B28D807F-13DB-4BEB-8CB9-62F71B0E5A36}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
