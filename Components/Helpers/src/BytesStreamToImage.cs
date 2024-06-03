@@ -12,11 +12,17 @@ namespace SAAC.Helpers
         public Receiver<byte[]> In { get; private set; }
         public Emitter<Shared<Image>> Out { get; private set; }
 
+        private string name;
+
         public BytesStreamToImage(Pipeline parent, string name = nameof(BytesStreamToImage))
         {
+            this.name = name;
             In = parent.CreateReceiver<byte[]>(this, Process, $"{name}-In");
             Out = parent.CreateEmitter<Shared<Image>>(this, $"{name}-Out");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         public void Process(byte[] data, Envelope envelope)
         {

@@ -1,8 +1,4 @@
-﻿
-using Microsoft.Psi.Interop.Serialization;
-using System.IO;
-
-namespace SAAC.RendezVousPipelineServices
+﻿namespace SAAC.RendezVousPipelineServices
 {
     public class ClockSynchConfiguration
     {
@@ -36,7 +32,8 @@ namespace SAAC.RendezVousPipelineServices
                 TypesSerializers.Add(typeof(int), new PsiFormatInt());
                 TypesSerializers.Add(typeof(string), new PsiFormatString());
                 TypesSerializers.Add(typeof(byte[]), new PsiFormatBytes());
-                TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatPositionAndOrientation());
+                TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector());
+                TypesSerializers.Add(typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4());
             }
         }
     }

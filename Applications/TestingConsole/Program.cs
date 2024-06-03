@@ -426,7 +426,7 @@ namespace TestingConsole
         //                            case "Left":
         //                            case "Right":
         //                            case "Player":
-        //                                Connection<Tuple<Vector3, Vector3>>(stream.StreamName, source, p, PsiFormatPositionAndOrientation.GetFormat());
+        //                                Connection<Tuple<Vector3, Vector3>>(stream.StreamName, source, p, PsiFormatTupleOfVector.GetFormat());
         //                                break;
         //                            case "OutDigiCode":
         //                                Connection<char>(stream.StreamName, source, p, PsiFormaChar.GetFormat());

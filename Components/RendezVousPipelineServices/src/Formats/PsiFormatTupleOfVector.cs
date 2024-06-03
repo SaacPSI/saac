@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class PsiFormatPositionAndOrientation : IPsiFormat
+    public class PsiFormatTupleOfVector : IPsiFormat
     {
         public dynamic GetFormat()
         {
