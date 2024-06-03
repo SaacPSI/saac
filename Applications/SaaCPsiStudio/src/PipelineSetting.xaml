@@ -1,0 +1,71 @@
+﻿<Window x:Class="SaaCPsiStudio.PipelineSetting"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner" 
+        WindowStyle="SingleBorderWindow"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Title="PipelineSetting" Height="250" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" >
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="RendezVous Host :" FontWeight="Bold"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=RendezVousHost}"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Content="RendezVous Port :" FontWeight="Bold"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=RendezVousPort}"/>
+
+                <Label Grid.Row="2" Grid.Column="0" Content="Clock Port :" FontWeight="Bold"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=ClockPort}"/>
+
+                <Label Grid.Row="3" Grid.Column="0" Content="Dataset Path :" FontWeight="Bold"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=DatasetPath}"/>
+
+                <Label Grid.Row="4" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold"/>
+                <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=DatasetName}"/>
+                <Button Grid.Row="4" Grid.Column="2" Content="Browse" Click="BtnBrowseNameClick"/>
+
+                <Label Grid.Row="5" Grid.Column="0" Content="Session Name :" FontWeight="Bold"/>
+                <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=SessionName}"/>
+
+            </Grid>
+        </GroupBox>
+        <Button Content="Start RendezVous" Grid.Row="6" Grid.Column="0" Width="100" Click="BtnStartClick"/>
+        <Button Content="Stop RendezVous" Grid.Row="6" Grid.Column="1" Width="100" Click="BtnStopClick"/>
+
+        <GroupBox Header="Log" FontWeight="Bold" Grid.Column="1" >
+            <Label Grid.Row="0" Grid.Column="0" Content="{Binding Path=Status}" />
+        </GroupBox>
+    </Grid>
+</Window>

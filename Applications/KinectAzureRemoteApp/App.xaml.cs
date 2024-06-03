@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace KinectAzureRemoteApp
+namespace SAAC.KinectAzureRemoteApp
 {
     /// <summary>
     /// Interaction logic for App.xaml

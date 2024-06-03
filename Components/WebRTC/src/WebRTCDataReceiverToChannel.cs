@@ -2,7 +2,7 @@
 using Microsoft.Psi.Components;
 using TinyJson;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// Small delegate implementation for WebRTCDataReceiverToChannel class
@@ -30,17 +30,17 @@ namespace WebRTC
 
     public class WebRTCDataReceiverToChannel<T> : IWebRTCDataReceiverToChannel, IConsumer<T>
     {
-        public Connector<T> InConnector { get; private set; }
-        public Receiver<T> In => InConnector.In;
+        public Receiver<T> In { get; private set; }
 
-        public string Label { get; private set; }
-
-        internal WebRTCDataReceiverToChannel(Pipeline parent, string label, DeliveryPolicy? defaultDeliveryPolicy = null)
+        protected string name;
+        internal WebRTCDataReceiverToChannel(Pipeline parent, string label)
         {
-            Label = label;
-            InConnector = parent.CreateConnector<T>(Label);
-            InConnector.Out.Do(Process, defaultDeliveryPolicy);
+            this.name = label;
+            In = parent.CreateReceiver<T>(this, Process, $"{name}-In");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         protected virtual void Process(T message, Envelope envelope)
         {
@@ -52,8 +52,8 @@ namespace WebRTC
     {
         private OnMessageDelegate<string>? OnMessage;
 
-        internal WebRTCDataReceiverToChannelJson(Pipeline parent, string label, DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(parent, label, defaultDeliveryPolicy )
+        internal WebRTCDataReceiverToChannelJson(Pipeline parent, string label)
+            : base(parent, label)
         {
             Type = MessageType.Json;
         }
@@ -72,45 +72,45 @@ namespace WebRTC
             JSONStructT jSONStructT = new JSONStructT();
             jSONStructT.Data = message;
             jSONStructT.Timestamp = envelope.OriginatingTime.ToString();
-            OnMessage(JSONWriter.ToJson(jSONStructT), Label);
+            OnMessage(JSONWriter.ToJson(jSONStructT), name);
         }
     }
 
     public class WebRTCDataReceiverToChannelBytes<T> : WebRTCDataReceiverToChannel<T>
     {
-        private OnMessageDelegate<byte[]>? OnMessage;
-        private System.Reflection.MethodInfo ToBytesMethod;
+        private OnMessageDelegate<byte[]>? onMessage;
+        private System.Reflection.MethodInfo toBytesMethod;
 
-        internal WebRTCDataReceiverToChannelBytes(Pipeline parent, string label, System.Reflection.MethodInfo toBytesMethod, DeliveryPolicy? defaultDeliveryPolicy = null)
-             : base(parent, label, defaultDeliveryPolicy)
+        internal WebRTCDataReceiverToChannelBytes(Pipeline parent, string label, System.Reflection.MethodInfo toBytesMethod)
+             : base(parent, label)
         {
-            ToBytesMethod = toBytesMethod;
+            toBytesMethod = toBytesMethod;
             Type = MessageType.Bytes;
         }
 
         public override void SetOnMessageDelegateBytes(OnMessageDelegate<byte[]> onMessage)
         {
-            OnMessage = onMessage;
+            this.onMessage = onMessage;
         }
 
         protected override void Process(T message, Envelope envelope)
         {
-            if (OnMessage == null)
+            if (onMessage == null)
                 return;
-            byte[] buffer = (byte[])ToBytesMethod.Invoke(message, null);
-            OnMessage(buffer, Label);
+            byte[] buffer = (byte[])toBytesMethod.Invoke(message, null);
+            onMessage(buffer, name);
         }
     }
 
     public static class WebRTCDataReceiverToChannelFactory
     {
-        public static WebRTCDataReceiverToChannel<T> Create<T>(Pipeline parent, string label, bool hasBytesMethod = false, DeliveryPolicy? defaultDeliveryPolicy = null) 
+        public static WebRTCDataReceiverToChannel<T> Create<T>(Pipeline parent, string label, bool hasBytesMethod = false) 
         {
             if (hasBytesMethod)
                 foreach (var method in typeof(T).GetMethods())
                     if (method.ReturnType == typeof(byte[]))
-                        return new WebRTCDataReceiverToChannelBytes<T>(parent, label, method, defaultDeliveryPolicy);
-            return new WebRTCDataReceiverToChannelJson<T>(parent, label, defaultDeliveryPolicy);
+                        return new WebRTCDataReceiverToChannelBytes<T>(parent, label, method);
+            return new WebRTCDataReceiverToChannelJson<T>(parent, label);
         }
     }
 }

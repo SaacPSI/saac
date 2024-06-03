@@ -1,4 +1,4 @@
-﻿namespace WebRTC
+﻿namespace SAAC.WebRTC
 {
     public class WebRTCVideoStreamConfiguration : WebRTCDataConnectorConfiguration
     {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Net.Http;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     public class UnrealActionRequest
     {

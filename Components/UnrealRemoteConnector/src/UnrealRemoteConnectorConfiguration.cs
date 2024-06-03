@@ -1,4 +1,4 @@
-﻿namespace RemoteConnectors
+﻿namespace SAAC.RemoteConnectors
 {
     public class UnrealRemoteConnectorConfiguration
     {

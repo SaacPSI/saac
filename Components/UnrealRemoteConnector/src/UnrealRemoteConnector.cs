@@ -2,40 +2,40 @@
 using Microsoft.Psi.Components;
 using System.Net.Http;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     /// <summary>
     /// Unreal communication component class throught HTTP request.
     /// See UnrealRemoteConnectorConfiguration and UnrealActionRequest class for details.
     /// </summary>
-    public class UnrealRemoteConnector : IProducer<UnrealActionRequest>
+    public class UnrealRemoteConnector : IConsumerProducer<UnrealActionRequest, UnrealActionRequest>
     {
         /// <summary>
         /// Emitter of unreal request with response included.
         /// </summary>
-        public Emitter<UnrealActionRequest> OutActionRequest { get; private set; }
+        public Emitter<UnrealActionRequest> Out { get; private set; }
 
         /// <summary>
-        /// Connector in case it receives actions from another component in the pipeline.
+        /// Reciever in case it receives actions from another component in the pipeline.
         /// </summary>
-        protected Connector<UnrealActionRequest> InActionRequestConnector;
-        public Receiver<UnrealActionRequest> InActionRequest => InActionRequestConnector.In;
+        public Receiver<UnrealActionRequest> In { get; private set; }
 
-        public Emitter<UnrealActionRequest> Out => OutActionRequest;
+        private UnrealRemoteConnectorConfiguration configuration;
+        private HttpClient client;
+        private string name;
 
-        private UnrealRemoteConnectorConfiguration Configuration;
-        private HttpClient Client;
-
-        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null)
+        public UnrealRemoteConnector(Pipeline parent, UnrealRemoteConnectorConfiguration? configuration = null, string name = nameof(UnrealRemoteConnector))
         {
-            Configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
-            Client = new HttpClient();
+            this.name = name;
+            this.configuration = configuration ?? new UnrealRemoteConnectorConfiguration();
+            client = new HttpClient();
 
-            OutActionRequest = parent.CreateEmitter<UnrealActionRequest>(this, nameof(OutActionRequest));
-            InActionRequestConnector = parent.CreateConnector<UnrealActionRequest>(nameof(InActionRequestConnector));
-
-            InActionRequestConnector.Do(Process);
+            Out = parent.CreateEmitter<UnrealActionRequest>(parent, $"{name}-Out");
+            In = parent.CreateReceiver<UnrealActionRequest>(parent, Process, $"{name}-In");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(UnrealActionRequest request, Envelope envelope)
         {
@@ -47,18 +47,18 @@ namespace RemoteConnectors
             switch (request.Method)
             {
                 case UnrealActionRequest.EMethod.POST:
-                    request.Response = Client.PostAsync(Configuration.Address, request.ToHttpContent()).Result.Content.ReadAsStringAsync().Result;
+                    request.Response = client.PostAsync(configuration.Address, request.ToHttpContent()).Result.Content.ReadAsStringAsync().Result;
                     break;
 
                 case UnrealActionRequest.EMethod.PUT:
-                    request.Response = Client.PutAsync(Configuration.Address, request.ToStringContent()).Result.Content.ReadAsStringAsync().Result;
+                    request.Response = client.PutAsync(configuration.Address, request.ToStringContent()).Result.Content.ReadAsStringAsync().Result;
                     break;
 
                 case UnrealActionRequest.EMethod.GET:
-                    request.Response = Client.GetStringAsync(Configuration.Address + request.Path + request.Object).Result;
+                    request.Response = client.GetStringAsync(configuration.Address + request.Path + request.Object).Result;
                     break;
             }
-            OutActionRequest.Post(request, DateTime.UtcNow);
+            Out.Post(request, DateTime.UtcNow);
         }
     }
 }

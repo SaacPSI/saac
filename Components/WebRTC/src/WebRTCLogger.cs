@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     internal class WebRTCLogger : IDisposable, Microsoft.Extensions.Logging.ILogger
     {

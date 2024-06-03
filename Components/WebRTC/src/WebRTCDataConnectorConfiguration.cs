@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     public class WebRTCDataConnectorConfiguration : WebRTConnectorConfiguration
     {

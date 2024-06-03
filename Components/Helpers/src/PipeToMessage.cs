@@ -1,41 +1,34 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace Helpers
+namespace SAAC.Helpers
 {
     /// <summary>
     /// Class that transform pipeline data to message forwarded to the delegate given.
     /// </summary>
-    public class PipeToMessage<T>
+    public class PipeToMessage<T> : IConsumer<T>
     {
-        /// <summary>
-        /// Template connector
-        /// </summary>
-        private Connector<T> InConnector;
-
         /// <summary>
         /// Template receiver
         /// </summary>
-        public Receiver<T> In => InConnector.In;
-
-        /// <summary>
-        /// Name of the component
-        /// </summary>
-        public string Name { get; private set; }
+        public Receiver<T> In { get; private set; }
 
         /// <summary>
         /// Delegate function that will be called at each received data
         /// </summary>
         public delegate void Do(Message<T> message);
         private Do delegateDo;
+        private string name;
 
-        public PipeToMessage(Pipeline parent, Do toDo, string? name = null)
+        public PipeToMessage(Pipeline parent, Do toDo, string name = nameof(PipeToMessage<T>))
         {
-            Name = name ?? "PipeToMessage";
+            this.name = name;
             delegateDo = toDo;
-            InConnector = parent.CreateConnector<T>(nameof(In));
-            InConnector.Out.Do(Process);
+            In = parent.CreateReceiver<T>(this, Process, $"{name}-In");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(T data, Envelope envelope)
         {

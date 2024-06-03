@@ -4,43 +4,43 @@ using MathNet.Spatial.Euclidean;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {   
     /// <summary>
     /// Internal Optitrack component class.
     /// </summary>
     internal sealed class NatNetCore : ISourceComponent, IDisposable
     {
-        private readonly NatNetCoreConfiguration Configuration;
+        private readonly NatNetCoreConfiguration configuration;
 
          /// <summary>
         /// The underlying NatNet device.
         /// </summary>
         /// 
-        private static NatNetClientML mNatNet = new NatNetML.NatNetClientML();
+        private static NatNetClientML natNet = new NatNetML.NatNetClientML();
 
         /*  List for saving each of datadescriptors */
-        private List<DataDescriptor> mDataDescriptor = new List<DataDescriptor>();
+        private List<DataDescriptor> dataDescriptor = new List<DataDescriptor>();
 
         /*  Lists and Hashtables for saving data descriptions   */
-        private Hashtable mHtSkelRBs = new Hashtable();
-        private List<NatNetML.RigidBody> mRigidBodies = new List<NatNetML.RigidBody>();
-        private List<Skeleton> mSkeletons = new List<Skeleton>();
-        private List<ForcePlate> mForcePlates = new List<ForcePlate>();
-        private List<Device> mDevices = new List<Device>();
-        private List<Camera> mCameras = new List<Camera>();
-        private readonly object ConnexionOpenLock = new object();
-        private Pipeline Parent;
+        private Hashtable hSkelRBs = new Hashtable();
+        private List<NatNetML.RigidBody> rigidBodies = new List<NatNetML.RigidBody>();
+        private List<Skeleton> skeletons = new List<Skeleton>();
+        private List<ForcePlate> forcePlates = new List<ForcePlate>();
+        private List<Device> devices = new List<Device>();
+        private List<Camera> cameras = new List<Camera>();
+        private readonly object connexionOpenLock = new object();
+        private Pipeline parent;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NatNetCore"/> class.
         /// </summary>
         /// <param name="pipeline">The pipeline to add the component to.</param>
-        /// <param name="config">Configuration to use for the device.</param>
+        /// <param name="config">configuration to use for the device.</param>
         public NatNetCore(Pipeline pipeline, NatNetCoreConfiguration? config = null)
         {
-            Configuration = config ?? new NatNetCoreConfiguration();
-            Parent = pipeline;
+            configuration = config ?? new NatNetCoreConfiguration();
+            parent = pipeline;
 
             //this.Bodies = pipeline.CreateEmitter<List<Skeleton>>(this, nameof(this.Bodies));
             OutRigidBodies = pipeline.CreateEmitter<List<RigidBody>>(this, nameof(this.OutRigidBodies));
@@ -96,7 +96,7 @@ namespace NatNetComponent
         /// <inheritdoc/>
         public void Dispose()
         {
-            mNatNet.Dispose();
+            natNet.Dispose();
         }
 
         private void fetchFrameData(NatNetML.FrameOfMocapData data, NatNetML.NatNetClientML client)
@@ -105,26 +105,26 @@ namespace NatNetComponent
             /*  Exception handler for cases where assets are added or removed.
                 Data description is re-obtained in the main function so that contents
                 in the frame handler is kept minimal. */
-            if ((data.bTrackingModelsChanged == true || data.nRigidBodies != mRigidBodies.Count || data.nSkeletons != mSkeletons.Count || data.nForcePlates != mForcePlates.Count))
+            if ((data.bTrackingModelsChanged == true || data.nRigidBodies != rigidBodies.Count || data.nSkeletons != skeletons.Count || data.nForcePlates != forcePlates.Count))
             {
                 fetchAndParseDataDescriptor();
             }
 
             /*  Processing and ouputting frame data every 200th frame.
                 This conditional statement is included in order to simplify the program output */
-            if (Configuration.OutputRigidBodies)
+            if (configuration.OutputRigidBodies)
             {
-                List<RigidBody> rigidBodies = new List<RigidBody>();
+                List<RigidBody> rigidBodiesParsed = new List<RigidBody>();
                 /*  Parsing Rigid Body Frame Data   */
-                for (int i = 0; i < mRigidBodies.Count; i++)
+                for (int i = 0; i < rigidBodies.Count; i++)
                 {
-                    int rbID = mRigidBodies[i].ID;              // Fetching rigid body IDs from the saved descriptions
+                    int rbID = rigidBodies[i].ID;              // Fetching rigid body IDs from the saved descriptions
 
                     for (int j = 0; j < data.nRigidBodies; j++)
                     {
                         if (rbID == data.RigidBodies[j].ID)      // When rigid body ID of the descriptions matches rigid body ID of the frame data.
                         {
-                            NatNetML.RigidBody rb = mRigidBodies[i];                // Saved rigid body descriptions
+                            NatNetML.RigidBody rb = rigidBodies[i];                // Saved rigid body descriptions
                             NatNetML.RigidBodyData rbData = data.RigidBodies[j];    // Received rigid body descriptions
 
                             if (rbData.Tracked == true)
@@ -133,12 +133,12 @@ namespace NatNetComponent
                                 rigidB.name = rb.Name;
                                 rigidB.position = new Vector3D(rbData.x, rbData.y, rbData.z);
                                 rigidB.orientation = new Quaternion(rbData.qx, rbData.qy, rbData.qz, rbData.qw);
-                                rigidBodies.Add(rigidB);
+                                rigidBodiesParsed.Add(rigidB);
                             }
                         }
                     }
                 }
-                OutRigidBodies.Post(rigidBodies, Parent.GetCurrentTime());
+                OutRigidBodies.Post(rigidBodiesParsed, parent.GetCurrentTime());
             }   
         }
 
@@ -149,25 +149,25 @@ namespace NatNetComponent
             notifyCompletionTime(DateTime.MaxValue);
 
             // Prevent device open race condition.
-            lock (ConnexionOpenLock)
+            lock (connexionOpenLock)
             {
                 NatNetClientML.ConnectParams connectParams = new NatNetClientML.ConnectParams();
-                connectParams.ConnectionType = Configuration.ConnectionType;
-                connectParams.ServerAddress = Configuration.ServerIP;
-                connectParams.LocalAddress = Configuration.LocalIP;
-                mNatNet.Connect(connectParams);
+                connectParams.ConnectionType = configuration.ConnectionType;
+                connectParams.ServerAddress = configuration.ServerIP;
+                connectParams.LocalAddress = configuration.LocalIP;
+                natNet.Connect(connectParams);
             }
             try
             {
                 // activate selected device
                 NatNetML.ServerDescription m_ServerDescriptor = new NatNetML.ServerDescription();
-                int errorCode = mNatNet.GetServerDescription(m_ServerDescriptor);
+                int errorCode = natNet.GetServerDescription(m_ServerDescriptor);
 
                 if (errorCode != 0)
                     throw new ArgumentException("Error: Failed to connect. Check the connection settings.");
 
                 fetchAndParseDataDescriptor();
-                mNatNet.OnFrameReady += new NatNetML.FrameReadyEventHandler(fetchFrameData);
+                natNet.OnFrameReady += new NatNetML.FrameReadyEventHandler(fetchFrameData);
             }
             catch (Exception exception)
             {
@@ -179,73 +179,73 @@ namespace NatNetComponent
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
             /*  [NatNet] Disabling data handling function   */
-            mNatNet.OnFrameReady -= fetchFrameData;
+            natNet.OnFrameReady -= fetchFrameData;
 
             /*  Clearing Saved Descriptions */
-            mRigidBodies.Clear();
-            mSkeletons.Clear();
-            mHtSkelRBs.Clear();
-            mForcePlates.Clear();
-            mNatNet.Disconnect();
+            rigidBodies.Clear();
+            skeletons.Clear();
+            hSkelRBs.Clear();
+            forcePlates.Clear();
+            natNet.Disconnect();
             notifyCompleted();
         }
 
         private void fetchAndParseDataDescriptor()
         {
-            if (!mNatNet.GetDataDescriptions(out mDataDescriptor))
+            if (!natNet.GetDataDescriptions(out dataDescriptor))
                 throw new ArgumentException("Error: Failed to get data descriptions. Check the connection settings.");
             //  [NatNet] Request a description of the Active Model List from the server. 
             //  This sample will list only names of the data sets, but you can access 
-            int numDataSet = mDataDescriptor.Count;
+            int numDataSet = dataDescriptor.Count;
             Console.WriteLine("Total {0} data sets in the capture:", numDataSet);
 
             for (int i = 0; i < numDataSet; ++i)
             {
-                int dataSetType = mDataDescriptor[i].type;
+                int dataSetType = dataDescriptor[i].type;
                 // Parse Data Descriptions for each data sets and save them in the delcared lists and hashtables for later uses.
                 switch (dataSetType)
                 {
                     case ((int)NatNetML.DataDescriptorType.eMarkerSetData):
-                        NatNetML.MarkerSet mkset = (NatNetML.MarkerSet)mDataDescriptor[i];
+                        NatNetML.MarkerSet mkset = (NatNetML.MarkerSet)dataDescriptor[i];
                         break;
 
                     case ((int)NatNetML.DataDescriptorType.eRigidbodyData):
-                        NatNetML.RigidBody rb = (NatNetML.RigidBody)mDataDescriptor[i];
+                        NatNetML.RigidBody rb = (NatNetML.RigidBody)dataDescriptor[i];
                         // Saving Rigid Body Descriptions
-                        mRigidBodies.Add(rb);
+                        rigidBodies.Add(rb);
                         break;
 
                     case ((int)NatNetML.DataDescriptorType.eSkeletonData):
-                        NatNetML.Skeleton skl = (NatNetML.Skeleton)mDataDescriptor[i];
+                        NatNetML.Skeleton skl = (NatNetML.Skeleton)dataDescriptor[i];
                         //Saving Skeleton Descriptions
-                        //mSkeletons.Add(skl);
+                        //skeletons.Add(skl);
                         // Saving Individual Bone Descriptions
                         for (int j = 0; j < skl.nRigidBodies; j++)
                         {
                             int uniqueID = skl.ID * 1000 + skl.RigidBodies[j].ID;
                             int key = uniqueID.GetHashCode();
-                            mHtSkelRBs.Add(key, skl.RigidBodies[j]); //Saving the bone segments onto the hashtable
+                            hSkelRBs.Add(key, skl.RigidBodies[j]); //Saving the bone segments onto the hashtable
                         }
                         break;
 
 
                     case ((int)NatNetML.DataDescriptorType.eForcePlateData):
-                        NatNetML.ForcePlate fp = (NatNetML.ForcePlate)mDataDescriptor[i];
+                        NatNetML.ForcePlate fp = (NatNetML.ForcePlate)dataDescriptor[i];
                         // Saving Force Plate Channel Names
-                        mForcePlates.Add(fp);
+                        forcePlates.Add(fp);
                         break;
 
                     case ((int)NatNetML.DataDescriptorType.eDeviceData):
-                        NatNetML.Device dd = (NatNetML.Device)mDataDescriptor[i];
+                        NatNetML.Device dd = (NatNetML.Device)dataDescriptor[i];
                         // Saving Device Data Channel Names
-                        mDevices.Add(dd);
+                        devices.Add(dd);
                         break;
 
                     case ((int)NatNetML.DataDescriptorType.eCameraData):
                         // Saving Camera Names
-                        NatNetML.Camera camera = (NatNetML.Camera)mDataDescriptor[i];
+                        NatNetML.Camera camera = (NatNetML.Camera)dataDescriptor[i];
                         // Saving Force Plate Channel Names
-                        mCameras.Add(camera);
+                        cameras.Add(camera);
                         break;
 
                     default:

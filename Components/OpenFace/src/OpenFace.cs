@@ -4,21 +4,17 @@ using System.Windows;
 using Microsoft.Psi;
 using Microsoft.Psi.Imaging;
 using OpenFaceInterop;
-using Helpers;
+using SAAC.Helpers;
 
 // Fromhttps://github.com/ihp-lab/OpenSense/tree/master/Components/OpenFace.Windows
-namespace OpenFace {
+namespace SAAC.OpenFace
+{
     public class OpenFace : IConsumer<Shared<Image>>
     {
         /// <summary>
         /// Gets. Receiver that encapsulates the shared image input stream.
         /// </summary>
-        public Connector<Shared<Image>> InConnector { get; private set; }
-
-        /// <summary>
-        /// Gets. Receiver that encapsulates the shared image input stream.
-        /// </summary>
-        public Receiver<Shared<Image>> In => InConnector.In;
+        public Receiver<Shared<Image>> In {  get; }
 
         /// <summary>
         /// Gets. Emitter that encapsulates the boundingBoxes data output stream.
@@ -40,65 +36,69 @@ namespace OpenFace {
         /// </summary>
         public Emitter<Face> OutFace { get; private set; }
 
-        private CLNF? LandmarkDetector;
-        private FaceDetector? FaceDetector;
-        private FaceAnalyser? FaceAnalyser;
-        private GazeAnalyser? GazeAnalyser;
-        private FaceModelParameters? FaceModelParameters;
-        private bool isInit = false; 
-        private Thread? initThread = null;
+        private CLNF? landmarkDetector;
+        private FaceDetector? faceDetector;
+        private FaceAnalyser? faceAnalyser;
+        private GazeAnalyser? gazeAnalyser;
+        private FaceModelParameters? faceModelParameters;
+        private bool isInit; 
+        private Thread? initThread;
+        private string name;
 
-        private OpenFaceConfiguration Configuration;
+        private OpenFaceConfiguration configuration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OpenFace"/> class.
         /// </summary>
         /// <param name="pipeline">The pipeline.</param>
-        public OpenFace(Pipeline pipeline, OpenFaceConfiguration configuration) 
+        public OpenFace(Pipeline pipeline, OpenFaceConfiguration configuration, string name = nameof(OpenFace)) 
         {
-            Configuration = configuration;
-            // Image receiver.
-            InConnector = pipeline.CreateConnector<Shared<Image>>(nameof(In));//pipeline.CreateReceiver<Shared<Image>>(this, ReceiveImage, nameof(In));
-            InConnector.Out.Do(ReceiveImage);
+            this.configuration = configuration;
+            isInit = false;
+            initThread = null;
+            In = pipeline.CreateReceiver<Shared<Image>>(this, ReceiveImage, $"{name}-In");//pipeline.CreateReceiver<Shared<Image>>(this, ReceiveImage, nameof(In));
 
             // BoundingBoxes data emitter.
-            OutBoundingBoxes = pipeline.CreateEmitter<List<System.Drawing.Rectangle>>(this, nameof(OutBoundingBoxes));
+            OutBoundingBoxes = pipeline.CreateEmitter<List<System.Drawing.Rectangle>>(this, $"{name}-OutBoundingBoxes");
             // Pose data emitter.
-            OutPose = pipeline.CreateEmitter<Pose>(this, nameof(OutPose));
+            OutPose = pipeline.CreateEmitter<Pose>(this, $"{name}-OutPose");
             // Gaze data emitter.
-            OutEyes = pipeline.CreateEmitter<Eye>(this, nameof(OutEyes));
+            OutEyes = pipeline.CreateEmitter<Eye>(this, $"{name}-OutEyes");
             // Face data emitter.
-            OutFace = pipeline.CreateEmitter<Face>(this, nameof(OutFace));
+            OutFace = pipeline.CreateEmitter<Face>(this, $"{name}-OutFace");
 
             pipeline.PipelineRun += Initialize;
         }
 
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
+
         private void Initialize(object sender, PipelineRunEventArgs e)
         {
-            FaceModelParameters = new FaceModelParameters(Configuration.ModelDirectory, true, false, false);
-            FaceModelParameters.optimiseForVideo();
+            faceModelParameters = new FaceModelParameters(configuration.ModelDirectory, true, false, false);
+            faceModelParameters.optimiseForVideo();
 
-            FaceDetector = new FaceDetector(FaceModelParameters.GetHaarLocation(), FaceModelParameters.GetMTCNNLocation());
+            faceDetector = new FaceDetector(faceModelParameters.GetHaarLocation(), faceModelParameters.GetMTCNNLocation());
             isInit = true;
-            if (!FaceDetector.IsMTCNNLoaded())
+            if (!faceDetector.IsMTCNNLoaded())
             {
-                FaceModelParameters.SetFaceDetector(false, true, false);
+                faceModelParameters.SetFaceDetector(false, true, false);
             }
 
-            LandmarkDetector = new CLNF(FaceModelParameters);
-            if (Configuration.Face)
+            landmarkDetector = new CLNF(faceModelParameters);
+            if (configuration.Face)
             {
-                FaceAnalyser = new FaceAnalyser(Configuration.ModelDirectory, dynamic: true, output_width: 112, mask_aligned: true);
+                faceAnalyser = new FaceAnalyser(configuration.ModelDirectory, dynamic: true, output_width: 112, mask_aligned: true);
             }
-            if (Configuration.Eyes)
+            if (configuration.Eyes)
             {
-                GazeAnalyser = new GazeAnalyser();
+                gazeAnalyser = new GazeAnalyser();
             }
 
-            LandmarkDetector.Reset();
-            if (FaceAnalyser != null)
+            landmarkDetector.Reset();
+            if (faceAnalyser != null)
             {
-                FaceAnalyser.Reset();
+                faceAnalyser.Reset();
             }
         }
 
@@ -132,9 +132,9 @@ namespace OpenFace {
                     {
                         float Cx = input.Resource.Width / 2.0f, Cy = input.Resource.Height / 2.0f;
                         float Fx = input.Resource.Width / 4.0f, Fy = input.Resource.Height / 4.0f;
-                        if (LandmarkDetector != null && LandmarkDetector.DetectLandmarksInVideo(colorRawImage, FaceModelParameters, grayRawImage))
+                        if (landmarkDetector != null && landmarkDetector.DetectLandmarksInVideo(colorRawImage, faceModelParameters, grayRawImage))
                         {
-                            var bboxes = LandmarkDetector.GetBoundingBoxes(grayRawImage, 0.5f);
+                            var bboxes = landmarkDetector.GetBoundingBoxes(grayRawImage, 0.5f);
                             List<System.Drawing.Rectangle> boundingBoxes = new List<System.Drawing.Rectangle>();
                             foreach (var bbox in bboxes)
                             {
@@ -143,25 +143,25 @@ namespace OpenFace {
                             }
                             OutBoundingBoxes.Post(boundingBoxes, envelope.OriginatingTime);
                         
-                            if((Configuration.Pose || Configuration.Eyes || Configuration.Face) )
+                            if((configuration.Pose || configuration.Eyes || configuration.Face) )
                             {
-                                var rawAllLandmarks = LandmarkDetector.CalculateAllLandmarks();
+                                var rawAllLandmarks = landmarkDetector.CalculateAllLandmarks();
 
                                 // BoundingBoxes.
                                 var allLandmarks = rawAllLandmarks.Select(tupleToVector2);
-                                var visiableLandmarks = LandmarkDetector
+                                var visiableLandmarks = landmarkDetector
                                     .CalculateVisibleLandmarks()
                                     .Select(tupleToVector2);
 
                                 // Pose.
-                                if (Configuration.Pose)
+                                if (configuration.Pose)
                                 {
-                                    var landmarks3D = LandmarkDetector
+                                    var landmarks3D = landmarkDetector
                                       .Calculate3DLandmarks(Fx, Fy, Cx, Cy)
                                       .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
                                     var poseData = new List<float>();
-                                    LandmarkDetector.GetPose(poseData, Fx, Fy, Cx, Cy);
-                                    var box = LandmarkDetector.CalculateBox(Fx, Fy, Cx, Cy);
+                                    landmarkDetector.GetPose(poseData, Fx, Fy, Cx, Cy);
+                                    var box = landmarkDetector.CalculateBox(Fx, Fy, Cx, Cy);
                                     var boxConverted = box.Select(line =>
                                     {
                                         var a = pointToVector2(line.Item1);
@@ -173,21 +173,21 @@ namespace OpenFace {
                                 }
 
                                 // Gaze.
-                                if (GazeAnalyser != null)
+                                if (gazeAnalyser != null)
                                 {
-                                    GazeAnalyser.AddNextFrame(LandmarkDetector, success: true, Fx, Fy, Cx, Cy);
-                                    var eyeLandmarks = LandmarkDetector
+                                    gazeAnalyser.AddNextFrame(landmarkDetector, success: true, Fx, Fy, Cx, Cy);
+                                    var eyeLandmarks = landmarkDetector
                                         .CalculateAllEyeLandmarks()
                                         .Select(tupleToVector2);
-                                    var visiableEyeLandmarks = LandmarkDetector
+                                    var visiableEyeLandmarks = landmarkDetector
                                         .CalculateVisibleEyeLandmarks()
                                         .Select(tupleToVector2);
-                                    var eyeLandmarks3D = LandmarkDetector
+                                    var eyeLandmarks3D = landmarkDetector
                                         .CalculateAllEyeLandmarks3D(Fx, Fy,  Cx, Cy)
                                         .Select(m => new Vector3(m.Item1, m.Item2, m.Item3));
-                                    var (leftPupil, rightPupil) = GazeAnalyser.GetGazeCamera();
-                                    var (angleX, angleY) = GazeAnalyser.GetGazeAngle();//Not accurate
-                                    var gazeLines = GazeAnalyser.CalculateGazeLines(Fx, Fy,  Cx, Cy);
+                                    var (leftPupil, rightPupil) = gazeAnalyser.GetGazeCamera();
+                                    var (angleX, angleY) = gazeAnalyser.GetGazeAngle();//Not accurate
+                                    var gazeLines = gazeAnalyser.CalculateGazeLines(Fx, Fy,  Cx, Cy);
                                     var gazeLinesConverted = gazeLines.Select(line =>
                                     {
                                         var a = pointToVector2(line.Item1);
@@ -209,9 +209,9 @@ namespace OpenFace {
                                 }
 
                                 //Face
-                                if (FaceAnalyser != null)
+                                if (faceAnalyser != null)
                                 {
-                                    var (actionUnitIntensities, actionUnitOccurences) = FaceAnalyser.PredictStaticAUsAndComputeFeatures(colorRawImage, rawAllLandmarks);//image mode, so not using FaceAnalyser.AddNextFrame()
+                                    var (actionUnitIntensities, actionUnitOccurences) = faceAnalyser.PredictStaticAUsAndComputeFeatures(colorRawImage, rawAllLandmarks);//image mode, so not using FaceAnalyser.AddNextFrame()
                                     var actionUnits = actionUnitIntensities.ToDictionary(
                                         kv => kv.Key.Substring(2)/*remove prefix "AU"*/.TrimStart('0'),
                                         kv => new ActionUnit(intensity: kv.Value, presence: actionUnitOccurences[kv.Key])

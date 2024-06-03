@@ -2,7 +2,7 @@
 using Microsoft.Psi.Components;
 using LabJack.LabJackUD;
 
-namespace LabJackComponent
+namespace SAAC.LabJackComponent
 {
      /// <summary>
      /// Internal LabJack communicator component class.
@@ -10,28 +10,28 @@ namespace LabJackComponent
     internal class LabJackCore : ISourceComponent, IDisposable
     {
         //private LJUD Device;
-        private int DeviceHandle;
-        private LabJackCoreConfiguration Configuration;
-        private Thread? CaptureThread = null;
-        private bool Shutdown = false;
-        private readonly object CommandsLock = new object();
-        private bool FirstNexptOptionGetter = true;
+        private int deviceHandle;
+        private LabJackCoreConfiguration configuration;
+        private Thread? captureThread = null;
+        private bool shutdown = false;
+        private readonly object commandsLock = new object();
+        private bool firstNexptOptionGetter = true;
 
+        private Connector<Commands> inCommandsReceiverConnector;
 
-        private Connector<Commands> InCommandsReceiverConnector;
-
-        public Receiver<Commands> InCommandsReceiver => InCommandsReceiverConnector.In;
+        public Receiver<Commands> InCommandsReceiver => inCommandsReceiverConnector.In;
 
         public Emitter<bool> OutCommandsAck { get; private set; }
 
         public Emitter<double> OutDoubleValue { get; private set; }
+
         public LabJackCore(Pipeline pipeline, LabJackCoreConfiguration? config = null)
         {
-            Configuration = config ?? new LabJackCoreConfiguration();
-            InCommandsReceiverConnector = pipeline.CreateConnector<Commands>(nameof(InCommandsReceiverConnector));
+            configuration = config ?? new LabJackCoreConfiguration();
+            inCommandsReceiverConnector = pipeline.CreateConnector<Commands>(nameof(inCommandsReceiverConnector));
             OutCommandsAck = pipeline.CreateEmitter<bool>(this, nameof(OutCommandsAck));
             OutDoubleValue = pipeline.CreateEmitter<double>(this, nameof(OutDoubleValue));
-            InCommandsReceiverConnector.Out.Process<Commands, bool>(ProcessCommands);
+            inCommandsReceiverConnector.Out.Process<Commands, bool>(ProcessCommands);
         }
 
         public void Start(Action<DateTime> notifyCompletionTime)
@@ -40,42 +40,42 @@ namespace LabJackComponent
             notifyCompletionTime(DateTime.MaxValue);
 
             // Open
-            switch (Configuration.DeviceType)
+            switch (configuration.DeviceType)
             {
                 case LabJackCoreConfiguration.LabJackType.U3:
                     {
-                        U3 device = new U3(Configuration.ConnnectionType, Configuration.DeviceAdress, Configuration.FirstDeviceFound);
+                        U3 device = new U3(configuration.ConnnectionType, configuration.DeviceAdress, configuration.FirstDeviceFound);
                         //Device = device;
-                        DeviceHandle = device.ljhandle;
+                        deviceHandle = device.ljhandle;
                     }
                     break;
                 case LabJackCoreConfiguration.LabJackType.U6:
                     { 
-                        U6 device = new U6(Configuration.ConnnectionType, Configuration.DeviceAdress, Configuration.FirstDeviceFound);
+                        U6 device = new U6(configuration.ConnnectionType, configuration.DeviceAdress, configuration.FirstDeviceFound);
                         //Device = device;
-                        DeviceHandle = device.ljhandle;
+                        deviceHandle = device.ljhandle;
                     }
                     break;
                 case LabJackCoreConfiguration.LabJackType.UE9:
                     {
-                        UE9 device = new UE9(Configuration.ConnnectionType, Configuration.DeviceAdress, Configuration.FirstDeviceFound);
+                        UE9 device = new UE9(configuration.ConnnectionType, configuration.DeviceAdress, configuration.FirstDeviceFound);
                         //Device = device;
-                        DeviceHandle = device.ljhandle;
+                        deviceHandle = device.ljhandle;
                     }
                     break;
             }
-            if(ProcessCommands(Configuration.Commands) == false)
+            if(ProcessCommands(configuration.Commands) == false)
                 throw new Exception("LabJackCore: Failed to process configuration commands");
 
-            CaptureThread = new Thread(new ThreadStart(CaptureThreadProcess));
-            CaptureThread.Start();
+            captureThread = new Thread(new ThreadStart(CaptureThreadProcess));
+            captureThread.Start();
         }
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
-            Shutdown = true;
+            shutdown = true;
             TimeSpan waitTime = TimeSpan.FromSeconds(1);
-            if (CaptureThread != null && CaptureThread.Join(waitTime) != true)
-                CaptureThread.Abort();
+            if (captureThread != null && captureThread.Join(waitTime) != true)
+                captureThread.Abort();
             notifyCompleted();
         }
         public void Dispose()
@@ -84,7 +84,7 @@ namespace LabJackComponent
         }
         private void ProcessCommands(Commands commands, Envelope envelope, Emitter<bool> response)
         {
-            Configuration.Commands = commands;
+            configuration.Commands = commands;
             response.Post(ProcessCommands(commands), envelope.OriginatingTime);
         }
         public bool ProcessCommands(Commands commands)
@@ -93,13 +93,13 @@ namespace LabJackComponent
                 return false;
             try
             {
-                lock (CommandsLock)
+                lock (commandsLock)
                 {
                     foreach (PutCommand put in commands.PutCommands)
-                        LJUD.ePut(DeviceHandle, put.IoType, put.Channel, put.Val, put.X1);
+                        LJUD.ePut(deviceHandle, put.IoType, put.Channel, put.Val, put.X1);
 
                     foreach (RequestCommand req in commands.RequestCommands)
-                        LJUD.AddRequest(DeviceHandle, req.IoType, req.Channel, req.Val, req.X1, req.UserData);
+                        LJUD.AddRequest(deviceHandle, req.IoType, req.Channel, req.Val, req.X1, req.UserData);
 
                     // ToDo
                     //LJUD.eTCConfig
@@ -107,7 +107,7 @@ namespace LabJackComponent
                     //LJUD.eDAC
                     //LJUD.eDI
                     //LJUD.eDO
-                    LJUD.GoOne(DeviceHandle);
+                    LJUD.GoOne(deviceHandle);
                 }
             }
             catch (Exception ex)
@@ -120,31 +120,31 @@ namespace LabJackComponent
 
         private void CaptureThreadProcess()
         {
-            while (!Shutdown)
+            while (!shutdown)
             {
                 LJUD.IO ioType = 0;
                 LJUD.CHANNEL channel = 0;
                 double dblValue = 0;
                 int dummyInt = 0;
                 double dummyDouble = 0;
-                lock (CommandsLock)
+                lock (commandsLock)
                 {
                     try
                     {
-                        switch(Configuration.Commands.ResponseCommand.GetterType)
+                        switch(configuration.Commands.ResponseCommand.GetterType)
                         {
                             case ResponseCommand.EGetterType.First_Next:
-                                if (FirstNexptOptionGetter)
+                                if (firstNexptOptionGetter)
                                 {
-                                    LJUD.GetFirstResult(DeviceHandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
-                                    FirstNexptOptionGetter = false;
+                                    LJUD.GetFirstResult(deviceHandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
+                                    firstNexptOptionGetter = false;
                                 }
                                 else
-                                    LJUD.GetNextResult(DeviceHandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
+                                    LJUD.GetNextResult(deviceHandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
                                 OutDoubleValue.Post(dblValue, DateTime.UtcNow);
                                 break;
                             case ResponseCommand.EGetterType.E_Get:
-                                //LJUD.eGet(DeviceHandle, LJUD.IO.GET_TIMER, 0, ref dblValue, 0);
+                                //LJUD.eGet(deviceHandle, LJUD.IO.GET_TIMER, 0, ref dblValue, 0);
                                 break;
                         }
                     }
@@ -160,9 +160,9 @@ namespace LabJackComponent
         }
         private void CreateDevice<Type>() where Type : new()
         {
-            //Type device = new Type(Configuration.ConnnectionType, Configuration.DeviceAdress, Configuration.FirstDeviceFound);
+            //Type device = new Type(configuration.ConnnectionType, configuration.DeviceAdress, configuration.FirstDeviceFound);
             //Device = device;
-            //DeviceHandle = device.ljhandle;
+            //deviceHandle = device.ljhandle;
         }
     }
 }

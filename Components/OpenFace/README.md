@@ -17,3 +17,23 @@ This project must have a project dependency on [OpenFaceInterop](../../Interop/O
 
 ## Future works
 * Test and optimise performance.
+
+## Example
+           static void OpenFace(Pipeline p)
+            {
+
+                AzureKinectSensor webcam = new AzureKinectSensor(p);
+
+                OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
+                configuration.Face = false;
+                configuration.Eyes = false;
+                configuration.Pose = false;
+                OpenFace.OpenFace facer = new OpenFace.OpenFace(p, configuration);
+                webcam.ColorImage.PipeTo(facer.In);
+
+                FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
+                facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
+                webcam.ColorImage.PipeTo(faceBlurrer.InImage);
+
+                var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
+            }

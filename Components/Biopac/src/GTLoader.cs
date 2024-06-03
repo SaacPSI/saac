@@ -2,7 +2,7 @@
 using Microsoft.Psi;
 using Microsoft.Psi.Data;
 
-namespace BiopacDataIntegration
+namespace SAAC.BiopacDataIntegration
 {
     /// <summary>
     /// Class that write biopac data from AcqKnowledge file to a store synchronising with a given stream or with a given time reference.

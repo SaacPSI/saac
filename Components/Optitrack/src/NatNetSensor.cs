@@ -1,6 +1,6 @@
 using Microsoft.Psi;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {
     /// <summary>
     /// Optitrack component class using NatNet API.
@@ -56,8 +56,8 @@ namespace NatNetComponent
 
         /* End in/out puts */
         // Constructor
-        public NatNetSensor(Pipeline pipeline, NatNetCoreConfiguration? config = null, DeliveryPolicy? defaultDeliveryPolicy = null, DeliveryPolicy? bodyTrackerDeliveryPolicy = null)
-         : base(pipeline, nameof(NatNetSensor), defaultDeliveryPolicy ?? DeliveryPolicy.LatestMessage)
+        public NatNetSensor(Pipeline pipeline, NatNetCoreConfiguration? config = null, string name = nameof(NatNetSensor), DeliveryPolicy? defaultDeliveryPolicy = null, DeliveryPolicy? bodyTrackerDeliveryPolicy = null)
+         : base(pipeline, name, defaultDeliveryPolicy ?? DeliveryPolicy.LatestMessage)
         {
 
             this.Configuration = config ?? new NatNetCoreConfiguration();
@@ -67,7 +67,7 @@ namespace NatNetComponent
             //this.ColorImage = NatNetCore.ColorImage.BridgeTo(pipeline, nameof(this.ColorImage)).Out;
             //this.DepthImage = NatNetCore.DepthImage.BridgeTo(pipeline, nameof(this.DepthImage)).Out;
             //this.Bodies = NatNetCore.Bodies.BridgeTo(pipeline, nameof(this.Bodies)).Out;
-            this.OutRigidBodies = NatNetCore.OutRigidBodies.BridgeTo(pipeline, nameof(this.OutRigidBodies)).Out;
+            this.OutRigidBodies = NatNetCore.OutRigidBodies.BridgeTo(pipeline, $"{name}-OutRigidBodies").Out;
             //this.Users = NatNetCore.Users.BridgeTo(pipeline, nameof(this.Users)).Out;
             //this.Gestures = NatNetCore.Gestures.BridgeTo(pipeline, nameof(this.Gestures)).Out;
             //this.FrameRate = NatNetCore.FrameRate.BridgeTo(pipeline, nameof(this.FrameRate)).Out;

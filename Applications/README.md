@@ -24,6 +24,11 @@ It use RendezVous system allowing to start (and stop) kinect streams from the re
 ### Future works
 * Allowing **NamedPipes** protocol
 
+## SaaCPsiStudio
+### Summary
+This is a template to execute \psi pipeline in PsiStudio from our [fork](https://github.com/SaacPSI/psi), branch PsiStudio. It use [Rendez Vous Pipeline](../Components/RendezVousPipelineServices/src/RendezVousPipeline.cs) as main context for executing the pipeline.
+
+
 ## TestingConsole
 ### Summary
 This is our testing application, it might have some working example code to test (in the master branch)!
