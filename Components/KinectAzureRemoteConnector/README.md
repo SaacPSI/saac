@@ -12,7 +12,7 @@ Project including some components to handle Kinect Azure cameras.
 * [KinectAzureRemoteStreamsConfiguration](src/KinectAzureRemoteStreamsConfiguration.cs) is the component that integrate a RendezVous server to be used with [KinectAzureRemoteConnectorComponent](src/KinectAzureRemoteConnectorComponent.cs).
 
 ## Package /psi
- [Microsoft.Psi.Runtime.0.18.72.1-modifiedPipeline](nugetPackage/Microsoft.Psi.Runtime.0.18.72.1-modifiedPipeline.nupkg) is a modified version of /psi allowing to remove a subpipline from a parent pipline without stoping the whole application. See [issue](https://github.com/microsoft/psi/issues/291) for more information.
+ Microsoft.Psi.Runtime nugetPackage needs to be build from our [fork](https://github.com/SaacPSI/psi) branch Pipeline is a modified version of /psi allowing to remove a subpipline from a parent pipline without stoping the whole application. See [issue](https://github.com/microsoft/psi/issues/291) for more information.
 
 ## Curent issues
 

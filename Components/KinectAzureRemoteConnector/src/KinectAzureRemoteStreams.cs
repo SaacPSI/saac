@@ -5,15 +5,15 @@ using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Audio;
 using Microsoft.Psi.Imaging;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     public class KinectAzureRemoteStreams : Subpipeline
     {
         public KinectAzureRemoteStreamsConfiguration Configuration { get; private set; }
         public AzureKinectSensor? Sensor { get; private set; }
 
-        public KinectAzureRemoteStreams(Pipeline pipeline, KinectAzureRemoteStreamsConfiguration? configuration = null)
-            : base(pipeline)
+        public KinectAzureRemoteStreams(Pipeline pipeline, KinectAzureRemoteStreamsConfiguration? configuration = null, string name = nameof(KinectAzureRemoteStreams))
+            : base(pipeline, name)
         {
             Configuration = configuration ?? new KinectAzureRemoteStreamsConfiguration();
         }

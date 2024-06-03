@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi.Remoting;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     public class KinectAzureRemoteStreamsConfiguration
     {

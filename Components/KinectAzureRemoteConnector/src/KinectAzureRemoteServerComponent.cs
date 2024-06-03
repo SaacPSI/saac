@@ -1,15 +1,15 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Interop.Rendezvous;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     public class KinectAzureRemoteServerComponent : KinectAzureRemoteStreams
     {
         public RendezvousServer? Server { get; private set; }
         public Emitter<int> OutConnectionError { get; private set; }
 
-        public KinectAzureRemoteServerComponent(Pipeline pipeline, KinectAzureRemoteStreamsConfiguration? configuration = null)
-            : base(pipeline, configuration)
+        public KinectAzureRemoteServerComponent(Pipeline pipeline, KinectAzureRemoteStreamsConfiguration? configuration = null, string name = nameof(KinectAzureRemoteServerComponent))
+            : base(pipeline, configuration, name)
         {
             OutConnectionError = pipeline.CreateEmitter<int>(this, "ConnectionError");
         }

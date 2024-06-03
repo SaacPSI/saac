@@ -101,7 +101,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SaaCPsiStudio", "Applicatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RendezVousPipelineServices", "Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj", "{934AF3B8-E8E9-4F06-92F4-E07213A606BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{9420A360-3D66-4BB7-9F34-F9762AE07578}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{9420A360-3D66-4BB7-9F34-F9762AE07578}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -279,6 +279,14 @@ Global
 		{934AF3B8-E8E9-4F06-92F4-E07213A606BF}.Release|Any CPU.Build.0 = Release|x64
 		{934AF3B8-E8E9-4F06-92F4-E07213A606BF}.Release|x64.ActiveCfg = Release|x64
 		{934AF3B8-E8E9-4F06-92F4-E07213A606BF}.Release|x64.Build.0 = Release|x64
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Debug|x64.Build.0 = Debug|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|x64.ActiveCfg = Release|Any CPU
+		{9420A360-3D66-4BB7-9F34-F9762AE07578}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

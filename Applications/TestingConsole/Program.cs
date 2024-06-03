@@ -454,6 +454,35 @@ namespace TestingConsole
         //    Thread.Sleep(500);
         //}
 
+        //static bool alternate = true;
+        //static void testKinectRemote(Pipeline p)
+        //{
+        //    RendezvousServer server = new RendezvousServer(11411);
+        //    KinectAzureRemoteConnector receiver = new KinectAzureRemoteConnector(p);
+        //    server.Rendezvous.ProcessAdded += receiver.GenerateProcess();
+
+        //    var emitter = p.CreateEmitter<KinectAzureRemoteStreamsConfiguration?>(p, "config");
+        //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(15));
+        //    RemoteExporter exporter = new RemoteExporter(p, 11511, TransportKind.Tcp);
+        //    KinectAzureRemoteStreamsConfiguration cfg = new KinectAzureRemoteStreamsConfiguration();
+        //    cfg.StreamVideo = cfg.StreamSkeleton = false;
+        //    timer.Out.Do(t =>
+        //    {
+        //        if (alternate)
+        //            emitter.Post(cfg, p.GetCurrentTime());
+        //        else
+        //            emitter.Post(null, p.GetCurrentTime());
+        //        alternate = !alternate;
+        //        Console.WriteLine("Post");
+        //    });
+        //    exporter.Exporter.Write(emitter, "Configuration");
+        //    if (!server.Rendezvous.TryAddProcess(new Rendezvous.Process("KinectStreaming_Configuration", new List<Rendezvous.Endpoint> { exporter.ToRendezvousEndpoint("10.44.192.131") })))
+        //        Console.WriteLine("failed");
+        //    server.Start();
+        //    Console.WriteLine("start");
+        //    //var store = PsiStore.Create(p, "testKinectRemote", "D:\\Stores");
+
+        //}
 
         private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
         {
@@ -478,37 +507,6 @@ namespace TestingConsole
                 }
             }
         }
-
-        static bool alternate = true; 
-        static void testKinectRemote(Pipeline p)
-        {
-            RendezvousServer server = new RendezvousServer(11411);
-            KinectAzureRemoteConnector receiver = new KinectAzureRemoteConnector(p);
-            server.Rendezvous.ProcessAdded += receiver.GenerateProcess();
-
-            var emitter = p.CreateEmitter<KinectAzureRemoteStreamsConfiguration?>(p, "config");
-            var timer = Timers.Timer(p, TimeSpan.FromSeconds(15));
-            RemoteExporter exporter = new RemoteExporter(p, 11511, TransportKind.Tcp);
-            KinectAzureRemoteStreamsConfiguration cfg = new KinectAzureRemoteStreamsConfiguration();
-            cfg.StreamVideo = cfg.StreamSkeleton = false;
-            timer.Out.Do(t => 
-            {
-                if (alternate)
-                    emitter.Post(cfg, p.GetCurrentTime());
-                else
-                    emitter.Post(null, p.GetCurrentTime());
-                alternate = !alternate;
-                Console.WriteLine("Post");
-            });
-            exporter.Exporter.Write(emitter, "Configuration");
-            if(!server.Rendezvous.TryAddProcess(new Rendezvous.Process("KinectStreaming_Configuration", new List<Rendezvous.Endpoint> { exporter.ToRendezvousEndpoint("10.44.192.131") })))
-                Console.WriteLine("failed");
-            server.Start();
-            Console.WriteLine("start");
-            //var store = PsiStore.Create(p, "testKinectRemote", "D:\\Stores");
-
-        }
-
 
         static void Main(string[] args)
         {

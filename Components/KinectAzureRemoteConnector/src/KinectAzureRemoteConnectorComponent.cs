@@ -1,9 +1,7 @@
-﻿using Microsoft.Psi.Components;
-using Microsoft.Psi;
+﻿using Microsoft.Psi;
 using Microsoft.Psi.Interop.Rendezvous;
-using Microsoft.Psi.Imaging;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     public class KinectAzureRemoteConnectorComponent : KinectAzureRemoteConnector
     {
@@ -11,8 +9,8 @@ namespace RemoteConnectors
         public Emitter<int> OutConnectionError { get; private set; }
         public bool WaitForConnection { get; private set; }
 
-        public KinectAzureRemoteConnectorComponent(Pipeline pipeline, KinectAzureRemoteConnectorConfiguration? configuration = null, bool waitForConnection = true)
-            : base(pipeline, configuration)
+        public KinectAzureRemoteConnectorComponent(Pipeline pipeline, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnectorComponent), bool waitForConnection = true)
+            : base(pipeline, configuration, name)
         {
             OutConnectionError = pipeline.CreateEmitter<int>(this, "ConnectionError");
             WaitForConnection = waitForConnection;
