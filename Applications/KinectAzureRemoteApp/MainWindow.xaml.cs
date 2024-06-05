@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Net;
 using Microsoft.Psi.Diagnostics;
-using RemoteConnectors;
+using SAAC.RemoteConnectors;
 
 namespace KinectAzureRemoteApp
 {

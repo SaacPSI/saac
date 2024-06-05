@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Remoting;
-using RemoteConnectors;
+using SAAC.RemoteConnectors;
 
 namespace KinectAzureRemoteConsole
 {

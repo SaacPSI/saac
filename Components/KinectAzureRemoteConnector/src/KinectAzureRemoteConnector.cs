@@ -47,7 +47,7 @@ namespace SAAC.RemoteConnectors
 
         public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
 
-;        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector))
+        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector))
             : base(parent, name)
         {
             Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
@@ -57,7 +57,6 @@ namespace SAAC.RemoteConnectors
             OutDepthDeviceCalibrationInfo = null;
             OutAudio = null;
             OutIMU = null;
-            this.name = name;
         }
 
         private Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
