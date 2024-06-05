@@ -5,14 +5,12 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Psi;
 using Microsoft.Psi.Audio;
-using OpenSmile.Utility;
-using Environment = OpenSmileInterop.Environment;
 
-namespace OpenSmile {
-
+namespace SAAC.OpenSmile
+{
     public class OpenSmile  {
 
-        private Environment env;
+        private OpenSmileInterop.Environment env;
 
         private DateTimeOffset StartTime;
 
@@ -26,7 +24,7 @@ namespace OpenSmile {
 #if !DEBUG
 			config.PrintLogToConsole = false;
 #endif
-            env = new Environment(config ?? throw new ArgumentNullException(nameof(config)));
+            env = new OpenSmileInterop.Environment(config ?? throw new ArgumentNullException(nameof(config)));
             foreach (var name in env.RawDataSinkInstanceNames()) {
                 var receiver = pipeline.CreateEmitter<Vector<float>>(this, name);
                 Out = Out.Add(name, receiver);

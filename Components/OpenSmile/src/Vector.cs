@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace OpenSmile.Common
+namespace SAAC.OpenSmile
 {
     public class Vector<T>
     {
@@ -37,17 +37,5 @@ namespace OpenSmile.Common
             && Fields.SequenceEqual(o.Fields);
 
         public override int GetHashCode() => HashCode.Combine(Time, Index, LengthSec, HashCode.Combine(Fields));
-
-        public List<(string, T)> ToNumerics()
-        {
-            List<(string, T)> list = new List<(string, T)>();
-            foreach (var field in Fields)
-            {
-                list.Add(new Tuple<string, T>(field.Name, field.Data.));
-            }
-
-            return list;
-        }
-
     }
 }

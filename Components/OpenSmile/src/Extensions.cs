@@ -2,11 +2,13 @@
 using System.Numerics;
 using System.IO;
 using System.Linq;
-using OpenSmile.Common;
+using OpenSmileInterop;
 
-namespace OpenSmile.Utility {
-    internal static class Extensions {
-        public static Common.Vector<T> CreateVector<T>(this OpenSmileInterop.Vector rawVector, Func<byte[], T> bitConverter) 
+namespace SAAC.OpenSmile 
+{
+    internal static class Extensions 
+    {
+        public static Vector<T> CreateVector<T>(this OpenSmileInterop.Vector rawVector, Func<byte[], T> bitConverter) 
         {
             if (rawVector.DataType != typeof(T)) {
                 throw new InvalidDataException($"openSMILE data type mismatch: expect {typeof(T).Name} while got {rawVector.DataType.Name}");
@@ -23,16 +25,16 @@ namespace OpenSmile.Utility {
                 fields.Add(field);
                 dataIdx += rawField.Length;
             }
-            var result = new Common.Vector<T>(rawVector.Time, rawVector.Index, rawVector.LengthSec, fields);
+            var result = new Vector<T>(rawVector.Time, rawVector.Index, rawVector.LengthSec, fields);
             return result;
         }
 
-        public static Common.Vector<float> CreateVector_Single(this OpenSmileInterop.Vector rawVector) {
+        public static Vector<float> CreateVector_Single(this OpenSmileInterop.Vector rawVector) {
             float converter(byte[] arr) => BitConverter.ToSingle(arr, 0);
             return CreateVector(rawVector, converter);
         }
 
-        public static Common.Vector<int> CreateVector_Int32(this OpenSmileInterop.Vector rawVector) {
+        public static Vector<int> CreateVector_Int32(this OpenSmileInterop.Vector rawVector) {
             int converter(byte[] arr) => BitConverter.ToInt32(arr, 0);
             return CreateVector(rawVector, converter);
         }
