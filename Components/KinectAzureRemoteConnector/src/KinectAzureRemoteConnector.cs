@@ -5,8 +5,9 @@ using Microsoft.Psi.Audio;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Azure.Kinect.Sensor;
+using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 
-namespace RemoteConnectors
+namespace SAAC.RemoteConnectors
 {
     /// <summary>
     /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.
@@ -37,37 +38,50 @@ namespace RemoteConnectors
         /// <summary>
         /// Gets the emitter of audio.
         /// </summary>
-        public Emitter<AudioBuffer>? OutAudio{ get; private set; }
+        public Emitter<AudioBuffer>? OutAudio { get; private set; }
 
         /// <summary>
         /// Gets the emitter of IMU data.
         /// </summary>
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
-        public KinectAzureRemoteConnectorConfiguration Configuration { get; }
+        public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
 
-        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-          : base(parent, name, defaultDeliveryPolicy)
+;        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector))
+            : base(parent, name)
         {
             Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
-
             OutColorImage = null;
             OutDepthImage = null;
             OutBodies = null;
             OutDepthDeviceCalibrationInfo = null;
             OutAudio = null;
             OutIMU = null;
+            this.name = name;
+        }
 
-            var client = new RendezvousClient(Configuration.Address, (int)Configuration.ServeurtPort);
-            client.Rendezvous.ProcessAdded += (_, p) =>
+        private Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
+        {
+            if (remoteImporter.Connected.WaitOne() == false)
             {
-                if (p.Name == Configuration.ApplicationName)
+                Console.WriteLine(Configuration.RendezVousApplicationName + " failed to connect stream " + name);
+                return null;
+            }
+            Console.WriteLine(Configuration.RendezVousApplicationName + " stream " + name + " connected.");
+            return remoteImporter.Importer.OpenStream<T>(name).Out;
+        }
+
+        public EventHandler<Process> GenerateProcess()
+        {
+            return (_, p) =>
+            {
+                if (p.Name == Configuration.RendezVousApplicationName)
                 {
                     foreach (var endpoint in p.Endpoints)
                     {
                         if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
                         {
-                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(parent);
+                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(this);
                             foreach (var stream in remoteExporterEndpoint.Streams)
                             {
                                 if (stream.StreamName.Contains("Audio"))
@@ -105,23 +119,6 @@ namespace RemoteConnectors
                     }
                 }
             };
-            client.Start();
-            if (!client.Connected.WaitOne())
-            {
-                throw new Exception("Error while connecting to server at " + Configuration.Address);
-            }
         }
-         
-        private Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
-        {
-            if (remoteImporter.Connected.WaitOne() == false)
-            {
-                Console.WriteLine(Configuration.ApplicationName + " failed to connect stream " + name);
-                return null;
-            }
-            Console.WriteLine(Configuration.ApplicationName + " stream " + name + " connected.");
-            return remoteImporter.Importer.OpenStream<T>(name).Out;
-        }
-
     }
 }

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-	  <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
 	  <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>Preview</LangVersion>
@@ -10,24 +10,27 @@
 	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
-	  <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.18.72.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Runtime.Windows" Version="0.18.72.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Audio" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Speech" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Speech.Windows" Version="0.19.100.1-beta" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\OpenFace\OpenFace.csproj" />
+    <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
+    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="OpenFaceInterop">
-      <HintPath>..\..\build\bin\TestingConsole\x64\Debug\OpenFaceInterop.dll</HintPath>
+    <Reference Include="nuitrack.net">
+      <HintPath>..\..\..\PsiWorks\PsiComponents\Nuitrack\nuitrack.net.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\xmlrpc-c\default\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\xmlrpc-c\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\xmlrpc-c\default\lib\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\xmlrpc-c\lib\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ws2_32.lib;Wininet.lib;libxmlrpc.lib;libxmlrpc_abyss.lib;libxmlrpc_abyss++.lib;libxmlrpc_client.lib;libxmlrpc_server.lib;libxmlrpc_server_abyss.lib;libxmlrpc_server_cgi.lib;libxmlrpc_server_w32httpsys.lib;libxmlrpc_util.lib;libxmlrpc_util++.lib;libxmlrpc_xmlparse.lib;libxmlrpc_xmltok.lib;libxmlrpc++.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

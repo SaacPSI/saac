@@ -4,24 +4,25 @@ using SIPSorceryMedia.Abstractions;
 using SIPSorceryMedia.FFmpeg;
 using SIPSorcery.Net;
 using Microsoft.Psi.Audio;
-using WebSocketSharp;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// WebRTCVideoStream component class, working for Unreal Engine PixelStreaming and Unity (package in asset folder of this project)
     /// Use FFMPEG for codecs.
-    /// Inherit form WebRTConnector class 
+    /// Inherit form WebRTCDataConnector class to send and recieve from datachannels 
     /// </summary>
     /// Currently Audio is not working
 
-    public class WebRTCVideoStream : WebRTConnector
+    public class WebRTCVideoStream : WebRTCDataConnector
     {
-        private FFmpegVideoEndPoint VideoDecoder;
-        private OpusCodec.OpusAudioEncoder AudioDecoder;
-        private WebRTCVideoStreamConfiguration Configuration;
-        private List<byte> AudioArray = new List<byte>(); 
-        private DateTime AudioTimestamp = DateTime.Now;
+        private FFmpegVideoEndPoint videoDecoder;
+        private OpusCodec.OpusAudioEncoder audioDecoder;
+        private WebRTCVideoStreamConfiguration configuration;
+        private List<byte> audioArray; 
+        private DateTime audioTimestamp;
+        private WaveFormat? waveFormat;
+        private DateTime videoTimestamp;
 
         /// <summary>
         /// Gets the emitter images.
@@ -33,64 +34,71 @@ namespace WebRTC
         /// </summary>
         public Emitter<AudioBuffer> OutAudio { get; private set; }
 
-        public WebRTCVideoStream(Pipeline parent, WebRTCVideoStreamConfiguration configuration, string name = nameof(WebRTCVideoStream), DeliveryPolicy? defaultDeliveryPolicy = null)
-            : base(parent, configuration, name, defaultDeliveryPolicy)
+        public WebRTCVideoStream(Pipeline parent, WebRTCVideoStreamConfiguration configuration, string name = nameof(WebRTCVideoStream))
+            : base(parent, configuration, name)
         {
-            Configuration = configuration;
-            OutImage = parent.CreateEmitter<Shared<Image>>(this, nameof(OutImage));
+            this.configuration = configuration;
+            audioArray = new List<byte>();
+            audioTimestamp = DateTime.Now;
+            videoTimestamp = DateTime.Now;
+            waveFormat = null;
+            OutImage = parent.CreateEmitter<Shared<Image>>(parent, nameof(OutImage));
             OutAudio = parent.CreateEmitter<AudioBuffer>(this, nameof(OutAudio));
-            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, configuration.FFMPEGFullPath);
-            VideoDecoder = new FFmpegVideoEndPoint();
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_TRACE, configuration.FFMPEGFullPath, logger);
+            videoDecoder = new FFmpegVideoEndPoint();
             if (configuration.AudioStreaming)
             {
-                AudioDecoder = new OpusCodec.OpusAudioEncoder();
+                audioDecoder = new OpusCodec.OpusAudioEncoder(logger);
+                waveFormat = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ChannelCount);
             }
         }
 
         protected override void PrepareActions()
         {
-            MediaStreamTrack videoTrack = new MediaStreamTrack(VideoDecoder.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
-            PeerConnection.addTrack(videoTrack);
-            if (Configuration.AudioStreaming)
+            if (peerConnection == null)
+                return;
+            base.PrepareActions();
+            MediaStreamTrack videoTrack = new MediaStreamTrack(videoDecoder.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
+            peerConnection.addTrack(videoTrack);
+            if (configuration.AudioStreaming)
             {
-                MediaStreamTrack audioTrack = new MediaStreamTrack(AudioDecoder.SupportedFormats, MediaStreamStatusEnum.RecvOnly);
-                PeerConnection.addTrack(audioTrack);
-                PeerConnection.AudioStream.OnRtpPacketReceivedByIndex += AudioStream_OnRtpPacketReceivedByIndex;
+                MediaStreamTrack audioTrack = new MediaStreamTrack(audioDecoder.SupportedFormats, MediaStreamStatusEnum.RecvOnly);
+                peerConnection.addTrack(audioTrack);
+                peerConnection.AudioStream.OnRtpPacketReceivedByIndex += AudioStream_OnRtpPacketReceivedByIndex;
             }
-            PeerConnection.OnAudioFormatsNegotiated += PeerConnection_OnAudioFormatsNegotiated;
-            PeerConnection.OnVideoFormatsNegotiated += WebRTCPeer_OnVideoFormatsNegotiated;
-            PeerConnection.OnVideoFrameReceived += PeerConnection_OnVideoFrameReceived;
-            VideoDecoder.OnVideoSinkDecodedSample += VideoEncoder_OnVideoSinkDecodedSample;
-            //VideoDecoder.OnVideoSinkDecodedSampleFaster += VideoDecoder_OnVideoSinkDecodedSampleFaster;
+            peerConnection.OnAudioFormatsNegotiated += PeerConnection_OnAudioFormatsNegotiated;
+            peerConnection.OnVideoFormatsNegotiated += WebRTCPeer_OnVideoFormatsNegotiated;
+            peerConnection.OnVideoFrameReceived += PeerConnection_OnVideoFrameReceived;
+            videoDecoder.OnVideoSinkDecodedSample += VideoEncoder_OnVideoSinkDecodedSample;
+            videoDecoder.OnVideoSinkDecodedSampleFaster += VideoDecoder_OnVideoSinkDecodedSampleFaster;
         }
-
 
         private void AudioStream_OnRtpPacketReceivedByIndex(int arg1, System.Net.IPEndPoint arg2, SDPMediaTypesEnum arg3, RTPPacket arg4)
         {
-            if (arg3 != SDPMediaTypesEnum.audio)
+            if (arg3 != SDPMediaTypesEnum.audio || waveFormat == null)
                 return;
 
-            var rtp = arg4.GetBytes();
-            int dataSize = rtp.Length - arg4.Header.GetBytes().Length;
-            byte[] realData = rtp.SubArray(arg4.Header.Length, dataSize);
-            short[] buffer = AudioDecoder.DecodeAudio(realData, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
-            WaveFormat wave = WaveFormat.Create16BitPcm(OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS.ClockRate, 1);
+            if (arg1 == 0)
+            {
+                if (audioArray.Count > 0)
+                {
+                    OutAudio.Post(new AudioBuffer(audioArray.ToArray(), waveFormat), audioTimestamp);
+                    audioArray.Clear();
+                }
+                audioTimestamp = pipeline.GetCurrentTime();
+            }
+
+            short[] buffer = audioDecoder.DecodeAudio(arg4.Payload, OpusCodec.OpusAudioEncoder.MEDIA_FORMAT_OPUS);
             foreach (short pcm in buffer)
                 foreach (var data in BitConverter.GetBytes(pcm))
-                    AudioArray.Add(data);
-
-            if (AudioTimestamp.CompareTo(arg4.Header.ReceivedTime) != 0)
-            {
-                OutAudio.Post(new AudioBuffer(AudioArray.ToArray(), wave), AudioTimestamp.ToUniversalTime());
-                AudioTimestamp = arg4.Header.ReceivedTime;
-                AudioArray.Clear();
-            }
+                    audioArray.Add(data);
         }
 
         private void PeerConnection_OnVideoFrameReceived(System.Net.IPEndPoint arg1, uint arg2, byte[] arg3, VideoFormat arg4)
         {
-            VideoDecoder.SetVideoSourceFormat(arg4);
-            VideoDecoder.GotVideoFrame(arg1, arg2, arg3, arg4);
+           videoTimestamp = pipeline.GetCurrentTime();
+           videoDecoder.SetVideoSourceFormat(arg4);
+           videoDecoder.GotVideoFrame(arg1, arg2, arg3, arg4);
         }
 
         private void VideoEncoder_OnVideoSinkDecodedSample(byte[] sample, uint width, uint height, int stride, SIPSorceryMedia.Abstractions.VideoPixelFormatsEnum pixelFormat)
@@ -98,19 +106,19 @@ namespace WebRTC
             PixelFormat format = GetPixelFormat(pixelFormat);
             Shared<Image> imageEnc = ImagePool.GetOrCreate((int)width, (int)height, format);
             imageEnc.Resource.CopyFrom(sample);
-            OutImage.Post(imageEnc, Pipeline.GetCurrentTime());
+            OutImage.Post(imageEnc, videoTimestamp);
         }
 
         private void VideoDecoder_OnVideoSinkDecodedSampleFaster(RawImage rawImage)
         {
             PixelFormat format = GetPixelFormat(rawImage.PixelFormat);
-            Image image = new Image(rawImage.Sample, (int)rawImage.Width, (int)rawImage.Height, (int)rawImage.Stride, PixelFormat.BGR_24bpp);
+            Image image = new Image(rawImage.Sample, (int)rawImage.Width, (int)rawImage.Height, (int)rawImage.Stride, format);
             Shared<Image> imageS = ImagePool.GetOrCreate((int)rawImage.Width, (int)rawImage.Height, format);
-            if(Configuration.PixelStreamingConnection)
-                imageS.Resource.CopyFrom(image);
+            if (configuration.PixelStreamingConnection)
+                imageS.Resource.CopyFrom(rawImage.Sample);
             else
                 imageS.Resource.CopyFrom(image.Flip(FlipMode.AlongHorizontalAxis));
-            OutImage.Post(imageS, Pipeline.GetCurrentTime());
+            OutImage.Post(imageS, videoTimestamp);
             image.Dispose();
         }
 
@@ -121,9 +129,9 @@ namespace WebRTC
                 case VideoPixelFormatsEnum.Bgra:
                     return PixelFormat.BGRA_32bpp;
                 case VideoPixelFormatsEnum.Bgr:
-                    return PixelFormat.BGR_24bpp;
-                case VideoPixelFormatsEnum.Rgb:
                     return PixelFormat.RGB_24bpp;
+                case VideoPixelFormatsEnum.Rgb:
+                    return PixelFormat.BGR_24bpp;
                 default:
                 case VideoPixelFormatsEnum.NV12:
                 case VideoPixelFormatsEnum.I420:
@@ -134,9 +142,8 @@ namespace WebRTC
         private void WebRTCPeer_OnVideoFormatsNegotiated(List<VideoFormat> obj)
         {
             VideoFormat format = obj.Last();
-
-            VideoDecoder.SetVideoSourceFormat(format);
-            VideoDecoder.SetVideoSinkFormat(format);
+            videoDecoder.SetVideoSourceFormat(format);
+            videoDecoder.SetVideoSinkFormat(format);
         }
 
         private void PeerConnection_OnAudioFormatsNegotiated(List<AudioFormat> obj)

@@ -1,14 +1,13 @@
-﻿using Helpers;
+﻿using SAAC.Helpers;
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Imaging;
 using System.Drawing;
 using System.Numerics;
-using System.Windows.Controls;
 
-namespace OpenFace
+namespace SAAC.OpenFace
 {
-    public class FaceBlurrer : Subpipeline
+    public class FaceBlurrer : IProducer<Shared<Microsoft.Psi.Imaging.Image>>
     {
         /// <summary>
         /// Gets. Connector that encapsulates the shared image input stream.
@@ -31,18 +30,31 @@ namespace OpenFace
         public Receiver<Pose> InPose => InPoseConnector.In;
 
         /// <summary>
+        /// Gets. Connector that encapsulates the pose data input stream.
+        /// </summary>
+        public Connector<List<Rectangle>> InBBoxesConnector { get; private set; }
+
+        /// <summary>
+        /// Gets. Receiver that encapsulates the pose data input stream.
+        /// </summary>
+        public Receiver<List<Rectangle>> InBBoxes => InBBoxesConnector.In;
+
+
+        /// <summary>
         /// Gets. Emitter that encapsulates the image data output stream.
         /// </summary>
         public Emitter<Shared<Microsoft.Psi.Imaging.Image>> Out { get; private set; }
 
-        public FaceBlurrer(Pipeline parent, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null) : base(parent, name, defaultDeliveryPolicy)
+        public FaceBlurrer(Pipeline parent)
         {
             InImageConnector = parent.CreateConnector<Shared<Microsoft.Psi.Imaging.Image>>(nameof(InImage));
             InPoseConnector = parent.CreateConnector<Pose>(nameof(InPose));
+            InBBoxesConnector = parent.CreateConnector<List<Rectangle>>(nameof(InBBoxesConnector));
 
-            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(parent, nameof(Out));
+            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(this, nameof(Out));
 
             InPoseConnector.Pair(InImageConnector, DeliveryPolicy.LatestMessage).Do(Process);
+            InImageConnector.Fuse(InBBoxesConnector, Reproducible.Exact<List<Rectangle>>(), DeliveryPolicy.Throttle).Do(Process);
         }
 
         private void Process((Pose, Shared<Microsoft.Psi.Imaging.Image>) data, Envelope envelope)
@@ -59,6 +71,20 @@ namespace OpenFace
             data.Item2.Resource.FillRectangle(rect, Color.Black);
             Shared<Microsoft.Psi.Imaging.Image> image = ImagePool.GetOrCreate(data.Item2.Resource.Width, data.Item2.Resource.Height, data.Item2.Resource.PixelFormat);
             image.Resource.FillRectangle(rect, Color.Black);
+            Out.Post(image, envelope.OriginatingTime);
+        }
+
+        private void Process((Shared<Microsoft.Psi.Imaging.Image>, List<Rectangle>) data, Envelope envelope)
+        {
+            Shared<Microsoft.Psi.Imaging.Image> src = data.Item1;
+            List<Rectangle> boxes = data.Item2;
+            Shared<Microsoft.Psi.Imaging.Image> image = ImagePool.GetOrCreate(src.Resource.Width, src.Resource.Height, src.Resource.PixelFormat);
+            image.Resource.CopyFrom(src.Resource); 
+            foreach(Rectangle rectangle in boxes)
+            {
+                rectangle.Inflate(new Size((int)(rectangle.Size.Width * 0.25f), (int)(rectangle.Size.Height * 0.25f)));
+                image.Resource.FillRectangle(rectangle, Color.Black);
+            }
             Out.Post(image, envelope.OriginatingTime);
         }
 

@@ -1,6 +1,6 @@
 using MathNet.Spatial.Euclidean;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {
     /// <summary>
     /// RigidBody data structure.

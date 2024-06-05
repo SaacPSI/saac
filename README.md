@@ -1,19 +1,19 @@
 # SAAC
+(System As A Collaborator)
 
 Project using https://github.com/microsoft/psi/ framework.
 
-Full .NET 4.8 framework projects.
+.NET 4.8 framework projects.
 
-Three folders:
-- Applications for ready to use projects.
+Four folders:
+- Applications for ready to use projects see [Applications](Applications/README.md) for more details.
 - Components containing projects regrouping components by dependencies or uses.
-- Interop containing projects that wrap c++ code
-
-BiopacInterop origin from : https://github.com/intelligent-human-perception-laboratory/OpenSense/tree/master/BiopacInterop
+- Interop containing projects that wrapper of third part librairy see [Interop](Interop/README.md) for more details.
+- Dependencies containing third part librairies for interop wrappers.
 
 
 ## Roadmap
-A second batch during summer.
+A third batch at the begining of 2024.
 
 ## Project status
 We are currently focused on finishing some developpement for our architecture. We will finalize a proper documentation and sample code before publishing more components.
@@ -27,4 +27,4 @@ We are currently focused on finishing some developpement for our architecture. W
 - Aurélien Milliat aurelien.milliat@imt-atlantique.fr
 
 ## License
-CeCILL-C see LICENSE.md
+CeCILL-C see [LICENSE.md](LICENSE.md)

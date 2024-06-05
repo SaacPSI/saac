@@ -1,4 +1,4 @@
-﻿namespace Nuitrack
+﻿namespace SAAC.Nuitrack
 {
     public class NuitrackSensorConfiguration
     {

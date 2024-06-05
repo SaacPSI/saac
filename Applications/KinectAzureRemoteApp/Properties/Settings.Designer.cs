@@ -8,11 +8,11 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace KinectAzureRemoteApp.Properties {
+namespace SAAC.KinectAzureRemoteApp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.7.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -26,36 +26,24 @@ namespace KinectAzureRemoteApp.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
-        public string synchServerIp {
+        public string rendezVousServerIp {
             get {
-                return ((string)(this["synchServerIp"]));
+                return ((string)(this["rendezVousServerIp"]));
             }
             set {
-                this["synchServerIp"] = value;
+                this["rendezVousServerIp"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("1234")]
-        public uint synchServerPort {
+        public uint rendezVousServerPort {
             get {
-                return ((uint)(this["synchServerPort"]));
+                return ((uint)(this["rendezVousServerPort"]));
             }
             set {
-                this["synchServerPort"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool synchServerIsActive {
-            get {
-                return ((bool)(this["synchServerIsActive"]));
-            }
-            set {
-                this["synchServerIsActive"] = value;
+                this["rendezVousServerPort"] = value;
             }
         }
         
@@ -164,6 +152,30 @@ namespace KinectAzureRemoteApp.Properties {
             }
             set {
                 this["IpToUse"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("90")]
+        public uint encodingLevel {
+            get {
+                return ((uint)(this["encodingLevel"]));
+            }
+            set {
+                this["encodingLevel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int videoResolution {
+            get {
+                return ((int)(this["videoResolution"]));
+            }
+            set {
+                this["videoResolution"] = value;
             }
         }
     }

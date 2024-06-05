@@ -4,8 +4,9 @@ using System.Net;
 using Microsoft.Psi.Components;
 using System.Net.WebSockets;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
-namespace WebRTC
+namespace SAAC.WebRTC
 {
     /// <summary>
     /// WebRTConnector component class only do the basic connection throught SipSorcery librairy (https://github.com/sipsorcery-org/).
@@ -17,107 +18,96 @@ namespace WebRTC
         private const int MAX_SEND_BUFFER = 8192;
         private const int WEB_SOCKET_CONNECTION_TIMEOUT_MS = 1200000;
 
-        protected RTCPeerConnection? PeerConnection = null;
-        protected CancellationToken CToken;
+        internal WebRTCLogger logger;
 
-        public string Name { get; set; }
+        protected RTCPeerConnection? peerConnection = null;
+        protected CancellationToken cToken;
+        protected Pipeline pipeline;
+        protected string name;
 
-        protected Pipeline Pipeline;
-        private WebRTConnectorConfiguration Configuration;
-        private Uri WebSocketServerUri;
+        private WebRTConnectorConfiguration configuration;
+        private Uri webSocketServerUri;
 
-        /// <summary>
-        /// Gets the emitter of groups detected.
-        /// </summary>
-        public Emitter<string> OutLog { get; private set; }
-
-        public WebRTConnector(Pipeline parent, WebRTConnectorConfiguration configuration, string name = nameof(WebRTConnector), DeliveryPolicy? defaultDeliveryPolicy = null)
+        public WebRTConnector(Pipeline parent, WebRTConnectorConfiguration configuration, string name = nameof(WebRTConnector))
         {
-            Name = name;
-            Configuration = configuration;
-            Pipeline = parent;
-            OutLog = parent.CreateEmitter<string>(this, nameof(OutLog));
-            CToken = new CancellationToken();
-            WebSocketServerUri = new Uri("ws://" + configuration.WebsocketAddress.ToString() + ':' + configuration.WebsocketPort.ToString());
+            this.name = name;
+            this.configuration = configuration;
+            pipeline = parent;
+            logger = new WebRTCLogger();
+            logger.LogLevel = configuration.Log;
+            cToken = new CancellationToken();
+            webSocketServerUri = new Uri("ws://" + configuration.WebsocketAddress.ToString() + ':' + configuration.WebsocketPort.ToString());
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         public async void Start(Action<DateTime> notifyCompletionTime)
         {
-            PeerConnection = await CreatePeerConnection().ConfigureAwait(false);
-            log($"websocket-client attempting to connect to {WebSocketServerUri}.");
+            peerConnection = await CreatePeerConnection().ConfigureAwait(false);
+            logger.Log(LogLevel.Information, $"websocket-client attempting to connect to {webSocketServerUri}.");
 
-            _ = Task.Run(() => WebSocketConnection(PeerConnection, CToken)).ConfigureAwait(false);
+            _ = Task.Run(() => WebSocketConnection(peerConnection, cToken)).ConfigureAwait(false);
 
             notifyCompletionTime(DateTime.MaxValue);
         }
 
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
-            if (PeerConnection != null)
+            if (peerConnection != null)
             {
-                PeerConnection.Close("Stoping PSI");
-                PeerConnection.Dispose();
+                peerConnection.Close("Stoping PSI");
+                peerConnection.Dispose();
             }
             notifyCompleted();
         }
 
-        private void log(string message)
-        {
-            Console.WriteLine(message);
-            try
-            {
-                OutLog.Post(message, DateTime.Now);
-            }
-            catch(Exception ex) 
-            {
-                //do nothing
-            }
-        }
-
         private Task<RTCPeerConnection> CreatePeerConnection()
         {
-            PeerConnection = new RTCPeerConnection(null);
+            peerConnection = new RTCPeerConnection(null);
 
             PrepareActions(); 
-            PeerConnection.onconnectionstatechange += (state) =>
+            peerConnection.onconnectionstatechange += (state) =>
             {
-                log($"Peer connection state change to {state}.");
+                logger.Log(LogLevel.Trace, $"Peer connection state change to {webSocketServerUri}.");
                 if (state == RTCPeerConnectionState.connected)
                 {
+                    logger.Log(LogLevel.Information, $"Peer connected.");
                 }
                 else if (state == RTCPeerConnectionState.failed)
                 {
-                    PeerConnection.Close("ice disconnection");
+                    peerConnection.Close("ice disconnection");
+                    logger.Log(LogLevel.Error, $"Peer connection disconnected.");
                 }
             };
 
             // Diagnostics.
-            PeerConnection.OnReceiveReport += PeerConnection_OnReceiveReport;
-            PeerConnection.OnSendReport += PeerConnection_OnSendReport;
-            PeerConnection.GetRtpChannel().OnStunMessageReceived += WebRTConnector_OnStunMessageReceived;
-            PeerConnection.oniceconnectionstatechange += PeerConnection_oniceconnectionstatechange;
+            peerConnection.OnReceiveReport += PeerConnection_OnReceiveReport;
+            peerConnection.OnSendReport += PeerConnection_OnSendReport;
+            peerConnection.GetRtpChannel().OnStunMessageReceived += WebRTConnector_OnStunMessageReceived;
+            peerConnection.oniceconnectionstatechange += PeerConnection_oniceconnectionstatechange;
 
-            return Task.FromResult(PeerConnection);
+            return Task.FromResult(peerConnection);
         }
 
         private void PeerConnection_OnReceiveReport(IPEndPoint re, SDPMediaTypesEnum media, RTCPCompoundPacket rr)
         {
-            log($"RTCP Receive for {media} from {re}\n{rr.GetDebugSummary()}");
+            logger.Log(LogLevel.Trace, $"RTCP Receive for {media} from {re}\n{rr.GetDebugSummary()}");
         }
 
         private void PeerConnection_OnSendReport(SDPMediaTypesEnum media, RTCPCompoundPacket sr)
         {
-            log($"RTCP Send for {media}\n{sr.GetDebugSummary()}");
+            logger.Log(LogLevel.Trace, $"RTCP Send for {media}\n{sr.GetDebugSummary()}");
         }
 
         private void WebRTConnector_OnStunMessageReceived(STUNMessage msg, IPEndPoint ep, bool isRelay)
         {
-            log($"STUN {msg.Header.MessageType} received from {ep}.");
+            logger.Log(LogLevel.Trace, $"STUN {msg.Header.MessageType} received from {ep}.");
         }
         
         private void PeerConnection_oniceconnectionstatechange(RTCIceConnectionState state)
         {
-           log($"ICE connection state change to {state}.");
+            logger.Log(LogLevel.Information, $"ICE connection state change to {state}.");
         }
 
         protected virtual void PrepareActions()
@@ -140,7 +130,7 @@ namespace WebRTC
                 try
                 {
                     connectCts.CancelAfter(WEB_SOCKET_CONNECTION_TIMEOUT_MS);
-                    await webSocketClient.ConnectAsync(WebSocketServerUri, connectCts.Token).ConfigureAwait(true);
+                    await webSocketClient.ConnectAsync(webSocketServerUri, connectCts.Token).ConfigureAwait(true);
                 }
                 catch (Exception ex)
                 {
@@ -151,11 +141,12 @@ namespace WebRTC
                 loop = false;
                 if (webSocketClient.State == WebSocketState.Open)
                 {
-                    log($"websocket-client starting receive task for server {WebSocketServerUri}.");
+                    logger.Log(LogLevel.Information, $"websocket-client starting receive task for server {webSocketServerUri}.");
                     _ = Task.Run(() => ReceiveFromWebSocket(pc, webSocketClient, ct)).ConfigureAwait(false);
                 }
                 else
                 {
+                    logger.Log(LogLevel.Warning, "websocket-client connection failure.");
                     pc.Close("web socket connection failure");
                 }
             }
@@ -182,7 +173,7 @@ namespace WebRTC
                 {
                     var jsonMsg = Encoding.UTF8.GetString(buffer, 0, posn);
                     string jsonResp;
-                    if (Configuration.PixelStreamingConnection)
+                    if (configuration.PixelStreamingConnection)
                         jsonResp = await OnPixelStreamingMessage(jsonMsg, pc);
                     else
                         jsonResp = await OnMessage(jsonMsg, pc);
@@ -196,7 +187,7 @@ namespace WebRTC
                 posn = 0;
             }
 
-            log($"websocket-client receive loop exiting.");
+            logger.Log(LogLevel.Information, "websocket-client receive loop exiting.");
         }
 
         private async Task<string> OnMessage(string jsonStr, RTCPeerConnection pc)
@@ -204,17 +195,17 @@ namespace WebRTC
 
             if (RTCIceCandidateInit.TryParse(jsonStr, out var iceCandidateInit))
             {
-                log("Got remote ICE candidate.");
+                logger.Log(LogLevel.Information, "Got remote ICE candidate.");
                 pc.addIceCandidate(iceCandidateInit);
             }
             else if (RTCSessionDescriptionInit.TryParse(jsonStr, out var descriptionInit))
             {
-                log($"Got remote SDP, type {descriptionInit.type}.");
+                logger.Log(LogLevel.Information, $"Got remote SDP, type {descriptionInit.type}.");
 
                 var result = pc.setRemoteDescription(descriptionInit);
                 if (result != SetDescriptionResultEnum.OK)
                 {
-                    log($"Failed to set remote description, {result}.");
+                    logger.Log(LogLevel.Error, $"Failed to set remote description, {result}.");
                     pc.Close("failed to set remote description");
                 }
 
@@ -228,7 +219,7 @@ namespace WebRTC
             }
             else
             {
-                log($"websocket-client could not parse JSON message. {jsonStr}");
+                logger.Log(LogLevel.Error, $"websocket-client could not parse JSON message. {jsonStr}");
             }
 
             return null;
@@ -242,18 +233,18 @@ namespace WebRTC
                 string sub = jsonStr.Substring(pos, jsonStr.IndexOf("}}") - (pos - 1));
                 if (RTCIceCandidateInit.TryParse(sub, out var iceCandidateInit))
                 {
-                    log("Got remote ICE candidate.");
+                    logger.Log(LogLevel.Information, "Got remote ICE candidate.");
                     pc.addIceCandidate(iceCandidateInit);
                 }
             }
             else if (RTCSessionDescriptionInit.TryParse(jsonStr, out var descriptionInit))
             {
-                log($"Got remote SDP, type {descriptionInit.type}.");
+                logger.Log(LogLevel.Information, $"Got remote SDP, type {descriptionInit.type}.");
 
                 var result = pc.setRemoteDescription(descriptionInit);
                 if (result != SetDescriptionResultEnum.OK)
                 {
-                    log($"Failed to set remote description, {result}.");
+                    logger.Log(LogLevel.Error, $"Failed to set remote description, {result}.");
                     pc.Close("failed to set remote description");
                 }
 
@@ -267,7 +258,7 @@ namespace WebRTC
             }
             else
             {
-                log($"websocket-client could not parse JSON message. {jsonStr}");
+                logger.Log(LogLevel.Error, $"websocket-client could not parse JSON message. {jsonStr}");
             }
 
             return null;

@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<OutputType>Exe</OutputType>
+	<TargetFramework>net48</TargetFramework>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<Nullable>enable</Nullable>
+	  <LangVersion>Preview</LangVersion>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+	<BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.AutoGen" Version="6.1.0.1" />
+    <PackageReference Include="Microsoft.Psi.Audio" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Imaging" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
+  </ItemGroup>
+
+</Project>

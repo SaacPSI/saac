@@ -1,6 +1,6 @@
 ﻿using NatNetML;
 
-namespace NatNetComponent
+namespace SAAC.NatNetComponent
 {
     public class NatNetCoreConfiguration
     {

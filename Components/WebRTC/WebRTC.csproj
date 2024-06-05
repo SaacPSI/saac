@@ -12,15 +12,30 @@
 	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="asset\src\OpusAudioEncoder.cs" />
+    <Compile Remove="asset\src\SipSorceryWebRTCDataPeer.cs" />
+    <Compile Remove="asset\src\SipSorceryWebRTCPeer.cs" />
+    <Compile Remove="asset\src\WebRTCUnityLogger.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="asset\src\OpusAudioEncoder.cs" />
+    <None Include="asset\src\SipSorceryWebRTCDataPeer.cs" />
+    <None Include="asset\src\SipSorceryWebRTCPeer.cs" />
+    <None Include="asset\src\WebRTCUnityLogger.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Concentus" Version="1.1.7" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.18.72.1-beta" />
-	<PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.18.72.1-beta" />
-	<PackageReference Include="SIPSorcery" Version="6.0.12" />
-	<PackageReference Include="SIPSorceryMedia.FFmpeg" Version="1.2.1" />
-	<PackageReference Include="SIPSorceryMedia.SDL2" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
+	<PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.19.100.1-beta" />
+	<PackageReference Include="SIPSorcery" Version="6.2.1" />
+	<PackageReference Include="SIPSorceryMedia" Version="4.0.67-pre" />
+	<PackageReference Include="SIPSorceryMedia.FFmpeg" Version="1.4.1" />
   </ItemGroup>
 
 

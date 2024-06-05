@@ -72,6 +72,7 @@
     <Link>
       <AdditionalManifestDependencies>
       </AdditionalManifestDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -84,6 +85,9 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\Interop\InteropHelpers\include;$(SolutionDir)\Dependencies\xmlrpc-c\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="System" />

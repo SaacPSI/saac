@@ -2,14 +2,11 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="KinectAzureRemoteApp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="synchServerIp" Type="System.String" Scope="User">
+    <Setting Name="rendezVousServerIp" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>
     </Setting>
-    <Setting Name="synchServerPort" Type="System.UInt32" Scope="User">
+    <Setting Name="rendezVousServerPort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">1234</Value>
-    </Setting>
-    <Setting Name="synchServerIsActive" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="remotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11411</Value>
@@ -37,6 +34,12 @@
     </Setting>
     <Setting Name="IpToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>
+    </Setting>
+    <Setting Name="encodingLevel" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">90</Value>
+    </Setting>
+    <Setting Name="videoResolution" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">3</Value>
     </Setting>
   </Settings>
 </SettingsFile>
