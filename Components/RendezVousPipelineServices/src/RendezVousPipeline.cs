@@ -5,9 +5,7 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
-using Microsoft.Psi.Components;
-using System.IO.Packaging;
-using System.Xml.Linq;
+using static Microsoft.Psi.Calibration.LevenbergMarquardt;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -17,12 +15,14 @@ namespace SAAC.RendezVousPipelineServices
     {
         public Dataset Dataset { get; private set; }
         public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
+        public Dictionary<string, Dictionary<string, PsiExporter>> Stores { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public delegate void LogStatus(string log);
 
         protected LogStatus log;
         protected Pipeline pipeline;
+
         private RendezvousServer server;
         private bool isStarted;
         private bool isPipelineRunning;
@@ -35,6 +35,7 @@ namespace SAAC.RendezVousPipelineServices
             pipeline = Pipeline.Create(enableDiagnostics: this.Configuration.Diagnostics);
             server = new RendezvousServer(this.Configuration.RendezVousPort);
             Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
+            Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
             isClockServer = this.Configuration.ClockConfiguration != null && this.Configuration.ClockConfiguration.ClockPort != 0;
             if (this.Configuration.AutomaticPipelineRun && !isClockServer)
                 throw new Exception("It is not possible to have AutomaticPipelineRun without ClockServer.");
@@ -66,7 +67,7 @@ namespace SAAC.RendezVousPipelineServices
             if (isStarted)
                 return;
             if(Configuration.Diagnostics)
-                CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), "Diagnostics", pipeline.Diagnostics);
+                CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), "Diagnostics", "Diagnostics", pipeline.Diagnostics);
             if (this.Configuration.AutomaticPipelineRun)
                 RunPipeline();
             if (isClockServer)
@@ -115,14 +116,24 @@ namespace SAAC.RendezVousPipelineServices
                 Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
             Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, type, stream));
             if (storeSteam)
-                CreateStore(p, session, storeName, stream);
+                CreateStore(p, session, name, storeName, stream);
         }
 
-        public void CreateStore<T>(Pipeline pipeline, Session session, string name, IProducer<T> source)
+        public void CreateStore<T>(Pipeline pipeline, Session session, string name, string storeName, IProducer<T> source)
         {
-            var store = PsiStore.Create(pipeline, name, $"{Configuration.DatasetPath}/{session.Name}/");
-            store.Write(source, name);
-            session.AddPartitionFromPsiStoreAsync(name, $"{Configuration.DatasetPath}/{session.Name}/");
+            if (Stores.ContainsKey(session.Name) && Stores[session.Name].ContainsKey(storeName))
+            {
+                Stores[session.Name][storeName].Write(source, name);
+            }
+            else
+            {
+                PsiExporter store = PsiStore.Create(pipeline, storeName, $"{Configuration.DatasetPath}/{session.Name}/");
+                store.Write(source, name);
+                session.AddPartitionFromPsiStoreAsync(storeName, $"{Configuration.DatasetPath}/{session.Name}/");
+                if (!Stores.ContainsKey(session.Name))
+                    Stores.Add(session.Name, new Dictionary<string, PsiExporter>());
+                Stores[session.Name].Add(storeName, store);
+            }
         }
 
         public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
@@ -222,10 +233,10 @@ namespace SAAC.RendezVousPipelineServices
             {
                 dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_transformer" ]);
                 Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
-                CreateConnectorAndStore(name, session.Name, session, p, transformer.Out.Type, transformer, storeSteam);
+                CreateConnectorAndStore(name, sourceName, session, p, transformer.Out.Type, transformer, storeSteam);
             }
             else
-                CreateConnectorAndStore(name, session.Name, session, p, typeof(T), tcpSource, storeSteam);
+                CreateConnectorAndStore(name, sourceName, session, p, typeof(T), tcpSource, storeSteam);
         }
 
         private bool Connection(string name, Session session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
