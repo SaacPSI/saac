@@ -24,12 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\Groups\Groups.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Psi.Visualization.Windows">
-      <HintPath>dependencies\Microsoft.Psi.Visualization.Windows.dll</HintPath>
-    </Reference>
   </ItemGroup>   
     <ItemGroup>
       <Reference Include="PresentationCore" />

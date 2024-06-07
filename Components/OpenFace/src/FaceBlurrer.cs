@@ -45,17 +45,23 @@ namespace SAAC.OpenFace
         /// </summary>
         public Emitter<Shared<Microsoft.Psi.Imaging.Image>> Out { get; private set; }
 
-        public FaceBlurrer(Pipeline parent)
-        {
-            InImageConnector = parent.CreateConnector<Shared<Microsoft.Psi.Imaging.Image>>(nameof(InImage));
-            InPoseConnector = parent.CreateConnector<Pose>(nameof(InPose));
-            InBBoxesConnector = parent.CreateConnector<List<Rectangle>>(nameof(InBBoxesConnector));
+        private string name;
 
-            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(this, nameof(Out));
+        public FaceBlurrer(Pipeline parent, string name = nameof(FaceBlurrer))
+        {
+            this.name = name;
+            InImageConnector = parent.CreateConnector<Shared<Microsoft.Psi.Imaging.Image>>($"{name}-InImage");
+            InPoseConnector = parent.CreateConnector<Pose>($"{name}-InPose");
+            InBBoxesConnector = parent.CreateConnector<List<Rectangle>>($"{name}-InBBoxe");
+
+            Out = parent.CreateEmitter<Shared<Microsoft.Psi.Imaging.Image>>(this, $"{name}-Out");
 
             InPoseConnector.Pair(InImageConnector, DeliveryPolicy.LatestMessage).Do(Process);
             InImageConnector.Fuse(InBBoxesConnector, Reproducible.Exact<List<Rectangle>>(), DeliveryPolicy.Throttle).Do(Process);
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process((Pose, Shared<Microsoft.Psi.Imaging.Image>) data, Envelope envelope)
         {
