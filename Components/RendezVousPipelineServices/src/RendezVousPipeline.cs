@@ -254,7 +254,7 @@ namespace SAAC.RendezVousPipelineServices
                 var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
                 if (Configuration.Debug)
                     stream.Do((d, e) => { log($"Recieve {sourceName}-{streamInfo.Name} data @{e} : {d}"); });
-                CreateConnectorAndStore(name, $"{name}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
+                CreateConnectorAndStore(streamInfo.Name, $"{sourceName}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
             } 
             return true;
         }
