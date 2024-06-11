@@ -5,7 +5,6 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
-using static Microsoft.Psi.Calibration.LevenbergMarquardt;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -66,7 +65,7 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (isStarted)
                 return;
-            if(Configuration.Diagnostics)
+            if (Configuration.Diagnostics)
                 CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), "Diagnostics", "Diagnostics", pipeline.Diagnostics);
             if (this.Configuration.AutomaticPipelineRun)
                 RunPipeline();
@@ -151,7 +150,7 @@ namespace SAAC.RendezVousPipelineServices
             log($"Process {process.Name}");
             if (isClockServer && process.Name == Configuration.ClockConfiguration?.ClockProcessName)
                 return;
-            int elementAdded=0;
+            int elementAdded = 0;
             Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
             Session session;
             if (Configuration.UniqueSession)
@@ -160,10 +159,6 @@ namespace SAAC.RendezVousPipelineServices
                 session = CreateOrGetSession(Configuration.SessionName + process.Name);
             foreach (var endpoint in process.Endpoints)
             {
-                if (isClockServer == false && process.Name == Configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
-                {
-                    var remoteClockImporter = remoteClockEndpoint.ToRemoteClockImporter(pipeline);
-                }
                 if (endpoint is Rendezvous.TcpSourceEndpoint)
                 {
                     TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
@@ -203,6 +198,9 @@ namespace SAAC.RendezVousPipelineServices
                         elementAdded += Connection(streamName, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
                     }
                 }
+                else if (isClockServer == false && process.Name == Configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
+                    remoteClockEndpoint.ToRemoteClockImporter(pipeline);
+                
             }
             log($"Process {process.Name} sources added : {elementAdded}");
             if (elementAdded == 0)
@@ -231,7 +229,7 @@ namespace SAAC.RendezVousPipelineServices
                 Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
             if (transformerType != null)
             {
-                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_transformer" ]);
+                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{sourceName}_transformer"]);
                 Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
                 CreateConnectorAndStore(name, sourceName, session, p, transformer.Out.Type, transformer, storeSteam);
             }

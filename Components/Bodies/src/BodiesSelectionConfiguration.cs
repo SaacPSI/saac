@@ -1,4 +1,4 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using MathNet.Spatial.Euclidean;
 using Microsoft.Azure.Kinect.BodyTracking;
 namespace SAAC.Bodies
 {
@@ -7,7 +7,7 @@ namespace SAAC.Bodies
         /// <summary>
         /// Gets or sets in which space the bodies are sent.
         /// </summary>
-        public Matrix<double>? Camera2ToCamera1Transformation { get; set; } = null;
+        public CoordinateSystem? Camera2ToCamera1Transformation { get; set; } = null;
 
         /// <summary>
         /// Gets or sets in which space the bodies are sent.

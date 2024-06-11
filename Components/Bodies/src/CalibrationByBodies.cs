@@ -6,12 +6,12 @@ using Microsoft.Azure.Kinect.BodyTracking;
 
 namespace SAAC.Bodies
 {
-    public class CalibrationByBodies : IProducer<Matrix<double>>
+    public class CalibrationByBodies : IProducer<CoordinateSystem>
     {
         /// <summary>
         /// Gets the emitter of groups detected.
         /// </summary>
-        public Emitter<Matrix<double>> Out{ get; private set; }
+        public Emitter<CoordinateSystem> Out{ get; private set; }
 
         /// <summary>
         /// Synch signals for capturing skeletons.
@@ -53,7 +53,7 @@ namespace SAAC.Bodies
             Configuration = configuration ?? new CalibrationByBodiesConfiguration();
             InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>(nameof(InCamera1BodiesConnector));
             InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>(nameof(InCamera2BodiesConnector));
-            Out = parent.CreateEmitter<Matrix<double>>(this, nameof(Out));
+            Out = parent.CreateEmitter<CoordinateSystem>(this, nameof(Out));
             InSynchEventConnector = parent.CreateConnector<bool>(nameof(InSynchEventConnector));
 
             if (Configuration.SynchedCalibration)
@@ -143,7 +143,7 @@ namespace SAAC.Bodies
                 }
                 else
                 {
-                    Out.Post(transformationMatrix, time);
+                    Out.Post(new CoordinateSystem(transformationMatrix), time);
                     SetStatus("Calibration Done");
                     Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, transformationMatrix);
                     return ECalibrationState.Idle;
@@ -180,7 +180,7 @@ namespace SAAC.Bodies
                 if (RMSE < Configuration.AllowedMaxRMSE)
                 {
                     SetStatus("Calibration done! RMSE: " + RMSE.ToString());
-                    Out.Post(transformationMatrix, time);
+                    Out.Post(new CoordinateSystem(transformationMatrix), time);
                     Helpers.Helpers.StoreCalibrationMatrix(Configuration.StoringPath, transformationMatrix);
                     return ECalibrationState.Idle;
                 }

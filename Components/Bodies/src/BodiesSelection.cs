@@ -22,12 +22,12 @@ namespace SAAC.Bodies
         /// <summary>
         /// Gets the connector of the calibration matrix.
         /// </summary>
-        private Connector<Matrix<double>> InCalibrationMatrixConnector;
+        private Connector<CoordinateSystem> InCalibrationMatrixConnector;
 
         /// <summary>
         /// Receiver that encapsulates the calibration matrix input.
         /// </summary>
-        public Receiver<Matrix<double>> InCalibrationMatrix => InCalibrationMatrixConnector.In;
+        public Receiver<CoordinateSystem> InCalibrationMatrix => InCalibrationMatrixConnector.In;
 
         /// <summary>
         /// Gets the connector of lists of currently tracked bodies.
@@ -110,12 +110,12 @@ namespace SAAC.Bodies
             InCamera2LearnedBodiesConnector = CreateInputConnectorFrom<List<LearnedBody>>(parent, nameof(InCamera2LearnedBodiesConnector));
             InCamera1RemovedBodiesConnector = CreateInputConnectorFrom<List<uint>>(parent, nameof(InCamera1RemovedBodiesConnector));
             InCamera2RemovedBodiesConnector = CreateInputConnectorFrom<List<uint>>(parent, nameof(InCamera2RemovedBodiesConnector));
-            InCalibrationMatrixConnector = CreateInputConnectorFrom<Matrix<double>>(parent, nameof(InCalibrationMatrixConnector));
+            InCalibrationMatrixConnector = CreateInputConnectorFrom<CoordinateSystem>(parent, nameof(InCalibrationMatrixConnector));
             OutBodiesCalibrated = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(OutBodiesCalibrated));
             OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, nameof(OutBodiesRemoved));
 
             if (this.configuration.Camera2ToCamera1Transformation == null)
-                InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Out.Fuse(InCalibrationMatrixConnector.Out, Available.Nearest<Matrix<double>>()).Do(Process);
+                InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Out.Fuse(InCalibrationMatrixConnector.Out, Available.Nearest<CoordinateSystem>()).Do(Process);
             else
                 InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Do(Process);
 
@@ -125,7 +125,7 @@ namespace SAAC.Bodies
             InCamera1RemovedBodiesConnector.Do(RemovedBodyProcessing1);
             InCamera2RemovedBodiesConnector.Do(RemovedBodyProcessing2);
         }
-        private void Process((List<SimplifiedBody>, List<SimplifiedBody>, Matrix<double>) bodies, Envelope envelope)
+        private void Process((List<SimplifiedBody>, List<SimplifiedBody>, CoordinateSystem) bodies, Envelope envelope)
         {
             configuration.Camera2ToCamera1Transformation = bodies.Item3;
             Process((bodies.Item1, bodies.Item2), envelope);
@@ -302,7 +302,7 @@ namespace SAAC.Bodies
                 distances[bodyC1.Id] = new List<Tuple<double, uint>>();
                 foreach (SimplifiedBody bodyC2 in camera2)
                     if(!notPairable.ContainsKey((bodyC1.Id,0)) || !notPairable[(bodyC1.Id, 0)].Contains(bodyC2.Id))
-                        distances[bodyC1.Id].Add(new Tuple<double, uint>(MathNet.Numerics.Distance.Euclidean(bodyC1.Joints[configuration.JointUsedForCorrespondence].Item2.ToVector(), Helpers.Helpers.CalculateTransform(bodyC2.Joints[configuration.JointUsedForCorrespondence].Item2, configuration.Camera2ToCamera1Transformation).ToVector()), bodyC2.Id));
+                        distances[bodyC1.Id].Add(new Tuple<double, uint>(MathNet.Numerics.Distance.Euclidean(bodyC1.Joints[configuration.JointUsedForCorrespondence].Item2.ToVector(), configuration.Camera2ToCamera1Transformation.Transform(bodyC2.Joints[configuration.JointUsedForCorrespondence].Item2).ToVector()), bodyC2.Id));
             }
 
             List<(uint, uint)> correspondanceMap = new List<(uint, uint)>();
@@ -491,7 +491,7 @@ namespace SAAC.Bodies
                 return body;
             SimplifiedBody transformed = body.DeepClone();
             foreach (var joint in body.Joints)
-                transformed.Joints[joint.Key] = new Tuple<JointConfidenceLevel, Vector3D>(joint.Value.Item1, Helpers.Helpers.CalculateTransform(joint.Value.Item2, configuration.Camera2ToCamera1Transformation));
+                transformed.Joints[joint.Key] = new Tuple<JointConfidenceLevel, Vector3D>(joint.Value.Item1, configuration.Camera2ToCamera1Transformation.Transform(joint.Value.Item2));
             return transformed;
         }
     }
