@@ -14,7 +14,8 @@
         public bool Diagnostics = false;
         public bool Debug = false;
         public bool AutomaticPipelineRun = false;
-        public bool UniqueSession = false;
+        public RendezVousPipeline.SessionNamingMode SessionMode = RendezVousPipeline.SessionNamingMode.Increment;
+        public RendezVousPipeline.StoreMode StoreMode = RendezVousPipeline.StoreMode.Independant;
         public string DatasetPath = "";
         public string DatasetName = "";
         public string SessionName = "";
@@ -22,6 +23,7 @@
         public Dictionary<string, Type> Transformers = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
         public List<string> NotStoredTopics = new List<string>();
+        public Dictionary<string, string> StreamToStore = new Dictionary<string, string>();
 
         public RendezVousPipelineConfiguration(bool addRegularSerializers = true) 
         {

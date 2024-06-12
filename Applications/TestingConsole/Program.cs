@@ -20,6 +20,7 @@ using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
 using SAAC.RendezVousPipelineServices;
 using SAAC.Helpers;
+using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -500,7 +501,7 @@ namespace TestingConsole
                     Microsoft.Psi.Operators.PipeTo(producer.Out, processor.In);
                     Microsoft.Psi.Data.Session? session = parent.GetSession(stream.Value.SessionName);
                     if(session != null)
-                        parent.CreateStore(subP, session, "ImageProcessing", processor);
+                        parent.CreateStore(subP, session, "Image", "WebRTC", processor);
                     subP.RunAsync();
                     parent.Dataset.Save();
                     return;
@@ -514,7 +515,7 @@ namespace TestingConsole
             configuration.AutomaticPipelineRun = true;
             configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "10.142.1.159";
+            configuration.RendezVousHost = "192.168.56.1";
             //configuration.NotStoredTopics.Add("Image");
             configuration.TopicsTypes.Add("Image", typeof(byte[]));
             configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
@@ -524,6 +525,9 @@ namespace TestingConsole
             configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
             configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
             configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
+            configuration.StoreMode = StoreMode.Dictionnary;
+            configuration.StreamToStore.Add("PositionLeft", "Positions");
+            configuration.StreamToStore.Add("PositionRight", "Positions");
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
            // pipeline.NewProcess += OnNewProcess;
