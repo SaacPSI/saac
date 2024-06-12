@@ -13,7 +13,7 @@ namespace SAAC.RendezVousPipelineServices
     public class RendezVousPipeline
     {
         public enum SessionNamingMode { Unique, Increment, Overwrite };
-        public enum StoreMode { Independant, Session, Dictionnary };
+        public enum StoreMode { Independant, Process, Dictionnary };
 
         public Dataset Dataset { get; private set; }
         public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
@@ -241,7 +241,7 @@ namespace SAAC.RendezVousPipelineServices
             string storeName;
             switch (Configuration.StoreMode)
             {
-                case StoreMode.Session:
+                case StoreMode.Process:
                     storeName = session.Name;
                     break;
                 case StoreMode.Dictionnary:
