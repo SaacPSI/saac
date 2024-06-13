@@ -247,7 +247,7 @@ namespace SAAC.RendezVousPipelineServices
                 case StoreMode.Dictionnary:
                     if (Configuration.StreamToStore.ContainsKey(streamName))
                     {
-                        storeName = Configuration.StreamToStore[streamName];
+                        storeName = $"{processName}-{Configuration.StreamToStore[streamName]}";
                         break;
                     }
                     goto default;
