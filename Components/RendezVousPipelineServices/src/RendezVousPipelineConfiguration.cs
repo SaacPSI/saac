@@ -1,17 +1,12 @@
 ﻿namespace SAAC.RendezVousPipelineServices
 {
-    public class ClockSynchConfiguration
-    {
-        public int ClockPort = 11510;
-        public string ClockProcessName = "ClockSynch";
-    }
-
     public class RendezVousPipelineConfiguration
     {
         public string RendezVousHost = "localhost";
         public int RendezVousPort = 13331;
-        public ClockSynchConfiguration? ClockConfiguration = new ClockSynchConfiguration();
-        public bool Diagnostics = false;
+        public int CommandPort = 11511;
+        public int ClockPort = 11510;
+        public RendezVousPipeline.DiagnosticsMode Diagnostics = RendezVousPipeline.DiagnosticsMode.Off;
         public bool Debug = false;
         public bool AutomaticPipelineRun = false;
         public RendezVousPipeline.SessionNamingMode SessionMode = RendezVousPipeline.SessionNamingMode.Increment;
@@ -24,9 +19,11 @@
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
         public List<string> NotStoredTopics = new List<string>();
         public Dictionary<string, string> StreamToStore = new Dictionary<string, string>();
+        public Helpers.PipeToMessage<(RendezVousPipeline.Command, string)>.Do? CommandDelegate;
 
         public RendezVousPipelineConfiguration(bool addRegularSerializers = true) 
         {
+            CommandDelegate = null;
             if (addRegularSerializers)
             {
                 TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());

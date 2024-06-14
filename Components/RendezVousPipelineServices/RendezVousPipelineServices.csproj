@@ -15,6 +15,16 @@
 	  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	  <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
+<ItemGroup>
+  <Compile Remove="src\IRebootingComponent.cs" />
+  <Compile Remove="src\RebootableSubPipeline.cs" />
+  <Compile Remove="src\RebooterRendezVousPipeline.cs" />
+</ItemGroup>
+<ItemGroup>
+  <None Include="src\IRebootingComponent.cs" />
+  <None Include="src\RebootableSubPipeline.cs" />
+  <None Include="src\RebooterRendezVousPipeline.cs" />
+</ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />

@@ -5,48 +5,70 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
+using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Diagnostics;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class RendezVousPipeline
+    public abstract class RendezVousPipeline
     {
+        public const string ClockSynchProcessName = "ClockSynch";
+        public const string DiagnosticsProcessName = "Diagnostics";
+        public const string CommandProcessName = "Command";
+
         public enum SessionNamingMode { Unique, Increment, Overwrite };
         public enum StoreMode { Independant, Process, Dictionnary };
+        public enum DiagnosticsMode { Off, Store, Export };
+        public enum Command { Run, Stop, Restart, Close, Status };
 
-        public Dataset Dataset { get; private set; }
+        public Dataset? Dataset { get; private set; }
         public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
         public Dictionary<string, Dictionary<string, PsiExporter>> Stores { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public delegate void LogStatus(string log);
+        public Emitter<(Command, string)> CommandEmitter { get; private set; }
+        public delegate void OnCommandReceive(string process, (Command, string) command);
 
+        protected List<string> processNames;
         protected LogStatus log;
         protected Pipeline pipeline;
+        protected bool isStarted;
+        protected bool isPipelineRunning;
+        protected string name;
+        protected PsiFormatIntString commandFormat;
+        protected RendezvousRelay? rendezvousRelay;
 
-        private RendezvousServer server;
-        private bool isStarted;
-        private bool isPipelineRunning;
-        private bool isClockServer;
-
-        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, LogStatus? log = null)
+        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), LogStatus? log = null)
         {
+            this.name = name;
             this.Configuration = configuration ?? new RendezVousPipelineConfiguration();
             this.log = log ?? ((log) => { Console.WriteLine(log); });
-            pipeline = Pipeline.Create(enableDiagnostics: this.Configuration.Diagnostics);
-            server = new RendezvousServer(this.Configuration.RendezVousPort);
+            pipeline = Pipeline.Create(enableDiagnostics: this.Configuration.Diagnostics != DiagnosticsMode.Off);
             Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
             Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
-            isClockServer = this.Configuration.ClockConfiguration != null && this.Configuration.ClockConfiguration.ClockPort != 0;
-            if (this.Configuration.AutomaticPipelineRun && !isClockServer)
+            commandFormat = new PsiFormatIntString();
+            CommandEmitter = pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
+            rendezvousRelay = null;
+            processNames = new List<string>();
+            if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort == 0)
                 throw new Exception("It is not possible to have AutomaticPipelineRun without ClockServer.");
-            if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
-                Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName);
+            if (this.Configuration.DatasetName.Length > 4)
+            {
+                if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
+                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName);
+                else
+                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName);
+            }
             else
-                Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName);
+                Dataset = null;
             isStarted = isPipelineRunning = false;
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         public bool RunPipeline()
         {
@@ -68,19 +90,10 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (isStarted)
                 return;
-            if (Configuration.Diagnostics)
-                CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), "Diagnostics", "Diagnostics", pipeline.Diagnostics);
+            if (StartRendezVousRelay())
+                return;
             if (this.Configuration.AutomaticPipelineRun)
                 RunPipeline();
-            if (isClockServer)
-            {
-                var remoteClock = new RemoteClockExporter(Configuration.ClockConfiguration.ClockPort);
-                server.Rendezvous.TryAddProcess(new Rendezvous.Process(Configuration.ClockConfiguration.ClockProcessName, new[] { remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost) }));
-            }
-            server.Rendezvous.ProcessAdded += AddedProcess;
-            server.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
-            server.Start();
-            log("server started!");
             isStarted = true;
         }
 
@@ -88,32 +101,36 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (!isStarted)
                 return;
-            server.Stop();
+            StopRendezVous();
             if (isPipelineRunning)
                 pipeline.Dispose();
-            if (Dataset.HasUnsavedChanges)
-                Dataset.Save();
+            Dataset?.Save();
             isStarted = isPipelineRunning = false;
         }
 
         public Session? GetSession(string sessionName)
         {
-            foreach (var session in Dataset.Sessions)
-                if (session != null && session.Name == sessionName)
-                    return session;
+            if (Dataset != null)
+                foreach (var session in Dataset.Sessions)
+                    if (session != null && session.Name == sessionName)
+                        return session;
             return null;
         }
 
-        public Session CreateOrGetSession(string sessionName)
+        public Session? CreateOrGetSession(string sessionName)
         {
+            if (Dataset == null)
+                return null;
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name == sessionName)
                     return session;
             return Dataset.AddEmptySession(sessionName);
         }
 
-        public Session CreateIterativeSession(string sessionName)
+        public Session? CreateIterativeSession(string sessionName)
         {
+            if (Dataset == null)
+                return null;
             int iterator = 0;
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name.Contains(sessionName))
@@ -121,7 +138,7 @@ namespace SAAC.RendezVousPipelineServices
             return Dataset.AddEmptySession($"{sessionName}.{iterator:D3}");
         }
 
-        public Session CreateOrGetSessionFromMode(string sessionName)
+        public Session? CreateOrGetSessionFromMode(string sessionName)
         {
             switch (Configuration.SessionMode)
             {
@@ -135,12 +152,12 @@ namespace SAAC.RendezVousPipelineServices
             }
         }
 
-        public void CreateConnectorAndStore<T>(string name, string storeName, Session session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam)
+        public void CreateConnectorAndStore<T>(string name, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam)
         {
-            if (!Connectors.ContainsKey(session.Name))
-                Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
-            Connectors[session.Name].Add(name, new ConnectorInfo(name, session.Name, type, stream));
-            if (storeSteam)
+            if (!Connectors.ContainsKey(storeName))
+                Connectors.Add(storeName, new Dictionary<string, ConnectorInfo>());
+            Connectors[storeName].Add(name, new ConnectorInfo(name, storeName, session == null ? "" : session.Name, type, stream));
+            if (storeSteam && session != null)
                 CreateStore(p, session, name, storeName, stream);
         }
 
@@ -171,14 +188,160 @@ namespace SAAC.RendezVousPipelineServices
             NewProcess?.Invoke(this, (name, Connectors));
         }
 
-        private void AddedProcess(object? sender, Process process)
+        public bool AddProcess(Process newProcess)
+        {
+            if (rendezvousRelay == null)
+                return false;
+            if (rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
+                processNames.Add(newProcess.Name);
+            else 
+                return false;
+            return true;
+        }
+
+        protected bool StartRendezVousRelay()
+        {
+            if (rendezvousRelay == null)
+                return false;
+            if (Dataset != null)
+            {
+                switch (Configuration.Diagnostics)
+                {
+                    case DiagnosticsMode.Store:
+                        CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), name, DiagnosticsProcessName, pipeline.Diagnostics);
+                        break;
+                    case DiagnosticsMode.Export:
+                        var remoteDiagnostics = new RemoteExporter(pipeline, 13332, TransportKind.Tcp);
+                        remoteDiagnostics.Exporter.Write(pipeline.Diagnostics, DiagnosticsProcessName);
+                        AddProcess(new Rendezvous.Process($"{name}-{DiagnosticsProcessName}", [remoteDiagnostics.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+                        break;
+                }
+            }
+            if (Configuration.ClockPort != 0)
+            {
+                var remoteClock = new RemoteClockExporter(Configuration.ClockPort);
+                AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+            }
+            TcpWriter<(Command, string)> writer = new TcpWriter<(Command, string)>(pipeline, Configuration.CommandPort, commandFormat.GetFormat(), "Command");
+            CommandEmitter.PipeTo(writer.In);
+            AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, "Command")]));
+            rendezvousRelay.Rendezvous.ProcessAdded += AddedProcess;
+            rendezvousRelay.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
+            StartRendezVous();
+            return true;
+        }
+
+        protected abstract void StartRendezVous();
+
+        protected abstract void StopRendezVous();
+
+        protected void AddedProcess(object? sender, Process process)
         {
             log($"Process {process.Name}");
-            if (isClockServer && process.Name == Configuration.ClockConfiguration?.ClockProcessName)
+            if (processNames.Contains(process.Name))
                 return;
+            if (process.Name.Contains(CommandProcessName))
+            {
+                if (!process.Name.Contains(name))
+                    AddedCommandProcess(process);
+                else
+                    return;
+            }
+            else if (process.Name.Contains(DiagnosticsProcessName))
+            {
+                if (!process.Name.Contains(name))
+                    AddedDiagnoticsProcess(process);
+                else
+                    return;
+            } 
+            else
+                switch (process.Name)
+                {
+                    case ClockSynchProcessName:
+                        if (Configuration.ClockPort == 0)
+                            AddedClockProcess(process);
+                        break;
+                    default:
+                        AddedDataProcess(process);
+                        break;
+                }
+        }
+
+        protected void AddedClockProcess(Process process)
+        {
+            foreach (var endpoint in process.Endpoints)
+            {
+                if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint) 
+                { 
+                    remoteClockEndpoint.ToRemoteClockImporter(pipeline);
+                    return;
+                }
+            }
+        }
+
+        protected void AddedCommandProcess(Process process)
+        {
+            if (Configuration.CommandDelegate == null)
+                return;
+            foreach (var endpoint in process.Endpoints)
+            {
+                if (endpoint is Rendezvous.TcpSourceEndpoint)
+                {
+                    TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
+                    if (source == null)
+                        continue;
+                    foreach (var stream in endpoint.Streams)
+                    {
+                        if (stream.StreamName == CommandProcessName)
+                        {
+                            Subpipeline commandSubPipeline = new Subpipeline(pipeline, process.Name);
+                            var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
+                            Helpers.PipeToMessage<(Command, string)> p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
+                            Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
+                            if (this.Configuration.AutomaticPipelineRun)
+                            {
+                                commandSubPipeline.RunAsync();
+                                log($"SubPipeline {process.Name} started.");
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        protected void AddedDiagnoticsProcess(Process process)
+        {
+            foreach (var endpoint in process.Endpoints)
+            {
+                if (endpoint is Rendezvous.RemoteExporterEndpoint)
+                {
+                    RemoteExporterEndpoint? source = endpoint as RemoteExporterEndpoint;
+                    if (source == null)
+                        continue;
+                    foreach (var stream in source.Streams)
+                    {
+                        if (stream.GetType() == typeof(PipelineDiagnostics))
+                        {
+                            Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
+                            Connection(stream.StreamName, DiagnosticsProcessName, CreateOrGetSession(Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
+                            if (this.Configuration.AutomaticPipelineRun)
+                            {
+                                processSubPipeline.RunAsync();
+                                log($"SubPipeline {process.Name} started.");
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        protected void AddedDataProcess(Process process)
+        {
             int elementAdded = 0;
             Subpipeline processSubPipeline = new Subpipeline(pipeline, process.Name);
-            Session session = CreateOrGetSessionFromMode(process.Name);
+            Session? session = CreateOrGetSessionFromMode(process.Name);
             foreach (var endpoint in process.Endpoints)
             {
                 if (endpoint is Rendezvous.TcpSourceEndpoint)
@@ -204,27 +367,19 @@ namespace SAAC.RendezVousPipelineServices
                     RemoteExporterEndpoint? source = endpoint as RemoteExporterEndpoint;
                     if (source == null)
                         continue;
-                    foreach (var stream in endpoint.Streams)
+                    foreach (var stream in source.Streams)
                     {
                         log($"\tStream {stream.StreamName}");
-                        string streamName;
-                        if (Configuration.SessionMode == SessionNamingMode.Unique)
-                            streamName = $"{process.Name}-{stream.StreamName}";
-                        else
-                            streamName = stream.StreamName;
-                        elementAdded += Connection(streamName, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
+                        elementAdded += Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
                     }
                 }
-                else if (isClockServer == false && process.Name == Configuration.ClockConfiguration?.ClockProcessName && endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
-                    remoteClockEndpoint.ToRemoteClockImporter(pipeline);
-                
             }
             log($"Process {process.Name} sources added : {elementAdded}");
-            if (elementAdded == 0)
+            if (elementAdded == 0 && session != null)
             {
                 processSubPipeline.Dispose();
-                if(session.Partitions.Count() == 0)
-                    Dataset.RemoveSession(session);
+                if (session.Partitions.Count() == 0)
+                    Dataset?.RemoveSession(session);
                 return;
             }
             else if (this.Configuration.AutomaticPipelineRun)
@@ -233,21 +388,25 @@ namespace SAAC.RendezVousPipelineServices
                 log($"SubPipeline {process.Name} started.");
                 TriggerNewProcessEvent(process.Name);
             }
-            Dataset.Save();
+            Dataset?.Save();
         }
 
-        private void Connection<T>(string streamName, string processName, Session session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
+        protected void Connection<T>(string streamName, string processName, Session? session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
             string storeName;
             switch (Configuration.StoreMode)
             {
                 case StoreMode.Process:
-                    storeName = session.Name;
+                    storeName = processName;
                     break;
                 case StoreMode.Dictionnary:
-                    if (Configuration.StreamToStore.ContainsKey(streamName))
+                    if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
                     {
-                        storeName = $"{processName}-{Configuration.StreamToStore[streamName]}";
+                        storeName = Configuration.StreamToStore[streamName];
+                        if (storeName.Contains("%p"))
+                            storeName = storeName.Replace("%p", processName);
+                        if (storeName.Contains("%s"))
+                            storeName = storeName.Replace("%s", session.Name);
                         break;
                     }
                     goto default;
@@ -255,14 +414,10 @@ namespace SAAC.RendezVousPipelineServices
                 case StoreMode.Independant:
                     storeName = $"{processName}-{streamName}";
                     break;
-
             }
-
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, storeName);
             if (Configuration.Debug)
                 tcpSource.Do((d, e) => { log($"Recieve {storeName} data @{e} : {d}"); });
-            if (!Connectors.ContainsKey(session.Name))
-                Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
             if (transformerType != null)
             {
                 dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{storeName}_transformer"]);
@@ -273,22 +428,43 @@ namespace SAAC.RendezVousPipelineServices
                 CreateConnectorAndStore(streamName, storeName, session, p, typeof(T), tcpSource, storeSteam);
         }
 
-        private bool Connection(string name, Session session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
+        protected bool Connection(string streamName, string processName, Session? session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
         {
-            string sourceName = $"{session.Name}-{name}";
             var importer = source.ToRemoteImporter(p);
             if (!importer.Connected.WaitOne())
             {
-                log($"Failed to connect to {sourceName}");
+                log($"Failed to connect to {streamName}");
                 return false;
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
+                string storeName;
+                switch (Configuration.StoreMode)
+                {
+                    case StoreMode.Process:
+                        storeName = processName;
+                        break;
+                    case StoreMode.Dictionnary:
+                        if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
+                        {
+                            storeName = Configuration.StreamToStore[streamName];
+                            if (storeName.Contains("%p"))
+                                storeName = storeName.Replace("%p", processName);
+                            if (storeName.Contains("%s"))
+                                storeName = storeName.Replace("%s", session.Name);
+                            break;
+                        }
+                        goto default;
+                    default:
+                    case StoreMode.Independant:
+                        storeName = $"{processName}-{streamName}";
+                        break;
+                }
                 Type type = Type.GetType(streamInfo.TypeName);
                 var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
                 if (Configuration.Debug)
-                    stream.Do((d, e) => { log($"Recieve {sourceName}-{streamInfo.Name} data @{e} : {d}"); });
-                CreateConnectorAndStore(streamInfo.Name, $"{sourceName}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
+                    stream.Do((d, e) => { log($"Recieve {storeName}-{streamInfo.Name} data @{e} : {d}"); });
+                CreateConnectorAndStore(streamInfo.Name, $"{storeName}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
             } 
             return true;
         }
