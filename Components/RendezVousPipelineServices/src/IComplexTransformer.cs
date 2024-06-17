@@ -3,7 +3,7 @@ using Microsoft.Psi;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public interface IComplexTransfromer
+    public interface IComplexTransformer
     {
         // Calls inside rendezVousPipeline.CreateConnectorAndStore() for each outputs
         public void CreateConnections(string name, string storeName, Session? session, Pipeline p, bool storeSteam, RendezVousPipeline rendezVousPipeline);
