@@ -422,7 +422,10 @@ namespace SAAC.RendezVousPipelineServices
             {
                 dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{storeName}_transformer"]);
                 Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
-                CreateConnectorAndStore(streamName, storeName, session, p, transformer.Out.Type, transformer, storeSteam);
+                if (transformerType.GetInterfaces().Union([typeof(IComplexTransfromer)]).Count() > 0)
+                    transformer.CreateConnectionsstreamName(streamName, storeName, session, p, storeSteam, this);
+                else
+                    CreateConnectorAndStore(streamName, storeName, session, p, transformer.Out.Type, transformer, storeSteam);
             }
             else
                 CreateConnectorAndStore(streamName, storeName, session, p, typeof(T), tcpSource, storeSteam);
