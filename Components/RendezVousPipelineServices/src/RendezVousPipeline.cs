@@ -12,7 +12,7 @@ using Microsoft.Psi.Diagnostics;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public abstract class RendezVousPipeline
+    public class RendezVousPipeline
     {
         public const string ClockSynchProcessName = "ClockSynch";
         public const string DiagnosticsProcessName = "Diagnostics";
@@ -39,9 +39,10 @@ namespace SAAC.RendezVousPipelineServices
         protected bool isPipelineRunning;
         protected string name;
         protected PsiFormatIntString commandFormat;
-        protected RendezvousRelay? rendezvousRelay;
+        protected RendezvousRelay rendezvousRelay;
+        protected dynamic rendezVous;
 
-        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), LogStatus? log = null)
+        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
         {
             this.name = name;
             this.Configuration = configuration ?? new RendezVousPipelineConfiguration();
@@ -51,7 +52,6 @@ namespace SAAC.RendezVousPipelineServices
             Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
             commandFormat = new PsiFormatIntString();
             CommandEmitter = pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
-            rendezvousRelay = null;
             processNames = new List<string>();
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort == 0)
                 throw new Exception("It is not possible to have AutomaticPipelineRun without ClockServer.");
@@ -64,6 +64,11 @@ namespace SAAC.RendezVousPipelineServices
             }
             else
                 Dataset = null;
+
+            if (rendezVousServerAddress == null)
+                rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);
+            else
+                rendezvousRelay = rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
             isStarted = isPipelineRunning = false;
         }
 
@@ -90,7 +95,7 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (isStarted)
                 return;
-            if (StartRendezVousRelay())
+            if (!StartRendezVousRelay())
                 return;
             if (this.Configuration.AutomaticPipelineRun)
                 RunPipeline();
@@ -101,7 +106,7 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (!isStarted)
                 return;
-            StopRendezVous();
+            rendezVous.Stop();
             if (isPipelineRunning)
                 pipeline.Dispose();
             Dataset?.Save();
@@ -227,13 +232,10 @@ namespace SAAC.RendezVousPipelineServices
             AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, "Command")]));
             rendezvousRelay.Rendezvous.ProcessAdded += AddedProcess;
             rendezvousRelay.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
-            StartRendezVous();
+            rendezVous.Start();
+            log("RendezVous started!");
             return true;
         }
-
-        protected abstract void StartRendezVous();
-
-        protected abstract void StopRendezVous();
 
         protected void AddedProcess(object? sender, Process process)
         {

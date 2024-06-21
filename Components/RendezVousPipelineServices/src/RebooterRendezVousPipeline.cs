@@ -6,8 +6,8 @@ namespace SAAC.RendezVousPipelineServices
     {
         private Dictionary<string, Dictionary<string, Dictionary<string, object>>> memory;
 
-        public RebooterRendezVousPipeline(RendezVousPipelineConfiguration? configuration, LogStatus? log = null) 
-            : base(configuration, log)
+        public RebooterRendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RebooterRendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null) 
+            : base(configuration, name, rendezVousServerAddress, log)
         {
             memory = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>();
         }

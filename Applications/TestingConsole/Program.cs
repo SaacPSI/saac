@@ -528,12 +528,12 @@ namespace TestingConsole
             configuration.StoreMode = StoreMode.Dictionnary;
             configuration.StreamToStore.Add("PositionLeft", "%s-%p-Positions");
             configuration.StreamToStore.Add("PositionRight", "%s-%p-Positions");
-            RendezVousPipeline pipeline = new RendezVousPipelineServer(configuration);
+            RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
            // pipeline.NewProcess += OnNewProcess;
 
             pipeline.Start();
-            pipeline.RunPipeline();
+
             // // Enabling diagnotstics !!!
             // Pipeline p = Pipeline.Create(enableDiagnostics: false);
 
