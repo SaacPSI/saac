@@ -157,25 +157,25 @@ namespace SAAC.RendezVousPipelineServices
             }
         }
 
-        public void CreateConnectorAndStore<T>(string name, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam)
+        public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam)
         {
             if (!Connectors.ContainsKey(storeName))
                 Connectors.Add(storeName, new Dictionary<string, ConnectorInfo>());
-            Connectors[storeName].Add(name, new ConnectorInfo(name, storeName, session == null ? "" : session.Name, type, stream));
+            Connectors[storeName].Add(streamName, new ConnectorInfo(streamName, storeName, session == null ? "" : session.Name, type, stream));
             if (storeSteam && session != null)
-                CreateStore(p, session, name, storeName, stream);
+                CreateStore(p, session, streamName, storeName, stream);
         }
 
-        public void CreateStore<T>(Pipeline pipeline, Session session, string name, string storeName, IProducer<T> source)
+        public void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
         {
             if (Stores.ContainsKey(session.Name) && Stores[session.Name].ContainsKey(storeName))
             {
-                Stores[session.Name][storeName].Write(source, name);
+                Stores[session.Name][storeName].Write(source, streamName);
             }
             else
             {
                 PsiExporter store = PsiStore.Create(pipeline, storeName, $"{Configuration.DatasetPath}/{session.Name}/");
-                store.Write(source, name);
+                store.Write(source, streamName);
                 session.AddPartitionFromPsiStoreAsync(storeName, $"{Configuration.DatasetPath}/{session.Name}/");
                 if (!Stores.ContainsKey(session.Name))
                     Stores.Add(session.Name, new Dictionary<string, PsiExporter>());
