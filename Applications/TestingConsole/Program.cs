@@ -530,8 +530,14 @@ namespace TestingConsole
             configuration.StreamToStore.Add("PositionRight", "%s-%p-Positions");
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-           // pipeline.NewProcess += OnNewProcess;
+            // pipeline.NewProcess += OnNewProcess;
 
+            var p = pipeline.CreateSubpipeline();
+            var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            var timer2 = Timers.Timer(p, TimeSpan.FromSeconds(2));
+
+            pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
+            pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
             pipeline.Start();
 
             // // Enabling diagnotstics !!!

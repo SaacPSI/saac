@@ -4,6 +4,7 @@ using Microsoft.Psi.Interop.Serialization;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
+using static Microsoft.Psi.Interop.Rendezvous.Operators;
 using System.IO;
 using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
@@ -157,7 +158,7 @@ namespace SAAC.RendezVousPipelineServices
             }
         }
 
-        public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam)
+        public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam = true)
         {
             if (!Connectors.ContainsKey(storeName))
                 Connectors.Add(storeName, new Dictionary<string, ConnectorInfo>());
