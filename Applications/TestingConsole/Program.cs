@@ -513,6 +513,8 @@ namespace TestingConsole
         {
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = true;
+            configuration.Debug = true;
+            //configuration.Diagnostics = DiagnosticsMode.Store;
             configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "192.168.56.1";
@@ -532,12 +534,12 @@ namespace TestingConsole
 
             // pipeline.NewProcess += OnNewProcess;
 
-            var p = pipeline.CreateSubpipeline();
-            var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            var timer2 = Timers.Timer(p, TimeSpan.FromSeconds(2));
+            //var p = pipeline.CreateSubpipeline();
+            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            //var timer2 = Timers.Timer(p, TimeSpan.FromSeconds(2));
 
-            pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
-            pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
+            //pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
+            //pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
             pipeline.Start();
 
             // // Enabling diagnotstics !!!

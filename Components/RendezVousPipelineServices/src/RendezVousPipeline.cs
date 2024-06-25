@@ -214,7 +214,7 @@ namespace SAAC.RendezVousPipelineServices
                 switch (Configuration.Diagnostics)
                 {
                     case DiagnosticsMode.Store:
-                        CreateStore(pipeline, Dataset.AddEmptySession(Configuration.SessionName + "_Diagnostics"), name, DiagnosticsProcessName, pipeline.Diagnostics);
+                        CreateStore(pipeline, CreateOrGetSessionFromMode(Configuration.SessionName + "_Diagnostics"), name, DiagnosticsProcessName, pipeline.Diagnostics);
                         break;
                     case DiagnosticsMode.Export:
                         var remoteDiagnostics = new RemoteExporter(pipeline, 13332, TransportKind.Tcp);
@@ -410,6 +410,7 @@ namespace SAAC.RendezVousPipelineServices
                             storeName = storeName.Replace("%p", processName);
                         if (storeName.Contains("%s"))
                             storeName = storeName.Replace("%s", session.Name);
+                        streamName = $"{processName}-{streamName}";
                         break;
                     }
                     goto default;
@@ -418,12 +419,12 @@ namespace SAAC.RendezVousPipelineServices
                     storeName = $"{processName}-{streamName}";
                     break;
             }
-            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, storeName);
+            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
             if (Configuration.Debug)
-                tcpSource.Do((d, e) => { log($"Recieve {storeName} data @{e} : {d}"); });
+                tcpSource.Do((d, e) => { log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             if (transformerType != null)
             {
-                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{storeName}_transformer"]);
+                dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{processName}-{streamName}_transformer"]);
                 Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
                 if (transformerType.GetInterfaces().Intersect([typeof(IComplexTransformer)]).Count() > 0)
                     transformer.CreateConnections(streamName, storeName, session, p, storeSteam, this);

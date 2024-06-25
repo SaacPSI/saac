@@ -65,12 +65,12 @@ namespace SaaCPsiStudio
         // ClockPort
         public int ClockPort
         {
-            get => configuration.ClockConfiguration.ClockPort;
-            set => SetProperty(ref configuration.ClockConfiguration.ClockPort, value);
+            get => configuration.ClockPort;
+            set => SetProperty(ref configuration.ClockPort, value);
         }
         public void DelegateMethodClockPort(int port)
         {
-            configuration.ClockConfiguration.ClockPort = port;
+            configuration.ClockPort = port;
         }
 
         // DatasetPath
@@ -145,7 +145,7 @@ namespace SaaCPsiStudio
         private void BtnStartClick(object sender, RoutedEventArgs e)
         {
             status = "";
-            server = new RendezVousPipeline(configuration,(log) => { Status += $"{log}\n"; });
+            server = new RendezVousPipeline(configuration, "SaaCPsiStudioApplication", null, (log) => { Status += $"{log}\n"; });
             server.Start();
         }
 
