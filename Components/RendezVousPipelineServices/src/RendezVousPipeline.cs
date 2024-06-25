@@ -298,7 +298,7 @@ namespace SAAC.RendezVousPipelineServices
                         if (stream.StreamName == CommandProcessName)
                         {
                             Subpipeline commandSubPipeline = new Subpipeline(pipeline, process.Name);
-                            var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
+                            var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, commandFormat.GetFormat(), null, false/*true*/, stream.StreamName);
                             Helpers.PipeToMessage<(Command, string)> p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             if (this.Configuration.AutomaticPipelineRun)
@@ -419,7 +419,7 @@ namespace SAAC.RendezVousPipelineServices
                     storeName = $"{processName}-{streamName}";
                     break;
             }
-            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, false/*true*/, $"{processName}-{streamName}");
             if (Configuration.Debug)
                 tcpSource.Do((d, e) => { log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             if (transformerType != null)

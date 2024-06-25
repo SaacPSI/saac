@@ -528,8 +528,8 @@ namespace TestingConsole
             configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
             configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
             configuration.StoreMode = StoreMode.Dictionnary;
-            configuration.StreamToStore.Add("PositionLeft", "%s-%p-Positions");
-            configuration.StreamToStore.Add("PositionRight", "%s-%p-Positions");
+            configuration.StreamToStore.Add("PositionLeft", "Positions");
+            configuration.StreamToStore.Add("PositionRight", "Positions");
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
             // pipeline.NewProcess += OnNewProcess;
