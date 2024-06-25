@@ -8,6 +8,7 @@ using static Microsoft.Psi.Interop.Rendezvous.Operators;
 using System.IO;
 using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -117,9 +118,33 @@ namespace SAAC.RendezVousPipelineServices
         public Session? GetSession(string sessionName)
         {
             if (Dataset != null)
-                foreach (var session in Dataset.Sessions)
-                    if (session != null && session.Name == sessionName)
-                        return session;
+            {
+                if (sessionName.Contains("."))
+                {
+                    Session? sessionTmp = null;
+                    foreach (var session in Dataset.Sessions)
+                    {
+                        if (session != null && session.Name.Contains(sessionName))
+                        {
+                            if (sessionTmp != null)
+                            {
+                                if (session.Name.Replace(sessionName, "").CompareTo(sessionTmp.Name.Replace(sessionName, "")) < 0)
+                                    continue;
+                            }
+                            sessionTmp = session;
+                        }
+                    }
+                    return sessionTmp;
+                }
+                else
+                {
+                    foreach (var session in Dataset.Sessions)
+                    {
+                        if (session != null && session.Name == sessionName)
+                            return session;
+                    }
+                }
+            }      
             return null;
         }
 

@@ -490,9 +490,11 @@ namespace TestingConsole
             RendezVousPipeline? parent = sender as RendezVousPipeline;
             if (parent == null)
                 return;
+            var sessionp = parent.GetSession("Unity.");
+
             var newStreams = e.Item2[e.Item1];
-            foreach (var stream in newStreams) 
-            { 
+            foreach (var stream in newStreams)
+            {
                 if (stream.Key == "Image")
                 {
                     var subP = parent.CreateSubpipeline($"{e.Item1}-ImageProcessing");
@@ -500,7 +502,7 @@ namespace TestingConsole
                     BytesStreamToImage processor = new BytesStreamToImage(subP);
                     Microsoft.Psi.Operators.PipeTo(producer.Out, processor.In);
                     Microsoft.Psi.Data.Session? session = parent.GetSession(stream.Value.SessionName);
-                    if(session != null)
+                    if (session != null)
                         parent.CreateStore(subP, session, "Image", "WebRTC", processor);
                     subP.RunAsync();
                     parent.Dataset.Save();
@@ -532,7 +534,7 @@ namespace TestingConsole
             configuration.StreamToStore.Add("PositionRight", "Positions");
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-            // pipeline.NewProcess += OnNewProcess;
+            pipeline.NewProcess += OnNewProcess;
 
             //var p = pipeline.CreateSubpipeline();
             //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
