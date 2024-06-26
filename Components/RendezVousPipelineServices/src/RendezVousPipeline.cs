@@ -119,7 +119,7 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (Dataset != null)
             {
-                if (sessionName.Contains("."))
+                if (sessionName.EndsWith("."))
                 {
                     Session? sessionTmp = null;
                     foreach (var session in Dataset.Sessions)
