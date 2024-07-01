@@ -21,6 +21,7 @@ using System.IO;
 using SAAC.RendezVousPipelineServices;
 using SAAC.Helpers;
 using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
+using SAAC.KinectAzureRemoteServices;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -534,7 +535,7 @@ namespace TestingConsole
             configuration.StreamToStore.Add("PositionRight", "Positions");
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-            pipeline.NewProcess += OnNewProcess;
+            //pipeline.NewProcess += OnNewProcess;
 
             //var p = pipeline.CreateSubpipeline();
             //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
@@ -542,6 +543,9 @@ namespace TestingConsole
 
             //pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
             //pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
+            SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
+            KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
+
             pipeline.Start();
 
             // // Enabling diagnotstics !!!

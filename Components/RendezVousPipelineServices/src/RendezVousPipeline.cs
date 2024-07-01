@@ -8,7 +8,6 @@ using static Microsoft.Psi.Interop.Rendezvous.Operators;
 using System.IO;
 using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -209,6 +208,29 @@ namespace SAAC.RendezVousPipelineServices
             }
         }
 
+        public (string, string) GetStoreName(string streamName, string processName, Session? session)
+        {
+            switch (Configuration.StoreMode)
+            {
+                case StoreMode.Process:
+                    return (streamName, processName);
+                case StoreMode.Dictionnary:
+                    if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
+                    {
+                        string storeName = Configuration.StreamToStore[streamName];
+                        if (storeName.Contains("%p"))
+                            storeName = storeName.Replace("%p", processName);
+                        if (storeName.Contains("%s"))
+                            storeName = storeName.Replace("%s", session.Name);
+                        return ($"{processName}-{streamName}", storeName);
+                    }
+                    goto default;
+                default:
+                case StoreMode.Independant:
+                    return (streamName, $"{processName}-{streamName}");
+            }
+        }
+
         public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
         {
             return new Subpipeline(pipeline, name);
@@ -217,6 +239,15 @@ namespace SAAC.RendezVousPipelineServices
         public void TriggerNewProcessEvent(string name)
         {
             NewProcess?.Invoke(this, (name, Connectors));
+        }
+
+        public bool AddConnectingProcess(string name, EventHandler<Process> eventProcess)
+        {
+            if (rendezvousRelay == null)
+                return false;
+            rendezvousRelay.Rendezvous.ProcessAdded += eventProcess;
+            processNames.Add(name);
+            return true;
         }
 
         public bool AddProcess(Process newProcess)
@@ -421,29 +452,7 @@ namespace SAAC.RendezVousPipelineServices
 
         protected void Connection<T>(string streamName, string processName, Session? session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
-            string storeName;
-            switch (Configuration.StoreMode)
-            {
-                case StoreMode.Process:
-                    storeName = processName;
-                    break;
-                case StoreMode.Dictionnary:
-                    if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
-                    {
-                        storeName = Configuration.StreamToStore[streamName];
-                        if (storeName.Contains("%p"))
-                            storeName = storeName.Replace("%p", processName);
-                        if (storeName.Contains("%s"))
-                            storeName = storeName.Replace("%s", session.Name);
-                        streamName = $"{processName}-{streamName}";
-                        break;
-                    }
-                    goto default;
-                default:
-                case StoreMode.Independant:
-                    storeName = $"{processName}-{streamName}";
-                    break;
-            }
+            var storeName = GetStoreName(streamName, processName, session);
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, false/*true*/, $"{processName}-{streamName}");
             if (Configuration.Debug)
                 tcpSource.Do((d, e) => { log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
@@ -454,10 +463,10 @@ namespace SAAC.RendezVousPipelineServices
                 if (transformerType.GetInterfaces().Intersect([typeof(IComplexTransformer)]).Count() > 0)
                     transformer.CreateConnections(streamName, storeName, session, p, storeSteam, this);
                 else
-                    CreateConnectorAndStore(streamName, storeName, session, p, transformer.Out.Type, transformer, storeSteam);
+                    CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, p, transformer.Out.Type, transformer, storeSteam);
             }
             else
-                CreateConnectorAndStore(streamName, storeName, session, p, typeof(T), tcpSource, storeSteam);
+                CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, p, typeof(T), tcpSource, storeSteam);
         }
 
         protected bool Connection(string streamName, string processName, Session? session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
@@ -470,33 +479,12 @@ namespace SAAC.RendezVousPipelineServices
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
-                string storeName;
-                switch (Configuration.StoreMode)
-                {
-                    case StoreMode.Process:
-                        storeName = processName;
-                        break;
-                    case StoreMode.Dictionnary:
-                        if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
-                        {
-                            storeName = Configuration.StreamToStore[streamName];
-                            if (storeName.Contains("%p"))
-                                storeName = storeName.Replace("%p", processName);
-                            if (storeName.Contains("%s"))
-                                storeName = storeName.Replace("%s", session.Name);
-                            break;
-                        }
-                        goto default;
-                    default:
-                    case StoreMode.Independant:
-                        storeName = $"{processName}-{streamName}";
-                        break;
-                }
+                var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);
                 var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
                 if (Configuration.Debug)
-                    stream.Do((d, e) => { log($"Recieve {storeName}-{streamInfo.Name} data @{e} : {d}"); });
-                CreateConnectorAndStore(streamInfo.Name, $"{storeName}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
+                    stream.Do((d, e) => { log($"Recieve {storeName.Item2}-{streamInfo.Name} data @{e} : {d}"); });
+                CreateConnectorAndStore(streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
             } 
             return true;
         }

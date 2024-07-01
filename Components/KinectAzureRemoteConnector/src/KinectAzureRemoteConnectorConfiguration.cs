@@ -16,5 +16,6 @@
         /// Gets or sets KinectStreaming application name (if there is more than one).
         /// </summary>
         public string RendezVousApplicationName { get; set; } = "RemoteKinectAzureServer";
+
     }
 }

@@ -9,8 +9,8 @@ namespace SAAC.RemoteConnectors
         public Emitter<int> OutConnectionError { get; private set; }
         public bool WaitForConnection { get; private set; }
 
-        public KinectAzureRemoteConnectorComponent(Pipeline pipeline, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnectorComponent), bool waitForConnection = true)
-            : base(pipeline, configuration, name)
+        public KinectAzureRemoteConnectorComponent(Pipeline pipeline, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnectorComponent), bool waitForConnection = true, LogStatus? log = null)
+            : base(pipeline, configuration, name, log)
         {
             OutConnectionError = pipeline.CreateEmitter<int>(this, "ConnectionError");
             WaitForConnection = waitForConnection;
@@ -20,13 +20,13 @@ namespace SAAC.RemoteConnectors
         {
             Client = new RendezvousClient(Configuration.RendezVousServerAddress, (int)Configuration.RendezVousServerPort);
             Client.Rendezvous.ProcessAdded += GenerateProcess();
-            Client.Error += (s, e) => { OutConnectionError.Post(e.HResult, ParentPipeline.GetCurrentTime()); };
+            Client.Error += (s, e) => { OutConnectionError.Post(e.HResult, pipeline.GetCurrentTime()); };
             Client.Start();
             if (WaitForConnection && !Client.Connected.WaitOne())
             {
                 throw new Exception("Error while connecting to server at " + Configuration.RendezVousServerAddress);
             }
-            notifyCompletionTime.Invoke(ParentPipeline.GetCurrentTime());
+            notifyCompletionTime.Invoke(pipeline.GetCurrentTime());
         }
 
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)

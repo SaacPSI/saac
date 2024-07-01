@@ -13,7 +13,7 @@ namespace SAAC.RemoteConnectors
     /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.
     /// See KinectAzureRemoteConnectorConfiguration class for details.
     /// </summary>
-    public class KinectAzureRemoteConnector : Subpipeline
+    public class KinectAzureRemoteConnector
     {
         /// <summary>
         /// Gets the emitter of color image.
@@ -45,11 +45,17 @@ namespace SAAC.RemoteConnectors
         /// </summary>
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
+        public delegate void LogStatus(string log);
+
         public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
 
-        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector))
-            : base(parent, name)
+        protected Pipeline pipeline;
+        protected LogStatus logStatus;
+
+        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector), LogStatus? log = null)
         {
+            pipeline = parent;
+            logStatus = log ?? ((log) => { Console.WriteLine(log); });
             Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
             OutColorImage = null;
             OutDepthImage = null;
@@ -59,14 +65,14 @@ namespace SAAC.RemoteConnectors
             OutIMU = null;
         }
 
-        private Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
+        protected virtual Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
         {
             if (remoteImporter.Connected.WaitOne() == false)
             {
-                Console.WriteLine(Configuration.RendezVousApplicationName + " failed to connect stream " + name);
+                logStatus(Configuration.RendezVousApplicationName + " failed to connect stream " + name);
                 return null;
             }
-            Console.WriteLine(Configuration.RendezVousApplicationName + " stream " + name + " connected.");
+            logStatus(Configuration.RendezVousApplicationName + " stream " + name + " connected.");
             return remoteImporter.Importer.OpenStream<T>(name).Out;
         }
 
@@ -80,7 +86,7 @@ namespace SAAC.RemoteConnectors
                     {
                         if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
                         {
-                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(this);
+                            var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(pipeline);
                             foreach (var stream in remoteExporterEndpoint.Streams)
                             {
                                 if (stream.StreamName.Contains("Audio"))

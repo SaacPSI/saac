@@ -293,7 +293,7 @@ namespace KinectAzureRemoteApp
             };
 
             State = "Waiting for server";
-            //Client.Start();
+            Client.Start();
             Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
             State = "Ready to start Kinect";
         }
