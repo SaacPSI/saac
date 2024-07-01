@@ -14,7 +14,7 @@ namespace SAAC.KinectAzureRemoteServices
             : base(parent, configuration, name, log)
         {
             this.server = server;
-            this.server.AddConnectingProcess(name, GenerateProcess());
+            this.server.AddConnectingProcess(Configuration.RendezVousApplicationName, GenerateProcess());
         }
 
         protected override Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
@@ -22,9 +22,9 @@ namespace SAAC.KinectAzureRemoteServices
             Emitter<T>? stream = base.Connection<T>(name, remoteImporter);
             if(stream != null)
             {
-                Session? session = server.CreateOrGetSessionFromMode(base.ToString());
-                var storeName = server.GetStoreName(name, base.ToString(), session);
-                server.CreateConnectorAndStore(name, base.ToString(), session, base.pipeline, stream.Type, stream, !server.Configuration.NotStoredTopics.Contains(name));
+                Session? session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);
+                var storeName = server.GetStoreName(name, Configuration.RendezVousApplicationName, session);
+                server.CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, base.pipeline, stream.Type, stream, !server.Configuration.NotStoredTopics.Contains(name));
             }
             return stream;
         }
