@@ -30,7 +30,6 @@ namespace KinectAzureRemoteApp
         }
         #endregion
 
-        private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration(); 
 
         private string state = "Hello";
         public string State
@@ -43,7 +42,7 @@ namespace KinectAzureRemoteApp
             State = status;
         }
 
-
+        private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration(); 
         public KinectAzureRemoteStreamsConfiguration ConfigurationUI
         {
             get => Configuration;
@@ -129,20 +128,19 @@ namespace KinectAzureRemoteApp
             KinectStreams = null;
             Client = null;
 
-            InitializeComponent();
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             ConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-
+            ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
+            ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
+            Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
+            InitializeComponent();
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
             Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
             RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
             Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
-            ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             iPSelected = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
-            ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
-            Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
             UpdateLayout();
         }
 
