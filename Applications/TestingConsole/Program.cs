@@ -543,9 +543,9 @@ namespace TestingConsole
 
             //pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
             //pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
-            SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
-            configKinect.RendezVousApplicationName = "KinectStreaming";
-            KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
+            //SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
+            //configKinect.RendezVousApplicationName = "KinectStreaming";
+            //KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
 
             pipeline.Start();
 
@@ -568,6 +568,13 @@ namespace TestingConsole
             //     Console.WriteLine(ex.Message);
             // }
             // // Waiting for an out key
+            Console.WriteLine("Press to command AddProcess.");
+            Console.ReadLine();
+            pipeline.CommandEmitter.Post((Command.Initialize, "Unity"), DateTime.UtcNow);
+            Console.WriteLine("Press to command run.");
+            Console.ReadLine();
+            pipeline.CommandEmitter.Post((Command.Run, ""), DateTime.UtcNow);
+
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
             pipeline.Stop();

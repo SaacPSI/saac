@@ -4,6 +4,7 @@
     {
         public string RendezVousHost = "localhost";
         public int RendezVousPort = 13331;
+        public int DiagnosticPort = 11512;
         public int CommandPort = 11511;
         public int ClockPort = 11510;
         public RendezVousPipeline.DiagnosticsMode Diagnostics = RendezVousPipeline.DiagnosticsMode.Off;
