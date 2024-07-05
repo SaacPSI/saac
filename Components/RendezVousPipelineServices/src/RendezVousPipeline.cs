@@ -284,9 +284,12 @@ namespace SAAC.RendezVousPipelineServices
                 var remoteClock = new RemoteClockExporter(Configuration.ClockPort);
                 AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
             }
-            TcpWriter<(Command, string)> writer = new TcpWriter<(Command, string)>(pipeline, Configuration.CommandPort, commandFormat.GetFormat(), CommandProcessName);
-            CommandEmitter.PipeTo(writer.In);
-            AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
+            if (Configuration.CommandPort != 0)
+            { 
+                TcpWriter<(Command, string)> writer = new TcpWriter<(Command, string)>(pipeline, Configuration.CommandPort, commandFormat.GetFormat(), CommandProcessName);
+                CommandEmitter.PipeTo(writer.In);
+                AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
+            }
             rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
             rendezvousRelay.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
             rendezVous.Start();

@@ -194,7 +194,7 @@ public class PsiPipelineManager : MonoBehaviour
                 {
                     if (stream.StreamName == CommandProcessName)
                     {
-                        CommandSubPipeline = Pipeline.Create("process.Name");
+                        CommandSubPipeline = Pipeline.Create(process.Name);
                         var tcpSource = source.ToTcpSource<(Command, string)>(CommandSubPipeline, PsiFormatCommandString.GetFormat(), null, true, stream.StreamName);
                         SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)> p2m = new SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)>(CommandSubPipeline, CommandHandling, process.Name);
                         Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
@@ -350,7 +350,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         if (Pipeline == null)
         {
-            Pipeline = Pipeline.Create("UnityPipeline");
+            Pipeline = Pipeline.Create(RendezVousAppName);
             if (HostAddress.Length == 0)
                 HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         }
@@ -377,7 +377,7 @@ public class PsiPipelineManager : MonoBehaviour
             {
                 AddLog($"Pipeline Error: {ex.Exception.Message}");
                 State = PsiPipelineManagerState.Failed;
-                Pipeline.Dispose();
+                StopPsi();
             };
             Pipeline.RunAsync();
             State = PsiPipelineManagerState.Running;
