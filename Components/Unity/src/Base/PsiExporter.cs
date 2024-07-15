@@ -39,7 +39,10 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
             TcpWriter<T> tcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer());
             Out.PipeTo(tcpWriter);
 #else
-            PsiManager.GetRemoteExporter(ExportType).Exporter.Write(Out, TopicName);
+            RemoteExporter exporter;
+            PsiManager.GetRemoteExporter(ExportType, out exporter);
+            exporter.Exporter.Write(Out, TopicName);
+            PsiManager.RegisterExporter(ref exporter);
 #endif
             IsInitialized = true;
         }
@@ -51,7 +54,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 
     protected bool CanSend()
     {
-        if (IsInitialized && PsiManager.IsRunning && (DataTime == 0.0f || GetCurrentTime().Subtract(Timestamp).TotalSeconds > DataTime))
+        if (IsInitialized && PsiManager.IsRunning() && (DataTime == 0.0f || GetCurrentTime().Subtract(Timestamp).TotalSeconds > DataTime))
         {
             Timestamp = GetCurrentTime();
             return true; 

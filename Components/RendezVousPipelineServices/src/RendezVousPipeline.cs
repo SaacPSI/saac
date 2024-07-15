@@ -43,10 +43,12 @@ namespace SAAC.RendezVousPipelineServices
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
 
+        private Helpers.PipeToMessage<(Command, string)> p2m;
+
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
         {
             this.name = name;
-            this.Configuration = configuration ?? new RendezVousPipelineConfiguration();
+            Configuration = configuration ?? new RendezVousPipelineConfiguration();
             this.log = log ?? ((log) => { Console.WriteLine(log); });
             pipeline = Pipeline.Create(enableDiagnostics: this.Configuration.Diagnostics != DiagnosticsMode.Off);
             Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
@@ -358,7 +360,7 @@ namespace SAAC.RendezVousPipelineServices
                         {
                             Subpipeline commandSubPipeline = new Subpipeline(pipeline, process.Name);
                             var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
-                            Helpers.PipeToMessage<(Command, string)> p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
+                            p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             if (this.Configuration.AutomaticPipelineRun)
                             {

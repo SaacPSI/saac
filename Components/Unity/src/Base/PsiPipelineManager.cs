@@ -2,6 +2,7 @@ using UnityEngine;
 using Microsoft.Psi;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Remoting;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -70,10 +71,10 @@ public class PsiPipelineManager : MonoBehaviour
         RemoteImporters = new Dictionary<string, RemoteImporter>();
         ExportersRegistered = new List<RemoteExporter>();
         EventExporter = null;
-#endif
+#else
         SourceDelegates = new Dictionary<string, ConnectToSourceEndPoint>();
         SourceEndpoint = new Dictionary<string, Rendezvous.TcpSourceEndpoint>();
-
+#endif
         LogBuffer = new List<string>();
         ExporterCount = WaitedRendezVousCount = 0;
         Serializers = KnownSerializers.GetKnownSerializers();
@@ -88,7 +89,7 @@ public class PsiPipelineManager : MonoBehaviour
         if(RemoteImporters.ContainsKey(streamName))
             connectionDelegate(RemoteImporters[streamName]);
     }
-#endif
+#else
     public void RegisterComponentImporter(string streamName, ConnectToSourceEndPoint connectionDelegate)
     {
         SourceDelegates.Add(streamName, connectionDelegate);
@@ -96,6 +97,7 @@ public class PsiPipelineManager : MonoBehaviour
         if (SourceEndpoint.ContainsKey(streamName))
             connectionDelegate(SourceEndpoint[streamName]);
     }
+#endif
 
     public bool IsRunning()
     {
@@ -211,6 +213,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         foreach (var endpoint in process.Endpoints)
         {
+#if PLATFORM_ANDROID
             if (endpoint is Rendezvous.TcpSourceEndpoint tcpRemoteEndpoint)
             {
                 foreach (Rendezvous.Stream stream in tcpRemoteEndpoint.Streams)
@@ -223,8 +226,8 @@ public class PsiPipelineManager : MonoBehaviour
                     }
                 }
             }
-#if !PLATFORM_ANDROID
-            else if (endpoint is Rendezvous.RemoteExporterEndpoint remoteEndpoint)
+#else
+            if (endpoint is Rendezvous.RemoteExporterEndpoint remoteEndpoint)
             {
                 RemoteImporter remoteImporter = remoteEndpoint.ToRemoteImporter(Pipeline);
                 foreach (Rendezvous.Stream stream in remoteEndpoint.Streams)
@@ -299,27 +302,26 @@ public class PsiPipelineManager : MonoBehaviour
         return new RemoteExporter(GetPipeline(), ExportersStartingPort + ExporterCount++, ExportersTransportType);
     }
 
-    public RemoteExporter GetRemoteExporter(ExportType type)
+    public void GetRemoteExporter(ExportType type, out RemoteExporter exporter)
     {
-        RemoteExporter exporter = null;
+        exporter = null;
         switch (type)
         {
             case ExportType.LowFrequency:
                 {
                     if (EventExporter != null && EventExporter.Exporter.Metadata.Count() >= ExportersMaxLowFrequencyStreams)
-                        return EventExporter;
-                    EventExporter = exporter = CreateRemoteExporter();
+                        exporter = EventExporter;
+                    else
+                        EventExporter = exporter = CreateRemoteExporter();
                 }
                 break;
             default:
                 exporter = CreateRemoteExporter();
                 break;
         }
-        RegisterExporter(ref exporter);
-        return exporter;
     }
-        
-    public void RegisterExporter(ref RemoteExporter exporter)
+
+public void RegisterExporter(ref RemoteExporter exporter)
     {
         if (HostAddress.Length == 0)
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
@@ -329,9 +331,9 @@ public class PsiPipelineManager : MonoBehaviour
             GetProcess().AddEndpoint(exporter.ToRendezvousEndpoint(HostAddress));
         }
     }
-#endif
+#else
 
-    public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers)
+public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers)
     {
         TcpWriter<T> tcpWriter = new TcpWriter<T>(GetPipeline(), ExportersStartingPort + ExporterCount++, serializers, topic);
         RegisterTCPWriter(tcpWriter, topic);
@@ -345,10 +347,11 @@ public class PsiPipelineManager : MonoBehaviour
         AddLog($"PsiPipelineManager : Add {topic} endpoint to process.");
         GetProcess().AddEndpoint(writer.ToRendezvousEndpoint(HostAddress, topic));
     }
+#endif
 
-    public Pipeline GetPipeline()
-    {
-        if (Pipeline == null)
+public Pipeline GetPipeline()
+{
+    if (Pipeline == null)
         {
             Pipeline = Pipeline.Create(RendezVousAppName);
             if (HostAddress.Length == 0)

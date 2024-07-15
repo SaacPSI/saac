@@ -512,6 +512,11 @@ namespace TestingConsole
             }
         }
 
+        static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        {
+            Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
+        }
+
         static void Main(string[] args)
         {
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
@@ -523,6 +528,8 @@ namespace TestingConsole
             configuration.RendezVousHost = "192.168.56.1";
             //configuration.NotStoredTopics.Add("Image");
             configuration.TopicsTypes.Add("Image", typeof(byte[]));
+            configuration.TopicsTypes.Add("Time", typeof(DateTime));
+            configuration.TypesSerializers.Add(typeof(DateTime), new PsiFormatDateTime());
             configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
             configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
             configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
@@ -533,6 +540,8 @@ namespace TestingConsole
             configuration.StoreMode = StoreMode.Dictionnary;
             configuration.StreamToStore.Add("PositionLeft", "Positions");
             configuration.StreamToStore.Add("PositionRight", "Positions");
+
+            configuration.CommandDelegate = CommandDel;
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
             //pipeline.NewProcess += OnNewProcess;
