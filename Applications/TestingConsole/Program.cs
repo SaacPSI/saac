@@ -530,6 +530,11 @@ namespace TestingConsole
             configuration.TopicsTypes.Add("Image", typeof(byte[]));
             configuration.TopicsTypes.Add("Time", typeof(DateTime));
             configuration.TypesSerializers.Add(typeof(DateTime), new PsiFormatDateTime());
+            for (int i = 0; i < 50; i++)
+            {
+                configuration.TopicsTypes.Add($"Cube-{i}", typeof(System.Numerics.Matrix4x4));
+                configuration.TopicsTypes.Add($"Time-{i}", typeof(DateTime));
+            }
             configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
             configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
             configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
@@ -537,7 +542,7 @@ namespace TestingConsole
             configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
             configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
             configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
-            configuration.StoreMode = StoreMode.Dictionnary;
+            configuration.StoreMode = StoreMode.Independant;
             configuration.StreamToStore.Add("PositionLeft", "Positions");
             configuration.StreamToStore.Add("PositionRight", "Positions");
 

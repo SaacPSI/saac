@@ -13,7 +13,7 @@ public class PsiExporterPositionOrientation
         var orientation = gameObject.transform.eulerAngles;
         if (CanSend() && position != PreviousPosition && PreviousOrientation != orientation)
         {
-            Out.Post(new Tuple<System.Numerics.Vector3, System.Numerics.Vector3>(new System.Numerics.Vector3(position.x, position.y, position.z), new System.Numerics.Vector3(orientation.x, orientation.y, orientation.z)), GetCurrentTime());
+            Out.Post(new Tuple<System.Numerics.Vector3, System.Numerics.Vector3>(new System.Numerics.Vector3(position.x, position.y, position.z), new System.Numerics.Vector3(orientation.x, orientation.y, orientation.z)), Timestamp);
             PreviousPosition = position;
             PreviousOrientation = orientation;
         }

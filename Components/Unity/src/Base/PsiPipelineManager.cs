@@ -43,6 +43,7 @@ public class PsiPipelineManager : MonoBehaviour
     private Thread ConnectionThread;
     private int ExporterCount;
     private int WaitedRendezVousCount;
+    private bool initializedEventTriggered;
 
     public enum PsiManagerStartMode { Manual, Connection, Automatic };
     public PsiManagerStartMode StartMode = PsiManagerStartMode.Automatic;
@@ -53,7 +54,8 @@ public class PsiPipelineManager : MonoBehaviour
     public string HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
     public List<string> WaitedRendezVousApp;
     public delegate void PsiEvent();
-    public static PsiEvent onConnected;
+    public PsiEvent onConnected;
+    public PsiEvent onInitialized;
 #if !PLATFORM_ANDROID
     public TransportKind ExportersTransportType = TransportKind.Tcp;
     public int ExportersMaxLowFrequencyStreams = 12;
@@ -61,7 +63,7 @@ public class PsiPipelineManager : MonoBehaviour
     public int ExportersStartingPort = 11411;
     public GameObject TextLogObject;
 
-    public enum PsiPipelineManagerState { Instantiated, Connecting, Connected, Served, Initialised, Running, Stopped, Failed };
+    public enum PsiPipelineManagerState { Instantiated, Connecting, Connected, Served, Initializing, Initialized, Running, Stopped, Failed };
     public PsiPipelineManagerState State { private set; get; } = PsiPipelineManagerState.Instantiated;
 
     PsiPipelineManager()
@@ -77,6 +79,7 @@ public class PsiPipelineManager : MonoBehaviour
 #endif
         LogBuffer = new List<string>();
         ExporterCount = WaitedRendezVousCount = 0;
+        initializedEventTriggered = false;
         Serializers = KnownSerializers.GetKnownSerializers();
         InitializeSerializer(Serializers);
     }
@@ -254,6 +257,7 @@ public class PsiPipelineManager : MonoBehaviour
         switch (command)
         {
             case Command.Initialize:
+                InitializeExporters();
                 AddProcess();
                 break;
             case Command.Run:
@@ -271,9 +275,21 @@ public class PsiPipelineManager : MonoBehaviour
         AddLog($"PsiPipelineManager Exception in RendezVousClient: {e.Message} \n {e.InnerException} \n {e.Source} \n {e.StackTrace}");
     }
 
-    private void AddProcess()
+    public void InitializeExporters()
     {
         if (State > PsiPipelineManagerState.Served)
+            return;
+        if (!initializedEventTriggered && onInitialized != null)
+        {
+            onInitialized();
+            initializedEventTriggered = true;
+            State = PsiPipelineManagerState.Initializing;
+        }
+    }
+
+    public void AddProcess()
+    {
+        if (State > PsiPipelineManagerState.Initializing)
             return;
         Rendezvous.Process proc = GetProcess();
         int count = proc.Endpoints.Count();
@@ -281,7 +297,7 @@ public class PsiPipelineManager : MonoBehaviour
             return;
         RendezVousClient.Rendezvous.TryAddProcess(proc);
         AddLog($"PsiPipelineManager : Add process with {count} endpoints.");
-        State = PsiPipelineManagerState.Initialised;
+        State = PsiPipelineManagerState.Initialized;
     }
 
     private void StopPsi()
@@ -321,7 +337,7 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
-public void RegisterExporter(ref RemoteExporter exporter)
+    public void RegisterExporter(ref RemoteExporter exporter)
     {
         if (HostAddress.Length == 0)
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
@@ -349,15 +365,15 @@ public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serializ
     }
 #endif
 
-public Pipeline GetPipeline()
-{
-    if (Pipeline == null)
-        {
-            Pipeline = Pipeline.Create(RendezVousAppName);
-            if (HostAddress.Length == 0)
-                HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
-        }
-        return Pipeline;
+    public Pipeline GetPipeline()
+    {
+        if (Pipeline == null)
+            {
+                Pipeline = Pipeline.Create(RendezVousAppName);
+                if (HostAddress.Length == 0)
+                    HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+            }
+            return Pipeline;
     }
 
     public Rendezvous.Process GetProcess()
@@ -374,7 +390,7 @@ public Pipeline GetPipeline()
 
     public void StartPipeline()
     {
-        if (State == PsiPipelineManagerState.Initialised)
+        if (State == PsiPipelineManagerState.Initialized)
         {
             Pipeline.PipelineExceptionNotHandled += (_, ex) =>
             {
@@ -428,9 +444,12 @@ public Pipeline GetPipeline()
                         StartPsi();
                         break;
                     case PsiPipelineManagerState.Served:
+                        InitializeExporters();
+                        break;
+                    case PsiPipelineManagerState.Initializing:
                         AddProcess();
                         break;
-                    case PsiPipelineManagerState.Initialised:
+                    case PsiPipelineManagerState.Initialized:
                         StartPipeline();
                         break;
                     default: // nothing to do on others cases

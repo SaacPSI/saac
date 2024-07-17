@@ -15,8 +15,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 #endif
     
     protected PsiPipelineManager PsiManager;
-    protected Emitter<T> Out;
-    Emitter<T> IProducer<T>.Out => ((IProducer<T>)Out).Out;
+    public Emitter<T> Out { get; private set; }
 
     protected bool IsInitialized = false;
     protected float DataTime;
@@ -32,6 +31,11 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
             Debug.LogError("Could not found PsiPipelineManager script ! Have you put it in your scene ?");
             return;
         }
+        PsiManager.onInitialized += Initialize;
+    }
+
+    public void Initialize()
+    {
         try
         {
             Out = PsiManager.GetPipeline().CreateEmitter<T>(this, TopicName);

@@ -50,7 +50,7 @@ public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
             Microsoft.Psi.Imaging.Image image = new Microsoft.Psi.Imaging.Image(Screen.width, Screen.height, PixelFormat.BGRA_32bpp);
  
             if (image != null)
-                Out.Post(image, GetCurrentTime());
+                Out.Post(image, Timestamp);
         }
     }
 

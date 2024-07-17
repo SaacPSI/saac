@@ -14,7 +14,7 @@ public class PsiExporterMatrix4x4: PsiExporter<System.Numerics.Matrix4x4>
                                                                             transform.worldToLocalMatrix[3, 0], transform.worldToLocalMatrix[3, 1], transform.worldToLocalMatrix[3, 2], transform.worldToLocalMatrix[3, 3]);
         if (CanSend() && PreviousMatrix4x4 != newMatrix)
         {
-            Out.Post(newMatrix, GetCurrentTime());
+            Out.Post(newMatrix, Timestamp);
             PreviousMatrix4x4 = newMatrix;
         }
     }

@@ -11,7 +11,7 @@ public class PsiExporterPosition
         var position = gameObject.transform.position;
         if (CanSend() && position != PreviousPosition)
         {
-            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), GetCurrentTime());
+            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), Timestamp);
             PreviousPosition = position;
         }
     }
