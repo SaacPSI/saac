@@ -14,16 +14,17 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
 #endif
     
-    protected PsiPipelineManager PsiManager;
     public Emitter<T> Out { get; private set; }
+    public bool IsInitialized { get; private set; } = false;
 
-    protected bool IsInitialized = false;
+    protected PsiPipelineManager PsiManager;
     protected float DataTime;
     protected DateTime Timestamp = DateTime.UtcNow;
 
     // Start is called before the first frame update
     public virtual void Start()
     {
+        Out = null;
         DataTime = DataPerSecond == 0.0f ? 0.0f : 1.0f / DataPerSecond;
         PsiManager = GameObject.FindAnyObjectByType<PsiPipelineManager>();
         if (PsiManager == null)
