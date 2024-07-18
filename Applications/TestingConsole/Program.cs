@@ -551,12 +551,12 @@ namespace TestingConsole
 
             //pipeline.NewProcess += OnNewProcess;
 
-            //var p = pipeline.CreateSubpipeline();
-            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            //var timer2 = Timers.Timer(p, TimeSpan.FromSeconds(2));
-
-            //pipeline.CreateConnectorAndStore("timer1", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer1.Out, true);
-            //pipeline.CreateConnectorAndStore("timer2", "Timers", pipeline.CreateOrGetSession("Timers-session"), p, timer1.Out.Type, timer2.Out, true);
+            var p = pipeline.CreateSubpipeline();
+            var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            timer1.Do((d, e) => {
+                pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
+            });
+            
             //SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
             //configKinect.RendezVousApplicationName = "KinectStreaming";
             //KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
@@ -581,14 +581,14 @@ namespace TestingConsole
             // {
             //     Console.WriteLine(ex.Message);
             // }
-            // // Waiting for an out key
-            Console.WriteLine("Press to command AddProcess.");
-            Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Initialize, "Unity"), DateTime.UtcNow);
-            Console.WriteLine("Press to command run.");
-            Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Run, ""), DateTime.UtcNow);
+            //Console.WriteLine("Press to command AddProcess.");
+            //Console.ReadLine();
+            //pipeline.CommandEmitter.Post((Command.Initialize, "Unity"), DateTime.UtcNow);
+            //Console.WriteLine("Press to command run.");
+            //Console.ReadLine();
+            //pipeline.CommandEmitter.Post((Command.Run, ""), DateTime.UtcNow);
 
+            // // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
             pipeline.Stop();
