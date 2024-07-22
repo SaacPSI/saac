@@ -82,6 +82,7 @@ public class PsiPipelineManager : MonoBehaviour
         logBuffer = new List<string>();
         exporterCount = waitedRendezVousCount = 0;
         initializedEventTriggered = false;
+        text = null;
         serializers = KnownSerializers.GetKnownSerializers();
         InitializeSerializer(serializers);
     }
@@ -89,10 +90,10 @@ public class PsiPipelineManager : MonoBehaviour
 #if !PLATFORM_ANDROID
     public void RegisterComponentImporter(string streamName, ConnectToImporterEndPoint connectionDelegate)
     {
-        ImporterDelegates.Add(streamName, connectionDelegate);
+        importerDelegates.Add(streamName, connectionDelegate);
         // If subscriber is late.
-        if(RemoteImporters.ContainsKey(streamName))
-            connectionDelegate(RemoteImporters[streamName]);
+        if(remoteImporters.ContainsKey(streamName))
+            connectionDelegate(remoteImporters[streamName]);
     }
 #else
     public void RegisterComponentImporter(string streamName, ConnectToSourceEndPoint connectionDelegate)
@@ -246,14 +247,14 @@ public class PsiPipelineManager : MonoBehaviour
 #else
             if (endpoint is Rendezvous.RemoteExporterEndpoint remoteEndpoint)
             {
-                RemoteImporter remoteImporter = remoteEndpoint.ToRemoteImporter(Pipeline);
+                RemoteImporter remoteImporter = remoteEndpoint.ToRemoteImporter(pipeline);
                 foreach (Rendezvous.Stream stream in remoteEndpoint.Streams)
                 {
                     AddLog($"PsiPipelineManager : Remote stream {stream.StreamName} found!");
-                    RemoteImporters.Add(stream.StreamName, remoteImporter);
-                    if (ImporterDelegates.ContainsKey(stream.StreamName))
+                    remoteImporters.Add(stream.StreamName, remoteImporter);
+                    if (importerDelegates.ContainsKey(stream.StreamName))
                     {
-                        ImporterDelegates[stream.StreamName](remoteImporter);
+                        importerDelegates[stream.StreamName](remoteImporter);
                     }
                 }
             }
@@ -270,6 +271,10 @@ public class PsiPipelineManager : MonoBehaviour
         AddLog($"PsiPipelineManager Recieve Command {command} from {processName} @{message.OriginatingTime} with argument {message.Data.Item2} \n");
         switch (command)
         {
+            case Command.Restart:
+                State = PsiPipelineManagerState.Instantiated;
+                StartPsi();
+                break;
             case Command.Initialize:
                 InitializeExporters();
                 AddProcess();
@@ -334,7 +339,7 @@ public class PsiPipelineManager : MonoBehaviour
 #if !PLATFORM_ANDROID
     protected RemoteExporter CreateRemoteExporter()
     {
-        return new RemoteExporter(GetPipeline(), ExportersStartingPort + ExporterCount++, ExportersTransportType);
+        return new RemoteExporter(GetPipeline(), ExportersStartingPort + exporterCount++, ExportersTransportType);
     }
 
     public void GetRemoteExporter(ExportType type, out RemoteExporter exporter)
@@ -363,7 +368,7 @@ public class PsiPipelineManager : MonoBehaviour
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         if (exportersRegistered.Contains(exporter) == false)
         {
-            ExportersRegistered.Add(exporter);
+            exportersRegistered.Add(exporter);
             GetProcess().AddEndpoint(exporter.ToRendezvousEndpoint(HostAddress));
         }
     }
@@ -429,14 +434,12 @@ public class PsiPipelineManager : MonoBehaviour
         if (State < PsiPipelineManagerState.Connecting)
         {
             AddLog($"PsiPipelineManager: IP used {HostAddress}");
-            if (TextLogObject != null)
+            if (TextLogObject != null && text == null)
             {
                 text = TextLogObject.GetComponent<TMP_Text>();
                 if (text != null)
                     text.text = "PsiPipelineManager logs:\n";
             }
-            else
-                text = null;
             GetPipeline();
             rendezVousClient = new RendezvousClient(RendezVousServerAddress, RendezVousServerPort);
             connectionThread = new Thread(SyncServerConnection);

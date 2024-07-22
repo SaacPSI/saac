@@ -3,6 +3,7 @@ using Microsoft.Psi;
 using System;
 using System.Net.Sockets;
 using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Components;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
