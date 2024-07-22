@@ -105,6 +105,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteConsole", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteServices", "Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj", "{F4550663-C436-487A-9F3E-1F5EB7E74C6C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeslaSuit", "Components\TeslaSuit\TeslaSuit.csproj", "{FF7314AB-B108-4109-943B-360992173850}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -297,6 +299,14 @@ Global
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C}.Release|Any CPU.Build.0 = Release|x64
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C}.Release|x64.ActiveCfg = Release|x64
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C}.Release|x64.Build.0 = Release|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Debug|Any CPU.Build.0 = Debug|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Debug|x64.ActiveCfg = Debug|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Debug|x64.Build.0 = Debug|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Release|Any CPU.ActiveCfg = Release|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Release|Any CPU.Build.0 = Release|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Release|x64.ActiveCfg = Release|x64
+		{FF7314AB-B108-4109-943B-360992173850}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -332,6 +342,7 @@ Global
 		{934AF3B8-E8E9-4F06-92F4-E07213A606BF} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{9420A360-3D66-4BB7-9F34-F9762AE07578} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{FF7314AB-B108-4109-943B-360992173850} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
