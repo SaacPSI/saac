@@ -9,7 +9,7 @@ namespace SAAC.Bodies
     public class BodiesConverter : IProducer<List<SimplifiedBody>>
     {
         /// <summary>
-        /// Gets the emitter of groups detected.
+        /// Gets the emitter of bodies converted.
         /// </summary>
         public Emitter<List<SimplifiedBody>> Out { get; private set; }
 
@@ -24,11 +24,13 @@ namespace SAAC.Bodies
         public Receiver<List<AzureKinectBody>> InBodiesAzure;
 
         private Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> nuiToAzure;
-        public BodiesConverter(Pipeline parent)
+        private string name;
+        public BodiesConverter(Pipeline parent, string name = nameof(BodiesConverter))
         {
-            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(this, Process, nameof(InBodiesNuitrack));
-            InBodiesAzure= parent.CreateReceiver<List<AzureKinectBody>>(this, Process, nameof(InBodiesAzure));
-            Out = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(Out));
+            this.name = name;
+            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(this, Process, $"{name}-InBodiesNuitrack");
+            InBodiesAzure= parent.CreateReceiver<List<AzureKinectBody>>(this, Process, $"{name}-InBodiesAzure");
+            Out = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-Out");
             nuiToAzure = new Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> {
                 { JointType.Head, Microsoft.Azure.Kinect.BodyTracking.JointId.Head },
                 { JointType.Neck, Microsoft.Azure.Kinect.BodyTracking.JointId.Neck },
@@ -55,6 +57,9 @@ namespace SAAC.Bodies
                 { JointType.RightAnkle, Microsoft.Azure.Kinect.BodyTracking.JointId.AnkleRight },
                 { JointType.RightFoot, Microsoft.Azure.Kinect.BodyTracking.JointId.FootRight }};
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(List<Skeleton> bodies, Envelope envelope)
         {

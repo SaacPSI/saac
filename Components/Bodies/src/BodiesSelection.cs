@@ -6,8 +6,7 @@ using Microsoft.Azure.Kinect.BodyTracking;
 
 namespace SAAC.Bodies
 {
-    // TODO : remove Subpipeline to consumer producer.
-    public class BodiesSelection : Subpipeline
+    public class BodiesSelection
     {
         /// <summary>
         /// Gets the emitter of groups detected.
@@ -98,21 +97,22 @@ namespace SAAC.Bodies
         private Dictionary<uint, LearnedBody> camera2LearnedBodies = new Dictionary<uint, LearnedBody>();
         private uint idCount = 1;
         private enum TupleState { AlreadyExist, KeyAlreadyInserted, GoodToInsert, Replace  };
+        private string name;
 
-        public BodiesSelection(Pipeline parent, BodiesSelectionConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
-          : base(parent, name, defaultDeliveryPolicy)
+        public BodiesSelection(Pipeline parent, BodiesSelectionConfiguration? configuration = null, string name = nameof(BodiesSelection))
         {
+            this.name = name;
             this.configuration = configuration ?? new BodiesSelectionConfiguration();
 
-            InCamera1BodiesConnector = CreateInputConnectorFrom<List<SimplifiedBody>>(parent, nameof(InCamera1BodiesConnector));
-            InCamera2BodiesConnector = CreateInputConnectorFrom<List<SimplifiedBody>>(parent, nameof(InCamera2BodiesConnector));
-            InCamera1LearnedBodiesConnector = CreateInputConnectorFrom<List<LearnedBody>>(parent, nameof(InCamera1LearnedBodiesConnector));
-            InCamera2LearnedBodiesConnector = CreateInputConnectorFrom<List<LearnedBody>>(parent, nameof(InCamera2LearnedBodiesConnector));
-            InCamera1RemovedBodiesConnector = CreateInputConnectorFrom<List<uint>>(parent, nameof(InCamera1RemovedBodiesConnector));
-            InCamera2RemovedBodiesConnector = CreateInputConnectorFrom<List<uint>>(parent, nameof(InCamera2RemovedBodiesConnector));
-            InCalibrationMatrixConnector = CreateInputConnectorFrom<CoordinateSystem>(parent, nameof(InCalibrationMatrixConnector));
-            OutBodiesCalibrated = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(OutBodiesCalibrated));
-            OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, nameof(OutBodiesRemoved));
+            InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>( $"{name}-InCamera1BodiesConnector");
+            InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
+            InCamera1LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>($"{name}-InCamera1LearnedBodiesConnector");
+            InCamera2LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>(  $"{name}-InCamera2LearnedBodiesConnector");
+            InCamera1RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera1RemovedBodiesConnector");
+            InCamera2RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera2RemovedBodiesConnector");
+            InCalibrationMatrixConnector = parent.CreateConnector<CoordinateSystem>($"{name}-InCalibrationMatrixConnector");
+            OutBodiesCalibrated = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-OutBodiOutBodiesCalibratedesRemoved" );
+            OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, $"{name}-OutBodiesRemoved");
 
             if (this.configuration.Camera2ToCamera1Transformation == null)
                 InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Out.Fuse(InCalibrationMatrixConnector.Out, Available.Nearest<CoordinateSystem>()).Do(Process);
@@ -125,6 +125,10 @@ namespace SAAC.Bodies
             InCamera1RemovedBodiesConnector.Do(RemovedBodyProcessing1);
             InCamera2RemovedBodiesConnector.Do(RemovedBodyProcessing2);
         }
+        
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
+
         private void Process((List<SimplifiedBody>, List<SimplifiedBody>, CoordinateSystem) bodies, Envelope envelope)
         {
             configuration.Camera2ToCamera1Transformation = bodies.Item3;

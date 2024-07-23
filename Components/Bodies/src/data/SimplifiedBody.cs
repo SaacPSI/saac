@@ -6,7 +6,7 @@ namespace SAAC.Bodies
     public class SimplifiedBody
     {
         public uint Id { get; set; } = uint.MaxValue;
-        public enum SensorOrigin { Nuitrack, Azure };
+        public enum SensorOrigin { Nuitrack, Azure, TeslaSuit };
 
         public SensorOrigin Origin { get; private set; }
         public Dictionary<JointId, Tuple<JointConfidenceLevel, Vector3D>> Joints { get; set; }

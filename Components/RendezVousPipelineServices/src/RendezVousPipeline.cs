@@ -220,10 +220,13 @@ namespace SAAC.RendezVousPipelineServices
                     if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
                     {
                         string storeName = Configuration.StreamToStore[streamName];
-                        if (storeName.Contains("%p"))
-                            storeName = storeName.Replace("%p", processName);
                         if (storeName.Contains("%s"))
                             storeName = storeName.Replace("%s", session.Name);
+                        if (storeName.Contains("%p"))
+                        {
+                            storeName = storeName.Replace("%p", processName);
+                            return (streamName, storeName);
+                        }
                         return ($"{processName}-{streamName}", storeName);
                     }
                     goto default;

@@ -34,18 +34,23 @@ namespace SAAC.Bodies
         public Emitter<Dictionary<(uint, uint), List<HandsProximity>>> Out { get; }
 
         private HandsProximityDetectorConfiguration configuration;
+        private string name;
 
-        public HandsProximityDetector(Pipeline pipeline, HandsProximityDetectorConfiguration configuration = null)
+        public HandsProximityDetector(Pipeline pipeline, HandsProximityDetectorConfiguration configuration = null, string name = nameof(HandsProximityDetector))
         {
+            this.name = name;
             this.configuration = configuration ?? new HandsProximityDetectorConfiguration();
-            InConnector = pipeline.CreateConnector<List<SimplifiedBody>>(nameof(In));
-            InPairConnector = pipeline.CreateConnector<List<(uint, uint)>>(nameof(InPair));
-            Out = pipeline.CreateEmitter<Dictionary<(uint, uint), List<HandsProximity>>>(this, nameof(Out));
+            InConnector = pipeline.CreateConnector<List<SimplifiedBody>>($"{name}-In");
+            InPairConnector = pipeline.CreateConnector<List<(uint, uint)>>($"{name}-InPair");
+            Out = pipeline.CreateEmitter<Dictionary<(uint, uint), List<HandsProximity>>>(this, $"{name}-Out");
             if (this.configuration.IsPairToCheckGiven)
                 InConnector.Out.Pair(InPairConnector, DeliveryPolicy.LatestMessage, DeliveryPolicy.LatestMessage).Do(Process);
             else
                 InConnector.Out.Do(Process);
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(List<SimplifiedBody> message, Envelope envelope)
         {

@@ -22,6 +22,7 @@ using SAAC.RendezVousPipelineServices;
 using SAAC.Helpers;
 using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
 using SAAC.KinectAzureRemoteServices;
+using static Emgu.CV.VideoCapture;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -526,37 +527,52 @@ namespace TestingConsole
             configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "192.168.56.1";
-            //configuration.NotStoredTopics.Add("Image");
-            configuration.TopicsTypes.Add("Image", typeof(byte[]));
-            configuration.TopicsTypes.Add("Time", typeof(DateTime));
-            configuration.TypesSerializers.Add(typeof(DateTime), new PsiFormatDateTime());
-            for (int i = 0; i < 50; i++)
-            {
-                configuration.TopicsTypes.Add($"Cube-{i}", typeof(System.Numerics.Matrix4x4));
-                configuration.TopicsTypes.Add($"Time-{i}", typeof(DateTime));
-            }
-            configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
-            configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
-            configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
-            configuration.Transformers.Add("Image", typeof(BytesStreamToImage));
-            configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
-            configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
-            configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
-            configuration.StoreMode = StoreMode.Independant;
-            configuration.StreamToStore.Add("PositionLeft", "Positions");
-            configuration.StreamToStore.Add("PositionRight", "Positions");
 
-            configuration.CommandDelegate = CommandDel;
+            configuration.TopicsTypes.Add("PPG", typeof(SAAC.TeslaSuit.PpgData));
+            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.PpgData), new SAAC.TeslaSuit.PsiFormatTsPPG());
+            configuration.TopicsTypes.Add("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams));
+            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
+            configuration.TopicsTypes.Add("HapticPlayable", typeof(SAAC.TeslaSuit.HapticPlayable));
+            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.HapticPlayable), new SAAC.TeslaSuit.PsiFormatHapticPlayable());
+            configuration.TopicsTypes.Add("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>));
+            configuration.TypesSerializers.Add(typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion());
+            configuration.Transformers.Add("Mocap", typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
+
+            configuration.StoreMode = StoreMode.Dictionnary;
+            configuration.StreamToStore.Add("HapticTouch", "%s-Haptic");
+            configuration.StreamToStore.Add("HapticPlayable", "%s-Haptic");
+
+            //configuration.NotStoredTopics.Add("Image");
+            //configuration.TopicsTypes.Add("Image", typeof(byte[]));
+            //configuration.TopicsTypes.Add("Time", typeof(DateTime));
+            //configuration.TypesSerializers.Add(typeof(DateTime), new PsiFormatDateTime());
+            //for (int i = 0; i < 50; i++)
+            //{
+            //    configuration.TopicsTypes.Add($"Cube-{i}", typeof(System.Numerics.Matrix4x4));
+            //    configuration.TopicsTypes.Add($"Time-{i}", typeof(DateTime));
+            //}
+            //configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
+            //configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
+            //configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
+            //configuration.Transformers.Add("Image", typeof(BytesStreamToImage));
+            //configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
+            //configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
+            //configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
+            //configuration.StoreMode = StoreMode.Independant;
+            //configuration.StreamToStore.Add("PositionLeft", "Positions");
+            //configuration.StreamToStore.Add("PositionRight", "Positions");
+
+            //configuration.CommandDelegate = CommandDel;
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
             //pipeline.NewProcess += OnNewProcess;
 
-            var p = pipeline.CreateSubpipeline();
-            var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            timer1.Do((d, e) => {
-                pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
-            });
-            
+            //var p = pipeline.CreateSubpipeline();
+            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            //timer1.Do((d, e) => {
+            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
+            //});
+
             //SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
             //configKinect.RendezVousApplicationName = "KinectStreaming";
             //KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);

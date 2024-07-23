@@ -21,6 +21,11 @@ namespace SAAC.Bodies.Helpers
             return new Vector3D(vect.X, vect.Y, vect.Z);
         }
 
+        static public Vector3D NumericToMathNet(System.Numerics.Vector3 vect)
+        {
+            return new Vector3D(vect.X, vect.Y, vect.Z);
+        }
+
         static public Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel FloatToConfidence(float confidence)
         {
             if (confidence == 0f)

@@ -24,6 +24,12 @@
     <Reference Include="nuitrack.net">
       <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
     </Reference>
+    <Reference Include="TsAPI">
+      <HintPath>..\TeslaSuit\dep\TsApi.dll</HintPath>
+    </Reference>
+    <Reference Include="TsSDK">
+      <HintPath>..\TeslaSuit\dep\TsSDK.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 

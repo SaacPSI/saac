@@ -17,13 +17,18 @@ namespace SAAC.Bodies
         public Emitter<Dictionary<uint, List<Posture>>> Out { get; }
 
         private BodyPosturesDetectorConfiguration configuration;
+        private string name;
 
-        public BodyPosturesDetector(Pipeline pipeline, BodyPosturesDetectorConfiguration? configuration = null) 
+        public BodyPosturesDetector(Pipeline pipeline, BodyPosturesDetectorConfiguration? configuration = null, string name = nameof(BodyPosturesDetector)) 
         {
+            this.name = name;
             this.configuration = configuration ?? new BodyPosturesDetectorConfiguration();
-            In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, Process, nameof(In));
-            Out = pipeline.CreateEmitter<Dictionary<uint, List<BodyPosturesDetector.Posture>>>(this, nameof(Out));
+            In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, Process, $"{name}-In");
+            Out = pipeline.CreateEmitter<Dictionary<uint, List<BodyPosturesDetector.Posture>>>(this, $"{name}-Out");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         public void Process(List<SimplifiedBody> bodies, Envelope envelope)
         {

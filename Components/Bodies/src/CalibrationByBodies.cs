@@ -47,14 +47,16 @@ namespace SAAC.Bodies
         private ECalibrationState calibrationState = ECalibrationState.Running;
         private Matrix<double> transformationMatrix = Matrix<double>.Build.Dense(1,1);
         private Tuple<List<double>, List<double>> testingArray;
+        private string name;
 
-        public CalibrationByBodies(Pipeline parent, CalibrationByBodiesConfiguration? configuration = null, string? name = null, DeliveryPolicy? defaultDeliveryPolicy = null)
+        public CalibrationByBodies(Pipeline parent, CalibrationByBodiesConfiguration? configuration = null, string name = nameof(CalibrationByBodies), DeliveryPolicy? defaultDeliveryPolicy = null)
         {
+            this.name = name;
             Configuration = configuration ?? new CalibrationByBodiesConfiguration();
-            InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>(nameof(InCamera1BodiesConnector));
-            InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>(nameof(InCamera2BodiesConnector));
-            Out = parent.CreateEmitter<CoordinateSystem>(this, nameof(Out));
-            InSynchEventConnector = parent.CreateConnector<bool>(nameof(InSynchEventConnector));
+            InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera1BodiesConnector");
+            InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
+            Out = parent.CreateEmitter<CoordinateSystem>(this, $"{name}-Out");
+            InSynchEventConnector = parent.CreateConnector<bool>($"{name}-InSynchEventConnector");
 
             if (Configuration.SynchedCalibration)
                 InSynchEventConnector.Pair(InCamera1BodiesConnector).Pair(InCamera2BodiesConnector).Do(Process);
@@ -67,6 +69,9 @@ namespace SAAC.Bodies
             testingArray = new Tuple<List<double>, List<double>>(new List<double>(), new List<double>());
             SetStatus("Collecting data...");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process((bool, List<SimplifiedBody>, List<SimplifiedBody>) bodies, Envelope envelope)
         {

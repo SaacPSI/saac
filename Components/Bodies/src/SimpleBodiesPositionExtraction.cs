@@ -33,15 +33,20 @@ namespace SAAC.Bodies
         public Receiver<List<SimplifiedBody>> InBodiesSimplified;
 
         private SimpleBodiesPositionExtractionConfiguration configuration;
+        private string name;
 
-        public SimpleBodiesPositionExtraction(Pipeline parent, SimpleBodiesPositionExtractionConfiguration? configuration = null)
+        public SimpleBodiesPositionExtraction(Pipeline parent, SimpleBodiesPositionExtractionConfiguration? configuration = null, string name = nameof(SimpleBodiesPositionExtraction))
         {
             this.configuration = configuration ?? new SimpleBodiesPositionExtractionConfiguration();
-            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(parent, Process, nameof(InBodiesNuitrack));
-            InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(parent, Process, nameof(InBodiesAzure));
-            InBodiesSimplified = parent.CreateReceiver<List<SimplifiedBody>>(parent, Process, nameof(InBodiesSimplified));
-            Out = parent.CreateEmitter<Dictionary<uint, Vector3D>>(this, nameof(Out));
+            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(parent, Process, $"{name}-InBodiesNuitrack");
+            InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(parent, Process, $"{name}-InBodiesAzure");
+            InBodiesSimplified = parent.CreateReceiver<List<SimplifiedBody>>(parent, Process, $"{name}-InBodiesSimplified");
+            Out = parent.CreateEmitter<Dictionary<uint, Vector3D>>(this, $"{name}-Out");
+            this.name = name;
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(List<Skeleton> bodies, Envelope envelope)
         {

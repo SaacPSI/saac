@@ -34,16 +34,20 @@ namespace SAAC.Bodies
         private Dictionary<uint, LearnedBody> learnedBodies = new Dictionary<uint, LearnedBody>();
         private Dictionary<uint, LearningBody> learningBodies = new Dictionary<uint, LearningBody>();
         private List<LearnedBody> newLearnedBodies = new List<LearnedBody>();
+        private string name;
 
-
-        public BodiesIdentification(Pipeline parent, BodiesIdentificationConfiguration? configuration = null)
+        public BodiesIdentification(Pipeline parent, BodiesIdentificationConfiguration? configuration = null, string name = nameof(BodiesIdentification))
         {
+            this.name = name;
             this.configuration = configuration ?? new BodiesIdentificationConfiguration();
-            In = parent.CreateReceiver<List<SimplifiedBody>>(this, Process, nameof(In));
-            OutBodiesIdentified = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(OutBodiesIdentified));
-            OutLearnedBodies = parent.CreateEmitter<List<LearnedBody>>(this, nameof(OutLearnedBodies));
-            OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, nameof(OutBodiesRemoved));
+            In = parent.CreateReceiver<List<SimplifiedBody>>(this, Process, $"{name}-In");
+            OutBodiesIdentified = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-OutBodiesIdentified");
+            OutLearnedBodies = parent.CreateEmitter<List<LearnedBody>>(this, $"{name}-OutLearnedBodies");
+            OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, $"{name}-OutBodiesRemoved");
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
 
         private void Process(List<SimplifiedBody> bodies, Envelope envelope)
         {
