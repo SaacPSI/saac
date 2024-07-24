@@ -38,6 +38,9 @@
     <Reference Include="TsAPI">
       <HintPath>..\..\Components\TeslaSuit\dep\TsApi.dll</HintPath>
     </Reference>
+    <Reference Include="TsSDK">
+      <HintPath>..\..\Components\TeslaSuit\dep\TsSDK.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 

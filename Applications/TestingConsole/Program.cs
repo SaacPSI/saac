@@ -528,19 +528,15 @@ namespace TestingConsole
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "192.168.56.1";
 
-            configuration.TopicsTypes.Add("PPG", typeof(SAAC.TeslaSuit.PpgData));
-            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.PpgData), new SAAC.TeslaSuit.PsiFormatTsPPG());
-            configuration.TopicsTypes.Add("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams));
-            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
-            configuration.TopicsTypes.Add("HapticPlayable", typeof(SAAC.TeslaSuit.HapticPlayable));
-            configuration.TypesSerializers.Add(typeof(SAAC.TeslaSuit.HapticPlayable), new SAAC.TeslaSuit.PsiFormatHapticPlayable());
-            configuration.TopicsTypes.Add("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>));
-            configuration.TypesSerializers.Add(typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion());
-            configuration.Transformers.Add("Mocap", typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
+            configuration.AddTopicFormatAndTransformer("PPG", typeof(List<TsSDK.ProcessedPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsPPG());
+            configuration.AddTopicFormatAndTransformer("RawPPG", typeof(List<TsSDK.RawPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsRawPPG());
+            configuration.AddTopicFormatAndTransformer("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
+            configuration.AddTopicFormatAndTransformer("HapticPlayable", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
+            configuration.AddTopicFormatAndTransformer("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion(), typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
 
             configuration.StoreMode = StoreMode.Dictionnary;
-            configuration.StreamToStore.Add("HapticTouch", "%s-Haptic");
-            configuration.StreamToStore.Add("HapticPlayable", "%s-Haptic");
+            configuration.StreamToStore.Add("HapticTouch", "%p-Haptic");
+            configuration.StreamToStore.Add("HapticPlayable", "%p-Haptic");
 
             //configuration.NotStoredTopics.Add("Image");
             //configuration.TopicsTypes.Add("Image", typeof(byte[]));

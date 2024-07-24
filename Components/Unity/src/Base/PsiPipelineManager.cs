@@ -10,6 +10,7 @@ using System.Threading;
 using System.Linq;
 using Microsoft.Psi.Serialization;
 using System.Net;
+using TsSDK;
 
 public class PsiPipelineManager : MonoBehaviour
 {
@@ -28,7 +29,7 @@ public class PsiPipelineManager : MonoBehaviour
     private Rendezvous.Process process;
     private Pipeline pipeline;
     private Pipeline commandSubPipeline;
-    private KnownSerializers serializers;
+    public KnownSerializers Serializers { get; private set; }
 #if !PLATFORM_ANDROID
     private Dictionary<string, ConnectToImporterEndPoint> importerDelegates;
     private Dictionary<string, RemoteImporter> remoteImporters;
@@ -83,8 +84,8 @@ public class PsiPipelineManager : MonoBehaviour
         exporterCount = waitedRendezVousCount = 0;
         initializedEventTriggered = false;
         text = null;
-        serializers = KnownSerializers.GetKnownSerializers();
-        InitializeSerializer(serializers);
+        Serializers = KnownSerializers.GetKnownSerializers();
+        InitializeSerializer(Serializers);
     }
 
 #if !PLATFORM_ANDROID
@@ -141,7 +142,6 @@ public class PsiPipelineManager : MonoBehaviour
             rendezVousClient.Rendezvous.ProcessRemoved += ProcessRemoved;
             rendezVousClient.Error += RendezVousClient_Error;
             rendezVousClient.Rendezvous.ProcessAdded += ProcessAdded;
-            State = PsiPipelineManagerState.Connected;
         }
         catch (Exception e)
         {

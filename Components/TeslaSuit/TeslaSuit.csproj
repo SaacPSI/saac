@@ -15,6 +15,30 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Unity\PsiExporterTsMotion.cs" />
+    <Compile Remove="Unity\PsiExporterTsPPG.cs" />
+    <Compile Remove="Unity\PsiExporterTsRawPPG.cs" />
+    <Compile Remove="Unity\PsiFormatHapicParams.cs" />
+    <Compile Remove="Unity\PsiFormatHapicPlayable.cs" />
+    <Compile Remove="Unity\PsiFormatTsMotion.cs" />
+    <Compile Remove="Unity\PsiFormatTsPPG.cs" />
+    <Compile Remove="Unity\PsiFormatTsRawPPG.cs" />
+    <Compile Remove="Unity\PsiTsHapicPlayer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Unity\PsiExporterTsMotion.cs" />
+    <None Include="Unity\PsiExporterTsPPG.cs" />
+    <None Include="Unity\PsiExporterTsRawPPG.cs" />
+    <None Include="Unity\PsiFormatHapicParams.cs" />
+    <None Include="Unity\PsiFormatHapicPlayable.cs" />
+    <None Include="Unity\PsiFormatTsMotion.cs" />
+    <None Include="Unity\PsiFormatTsPPG.cs" />
+    <None Include="Unity\PsiFormatTsRawPPG.cs" />
+    <None Include="Unity\PsiTsHapicPlayer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Psi.DeviceManagement" Version="0.19.100.1-beta" />
   </ItemGroup>
 

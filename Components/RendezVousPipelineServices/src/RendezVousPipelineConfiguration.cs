@@ -1,4 +1,6 @@
-﻿namespace SAAC.RendezVousPipelineServices
+﻿using System.Threading.Tasks;
+
+namespace SAAC.RendezVousPipelineServices
 {
     public class RendezVousPipelineConfiguration
     {
@@ -35,6 +37,16 @@
                 TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector());
                 TypesSerializers.Add(typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4());
             }
+        }
+
+        public void AddTopicFormatAndTransformer(string topic, Type type, IPsiFormat format, Type? transformer = null)
+        {
+            if (!TopicsTypes.ContainsKey(topic))
+                TopicsTypes.Add(topic, type);
+            if (!TypesSerializers.ContainsKey(type))
+                TypesSerializers.Add(type, format);
+            if (transformer != null && !Transformers.ContainsKey(topic))
+                Transformers.Add(topic, transformer);
         }
     }
 }

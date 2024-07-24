@@ -9,13 +9,13 @@ namespace SAAC.TeslaSuit
     {
         public dynamic GetFormat()
         {
-            return new Format<TsSDK.IProcessedPpgData>(WriteRawPpgData, ReadRawPpgData);
+            return new Format<List<ProcessedPpgNodeData>>(WritePpgData, ReadPpgData);
         }
 
-        public void WriteRawPpgData(TsSDK.IProcessedPpgData data, BinaryWriter writer)
+        public void WritePpgData(List<ProcessedPpgNodeData> data, BinaryWriter writer)
         {
-            writer.Write(data.NodesData.Count());
-            foreach (var node in data.NodesData)
+            writer.Write(data.Count());
+            foreach (var node in data)
             {
                 writer.Write(node.nodeIndex);
                 writer.Write(node.timestamp);
@@ -24,7 +24,7 @@ namespace SAAC.TeslaSuit
             }
         }
 
-        public TsSDK.IProcessedPpgData ReadRawPpgData(BinaryReader reader)
+        public List<ProcessedPpgNodeData> ReadPpgData(BinaryReader reader)
         {
             int count = reader.ReadInt32();
             List<ProcessedPpgNodeData> listData = new List<ProcessedPpgNodeData>(count);
@@ -39,7 +39,7 @@ namespace SAAC.TeslaSuit
             }
 
             //missing check count
-            return new PpgData(listData);
+            return listData;
         }
     }
 }
