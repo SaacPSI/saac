@@ -21,7 +21,7 @@ Project containing components related to body tracking. We have tried to set a n
 * [Bodies Statistics](src/statistics/BodiesStatistics.cs) components generate csv file containing statiscs to evaluate the camera and the identification by bones.
 * [Leaning Body](src/data/LeaningBody.cs) and [Learned Body](src/data/LearnedBody.cs) are used in [Bodies Identification](src/BodiesIdentification.cs).
 * [Helpers](src/data/Helpers.cs) contains various general process to handle bodies.
-
+* [Ts Motion To Simplified Body](src/TsMotionToSimplifiedBody.cs) is a component to convert [TeslaSuit](https://teslasuit.io/) Mocap data into an [Simplified Body](src/data/SimplifiedBody.cs).
 ## Curent issues
 
 ## Future works

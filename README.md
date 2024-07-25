@@ -13,10 +13,10 @@ Four folders:
 
 
 ## Roadmap
-A third batch at the begining of 2024.
+Adding components and improving code/documentation.
 
 ## Project status
-We are currently focused on finishing some developpement for our architecture. We will finalize a proper documentation and sample code before publishing more components.
+We are currently focused on finishing some developpement for our architecture and test it in few experiments.
 
 ## Authors and acknowledgment
 - Cédric Dumas cedric.dumas@imt-atlantique.fr

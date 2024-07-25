@@ -10,30 +10,35 @@ All thoses modifications can be found in https://github.com/SaacPSI/psi branch U
 The unitypackage has been made with a fork from the \\psi repository with the last commit from 24/06/2023, commit ID : d08fdd34f6957a92a6343d6e7978c2b8efc5f83a
 It includes modifications of RemoteExorter to include multi clients streaming (see [RemoteExporterModification.md](../../RemoteExporterModification.md))
 
-## Current limitation
-At the moment, using \\psi imaging system is incompatible with Unity. This limitation as not been investigate as we use WebRTC.
-
 ## Unity Package
-The package contains dlls and scripts:
+The package contains dlls and scripts in 3 folders:
+In **Base** folder:
 * PsiExporter : base script to inherit from for exporter scripts.
 * PsiImporter : base script to inherit from for importer scripts.
+* PsiPiplineManager : required component for scripts to work, can synchronise with other \\psi piplines through a **RemoteClockImporter**.
+* PsiSerializerReflexion : file with serializers for KnownSerializer.
+
+In **Exporters** folder:
 * PsiExporterPosition : example of exporter to send position of the gameobject.
 * PsiExporterPositionOrientation : example of exporter to send position \& rotation of the gameobject.
-* PsiExporterPosition : exporter to send image of the camera.
-* PsiExporterPosition : exporter to send image of the camera as bytes stream.
-* PsiImportePositionr : example of importer to set position of the gameobject.
-* PsiImporterPing : example of importer to handle ping from server.
-* PsiPiplineManager : required component for scripts to work, can synchronise with other \\psi piplines through a **RemoteClockImporter**.
-* PsiFormatVector3 : (De)Serialization for Vector3 used in PsiPositionExporter \& PsiPositionImporter. 
-* PsiFormatString : (De)Serialization for string. 
-* PsiFormatPositionAndOrientation : (De)Serialization for a tuple of Vector3 used in PsiPositionOrientationExporter. 
-* PsiFormatDateTime : (De)Serialization for DateTime. 
+* PsiExporterImage : exporter to send image of the camera.
+* PsiExporterImageAsSteam : exporter to send image of the camera as bytes stream.
+* PsiExporterMatrix4x4  : exporter to the localToWorld matrix of the gameobject.
+
+In **Formats** folder:
 * PsiFormatBoolean : (De)Serialization for boolean. 
+* PsiFormatBytes : (De)Serialization for byte array. 
+* PsiFormatDateTime : (De)Serialization for DateTime. 
 * PsiFormatImage : (De)Serialization for image. 
-* PsiFormatString : (De)Serialization for string. 
 * PsiFormatInteger : (De)Serialization for int and enum. 
-* PsiASerializer : base class for KnowSerializer classes.
-* PsiAddedSerializer : file with serializers for KnownSerializer.
+* PsiFormatMatrix4x4 : (De)Serialization for matrix 4x4. 
+* PsiFormatPositionAndOrientation : (De)Serialization for a tuple of Vector3 used in PsiPositionOrientationExporter. 
+* PsiFormatString : (De)Serialization for string. 
+* PsiFormatVector3 : (De)Serialization for Vector3. 
+
+In **Importers** folder:
+* PsiImportePosition : example of importer to set position of the gameobject.
+* PsiImporterPing : example of importer to handle ping from server.
 
 In Unity Microsoft.BCL.Async should be configured as :
 

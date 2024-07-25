@@ -1,30 +1,23 @@
-﻿# Bodies
+﻿# Groups
 
 ## Summary
-Project containing components related to body tracking. We have tried to set a normalized body definition to be able to use both Kinect Azure and Nuitrack skeletons.  
+Project containing components for groups detections, the following diagram explain the hierarchy of components:  
+
+![Groups](docs/groups.png)
 
 ## Files
-* [Bodies Converter](src/BodiesConverter.cs) convert Azure Kinect and/or Nuitrack bodies into [Simplified Body](src/data/SimplifiedBody.cs).
-* [Bodies Identification](src/BodiesIdentification.cs) component that try to mitigate new ids for bodies already known, usually it comes from oculsion or the individual leaving the field of tracking.
-* [Bodies Identification Configuration](src/BodiesIdentificationConfiguration.cs) configuration class for [Bodies Identification](src/BodiesIdentification.cs).
-* [Bodies Selection](src/BodiesSelection.cs) select the best body from two cameras and apply a transformation matrix to provide positions on the camera master coordinate space.
-* [Bodies Selection Configuration](src/BodiesSelectionConfiguration.cs) configuration class for [Bodies Selection](src/BodiesSelection.cs)
-* [Body Postures Detector](src/BodyPosturesDetector.cs) component that provide information about posture on frame level.
-* [Body Postures Detector Configuration](src/BodyPosturesDetectorConfiguration.cs) configuration class for [Body Postures Detector](src/BodyPosturesDetector.cs)
-* [Calibration By Bodies](src/CalibrationByBodies.cs) low cost calibration component that provide the transformation matrix between two camera, using a single tracked body.
-* [Calibration By Bodies Configuration](src/CalibrationByBodiesConfiguration.cs) configuration class for [Calibration By Bodies](src/CalibrationByBodies.cs)
-* [Hands Proximity Detector](src/HandsProximityDetector.cs) is inspired from [OpenSense ArmsProximityDetector](https://github.com/ihp-lab/OpenSense/blob/master/Components/BodyGestureDetectors/ArmsProximityDetector.cs), it detect hand proximity of bodies and give wich hands.
-* [Hands Proximity Detector Configuration](src/HandsProximityDetectorConfiguration.cs) configuration class for [Hands Proximity Detector](src/HandsProximityDetector.cs)
-* [Simple Bodies Position Extraction](src/SimpleBodiesPositionExtraction.cs) basic component that emit the position of the selected joint as a position for bodies.
-* [Simple Bodies Position Extraction Configuration](src/SimpleBodiesPositionExtractionConfiguration.cs) configuration class for [Simple Bodies Position Extraction](src/SimpleBodiesPositionExtraction.cs)
-* [Calibration Statistics](src/statistics/CalibrationStatistics.cs) generate csv file containing statiscs to evaluate the calibration.
-* [Bodies Statistics](src/statistics/BodiesStatistics.cs) components generate csv file containing statiscs to evaluate the camera and the identification by bones.
-* [Leaning Body](src/data/LeaningBody.cs) and [Learned Body](src/data/LearnedBody.cs) are used in [Bodies Identification](src/BodiesIdentification.cs).
-* [Helpers](src/data/Helpers.cs) contains various general process to handle bodies.
+* [Entry Groups Detector](src/EntryGroupsDetector.cs)
+* [Entry Groups Detector Configuration](src/EntryGroupsDetectorConfiguration.cs)
+* [Flock Group Intersection](src/FlockGroupIntersection.cs)
+* [Instant Groups Detector](src/InstantGroupsDetector.cs)
+* [Instant Groups Detector Configuration](src/InstantGroupsDetectorConfiguration.cs)
+* [Integrated Groups Detector](src/IntegratedGroupsDetector.cs)
+* [Integrated Groups Detector Configuration](src/IntegratedGroupsDetectorConfiguration.cs)
+* [Simplified Flock Group](src/SimplifiedFlockGroup.cs)
+* [Simplified Flock Groups Detector](src/SimplifiedFlockGroupsDetector.cs)
+* [Simplified Flock Groups Detector Configuration](src/SimplifiedFlockGroupsDetectorConfiguration.cs)
+* [Helpers](src/Helpers/Helpers.cs) contains methods of ids generation and groups simplifications.
 
 ## Curent issues
 
 ## Future works
-* Integrate more than two cameras for [Bodies Selection](src/BodiesSelection.cs), [Calibration By Bodies](src/CalibrationByBodies.cs) and [Calibration Statistics](src/statistics/CalibrationStatistics.cs)
-* Add high level movement detection.
-* Add more postures detection.
