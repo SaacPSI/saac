@@ -107,6 +107,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteServices",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeslaSuit", "Components\TeslaSuit\TeslaSuit.csproj", "{FF7314AB-B108-4109-943B-360992173850}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AttentionMeasures", "Components\AttentionMeasures\AttentionMeasures.csproj", "{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -307,6 +309,14 @@ Global
 		{FF7314AB-B108-4109-943B-360992173850}.Release|Any CPU.Build.0 = Release|x64
 		{FF7314AB-B108-4109-943B-360992173850}.Release|x64.ActiveCfg = Release|x64
 		{FF7314AB-B108-4109-943B-360992173850}.Release|x64.Build.0 = Release|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Debug|Any CPU.Build.0 = Debug|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Debug|x64.ActiveCfg = Debug|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Debug|x64.Build.0 = Debug|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|Any CPU.ActiveCfg = Release|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|Any CPU.Build.0 = Release|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|x64.ActiveCfg = Release|x64
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -343,6 +353,7 @@ Global
 		{9420A360-3D66-4BB7-9F34-F9762AE07578} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{FF7314AB-B108-4109-943B-360992173850} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
