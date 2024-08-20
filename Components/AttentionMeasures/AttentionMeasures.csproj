@@ -16,6 +16,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Unity\Data\EyeTrackingData.cs" />
+    <Compile Remove="Unity\Data\EyeTrackingEvent.cs" />
+    <Compile Remove="Unity\Data\EyeTrackingTag.cs" />
+    <Compile Remove="Unity\Data\EyeTrackingTags.cs" />
+    <Compile Remove="Unity\Expoters\PsiExporterEyeTracking.cs" />
+    <Compile Remove="Unity\Expoters\PsiExporterEyeTrackingEvent.cs" />
+    <Compile Remove="Unity\Formats\PsiFormatEyeTracking.cs" />
+    <Compile Remove="Unity\Formats\PsiFormatEyeTrackingEvent.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Unity\Data\EyeTrackingData.cs" />
+    <None Include="Unity\Data\EyeTrackingEvent.cs" />
+    <None Include="Unity\Data\EyeTrackingTag.cs" />
+    <None Include="Unity\Data\EyeTrackingTags.cs" />
+    <None Include="Unity\Expoters\PsiExporterEyeTracking.cs" />
+    <None Include="Unity\Expoters\PsiExporterEyeTrackingEvent.cs" />
+    <None Include="Unity\Formats\PsiFormatEyeTracking.cs" />
+    <None Include="Unity\Formats\PsiFormatEyeTrackingEvent.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
   </ItemGroup>
   
