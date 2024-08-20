@@ -64,6 +64,7 @@ namespace SAAC.RendezVousPipelineServices
                     Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName);
                 else
                     Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName);
+                Dataset.AutoSave = true;
             }
             else
                 Dataset = null;
