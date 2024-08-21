@@ -24,7 +24,7 @@ public class PsiImporterPing : PsiImporter<System.DateTime>
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatDeserializer<System.DateTime> GetDeserializer()
     {
         return PsiFormatDateTime.GetFormat();

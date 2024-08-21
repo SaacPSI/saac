@@ -25,7 +25,7 @@ public class PsiImporterPosition : PsiImporter<System.Numerics.Vector3>
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatDeserializer<System.Numerics.Vector3> GetDeserializer()
     {
         return PsiFormatVector3.GetFormat(); 

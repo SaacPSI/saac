@@ -54,7 +54,7 @@ public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Microsoft.Psi.Imaging.Image> GetSerializer()
     {
         return PsiFormatImage.GetFormat();

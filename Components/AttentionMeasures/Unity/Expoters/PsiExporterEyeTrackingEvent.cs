@@ -16,7 +16,7 @@ public class PsiExporterEyeTrackingEvent : PsiExporter<EyeTrackingEvent>
         Out.Post(new EyeTrackingEvent(EyeTrackingEvent.EventType.EndingExperiment), GetCurrentTime());
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<EyeTrackingEvent> GetSerializer()
     {
         return PsiFormatEyeTrackingEvent.GetFormat();

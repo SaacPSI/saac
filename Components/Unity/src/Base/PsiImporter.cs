@@ -6,7 +6,7 @@ using Microsoft.Psi.Interop.Rendezvous;
 public abstract class IPsiImporter : MonoBehaviour
 {
     public abstract void ConnectionToImporter(RemoteImporter importer);
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     public abstract void ConnectionToTcpSource(Rendezvous.TcpSourceEndpoint source);
 #endif
 }
@@ -46,7 +46,7 @@ public abstract class PsiImporter<T> : IPsiImporter
         IsInitialized = true;
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     public override void ConnectionToTcpSource(Rendezvous.TcpSourceEndpoint source)
     {
         PsiManager.AddLog($"Connecting to stream {TopicName}");

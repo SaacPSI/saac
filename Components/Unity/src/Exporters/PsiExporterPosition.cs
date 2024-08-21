@@ -16,7 +16,7 @@ public class PsiExporterPosition
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<System.Numerics.Vector3> GetSerializer()
     { 
         return PsiFormatVector3.GetFormat();

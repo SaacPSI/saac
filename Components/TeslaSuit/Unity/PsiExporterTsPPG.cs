@@ -59,7 +59,7 @@ public class PsiExporterTsPPG : PsiExporter<List<ProcessedPpgNodeData>>
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<List<ProcessedPpgNodeData>> GetSerializer()
     {
         return PsiFormatTsPPG.GetFormat();

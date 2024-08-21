@@ -38,7 +38,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
             Out = PsiManager.GetPipeline().CreateEmitter<T>(this, TopicName);
             switch (ExportType)
             {
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
                 case PsiPipelineManager.ExportType.TCPWriter:
                     TcpWriter<T> tcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer());
                     Out.PipeTo(tcpWriter);
@@ -76,7 +76,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         return PsiManager.GetPipeline().GetCurrentTime();
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected abstract Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> GetSerializer();
 #endif
 }

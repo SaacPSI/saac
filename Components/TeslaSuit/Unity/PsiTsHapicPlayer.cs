@@ -152,7 +152,7 @@ public class PsiTsHapicPlayer : TsHapticPlayer
             PlayablehOut = PsiManager.GetPipeline().CreateEmitter<HapticPlayable>(this, PlaybleTopicName);
             switch (ExportType)
             {
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
                 case PsiPipelineManager.ExportType.TCPWriter:
                     TcpWriter<HapticParams> tcpWriterTouch = PsiManager.GetTcpWriter<HapticParams>(TouchTopicName, GetSerializerHapticParams());
                     TouchOut.PipeTo(tcpWriterTouch);
@@ -193,7 +193,7 @@ public class PsiTsHapicPlayer : TsHapticPlayer
         return PsiManager.GetPipeline().GetCurrentTime();
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected Microsoft.Psi.Interop.Serialization.IFormatSerializer<HapticParams> GetSerializerHapticParams()
     {
         return PsiFormatHapticParams.GetFormat();

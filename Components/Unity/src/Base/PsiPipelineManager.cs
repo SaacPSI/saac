@@ -24,7 +24,7 @@ public class PsiPipelineManager : MonoBehaviour
     public KnownSerializers Serializers { get; private set; }
 
     public enum ExportType {
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
         TCPWriter, 
 #endif
         LowFrequency, HighFrequency, Unknow };
@@ -81,7 +81,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         importerComponents.Add(streamName, component);
         // If subscriber is late.
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
         if (sourceEndpoint.ContainsKey(streamName))
             component.ConnectionToTcpSource(sourceEndpoint[streamName]);
 #endif
@@ -214,7 +214,7 @@ public class PsiPipelineManager : MonoBehaviour
     {
         foreach (var endpoint in process.Endpoints)
         {
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
             if (endpoint is Rendezvous.TcpSourceEndpoint tcpRemoteEndpoint)
             {
                 foreach (Rendezvous.Stream stream in tcpRemoteEndpoint.Streams)

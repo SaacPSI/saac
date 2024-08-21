@@ -27,7 +27,7 @@ public class PsiImageExporterAsStream : PsiExporter<byte[]>
         }
     }
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<byte[]> GetSerializer()
     {
         return PsiFormatBytes.GetFormat();
