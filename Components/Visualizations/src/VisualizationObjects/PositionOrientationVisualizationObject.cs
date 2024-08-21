@@ -68,7 +68,6 @@ namespace SAAC.Visualizations
         /// <summary>
         /// Gets the skeleton visualization object for the body.
         /// </summary>
-        [ExpandableObject]
         [DataMember]
         [PropertyOrder(4)]
         [DisplayName("ReverseYZ")]
@@ -109,22 +108,8 @@ namespace SAAC.Visualizations
         {
             if (this.CurrentData != null)
             {
-                MathNet.Spatial.Euclidean.Point3D origin;
-                MathNet.Spatial.Euclidean.CoordinateSystem rot;
-                if (ReverseYZ)
-                {
-                    origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Z, this.CurrentData.Item1.Y);
-                    rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X),
-                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y),
-                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
-                }
-                else
-                {
-                    origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Y, this.CurrentData.Item1.Z);
-                    rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X),
-                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y),
-                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
-                }
+                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, ReverseYZ ? this.CurrentData.Item1.Z : this.CurrentData.Item1.Y, ReverseYZ ? this.CurrentData.Item1.Y : this.CurrentData.Item1.Z);
+                MathNet.Spatial.Euclidean.CoordinateSystem rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X), MathNet.Spatial.Units.Angle.FromDegrees(ReverseYZ ? this.CurrentData.Item2.Z : this.CurrentData.Item2.Y), MathNet.Spatial.Units.Angle.FromDegrees(ReverseYZ ? this.CurrentData.Item2.Y : this.CurrentData.Item2.Z));
                 MathNet.Spatial.Euclidean.CoordinateSystem newValue = new MathNet.Spatial.Euclidean.CoordinateSystem(origin, rot.XAxis, rot.YAxis, rot.ZAxis);
                 this.System.SetCurrentValue(this.SynthesizeMessage(newValue));
             }
@@ -135,7 +120,7 @@ namespace SAAC.Visualizations
             if (this.CurrentData != null)
             {
                 var origin = this.CurrentData.Item1;
-                var pos = new Win3D.Point3D(origin.X, origin.Z, origin.Y + (this.BillboardHeightCm / 100.0));
+                var pos = new Win3D.Point3D(origin.X, ReverseYZ ? origin.Z : origin.Y, (ReverseYZ ? origin.Y : origin.Z) + (this.BillboardHeightCm / 100.0));
                 this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"{SourceStreamName}")));
             }
         }
