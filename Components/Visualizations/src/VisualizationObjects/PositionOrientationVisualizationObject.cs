@@ -64,6 +64,17 @@ namespace SAAC.Visualizations
         [Description("The representation object.")]
         public CoordinateSystemVisualizationObject System { get; set; }
 
+
+        /// <summary>
+        /// Gets the skeleton visualization object for the body.
+        /// </summary>
+        [ExpandableObject]
+        [DataMember]
+        [PropertyOrder(4)]
+        [DisplayName("ReverseYZ")]
+        [Description("Reverse Y & Z axes.")]
+        public bool ReverseYZ { get; set; }
+
         /// <inheritdoc/>
         public override void UpdateVisual3D()
         {
@@ -98,8 +109,22 @@ namespace SAAC.Visualizations
         {
             if (this.CurrentData != null)
             {
-                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Z, this.CurrentData.Item1.Y);
-                MathNet.Spatial.Euclidean.CoordinateSystem rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X), MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y), MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
+                MathNet.Spatial.Euclidean.Point3D origin;
+                MathNet.Spatial.Euclidean.CoordinateSystem rot;
+                if (ReverseYZ)
+                {
+                    origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Z, this.CurrentData.Item1.Y);
+                    rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X),
+                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y),
+                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
+                }
+                else
+                {
+                    origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.CurrentData.Item1.Y, this.CurrentData.Item1.Z);
+                    rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X),
+                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Y),
+                                                                                                                    MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.Z));
+                }
                 MathNet.Spatial.Euclidean.CoordinateSystem newValue = new MathNet.Spatial.Euclidean.CoordinateSystem(origin, rot.XAxis, rot.YAxis, rot.ZAxis);
                 this.System.SetCurrentValue(this.SynthesizeMessage(newValue));
             }
