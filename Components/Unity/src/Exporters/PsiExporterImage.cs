@@ -50,11 +50,11 @@ public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
             Microsoft.Psi.Imaging.Image image = new Microsoft.Psi.Imaging.Image(Screen.width, Screen.height, PixelFormat.BGRA_32bpp);
  
             if (image != null)
-                Out.Post(image, Timestamp);
+                Out.Post(image, GetCurrentTime());
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Microsoft.Psi.Imaging.Image> GetSerializer()
     {
         return PsiFormatImage.GetFormat();

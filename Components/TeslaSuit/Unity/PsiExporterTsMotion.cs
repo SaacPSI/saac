@@ -132,7 +132,7 @@ public class PsiExporterTsMotion : PsiExporter<Dictionary<TsHumanBoneIndex, Syst
     }
 
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>> GetSerializer()
     {
         return PsiFormatTsMotion.GetFormat();

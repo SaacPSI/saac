@@ -1,31 +1,26 @@
 using UnityEngine;
 using Microsoft.Psi;
 using System;
-using System.Net.Sockets;
-using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Components;
+using Microsoft.Psi.Interop.Transport;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
     public string TopicName = "Topic";
     public float DataPerSecond = 0.0f;
 
-#if !PLATFORM_ANDROID
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
-#endif
-    
+
+    protected PsiPipelineManager PsiManager;
     public Emitter<T> Out { get; private set; }
     public bool IsInitialized { get; private set; } = false;
 
-    protected PsiPipelineManager PsiManager;
     protected float DataTime;
     protected DateTime Timestamp = DateTime.UtcNow;
 
     // Start is called before the first frame update
     public virtual void Start()
     {
-        Out = null;
         DataTime = DataPerSecond == 0.0f ? 0.0f : 1.0f / DataPerSecond;
         PsiManager = GameObject.FindAnyObjectByType<PsiPipelineManager>();
         if (PsiManager == null)
@@ -41,15 +36,23 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         try
         {
             Out = PsiManager.GetPipeline().CreateEmitter<T>(this, TopicName);
-#if PLATFORM_ANDROID
-            TcpWriter<T> tcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer());
-            Out.PipeTo(tcpWriter);
-#else
-            RemoteExporter exporter;
-            PsiManager.GetRemoteExporter(ExportType, out exporter);
-            exporter.Exporter.Write(Out, TopicName);
-            PsiManager.RegisterExporter(ref exporter);
+            switch (ExportType)
+            {
+#if PSI_TCP_SOURCE
+                case PsiPipelineManager.ExportType.TCPWriter:
+                    TcpWriter<T> tcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer());
+                    Out.PipeTo(tcpWriter);
+                    break;
 #endif
+                default:
+                    {
+                        RemoteExporter exporter;
+                        PsiManager.GetRemoteExporter(ExportType, out exporter);
+                        exporter.Exporter.Write(Out, TopicName);
+                        PsiManager.RegisterExporter(ref exporter);
+                    }
+                    break;
+            }
             IsInitialized = true;
         }
         catch (Exception e)
@@ -73,7 +76,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         return PsiManager.GetPipeline().GetCurrentTime();
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected abstract Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> GetSerializer();
 #endif
 }

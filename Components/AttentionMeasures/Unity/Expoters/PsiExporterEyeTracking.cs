@@ -171,7 +171,7 @@ public class PsiExporterEyeTracking : PsiExporter<Dictionary<ETData, IEyeTrackin
     }
 
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Dictionary<ETData, IEyeTracking>> GetSerializer()
     {
         return PsiFormatEyeTracking.GetFormat();

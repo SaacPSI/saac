@@ -59,7 +59,7 @@ public class PsiExporterTsPPG : PsiExporter<List<ProcessedPpgNodeData>>
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<List<ProcessedPpgNodeData>> GetSerializer()
     {
         return PsiFormatTsPPG.GetFormat();

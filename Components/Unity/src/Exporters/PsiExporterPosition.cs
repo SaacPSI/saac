@@ -11,12 +11,12 @@ public class PsiExporterPosition
         var position = gameObject.transform.position;
         if (CanSend() && position != PreviousPosition)
         {
-            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), Timestamp);
+            Out.Post(new System.Numerics.Vector3(position.x, position.y, position.z), GetCurrentTime());
             PreviousPosition = position;
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<System.Numerics.Vector3> GetSerializer()
     { 
         return PsiFormatVector3.GetFormat();

@@ -1,10 +1,12 @@
 using Microsoft.Psi;
 using Microsoft.Psi.Common;
 using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Serialization;
 using System;
 using TsAPI.Types;
 using TsSDK;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public struct HapticParams
@@ -59,6 +61,7 @@ public class PsiTsHapicPlayer : TsHapticPlayer
     public string TouchTopicName = "HapticTouch";
     public string PlaybleTopicName = "HapticPlayable";
     public float DataPerSecond = 0.0f;
+    public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
 
     protected PsiPipelineManager PsiManager;
     public Emitter<HapticParams> TouchOut { get; private set; }
@@ -147,19 +150,26 @@ public class PsiTsHapicPlayer : TsHapticPlayer
         {
             TouchOut = PsiManager.GetPipeline().CreateEmitter<HapticParams>(this, TouchTopicName);
             PlayablehOut = PsiManager.GetPipeline().CreateEmitter<HapticPlayable>(this, PlaybleTopicName);
-#if PLATFORM_ANDROID
-            TcpWriter<HapticParams> tcpWriterTouch = PsiManager.GetTcpWriter<HapticParams>(TouchTopicName, GetSerializerHapticParams());
-            TouchOut.PipeTo(tcpWriterTouch);
-
-            TcpWriter<HapticPlayable> tcpWriterPlayable = PsiManager.GetTcpWriter<HapticPlayable>(PlaybleTopicName, GetSerializerHapticPlayable());
-            PlayablehOut.PipeTo(tcpWriterPlayable);
-#else
-            RemoteExporter exporter;
-            PsiManager.GetRemoteExporter(ExportType, out exporter);
-            exporter.Exporter.Write(TouchOut, TouchTopicName);
-            exporter.Exporter.Write(PlayablehOut, PlaybleTopicName);
-            PsiManager.RegisterExporter(ref exporter);
+            switch (ExportType)
+            {
+#if PSI_TCP_SOURCE
+                case PsiPipelineManager.ExportType.TCPWriter:
+                    TcpWriter<HapticParams> tcpWriterTouch = PsiManager.GetTcpWriter<HapticParams>(TouchTopicName, GetSerializerHapticParams());
+                    TouchOut.PipeTo(tcpWriterTouch);
+                    TcpWriter<HapticPlayable> tcpWriterPlayable = PsiManager.GetTcpWriter<HapticPlayable>(PlaybleTopicName, GetSerializerHapticPlayable());
+                    PlayablehOut.PipeTo(tcpWriterPlayable);
+                    break;
 #endif
+                default:
+                    {
+                        RemoteExporter exporter;
+                        PsiManager.GetRemoteExporter(ExportType, out exporter);
+                        exporter.Exporter.Write(TouchOut, TouchTopicName);
+                        exporter.Exporter.Write(PlayablehOut, PlaybleTopicName);
+                        PsiManager.RegisterExporter(ref exporter);
+                    }
+                    break;
+            }
             IsInitialized = true;
         }
         catch (Exception e)
@@ -183,8 +193,7 @@ public class PsiTsHapicPlayer : TsHapticPlayer
         return PsiManager.GetPipeline().GetCurrentTime();
     }
 
-
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected Microsoft.Psi.Interop.Serialization.IFormatSerializer<HapticParams> GetSerializerHapticParams()
     {
         return PsiFormatHapticParams.GetFormat();

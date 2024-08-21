@@ -22,12 +22,12 @@ public class PsiImageExporterAsStream : PsiExporter<byte[]>
             CameraTexture2D.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
             CameraTexture2D.Apply();
             RenderTexture.active = null;
-            Out.Post(CameraTexture2D.EncodeToJPG(JpegEncodingLevel), Timestamp);
+            Out.Post(CameraTexture2D.EncodeToJPG(JpegEncodingLevel), GetCurrentTime());
 
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<byte[]> GetSerializer()
     {
         return PsiFormatBytes.GetFormat();

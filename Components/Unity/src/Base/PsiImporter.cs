@@ -2,10 +2,16 @@ using UnityEngine;
 using Microsoft.Psi;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Interop.Rendezvous;
-using System;
-using Microsoft.Psi.Data;
 
-public abstract class PsiImporter<T> : MonoBehaviour
+public abstract class IPsiImporter : MonoBehaviour
+{
+    public abstract void ConnectionToImporter(RemoteImporter importer);
+#if PSI_TCP_SOURCE
+    public abstract void ConnectionToTcpSource(Rendezvous.TcpSourceEndpoint source);
+#endif
+}
+
+public abstract class PsiImporter<T> : IPsiImporter
 {
     public string TopicName = "Topic";
     protected bool IsInitialized = false;
@@ -21,19 +27,12 @@ public abstract class PsiImporter<T> : MonoBehaviour
             Debug.LogError("Could not found PsiPipelineManager script ! Have you put it in your scene ?");
             return;
         }
-#if PLATFORM_ANDROID
-        PsiPipelineManager.ConnectToSourceEndPoint ConnectionDelegate = ConnectionToTcpSource;
-        PsiManager.RegisterComponentImporter(TopicName, ConnectionToTcpSource);
-#else
-        PsiPipelineManager.ConnectToImporterEndPoint ConnectionDelegate = ConnectionToImporter;
-        PsiManager.RegisterComponentImporter(TopicName, ConnectionToImporter);
-#endif
+        PsiManager.RegisterComponentImporter(TopicName, this);
     }
 
     protected abstract void Process(T message, Envelope enveloppe);
 
-#if !PLATFORM_ANDROID
-    void ConnectionToImporter(RemoteImporter importer)
+    public override void ConnectionToImporter(RemoteImporter importer)
     {
         PsiManager.AddLog($"Connecting to stream {TopicName}");
         if (importer.Connected.WaitOne(1000) == false)
@@ -47,9 +46,8 @@ public abstract class PsiImporter<T> : MonoBehaviour
         IsInitialized = true;
     }
 
-#else
-
-    void ConnectionToTcpSource(Rendezvous.TcpSourceEndpoint source)
+#if PSI_TCP_SOURCE
+    public override void ConnectionToTcpSource(Rendezvous.TcpSourceEndpoint source)
     {
         PsiManager.AddLog($"Connecting to stream {TopicName}");
         var stream = source.ToTcpSource<T>(PsiManager.GetPipeline(), GetDeserializer(), null, true, TopicName);

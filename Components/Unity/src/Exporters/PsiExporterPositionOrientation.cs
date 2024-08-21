@@ -15,11 +15,11 @@ public class PsiExporterPositionOrientation
         {
             Out.Post(new Tuple<System.Numerics.Vector3, System.Numerics.Vector3>(new System.Numerics.Vector3(position.x, position.y, position.z), new System.Numerics.Vector3(orientation.x, orientation.y, orientation.z)), Timestamp);
             PreviousPosition = position;
-            PreviousOrientation = orientation;
+            PreviousOrientation = orientation; 
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetSerializer()
     {
         return PsiFormatPositionOrientation.GetFormat();

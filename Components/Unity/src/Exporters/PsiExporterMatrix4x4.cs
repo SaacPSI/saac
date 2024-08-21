@@ -19,7 +19,7 @@ public class PsiExporterMatrix4x4: PsiExporter<System.Numerics.Matrix4x4>
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<System.Numerics.Matrix4x4> GetSerializer()
     {
         return PsiFormatMatrix4x4.GetFormat();

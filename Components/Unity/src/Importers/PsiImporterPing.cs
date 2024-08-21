@@ -24,7 +24,7 @@ public class PsiImporterPing : PsiImporter<System.DateTime>
         }
     }
 
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatDeserializer<System.DateTime> GetDeserializer()
     {
         return PsiFormatDateTime.GetFormat();

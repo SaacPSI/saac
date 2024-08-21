@@ -16,10 +16,7 @@ public class PsiExporterEyeTrackingEvent : PsiExporter<EyeTrackingEvent>
         Out.Post(new EyeTrackingEvent(EyeTrackingEvent.EventType.EndingExperiment), GetCurrentTime());
     }
 
-
-
-
-#if PLATFORM_ANDROID
+#if PSI_TCP_SOURCE
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<EyeTrackingEvent> GetSerializer()
     {
         return PsiFormatEyeTrackingEvent.GetFormat();
