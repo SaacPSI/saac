@@ -61,10 +61,12 @@ namespace SAAC.RendezVousPipelineServices
             if (this.Configuration.DatasetName.Length > 4)
             {
                 if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
-                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName);
+                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
                 else
-                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName);
-                Dataset.AutoSave = true;
+                { 
+                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
+                    Dataset.Save(); // throw exception here if the path is not correct
+                }   
             }
             else
                 Dataset = null;
@@ -363,7 +365,7 @@ namespace SAAC.RendezVousPipelineServices
                         if (stream.StreamName == CommandProcessName)
                         {
                             Subpipeline commandSubPipeline = new Subpipeline(pipeline, process.Name);
-                            var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
+                            var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
                             p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             if (this.Configuration.AutomaticPipelineRun)
