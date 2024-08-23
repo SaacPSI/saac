@@ -15,6 +15,7 @@ In **Unity** folder :
 * [Psi Format Ts Motion](Unity/PsiFormatTsMotion.cs)
 * [Psi Format Ts P P G](Unity/PsiFormatTsPPG.cs)
 * [Psi Format Ts Raw P P G](Unity/PsiFormatTsRawPPG.cs)
+* [Psi Importer Haptic Params](Unity/PsiImporterHapticParams.cs) importer to create touch from \\psi
 
 In **src** folder:
 * [Psi Format Hapic Params](src/Formats/PsiFormatHapicParams.cs)
@@ -28,4 +29,3 @@ In **src** folder:
 ## Curent issues
 
 ## Future works
-* Integrate haptics activation from \\psi.

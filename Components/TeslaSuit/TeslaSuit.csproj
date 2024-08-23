@@ -23,6 +23,7 @@
     <Compile Remove="Unity\PsiFormatTsMotion.cs" />
     <Compile Remove="Unity\PsiFormatTsPPG.cs" />
     <Compile Remove="Unity\PsiFormatTsRawPPG.cs" />
+    <Compile Remove="Unity\PsiImporterHapticParams.cs" />
     <Compile Remove="Unity\PsiTsHapicPlayer.cs" />
   </ItemGroup>
 
@@ -35,6 +36,7 @@
     <None Include="Unity\PsiFormatTsMotion.cs" />
     <None Include="Unity\PsiFormatTsPPG.cs" />
     <None Include="Unity\PsiFormatTsRawPPG.cs" />
+    <None Include="Unity\PsiImporterHapticParams.cs" />
     <None Include="Unity\PsiTsHapicPlayer.cs" />
   </ItemGroup>
 
