@@ -13,6 +13,7 @@ Project handling network connections with automatic storing data stream to store
 * [Rendez Vous Pipeline](src/RendezVousPipeline.cs)  class that handle RendezVous process, stores and subpipelines.
 * [Rendez Vous Pipeline Configuration](src/RendezVousPipelineConfiguration.cs) configuration class for RendezVousPipeline.
 * [Pipe To Message](src/Helpers/PipeToMessage.cs) transform pipeline data stream to message forwarded to the delegate given.
+* [Dataset Loader](src/Helpers/DatasetLoader.cs) handle dataset and create ConnectorInfo for each stream.
 
 In **Formats** folder:
 * [I Format](src/Formats/IFormat.cs) interface for (de)serialization classes.
