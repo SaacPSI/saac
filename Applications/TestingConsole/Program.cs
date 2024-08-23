@@ -520,23 +520,23 @@ namespace TestingConsole
 
         static void Main(string[] args)
         {
-            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
-            configuration.Debug = true;
-            //configuration.Diagnostics = DiagnosticsMode.Store;
-            configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
-            configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "192.168.56.1";
+            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            //configuration.AutomaticPipelineRun = true;
+            //configuration.Debug = true;
+            ////configuration.Diagnostics = DiagnosticsMode.Store;
+            //configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
+            //configuration.DatasetName = "RendezVousPipeline.pds";
+            //configuration.RendezVousHost = "192.168.56.1";
 
-            configuration.AddTopicFormatAndTransformer("PPG", typeof(List<TsSDK.ProcessedPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsPPG());
-            configuration.AddTopicFormatAndTransformer("RawPPG", typeof(List<TsSDK.RawPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsRawPPG());
-            configuration.AddTopicFormatAndTransformer("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
-            configuration.AddTopicFormatAndTransformer("HapticPlayable", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
-            configuration.AddTopicFormatAndTransformer("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion(), typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
+            //configuration.AddTopicFormatAndTransformer("PPG", typeof(List<TsSDK.ProcessedPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsPPG());
+            //configuration.AddTopicFormatAndTransformer("RawPPG", typeof(List<TsSDK.RawPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsRawPPG());
+            //configuration.AddTopicFormatAndTransformer("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
+            //configuration.AddTopicFormatAndTransformer("HapticPlayable", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
+            //configuration.AddTopicFormatAndTransformer("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion(), typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
 
-            configuration.StoreMode = StoreMode.Dictionnary;
-            configuration.StreamToStore.Add("HapticTouch", "%p-Haptic");
-            configuration.StreamToStore.Add("HapticPlayable", "%p-Haptic");
+            //configuration.StoreMode = StoreMode.Dictionnary;
+            //configuration.StreamToStore.Add("HapticTouch", "%p-Haptic");
+            //configuration.StreamToStore.Add("HapticPlayable", "%p-Haptic");
 
             //configuration.NotStoredTopics.Add("Image");
             //configuration.TopicsTypes.Add("Image", typeof(byte[]));
@@ -559,7 +559,7 @@ namespace TestingConsole
             //configuration.StreamToStore.Add("PositionRight", "Positions");
 
             //configuration.CommandDelegate = CommandDel;
-            RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+            //RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
             //pipeline.NewProcess += OnNewProcess;
 
@@ -573,11 +573,12 @@ namespace TestingConsole
             //configKinect.RendezVousApplicationName = "KinectStreaming";
             //KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
 
-            pipeline.Start();
+            //pipeline.Start();
 
             // // Enabling diagnotstics !!!
-            // Pipeline p = Pipeline.Create(enableDiagnostics: false);
-
+            Pipeline p = Pipeline.Create(enableDiagnostics: false);
+            DatasetLoader loader = new DatasetLoader(p);
+            loader.Load(@"F:\Stores\RendezVousPipeline\RendezVousPipeline.pds");
             // //FullWebRTC(p);
             // //UnityDemo(p);
             // //OpenFace(p);
@@ -603,7 +604,7 @@ namespace TestingConsole
             // // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
-            pipeline.Stop();
+           // pipeline.Stop();
             //// Stop correctly the pipeline.
             //p.Dispose();
         }
