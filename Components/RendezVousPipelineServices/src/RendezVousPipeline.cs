@@ -13,7 +13,7 @@ using Microsoft.Psi.Diagnostics;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class RendezVousPipeline
+    public class RendezVousPipeline : ConnectorsAndStoresCreator
     {
         public const string ClockSynchProcessName = "ClockSynch";
         public const string DiagnosticsProcessName = "Diagnostics";
@@ -25,17 +25,15 @@ namespace SAAC.RendezVousPipelineServices
         public enum Command { Initialize, Run, Stop, Restart, Close, Status };
 
         public Dataset? Dataset { get; private set; }
-        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
-        public Dictionary<string, Dictionary<string, PsiExporter>> Stores { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public delegate void LogStatus(string log);
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
 
-        protected List<string> processNames;
-        protected LogStatus log;
+        protected List<string> processNames; 
         protected Pipeline pipeline;
+        protected LogStatus log;
         protected bool isStarted;
         protected bool isPipelineRunning;
         protected string name;
@@ -50,10 +48,8 @@ namespace SAAC.RendezVousPipelineServices
             this.name = name;
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
             this.log = log ?? ((log) => { Console.WriteLine(log); });
-            pipeline = Pipeline.Create(enableDiagnostics: this.Configuration.Diagnostics != DiagnosticsMode.Off);
-            Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
-            Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
             commandFormat = new PsiFormatCommand();
+            pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             CommandEmitter = pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
             processNames = new List<string>();
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort == 0)
@@ -66,7 +62,8 @@ namespace SAAC.RendezVousPipelineServices
                 { 
                     Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
                     Dataset.Save(); // throw exception here if the path is not correct
-                }   
+                }
+                StorePath = this.Configuration.DatasetPath;
             }
             else
                 Dataset = null;
@@ -184,32 +181,6 @@ namespace SAAC.RendezVousPipelineServices
                 case SessionNamingMode.Increment:
                 default:
                     return CreateIterativeSession(Configuration.SessionName + sessionName);
-            }
-        }
-
-        public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam = true)
-        {
-            if (!Connectors.ContainsKey(storeName))
-                Connectors.Add(storeName, new Dictionary<string, ConnectorInfo>());
-            Connectors[storeName].Add(streamName, new ConnectorInfo(streamName, storeName, session == null ? "" : session.Name, type, stream));
-            if (storeSteam && session != null)
-                CreateStore(p, session, streamName, storeName, stream);
-        }
-
-        public void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
-        {
-            if (Stores.ContainsKey(session.Name) && Stores[session.Name].ContainsKey(storeName))
-            {
-                Stores[session.Name][storeName].Write(source, streamName);
-            }
-            else
-            {
-                PsiExporter store = PsiStore.Create(pipeline, storeName, $"{Configuration.DatasetPath}/{session.Name}/");
-                store.Write(source, streamName);
-                session.AddPartitionFromPsiStoreAsync(storeName, $"{Configuration.DatasetPath}/{session.Name}/");
-                if (!Stores.ContainsKey(session.Name))
-                    Stores.Add(session.Name, new Dictionary<string, PsiExporter>());
-                Stores[session.Name].Add(storeName, store);
             }
         }
 

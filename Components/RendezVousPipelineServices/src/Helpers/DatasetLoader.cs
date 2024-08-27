@@ -5,10 +5,10 @@ namespace SAAC.RendezVousPipelineServices
 {
     public class DatasetLoader
     {
-        public Dictionary<string, Dictionary<string, PsiImporter>> Stores { get; private set; }
-        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; private set; }
+        public Dictionary<string, Dictionary<string, PsiImporter>> Stores { get; protected set; }
+        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; protected set; }
 
-        private Pipeline pipeline;
+        protected Pipeline? pipeline;
 
         public DatasetLoader(Pipeline pipeline)
         {
@@ -24,7 +24,7 @@ namespace SAAC.RendezVousPipelineServices
 
         public bool Load(Dataset dataset, string? sessionName = null)
         {
-            bool isGood = true; 
+            bool isGood = true;
             foreach (Session session in dataset.Sessions)
             {
                 if(sessionName != null && session.Name != sessionName)
@@ -50,9 +50,10 @@ namespace SAAC.RendezVousPipelineServices
                 }
                 else
                     store = Stores[session.Name][streamMetadata.StoreName];
-                if (!Connectors.ContainsKey(session.Name))
-                    Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
-                Connectors[session.Name].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, Type.GetType(streamMetadata.TypeName), store.OpenDynamicStream(streamMetadata.Name)));
+                if (!Connectors.ContainsKey(streamMetadata.StoreName))
+                    Connectors.Add(streamMetadata.StoreName, new Dictionary<string, ConnectorInfo>());
+                Type producedType = Type.GetType(streamMetadata.TypeName);
+                Connectors[streamMetadata.StoreName].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(store, [streamMetadata.Name, null, null])));
             }
             catch (Exception ex)
             {

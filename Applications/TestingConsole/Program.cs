@@ -578,7 +578,10 @@ namespace TestingConsole
             // // Enabling diagnotstics !!!
             Pipeline p = Pipeline.Create(enableDiagnostics: false);
             DatasetLoader loader = new DatasetLoader(p);
-            loader.Load(@"F:\Stores\RendezVousPipeline\RendezVousPipeline.pds");
+            loader.Load(@"F:\Stores\RendezVousPipeline\RendezVousPipeline.pds", "Unity.000");
+
+            var prod = loader.Connectors["Unity-PPG"]["PPG"].CreateBridge<TsSDK.ProcessedPpgNodeData> (p);
+
             // //FullWebRTC(p);
             // //UnityDemo(p);
             // //OpenFace(p);
