@@ -520,97 +520,23 @@ namespace TestingConsole
 
         static void Main(string[] args)
         {
-            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            //configuration.AutomaticPipelineRun = true;
-            //configuration.Debug = true;
-            ////configuration.Diagnostics = DiagnosticsMode.Store;
-            //configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
-            //configuration.DatasetName = "RendezVousPipeline.pds";
-            //configuration.RendezVousHost = "192.168.56.1";
+            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            configuration.AutomaticPipelineRun = true;
+            configuration.Debug = true;
+            //configuration.Diagnostics = DiagnosticsMode.Store;
+            configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
+            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.RendezVousHost = "127.0.0.1";
 
-            //configuration.AddTopicFormatAndTransformer("PPG", typeof(List<TsSDK.ProcessedPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsPPG());
-            //configuration.AddTopicFormatAndTransformer("RawPPG", typeof(List<TsSDK.RawPpgNodeData>), new SAAC.TeslaSuit.PsiFormatTsRawPPG());
-            //configuration.AddTopicFormatAndTransformer("HapticTouch", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
-            //configuration.AddTopicFormatAndTransformer("HapticPlayable", typeof(SAAC.TeslaSuit.HapticParams), new SAAC.TeslaSuit.PsiFormatHapticParams());
-            //configuration.AddTopicFormatAndTransformer("Mocap", typeof(Dictionary<TsAPI.Types.TsHumanBoneIndex, System.Numerics.Matrix4x4>), new SAAC.TeslaSuit.PsiFormatTsMotion(), typeof(SAAC.Bodies.TsMotionToSimplifiedBody));
+            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+           
+            RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+            pipeline.Start();
 
-            //configuration.StoreMode = StoreMode.Dictionnary;
-            //configuration.StreamToStore.Add("HapticTouch", "%p-Haptic");
-            //configuration.StreamToStore.Add("HapticPlayable", "%p-Haptic");
-
-            //configuration.NotStoredTopics.Add("Image");
-            //configuration.TopicsTypes.Add("Image", typeof(byte[]));
-            //configuration.TopicsTypes.Add("Time", typeof(DateTime));
-            //configuration.TypesSerializers.Add(typeof(DateTime), new PsiFormatDateTime());
-            //for (int i = 0; i < 50; i++)
-            //{
-            //    configuration.TopicsTypes.Add($"Cube-{i}", typeof(System.Numerics.Matrix4x4));
-            //    configuration.TopicsTypes.Add($"Time-{i}", typeof(DateTime));
-            //}
-            //configuration.TopicsTypes.Add("Head", typeof(System.Numerics.Matrix4x4));
-            //configuration.TopicsTypes.Add("PositionLeft", typeof(System.Numerics.Matrix4x4));
-            //configuration.TopicsTypes.Add("PositionRight", typeof(System.Numerics.Matrix4x4));
-            //configuration.Transformers.Add("Image", typeof(BytesStreamToImage));
-            //configuration.Transformers.Add("Head", typeof(MatrixToCoordinateSystem));
-            //configuration.Transformers.Add("PositionLeft", typeof(MatrixToCoordinateSystem));
-            //configuration.Transformers.Add("PositionRight", typeof(MatrixToCoordinateSystem));
-            //configuration.StoreMode = StoreMode.Independant;
-            //configuration.StreamToStore.Add("PositionLeft", "Positions");
-            //configuration.StreamToStore.Add("PositionRight", "Positions");
-
-            //configuration.CommandDelegate = CommandDel;
-            //RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
-
-            //pipeline.NewProcess += OnNewProcess;
-
-            //var p = pipeline.CreateSubpipeline();
-            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            //timer1.Do((d, e) => {
-            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
-            //});
-
-            //SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration configKinect = new SAAC.RemoteConnectors.KinectAzureRemoteConnectorConfiguration();
-            //configKinect.RendezVousApplicationName = "KinectStreaming";
-            //KinectAzureRemoteComponent kinect = new KinectAzureRemoteComponent(pipeline,pipeline.CreateSubpipeline("Kinect"), configKinect);
-
-            //pipeline.Start();
-
-            // // Enabling diagnotstics !!!
-            Pipeline p = Pipeline.Create(enableDiagnostics: false);
-            DatasetLoader loader = new DatasetLoader(p);
-            loader.Load(@"F:\Stores\RendezVousPipeline\RendezVousPipeline.pds", "Unity.000");
-
-            var prod = loader.Connectors["Unity-PPG"]["PPG"].CreateBridge<TsSDK.ProcessedPpgNodeData> (p);
-
-            // //FullWebRTC(p);
-            // //UnityDemo(p);
-            // //OpenFace(p);
-            // //testBodies(p);
-            // //testOllama(p);
-            // Quest2Demo(p);
-            // try { 
-            // // RunAsync the pipeline in non-blocking mode.
-            // p.RunAsync(ReplayDescriptor.ReplayAll);
-
-            // }
-            // catch(Exception ex)
-            // {
-            //     Console.WriteLine(ex.Message);
-            // }
-            //Console.WriteLine("Press to command AddProcess.");
-            //Console.ReadLine();
-            //pipeline.CommandEmitter.Post((Command.Initialize, "Unity"), DateTime.UtcNow);
-            //Console.WriteLine("Press to command run.");
-            //Console.ReadLine();
-            //pipeline.CommandEmitter.Post((Command.Run, ""), DateTime.UtcNow);
-
-            // // Waiting for an out key
+            // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
-           // pipeline.Stop();
-            //// Stop correctly the pipeline.
-            //p.Dispose();
+            pipeline.Stop();
         }
-
     }
 }

@@ -429,7 +429,7 @@ namespace SAAC.RendezVousPipelineServices
                 log($"SubPipeline {process.Name} started.");
                 TriggerNewProcessEvent(process.Name);
             }
-            Dataset?.Save();
+            //Dataset?.Save();
         }
 
         protected void Connection<T>(string streamName, string processName, Session? session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
