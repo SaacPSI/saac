@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B28D807F-13D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Importers", "Importers", "{64BC8755-826A-4608-8729-9FB9E2DC16BC}"
 	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Importers\PsiImporterListOfSimplifiedBody.cs = Components\Unity\src\Importers\PsiImporterListOfSimplifiedBody.cs
 		Components\Unity\src\Importers\PsiImporterPing.cs = Components\Unity\src\Importers\PsiImporterPing.cs
 		Components\Unity\src\Importers\PsiImporterPosition.cs = Components\Unity\src\Importers\PsiImporterPosition.cs
 	EndProjectSection
@@ -81,6 +82,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Formats", "Formats", "{EB4D
 		Components\Unity\src\Formats\PsiFormatDateTime.cs = Components\Unity\src\Formats\PsiFormatDateTime.cs
 		Components\Unity\src\Formats\PsiFormatImage.cs = Components\Unity\src\Formats\PsiFormatImage.cs
 		Components\Unity\src\Formats\PsiFormatInteger.cs = Components\Unity\src\Formats\PsiFormatInteger.cs
+		PsiFormatListOfSimplifiedBody.cs = PsiFormatListOfSimplifiedBody.cs
 		Components\Unity\src\Formats\PsiFormatMatrix4x4.cs = Components\Unity\src\Formats\PsiFormatMatrix4x4.cs
 		Components\Unity\src\Formats\PsiFormatPositionOrientation.cs = Components\Unity\src\Formats\PsiFormatPositionOrientation.cs
 		Components\Unity\src\Formats\PsiFormatString.cs = Components\Unity\src\Formats\PsiFormatString.cs
@@ -108,6 +110,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TeslaSuit", "Components\TeslaSuit\TeslaSuit.csproj", "{FF7314AB-B108-4109-943B-360992173850}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AttentionMeasures", "Components\AttentionMeasures\AttentionMeasures.csproj", "{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BodiesRemoteServices", "Components\BodiesRemoteServices\BodiesRemoteServices.csproj", "{447B087C-B1E7-4558-9546-E036632440DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -317,6 +321,14 @@ Global
 		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|Any CPU.Build.0 = Release|x64
 		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|x64.ActiveCfg = Release|x64
 		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F}.Release|x64.Build.0 = Release|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Debug|Any CPU.Build.0 = Debug|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Debug|x64.ActiveCfg = Debug|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Debug|x64.Build.0 = Debug|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Release|Any CPU.ActiveCfg = Release|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Release|Any CPU.Build.0 = Release|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Release|x64.ActiveCfg = Release|x64
+		{447B087C-B1E7-4558-9546-E036632440DE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -354,6 +366,7 @@ Global
 		{F4550663-C436-487A-9F3E-1F5EB7E74C6C} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{FF7314AB-B108-4109-943B-360992173850} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{447B087C-B1E7-4558-9546-E036632440DE} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

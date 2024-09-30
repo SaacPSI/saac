@@ -24,11 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Components\BodiesRemoteServices\BodiesRemoteServices.csproj" />
     <ProjectReference Include="..\..\Components\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
-    <ProjectReference Include="..\..\Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj" />
+    <ProjectReference Include="..\..\Components\Nuitrack\Nuitrack.csproj" />
     <ProjectReference Include="..\..\Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj" />
-    <ProjectReference Include="..\..\Components\TeslaSuit\TeslaSuit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

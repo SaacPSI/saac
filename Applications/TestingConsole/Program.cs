@@ -20,9 +20,11 @@ using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
 using SAAC.RendezVousPipelineServices;
 using SAAC.Helpers;
+using SAAC.Nuitrack;
 using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
-using SAAC.KinectAzureRemoteServices;
+//using SAAC.KinectAzureRemoteServices;
 using static Emgu.CV.VideoCapture;
+using SAAC.Bodies;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -487,31 +489,59 @@ namespace TestingConsole
 
         //}
 
-        private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
-        {
-            RendezVousPipeline? parent = sender as RendezVousPipeline;
-            if (parent == null)
-                return;
-            var sessionp = parent.GetSession("Unity.");
+        //private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        //{
+        //    RendezVousPipeline? parent = sender as RendezVousPipeline;
+        //    if (parent == null)
+        //        return;
+        //    var sessionp = parent.GetSession("Unity.");
 
-            var newStreams = e.Item2[e.Item1];
-            foreach (var stream in newStreams)
-            {
-                if (stream.Key == "Image")
-                {
-                    var subP = parent.CreateSubpipeline($"{e.Item1}-ImageProcessing");
-                    var producer = stream.Value.CreateBridge<byte[]>(subP);
-                    BytesStreamToImage processor = new BytesStreamToImage(subP);
-                    Microsoft.Psi.Operators.PipeTo(producer.Out, processor.In);
-                    Microsoft.Psi.Data.Session? session = parent.GetSession(stream.Value.SessionName);
-                    if (session != null)
-                        parent.CreateStore(subP, session, "Image", "WebRTC", processor);
-                    subP.RunAsync();
-                    parent.Dataset.Save();
-                    return;
-                }
-            }
-        }
+        //    var newStreams = e.Item2[e.Item1];
+        //    foreach (var stream in newStreams)
+        //    {
+        //        if (stream.Key == "Image")
+        //        {
+        //            var subP = parent.CreateSubpipeline($"{e.Item1}-ImageProcessing");
+        //            var producer = stream.Value.CreateBridge<byte[]>(subP);
+        //            BytesStreamToImage processor = new BytesStreamToImage(subP);
+        //            Microsoft.Psi.Operators.PipeTo(producer.Out, processor.In);
+        //            Microsoft.Psi.Data.Session? session = parent.GetSession(stream.Value.SessionName);
+        //            if (session != null)
+        //                parent.CreateStore(subP, session, "Image", "WebRTC", processor);
+        //            subP.RunAsync();
+        //            parent.Dataset.Save();
+        //            return;
+        //        }
+        //    }
+        //}
+
+        //static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        //{
+        //    Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
+        //}
+
+        //static void Main(string[] args)
+        //{
+        //    RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+        //    configuration.AutomaticPipelineRun = true;
+        //    configuration.Debug = true;
+        //    //configuration.Diagnostics = DiagnosticsMode.Store;
+        //    configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
+        //    configuration.DatasetName = "RendezVousPipeline.pds";
+        //    configuration.RendezVousHost = "127.0.0.1";
+
+        //    configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+           
+        //    RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+
+        //    pipeline.Start();
+
+        //    // Waiting for an out key
+        //    Console.WriteLine("Press any key to stop the application.");
+        //    Console.ReadLine();
+        //    pipeline.Stop();
+        //}
+
 
         static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
@@ -524,13 +554,31 @@ namespace TestingConsole
             configuration.AutomaticPipelineRun = true;
             configuration.Debug = true;
             //configuration.Diagnostics = DiagnosticsMode.Store;
-            configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
+            configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "127.0.0.1";
 
-            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-           
+            // Topic for positions
+            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("LeftController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+
+            // Nuitrack/Realsense process
+            Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
+            NuitrackSensorConfiguration sensorConfiguration = new NuitrackSensorConfiguration();
+            sensorConfiguration.DeviceSerialNumber = "943222070019";
+            sensorConfiguration.ActivationKey  = "license:35365:LmoTHY7vt5v2Q1A5";
+            sensorConfiguration.OutputColor = false;
+            sensorConfiguration.OutputDepth = false;
+            NuitrackSensor nuitrackSensor = new NuitrackSensor(nuitrackSubPipeline, sensorConfiguration);
+            BodiesConverter converter = new BodiesConverter(nuitrackSubPipeline);
+            TcpWriter<List<SAAC.Bodies.SimplifiedBody>> bodiesWriter = new TcpWriter<List<SAAC.Bodies.SimplifiedBody>>(nuitrackSubPipeline, 15562, new PsiFormatListOfSimplifiedBody().GetFormat());
+            nuitrackSensor.OutBodies.PipeTo(converter.InBodiesNuitrack);
+            converter.PipeTo(bodiesWriter);
+            pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
+
             pipeline.Start();
 
             // Waiting for an out key
