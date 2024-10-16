@@ -27,6 +27,7 @@ namespace SAAC.RendezVousPipelineServices
         public Dataset? Dataset { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
+        public EventHandler<string>? RemovedProcess;
         public delegate void LogStatus(string log);
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
@@ -270,6 +271,7 @@ namespace SAAC.RendezVousPipelineServices
                 AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
             }
             rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
+            rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
             rendezvousRelay.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
             rendezVous.Start();
             log("RendezVous started!");
@@ -430,6 +432,13 @@ namespace SAAC.RendezVousPipelineServices
                 TriggerNewProcessEvent(process.Name);
             }
             //Dataset?.Save();
+        }
+
+        private void RendezvousProcessRemoved(object sender, Process e)
+        {
+            var subpipeline = pipeline.GetElementsOfType<Subpipeline>().Find(x => x.Name == e.Name);
+            subpipeline?.Dispose();
+            RemovedProcess?.Invoke(this, e.Name);
         }
 
         protected void Connection<T>(string streamName, string processName, Session? session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)

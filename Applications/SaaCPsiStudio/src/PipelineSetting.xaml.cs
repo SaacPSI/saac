@@ -161,12 +161,12 @@ namespace SaaCPsiStudio
 
         public string GetLayout()
         {
-            return "";
+            return null;
         }
 
         public string GetAnnotation()
         {
-            return "";
+            return null;
         }
     }
 }
