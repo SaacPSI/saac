@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32;
 using SAAC.RendezVousPipelineServices;
+using static System.Net.Mime.MediaTypeNames;
+using System.Windows.Controls;
 
 namespace SaaCPsiStudio
 {
@@ -167,6 +169,15 @@ namespace SaaCPsiStudio
         public string GetAnnotation()
         {
             return null;
+        }
+
+        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            TextBox? log = sender as TextBox;
+            if (log == null) 
+                return;
+            log.CaretIndex = log.Text.Length;
+            log.ScrollToEnd();
         }
     }
 }
