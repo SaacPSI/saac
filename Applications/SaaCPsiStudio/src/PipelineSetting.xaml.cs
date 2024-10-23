@@ -6,6 +6,10 @@ using Microsoft.Win32;
 using SAAC.RendezVousPipelineServices;
 using static System.Net.Mime.MediaTypeNames;
 using System.Windows.Controls;
+using Microsoft.Psi;
+using Microsoft.Psi.Components;
+using SharpDX;
+using Microsoft.Psi.Data;
 
 namespace SaaCPsiStudio
 {
@@ -113,20 +117,32 @@ namespace SaaCPsiStudio
         public PipelineSetting()
         {
             DataContext = this;
+
             configuration = new RendezVousPipelineConfiguration();
-            configuration.RendezVousHost = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+            configuration.RendezVousHost = "127.0.0.1"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
             configuration.DatasetPath = "D:/Stores/SAAC/";
             configuration.DatasetName = "SAAC.pds";
+            configuration.AutomaticPipelineRun = true;
+            configuration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
+
             //configuration.TopicsTypes.Add();
             //configuration.TypesSerializers.Add();
             //configuration.NotStoredTopics.Add();
 
+            // Topic for positions
+            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(SAAC.Helpers.MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(SAAC.Helpers.MatrixToCoordinateSystem));
+
+            configuration.StreamToStore.Add("Head", "Unity");
+            configuration.StreamToStore.Add("Cube", "Unity");
+
             InitializeComponent();
         }
 
-        public string GetDataset()
+        public Dataset GetDataset()
         {
-            return configuration.DatasetPath + configuration.DatasetName;
+            server?.Dataset?.Save();
+            return server?.Dataset;
         }
 
         public void RunPipeline()
