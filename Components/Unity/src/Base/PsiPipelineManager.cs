@@ -151,13 +151,12 @@ public class PsiPipelineManager : MonoBehaviour
         else if (WaitedRendezVousApp.Contains(process.Name))
         {
             ProcessAddedData(process);
+            State = waitedRendezVousCount >= WaitedRendezVousApp.Count ? PsiPipelineManagerState.Served : PsiPipelineManagerState.Connected;
+            if (State == PsiPipelineManagerState.Served && onConnected != null)
+                onConnected();
         }
         else
             return;
-
-        State = waitedRendezVousCount >= WaitedRendezVousApp.Count ? PsiPipelineManagerState.Served : PsiPipelineManagerState.Connected;
-        if (State == PsiPipelineManagerState.Served && onConnected != null)
-            onConnected();
     }
 
     protected void ProcessAddedClock(Rendezvous.Process process)
@@ -354,10 +353,11 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
-    public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers)
+    public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers, bool register = false)
     {
         TcpWriter<T> tcpWriter = new TcpWriter<T>(GetPipeline(), ExportersStartingPort + exporterCount++, serializers, topic);
-        RegisterTCPWriter(tcpWriter, topic);
+        if (register)
+            RegisterTCPWriter(tcpWriter, topic);
         return tcpWriter;
     }
 
