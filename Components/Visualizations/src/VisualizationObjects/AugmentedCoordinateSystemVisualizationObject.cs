@@ -56,9 +56,16 @@ namespace SAAC.VisualizationObjects
         [Description("Reverse Y & Z axes.")]
         public bool ReverseYZ { get; set; }
 
+        public override void UpdateVisual3D()
+        { 
+            base.UpdateVisual3D();
+            UpdateBillboard();
+        }
+
         private void UpdateBillboard()
         {
-            if (this.CurrentData != null)
+            this.UpdateChildVisibility(this.Billboard.ModelVisual3D, Billboard.Visible);
+            if (this.CurrentData != null && Billboard.Visible)
             {
                 var origin = this.CurrentData.Origin;
                 var pos = new Win3D.Point3D(origin.X, ReverseYZ ? origin.Z : origin.Y, (ReverseYZ ? origin.Y : origin.Z) + (this.BillboardHeightCm / 100.0));
