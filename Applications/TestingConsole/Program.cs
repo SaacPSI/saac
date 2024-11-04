@@ -554,30 +554,30 @@ namespace TestingConsole
             configuration.AutomaticPipelineRun = true;
             configuration.Debug = true;
             //configuration.Diagnostics = DiagnosticsMode.Store;
-            configuration.DatasetPath = "F:\\Stores\\RendezVousPipeline\\";
+            configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "127.0.0.1";
 
             // Topic for positions
-            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("LeftController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            //configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            //configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
             // Nuitrack/Realsense process
-            Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
-            NuitrackSensorConfiguration sensorConfiguration = new NuitrackSensorConfiguration();
-            sensorConfiguration.DeviceSerialNumber = "943222070019";
-            sensorConfiguration.ActivationKey  = "license:35365:LmoTHY7vt5v2Q1A5";
-            sensorConfiguration.OutputColor = false;
-            sensorConfiguration.OutputDepth = false;
-            NuitrackSensor nuitrackSensor = new NuitrackSensor(nuitrackSubPipeline, sensorConfiguration);
-            BodiesConverter converter = new BodiesConverter(nuitrackSubPipeline);
-            TcpWriter<List<SAAC.Bodies.SimplifiedBody>> bodiesWriter = new TcpWriter<List<SAAC.Bodies.SimplifiedBody>>(nuitrackSubPipeline, 15562, new PsiFormatListOfSimplifiedBody().GetFormat());
-            nuitrackSensor.OutBodies.PipeTo(converter.InBodiesNuitrack);
-            converter.PipeTo(bodiesWriter);
-            pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
+            //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
+            //NuitrackSensorConfiguration sensorConfiguration = new NuitrackSensorConfiguration();
+            //sensorConfiguration.DeviceSerialNumber = "943222070019";
+            //sensorConfiguration.ActivationKey  = "license:35365:LmoTHY7vt5v2Q1A5";
+            //sensorConfiguration.OutputColor = false;
+            //sensorConfiguration.OutputDepth = false;
+            //NuitrackSensor nuitrackSensor = new NuitrackSensor(nuitrackSubPipeline, sensorConfiguration);
+            //BodiesConverter converter = new BodiesConverter(nuitrackSubPipeline);
+            //TcpWriter<List<SAAC.Bodies.SimplifiedBody>> bodiesWriter = new TcpWriter<List<SAAC.Bodies.SimplifiedBody>>(nuitrackSubPipeline, 15562, new PsiFormatListOfSimplifiedBody().GetFormat());
+            //nuitrackSensor.OutBodies.PipeTo(converter.InBodiesNuitrack);
+            //converter.PipeTo(bodiesWriter);
+            //pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
 
             pipeline.Start();
 
