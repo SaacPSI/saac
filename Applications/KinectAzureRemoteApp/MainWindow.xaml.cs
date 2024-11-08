@@ -7,6 +7,7 @@ using System.Windows;
 using System.Net;
 using Microsoft.Psi.Diagnostics;
 using SAAC.RemoteConnectors;
+using SAAC.RendezVousPipelineServices;
 
 namespace KinectAzureRemoteApp
 {
@@ -42,7 +43,9 @@ namespace KinectAzureRemoteApp
             State = status;
         }
 
-        private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration(); 
+        private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration();
+        private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
+
         public KinectAzureRemoteStreamsConfiguration ConfigurationUI
         {
             get => Configuration;
@@ -89,21 +92,18 @@ namespace KinectAzureRemoteApp
 
      
         public List<string> IPsList { get; }
-        private string iPSelected = "localhost";
         public string IPSelected
         {
-            get => iPSelected;
-            set => SetProperty(ref iPSelected, value);
+            get => PipelineConfiguration.RendezVousHost;
+            set => SetProperty(ref PipelineConfiguration.RendezVousHost, value);
         }
         public void DelegateMethodColorResolution(string val)
         {
-            IPSelected = val;
+            PipelineConfiguration.RendezVousHost = val;
         }
 
-        private RendezvousClient? Client;
-        private Pipeline? Pipeline;
+        private RendezVousPipeline? Pipeline;
         private KinectAzureRemoteStreams? KinectStreams;
-        private Pipeline? KinectStreamsPipline;
 
         public MainWindow()
         {
@@ -126,7 +126,7 @@ namespace KinectAzureRemoteApp
                 IPsList.Add(ip.ToString()); 
             }
             KinectStreams = null;
-            Client = null;
+            Pipeline = null;
 
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             ConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
@@ -140,7 +140,7 @@ namespace KinectAzureRemoteApp
             Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
-            iPSelected = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
             UpdateLayout();
         }
 
@@ -153,7 +153,7 @@ namespace KinectAzureRemoteApp
             Depth.IsChecked = Properties.Settings.Default.depth = Configuration.StreamDepth;
             DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration = Configuration.StreamDepthCalibration;
             IMU.IsChecked = Properties.Settings.Default.IMU = Configuration.StreamIMU;
-            iPSelected = Properties.Settings.Default.IpToUse = Configuration.RendezVousAddress;
+            PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse = Configuration.RendezVousAddress;
             if (Configuration.VideoResolution != null)
             {
                 bool found = false;
@@ -189,7 +189,7 @@ namespace KinectAzureRemoteApp
             Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
 
-            Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse = iPSelected;
+            Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             if (Configuration.VideoResolution != null)
             {
                 bool found = false;
@@ -213,100 +213,98 @@ namespace KinectAzureRemoteApp
             Properties.Settings.Default.Save();
         }
 
+        private bool UpdateConfigurationFromArgs(string arguments)
+        {
+            try
+            {
+                var args = arguments.Split([';']);
+                Configuration.KinectDeviceIndex = int.Parse(args[0]);
+                Configuration.StreamAudio = bool.Parse(args[1]);
+                Configuration.StreamSkeleton = bool.Parse(args[2]);
+                Configuration.StreamVideo = bool.Parse(args[3]);
+                Configuration.StreamDepth = bool.Parse(args[4]);
+                Configuration.StreamDepthCalibration = bool.Parse(args[5]);
+                Configuration.StreamIMU = bool.Parse(args[6]);
+                Configuration.EncodingVideoLevel = int.Parse(args[7]);
+                float videoWidth = float.Parse(args[8]);
+                float videoHeigth = float.Parse(args[9]);
+                if (videoWidth == 0.0 || videoHeigth == 0)
+                    Configuration.VideoResolution = null;
+                else
+                    Configuration.VideoResolution = new Tuple<float, float>(videoWidth, videoHeigth);
+                Configuration.RendezVousAddress = args[10];
+                Configuration.RendezVousPort = int.Parse(args[11]);
+            } 
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                RefreshUIFromConfiguration();
+            }));
+
+            return true;
+        }
+
+        private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
+        {
+            switch(message.Data.Item1)
+            {
+                case RendezVousPipeline.Command.Initialize:
+                    UpdateConfigurationFromArgs(message.Data.Item2);
+                    break;
+                case RendezVousPipeline.Command.Run:
+                    SetupKinect();
+                    break;
+                case RendezVousPipeline.Command.Stop:
+                    StopKinect();
+                    break;
+                case RendezVousPipeline.Command.Close:
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        StopPipeline();
+                        Close();
+                    }));
+                    break;
+                case RendezVousPipeline.Command.Restart:
+                    if (UpdateConfigurationFromArgs(message.Data.Item2))
+                    {
+                        Application.Current.Dispatcher.Invoke(new Action(() =>
+                        {
+                            OnRestart();
+                        }));
+                    }
+                    break;
+                case RendezVousPipeline.Command.Status:
+                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, KinectStreams == null ? "Not Initialised": KinectStreams.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
+                    break;
+            }
+        }
+
         private void SetupRendezVous()
         {
             //disable ui
             RendezVousGrid.IsEnabled = false;
-            Client = new RendezvousClient(Configuration.RendezVousAddress, Configuration.RendezVousPort);
-            if (Diagnostics.IsChecked == false)
-            {
-                Pipeline = Pipeline.Create(Configuration.RendezVousApplicationName, enableDiagnostics: false);
-            }
-            else
-            {
-                var config = new DiagnosticsConfiguration()
-                {
-                    TrackMessageSize = true,
-                    AveragingTimeSpan = TimeSpan.FromSeconds(2),
-                    SamplingInterval = TimeSpan.FromSeconds(10),
-                    IncludeStoppedPipelines = false,
-                    IncludeStoppedPipelineElements = false,
-                };
-                Pipeline = Pipeline.Create(Configuration.RendezVousApplicationName, enableDiagnostics: true, diagnosticsConfiguration: config);
-                RemoteExporter diagnosticsExporter = new RemoteExporter(Pipeline, Configuration.RendezVousPort * 2, Configuration.ConnectionType);
-                diagnosticsExporter.Exporter.Write(Pipeline.Diagnostics, $"{Configuration.RendezVousApplicationName}_Diagnostics");
-                Rendezvous.Process diagProcess = new Rendezvous.Process($"{Configuration.RendezVousApplicationName}_Diagnostics", new List<Rendezvous.Endpoint> { diagnosticsExporter.ToRendezvousEndpoint(Configuration.RendezVousAddress) });
-                Client.Rendezvous.TryAddProcess(diagProcess);
-            }
-
-            // SynchClock
-            // Might make sure that the clock of the server... check by name ?
-            Client.Rendezvous.ProcessAdded += (_, p) =>
-            {
-                foreach (var endpoint in p.Endpoints)
-                {
-                    if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
-                    {
-                        var remoteClockImporter = remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
-                        break;
-                    }
-                }
-            };
-
-            // Configuration Change
-            Client.Rendezvous.ProcessAdded += (_, p) =>
-            {
-                if (p.Name != $"{Configuration.RendezVousApplicationName}_Configuration")
-                    return;
-                foreach (var endpoint in p.Endpoints)
-                {
-                    if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
-                    {
-                        Subpipeline configurationSubpipeline = new Subpipeline(Pipeline);
-                        var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(configurationSubpipeline);
-                        foreach (var stream in remoteExporterEndpoint.Streams)
-                        {
-                            if (stream.StreamName.Contains("Configuration"))
-                            {
-                                if (remoteImporter.Connected.WaitOne() == false)
-                                {
-                                    Log += $"{Configuration.RendezVousApplicationName} failed to connect stream Configuration";
-                                    return;
-                                }
-                                Log += $"{Configuration.RendezVousApplicationName} failed to connect stream Configuration";
-                                remoteImporter.Importer.OpenStream<KinectAzureRemoteStreamsConfiguration?>("Configuration").Out.Do((c, e) =>
-                                {
-                                    //KinectConfigurationEvent.Invoke(this, c);
-                                    Application.Current.Dispatcher.Invoke(new Action(() => 
-                                    {
-                                        OnRestart(c);
-                                    }));
-                                });
-                                configurationSubpipeline.RunAsync();
-                                return;
-                            }
-                        }
-                    }
-                };
-            };
-
+            PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
+            PipelineConfiguration.CommandDelegate = CommandRecieved;
+            Pipeline = new RendezVousPipeline(PipelineConfiguration, "KinectAzure", RendezVousServerIp);
             State = "Waiting for server";
-            Client.Start();
-            Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+            Pipeline.Start();
             State = "Ready to start Kinect";
         }
 
         private void SetupKinect()
         {
-            if (Pipeline == null || Client == null)
+            if (Pipeline == null)
                 SetupRendezVous();
 
             //disable ui
             DataFormular.IsEnabled = false;
-            KinectStreamsPipline = Pipeline.CreateSynchedPipeline(Pipeline);
-            KinectStreams = new KinectAzureRemoteStreams(KinectStreamsPipline, Configuration);
-            Client.Rendezvous.TryAddProcess(KinectStreams.GenerateProcess());
-            KinectStreamsPipline.RunAsync();
+            KinectStreams = new KinectAzureRemoteStreams(Pipeline.Pipeline, Configuration);
+            Pipeline.AddProcess(KinectStreams.GenerateProcess());
+            KinectStreams.RunAsync();
             State = "Running";
         }
 
@@ -314,28 +312,22 @@ namespace KinectAzureRemoteApp
         {
             // Stop correctly the everything.
             State = "Stopping";
-            if (Client != null)
+            if (Pipeline != null)
             {
-                Client.Stop();
-                Client.Rendezvous.TryRemoveProcess(Configuration.RendezVousApplicationName);
-                if(Diagnostics.IsChecked == true)
-                    Client.Rendezvous.TryRemoveProcess($"{Configuration.RendezVousApplicationName}_Diagnostics");
-                Client.Dispose();
+                Pipeline.Stop();
             }
-            if(Pipeline != null)
-                Pipeline.Dispose();
         }
 
         private void StopKinect()
         {
             State = "Stopping Kinect";
-            if (KinectStreams != null && KinectStreams.Sensor != null)
+            if (KinectStreams != null && KinectStreams.Sensor != null && Pipeline != null)
             {
-                if(!Client.Rendezvous.TryRemoveProcess(Configuration.RendezVousApplicationName))
+                if(!Pipeline.RemoveProcess(Configuration.RendezVousApplicationName))
                     Console.WriteLine("error remove rendezvous");
                 try
                 {
-                    KinectStreamsPipline.Dispose();
+                    KinectStreams.Dispose();
                 }
                 catch(Exception ex) 
                 {
@@ -344,15 +336,11 @@ namespace KinectAzureRemoteApp
             }
         }
 
-        protected void OnRestart(KinectAzureRemoteStreamsConfiguration? e)
+        protected void OnRestart()
         {
             StopKinect();
-            if (e != null)
-            {
-                Configuration = e;
-                RefreshUIFromConfiguration();
-                SetupKinect();
-            }
+            RefreshUIFromConfiguration();
+            SetupKinect();
         }
 
         protected override void OnClosing(CancelEventArgs e)

@@ -14,7 +14,7 @@ namespace SAAC.RendezVousPipelineServices
 
         public RebootableSubPipeline CreateRebootableSubpipeline(string name = "SaaCSubpipeline")
         {
-            RebootableSubPipeline p = new RebootableSubPipeline(base.pipeline, name);
+            RebootableSubPipeline p = new RebootableSubPipeline(base.Pipeline, name);
             p.PipelineCompleted += SubPipelineCompleted;
             p.PipelineRun += SubPipelineRun; 
             return p;
