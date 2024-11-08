@@ -45,13 +45,7 @@ namespace KinectAzureRemoteApp
 
         private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration();
         private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
-
-        public KinectAzureRemoteStreamsConfiguration ConfigurationUI
-        {
-            get => Configuration;
-            set => SetProperty(ref Configuration, value);
-        }
-
+        
         private string rendezVousServerIp = "localhost";
         public string RendezVousServerIp
         {
@@ -61,6 +55,29 @@ namespace KinectAzureRemoteApp
         public void DelegateMethodRendezVousServerIP(string ip)
         {
             RendezVousServerIp = ip;
+        }
+
+        public KinectAzureRemoteStreamsConfiguration ConfigurationUI
+        {
+            get => Configuration;
+            set => SetProperty(ref Configuration, value);
+        }
+
+        public RendezVousPipelineConfiguration PipelineConfigurationUI
+        {
+            get => PipelineConfiguration;
+            set => SetProperty(ref PipelineConfiguration, value);
+        }
+
+        private string commandSource = "Server";
+        public string CommandSource
+        {
+            get => commandSource;
+            set => SetProperty(ref commandSource, value);
+        }
+        public void DelegateMethodCS(string commandSource)
+        {
+            CommandSource = commandSource;
         }
 
         private string log = "";
@@ -99,7 +116,7 @@ namespace KinectAzureRemoteApp
         }
         public void DelegateMethodColorResolution(string val)
         {
-            PipelineConfiguration.RendezVousHost = val;
+            Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = val;
         }
 
         private RendezVousPipeline? Pipeline;
@@ -250,6 +267,9 @@ namespace KinectAzureRemoteApp
 
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
+            if (CommandSource != source)
+                return;
+
             switch(message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
@@ -289,7 +309,7 @@ namespace KinectAzureRemoteApp
             RendezVousGrid.IsEnabled = false;
             PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
             PipelineConfiguration.CommandDelegate = CommandRecieved;
-            Pipeline = new RendezVousPipeline(PipelineConfiguration, "KinectAzure", RendezVousServerIp);
+            Pipeline = new RendezVousPipeline(PipelineConfiguration, ConfigurationUI.RendezVousApplicationName, RendezVousServerIp);
             State = "Waiting for server";
             Pipeline.Start();
             State = "Ready to start Kinect";

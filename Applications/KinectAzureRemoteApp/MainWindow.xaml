@@ -48,16 +48,24 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
                         <Label Grid.Row="0" Grid.Column="0" Content="Server IP :" FontWeight="Bold"/>
                         <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RendezVousServerIp}"/>
 
                         <Label Grid.Row="1" Grid.Column="0" Content="Server Port :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousPort}"/>
-                        
-                        <Label Grid.Row="2" Grid.Column="0" Content="Application UID :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousApplicationName}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=PipelineConfigurationUI.RendezVousPort}"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="IP to use :" FontWeight="Bold"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}" SelectedItem="{Binding Path=ConfigurationUI.RendezVousAddress}"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Application UID :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousApplicationName}"/>
+
+                        <Label Grid.Row="4" Grid.Column="0" Content="Command Source :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=CommandSource}"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Kinect Configuraton" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
@@ -71,17 +79,15 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
-                    <Label Grid.Row="0" Grid.Column="0" Content="Kinect Index :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.KinectDeviceIndex.}"/>
+                        <Label Grid.Row="0" Grid.Column="0" Content="Kinect Index :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.KinectDeviceIndex}"/>
 
-                    <Label Grid.Row="1" Grid.Column="0" Content="IP to use :" FontWeight="Bold"/>
-                    <ComboBox Grid.Row="1" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}" SelectedItem="{Binding Path=IPSelected}"/>
+                        <Label Grid.Row="2" Grid.Column="0" Content="Stream Port :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="2"  Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousPort}"/>
 
-                    <!--<Label Grid.Row="2" Grid.Column="0" Content="Stream Port :" FontWeight="Bold"/>
-                    <TextBox Grid.Row="2"  Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=KinectRendezVousRemotePort}"/>-->
-
-                    <GroupBox Header="Data Type" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
+                        <GroupBox Header="Data Type" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="3" >
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

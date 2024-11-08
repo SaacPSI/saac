@@ -7,33 +7,35 @@ namespace SAAC.Whisper
 {
     public sealed class WhisperSpeechRecognizerConfiguration 
     { 
-        public string modelDirectory { get; set; } = "";
+        public string ModelDirectory { get; set; } = "";
 
-        public GgmlType modelType { get; set; } = GgmlType.Medium;
+        public string LibrairyPath { get; set; } = "./whisper.dll";
 
-        public QuantizationType quantizationType { get; set; } = QuantizationType.Q5_1;
+        public GgmlType ModelType { get; set; } = GgmlType.Medium;
 
-        public bool forceDownload { get; set; } = false;
+        public QuantizationType QuantizationType { get; set; } = QuantizationType.Q5_1;
 
-        public double downloadTimeoutInSeconds { get; set; } = 15;
+        public bool ForceDownload { get; set; } = false;
 
-        public bool lazyInitialization { get; set; } = false;
+        public double DownloadTimeoutInSeconds { get; set; } = 15;
 
-        public Language language { get; set; } = Language.French;
+        public bool LazyInitialization { get; set; } = false;
 
-        public string prompt { get; set; } = "";
+        public Language Language { get; set; } = Language.French;
 
-        public SegmentationRestriction segmentationRestriction { get; set; } = SegmentationRestriction.OnePerUtterence;
+        public string Prompt { get; set; } = "";
 
-        public TimestampMode inputTimestampMode { get; set; } = TimestampMode.AtEnd;//\psi convention
+        public SegmentationRestriction SegmentationRestriction { get; set; } = SegmentationRestriction.OnePerUtterence;
 
-        public TimestampMode outputTimestampMode { get; set; } = TimestampMode.AtEnd;
+        public TimestampMode InputTimestampMode { get; set; } = TimestampMode.AtEnd;//\psi convention
 
-        public bool outputPartialResults { get; set; } = false;
+        public TimestampMode OutputTimestampMode { get; set; } = TimestampMode.AtEnd;
 
-        public double partialEvalueationInvervalInSeconds { get; set; } = 0.5;
+        public bool OutputPartialResults { get; set; } = false;
 
-        public bool outputAudio { get; set; } = false;
+        public double PartialEvalueationInvervalInSeconds { get; set; } = 0.5;
+
+        public bool OutputAudio { get; set; } = false;
 
         public WhisperSpeechRecognizerConfiguration() 
         {

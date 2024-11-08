@@ -32,32 +32,32 @@ namespace SAAC.Whisper
         private readonly Lazy<WhisperProcessor> processor;
 
         #region Options
-        /*private string modelDirectory = "";
+        /*private string ModelDirectory = "";
 
         public string ModelDirectory {
-            get => modelDirectory;
-            set => SetProperty(ref modelDirectory, value);
+            get => ModelDirectory;
+            set => SetProperty(ref ModelDirectory, value);
         }
 
-        private GgmlType modelType = GgmlType.BaseEn;
+        private GgmlType ModelType = GgmlType.BaseEn;
 
         public GgmlType ModelType {
-            get => modelType;
-            set => SetProperty(ref modelType, value);
+            get => ModelType;
+            set => SetProperty(ref ModelType, value);
         }
 
-        private QuantizationType quantizationType = QuantizationType.Q5_1;
+        private QuantizationType QuantizationType = QuantizationType.Q5_1;
 
         public QuantizationType QuantizationType {
-            get => quantizationType;
-            set => SetProperty(ref quantizationType, value);
+            get => QuantizationType;
+            set => SetProperty(ref QuantizationType, value);
         }
 
-        private bool forceDownload = false;
+        private bool ForceDownload = false;
 
         public bool ForceDownload {
-            get => forceDownload;
-            set => SetProperty(ref forceDownload, value);
+            get => ForceDownload;
+            set => SetProperty(ref ForceDownload, value);
         }
 
         private TimeSpan downloadTimeout = TimeSpan.FromSeconds(15);
@@ -67,53 +67,53 @@ namespace SAAC.Whisper
             set => SetProperty(ref downloadTimeout, value);
         }
 
-        private bool lazyInitialization = false;
+        private bool LazyInitialization = false;
 
         public bool LazyInitialization {
-            get => lazyInitialization;
-            set => SetProperty(ref lazyInitialization, value);
+            get => LazyInitialization;
+            set => SetProperty(ref LazyInitialization, value);
         }
 
-        private Language language = Language.English;
+        private Language Language = Language.English;
 
         public Language Language {
-            get => language;
-            set => SetProperty(ref language, value);
+            get => Language;
+            set => SetProperty(ref Language, value);
         }
 
-        private string prompt = "";
+        private string Prompt = "";
 
         public string Prompt {
-            get => prompt;
-            set => SetProperty(ref prompt, value);
+            get => Prompt;
+            set => SetProperty(ref Prompt, value);
         }
 
-        private SegmentationRestriction segmentationRestriction = SegmentationRestriction.OnePerUtterence;
+        private SegmentationRestriction SegmentationRestriction = SegmentationRestriction.OnePerUtterence;
 
         public SegmentationRestriction SegmentationRestriction {
-            get => segmentationRestriction;
-            set => SetProperty(ref segmentationRestriction, value);
+            get => SegmentationRestriction;
+            set => SetProperty(ref SegmentationRestriction, value);
         }
 
-        private TimestampMode inputTimestampMode = TimestampMode.AtEnd;//\psi convention
+        private TimestampMode InputTimestampMode = TimestampMode.AtEnd;//\psi convention
 
         public TimestampMode InputTimestampMode {
-            get => inputTimestampMode;
-            set => SetProperty(ref inputTimestampMode, value);
+            get => InputTimestampMode;
+            set => SetProperty(ref InputTimestampMode, value);
         }
 
-        private TimestampMode outputTimestampMode = TimestampMode.AtEnd;
+        private TimestampMode OutputTimestampMode = TimestampMode.AtEnd;
 
         public TimestampMode OutputTimestampMode {
-            get => outputTimestampMode;
-            set => SetProperty(ref outputTimestampMode, value);
+            get => OutputTimestampMode;
+            set => SetProperty(ref OutputTimestampMode, value);
         }
 
-        private bool outputPartialResults = false;
+        private bool OutputPartialResults = false;
 
         public bool OutputPartialResults {
-            get => outputPartialResults;
-            set => SetProperty(ref outputPartialResults, value);
+            get => OutputPartialResults;
+            set => SetProperty(ref OutputPartialResults, value);
         }
 
         private TimeSpan partialEvalueationInverval = TimeSpan.FromMilliseconds(500);
@@ -123,11 +123,11 @@ namespace SAAC.Whisper
             set => SetProperty(ref partialEvalueationInverval, value);
         }
 
-        private bool outputAudio = false;
+        private bool OutputAudio = false;
 
         public bool OutputAudio {
-            get => outputAudio;
-            set => SetProperty(ref outputAudio, value);
+            get => OutputAudio;
+            set => SetProperty(ref OutputAudio, value);
         }
 
         private ILogger? logger;
@@ -184,7 +184,7 @@ namespace SAAC.Whisper
         private void OnPipelineRun(object sender, PipelineRunEventArgs args) {
             using var tokenSource = new CancellationTokenSource(/*-1*/);
             var t = Task.Factory.StartNew(DownloadAsync, tokenSource.Token).Result;//Put on a worker thread. Otherwise, the pipeline will be blocked.
-            TimeSpan DownloadTimeout = TimeSpan.FromSeconds(configuration.downloadTimeoutInSeconds*100);
+            TimeSpan DownloadTimeout = TimeSpan.FromSeconds(configuration.DownloadTimeoutInSeconds*100);
             var timeout = (int) DownloadTimeout.TotalMilliseconds;
             var succeed = t.Wait(timeout);
             if (!succeed) {
@@ -196,11 +196,11 @@ namespace SAAC.Whisper
 
         private async Task DownloadAsync(object state) {
             var cancellationToken = (CancellationToken)state;
-            var modelType = configuration.modelType;
-            var quantizationType = configuration.quantizationType;
+            var modelType = configuration.ModelType;
+            var quantizationType = configuration.QuantizationType;
             var fn = string.Join("__", "ggml", GetTypeModelFileName(modelType), GetQuantizationModelFileName(quantizationType)) + ".bin";
-            modelFilename = Path.Combine(configuration.modelDirectory, fn);
-            if (configuration.forceDownload || !File.Exists(modelFilename)) {
+            modelFilename = Path.Combine(configuration.ModelDirectory, fn);
+            if (configuration.ForceDownload || !File.Exists(modelFilename)) {
                 try {
                     Console.WriteLine("Downloading Whisper model.");
                     using var modelStream = await WhisperGgmlDownloader.GetGgmlModelAsync(modelType, quantizationType, cancellationToken);
@@ -214,7 +214,7 @@ namespace SAAC.Whisper
 
                 }
             }
-            if (!configuration.lazyInitialization) {
+            if (!configuration.LazyInitialization) {
                 _ = processor.Value;
             }
         }
@@ -227,9 +227,9 @@ namespace SAAC.Whisper
             if (!File.Exists(modelFilename)) {
                 throw new FileNotFoundException("Whisper model file not exist.", modelFilename);
             }
-            var code = GetLanguageCode(configuration.language);
+            var code = GetLanguageCode(configuration.Language);
             var builder = WhisperFactory
-                .FromPath(modelFilename, false,"./whisper.dll")
+                .FromPath(modelFilename, false, configuration.LibrairyPath)
                 .CreateBuilder()
                 .WithLanguage(code)
                 .WithProgressHandler(OnProgress)
@@ -237,12 +237,12 @@ namespace SAAC.Whisper
                 .WithProbabilities()
                 .WithTokenTimestamps()
                 ;
-            var prompt = configuration.prompt;
+            var prompt = configuration.Prompt;
             if (!string.IsNullOrWhiteSpace(prompt))
             {
                 builder.WithPrompt(prompt!);
             }
-            switch (configuration.segmentationRestriction)
+            switch (configuration.SegmentationRestriction)
             {
                 case SegmentationRestriction.OnePerWord:
                     builder.SplitOnWord();//TODO: not working?
@@ -264,8 +264,8 @@ namespace SAAC.Whisper
             if (state) {
                 AppendAudio(data, envelope.OriginatingTime);
                 /* Post Partial */
-                TimeSpan PartialEvalueationInverval = TimeSpan.FromSeconds(configuration.partialEvalueationInvervalInSeconds);
-                if (configuration.outputPartialResults && bufferedDuration - lastPartialDuration >= PartialEvalueationInverval) {
+                TimeSpan PartialEvalueationInverval = TimeSpan.FromSeconds(configuration.PartialEvalueationInvervalInSeconds);
+                if (configuration.OutputPartialResults && bufferedDuration - lastPartialDuration >= PartialEvalueationInverval) {
                     lastPartialDuration = bufferedDuration;
                     ProcessAndPost(isFinal: false);
                 }
@@ -278,7 +278,7 @@ namespace SAAC.Whisper
         }
 
         private void AppendAudio(AudioBuffer data, DateTime timestamp) {
-            var inputTimeMode = configuration.inputTimestampMode;
+            var inputTimeMode = configuration.InputTimestampMode;
 
             /* Check Format */
             Debug.Assert(timestamp.Kind == DateTimeKind.Utc);
@@ -336,8 +336,8 @@ namespace SAAC.Whisper
             if (sections.Count <= 0) {
                 return;
             }
-            var inputTimeMode = configuration.inputTimestampMode;
-            var outputTimeMode = configuration.outputTimestampMode;
+            var inputTimeMode = configuration.InputTimestampMode;
+            var outputTimeMode = configuration.OutputTimestampMode;
             var processorValue = processor.Value;//Lazy initialize, but before data pre-processing
             var format = sections[0].Buffer.Format;
             var factor = format.Channels * format.BitsPerSample / 8;
@@ -386,7 +386,7 @@ namespace SAAC.Whisper
                     var actualEnd = segment.End > bufferedDuration ? bufferedDuration : segment.End;//Input is padded to 30 seconds, so the end time may be larger than the actual end time
                     var duration = actualEnd - segment.Start;
                     AudioBuffer? audio;
-                    if (!configuration.outputAudio) {
+                    if (!configuration.OutputAudio) {
                         audio = null;
                     } else {
                         var audioBuffer = SegmentAudioBuffer(segment, format, sections);
