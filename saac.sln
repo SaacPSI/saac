@@ -113,6 +113,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AttentionMeasures", "Compon
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BodiesRemoteServices", "Components\BodiesRemoteServices\BodiesRemoteServices.csproj", "{447B087C-B1E7-4558-9546-E036632440DE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhisperRemoteApp", "Applications\WhisperRemoteApp\WhisperRemoteApp.csproj", "{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -329,6 +331,14 @@ Global
 		{447B087C-B1E7-4558-9546-E036632440DE}.Release|Any CPU.Build.0 = Release|x64
 		{447B087C-B1E7-4558-9546-E036632440DE}.Release|x64.ActiveCfg = Release|x64
 		{447B087C-B1E7-4558-9546-E036632440DE}.Release|x64.Build.0 = Release|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Debug|Any CPU.Build.0 = Debug|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Debug|x64.ActiveCfg = Debug|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Debug|x64.Build.0 = Debug|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Release|Any CPU.ActiveCfg = Release|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Release|Any CPU.Build.0 = Release|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Release|x64.ActiveCfg = Release|x64
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -367,6 +377,7 @@ Global
 		{FF7314AB-B108-4109-943B-360992173850} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BF5A2E9C-6AF8-48A4-A7CC-7E20A09CF22F} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{447B087C-B1E7-4558-9546-E036632440DE} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

@@ -230,27 +230,26 @@ namespace KinectAzureRemoteApp
             Properties.Settings.Default.Save();
         }
 
-        private bool UpdateConfigurationFromArgs(string arguments)
+        private bool UpdateConfigurationFromArgs(string[] args)
         {
             try
             {
-                var args = arguments.Split([';']);
-                Configuration.KinectDeviceIndex = int.Parse(args[0]);
-                Configuration.StreamAudio = bool.Parse(args[1]);
-                Configuration.StreamSkeleton = bool.Parse(args[2]);
-                Configuration.StreamVideo = bool.Parse(args[3]);
-                Configuration.StreamDepth = bool.Parse(args[4]);
-                Configuration.StreamDepthCalibration = bool.Parse(args[5]);
-                Configuration.StreamIMU = bool.Parse(args[6]);
-                Configuration.EncodingVideoLevel = int.Parse(args[7]);
-                float videoWidth = float.Parse(args[8]);
-                float videoHeigth = float.Parse(args[9]);
+                Configuration.KinectDeviceIndex = int.Parse(args[1]);
+                Configuration.StreamAudio = bool.Parse(args[2]);
+                Configuration.StreamSkeleton = bool.Parse(args[3]);
+                Configuration.StreamVideo = bool.Parse(args[4]);
+                Configuration.StreamDepth = bool.Parse(args[5]);
+                Configuration.StreamDepthCalibration = bool.Parse(args[6]);
+                Configuration.StreamIMU = bool.Parse(args[7]);
+                Configuration.EncodingVideoLevel = int.Parse(args[8]);
+                float videoWidth = float.Parse(args[9]);
+                float videoHeigth = float.Parse(args[10]);
                 if (videoWidth == 0.0 || videoHeigth == 0)
                     Configuration.VideoResolution = null;
                 else
                     Configuration.VideoResolution = new Tuple<float, float>(videoWidth, videoHeigth);
-                Configuration.RendezVousAddress = args[10];
-                Configuration.RendezVousPort = int.Parse(args[11]);
+                Configuration.RendezVousAddress = args[11];
+                Configuration.RendezVousPort = int.Parse(args[12]);
             } 
             catch(Exception ex)
             {
@@ -269,11 +268,15 @@ namespace KinectAzureRemoteApp
         {
             if (CommandSource != source)
                 return;
+            var args = message.Data.Item2.Split([';']);
 
-            switch(message.Data.Item1)
+            if (args[0] != ConfigurationUI.RendezVousApplicationName)
+                return;
+
+            switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
-                    UpdateConfigurationFromArgs(message.Data.Item2);
+                    UpdateConfigurationFromArgs(args);
                     break;
                 case RendezVousPipeline.Command.Run:
                     SetupKinect();
@@ -289,7 +292,7 @@ namespace KinectAzureRemoteApp
                     }));
                     break;
                 case RendezVousPipeline.Command.Restart:
-                    if (UpdateConfigurationFromArgs(message.Data.Item2))
+                    if (UpdateConfigurationFromArgs(args))
                     {
                         Application.Current.Dispatcher.Invoke(new Action(() =>
                         {

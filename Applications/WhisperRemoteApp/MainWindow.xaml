@@ -1,0 +1,106 @@
+﻿<Window x:Class="WhisperRemoteApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WhisperRemoteApp"
+        mc:Ignorable="d"
+        Title="WhisperRemoteApp" Height="450" Width="400">
+    <UserControl>
+        <Grid Margin="0,0,0,-115">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="State :" FontWeight="Bold"/>
+            <Label Grid.Row="0" Grid.Column="1" Content="{Binding Path=State}" FontWeight="Bold"/>
+            <Grid Name="DataFormular" Grid.ColumnSpan="2" Grid.Row="1" Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+
+                <CheckBox Grid.Row="0" Grid.Column="0" Name="Diagnostics" Content="Diagnostics" FontWeight="Bold"/>
+                <GroupBox Name="RendezVousGrid" Header="RendezVous Configuration" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="1" >
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Content="Server IP :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RendezVousServerIp}"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Content="Server Port :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=PipelineConfigurationUI.RendezVousPort}"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="IP to use :" FontWeight="Bold"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}" SelectedItem="{Binding Path=PipelineConfigurationUI.RendezVousHost}"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Application UID :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ApplicationName}"/>
+
+                        <Label Grid.Row="4" Grid.Column="0" Content="Command Source :" FontWeight="Bold"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=CommandSource}"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Whisper Configuraton" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+            <GroupBox Header="" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="10px"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <Button Content="Start Network" Grid.Row="0" Grid.Column="0" Width="90" Click="BtnStartRendezVous"/>
+                    <Button Content="Start Whisper" Grid.Row="0" Grid.Column="1"  Width="90" Click="BtnStartAll"/>
+                    <Button Content="Stop" Grid.Row="2" Grid.Column="0" Width="90" Click="BtnStopClick"/>
+                    <Button Content="Quit" Grid.Row="2" Grid.Column="1" Width="90" Click="BtnQuitClick"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+    </UserControl>
+</Window>
