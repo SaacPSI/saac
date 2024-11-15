@@ -25,6 +25,7 @@ using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
 //using SAAC.KinectAzureRemoteServices;
 using static Emgu.CV.VideoCapture;
 using SAAC.Bodies;
+using Microsoft.Psi.AzureKinect;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -580,6 +581,20 @@ namespace TestingConsole
             //pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
 
             pipeline.Start();
+
+            var azureP = pipeline.CreateSubpipeline();
+
+            SAAC.RemoteConnectors.KinectAzureRemoteStreams azure = new SAAC.RemoteConnectors.KinectAzureRemoteStreams(azureP);
+            azure.GenerateProcess();
+            azureP.RunAsync();
+
+                pipeline.CommandEmitter.Post((Command.Status, "Unity"), DateTime.Now);
+            //var p = pipeline.CreateSubpipeline();
+            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
+            //timer1.Do((d, e) => {
+            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
+            //});
+
 
             // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");

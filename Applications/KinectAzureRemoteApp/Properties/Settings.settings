@@ -6,7 +6,7 @@
       <Value Profile="(Default)">localhost</Value>
     </Setting>
     <Setting Name="rendezVousServerPort" Type="System.UInt32" Scope="User">
-      <Value Profile="(Default)">1234</Value>
+      <Value Profile="(Default)">13331</Value>
     </Setting>
     <Setting Name="remotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11411</Value>

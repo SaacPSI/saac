@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KinectAzureRemoteApp"
         mc:Ignorable="d"
-        Title="KinectAzureRemoteApp" Height="450" Width="400">
+        Title="KinectAzureRemoteApp" Height="550" Width="400">
     <UserControl>
         <Grid Margin="0,0,0,-115">
             <Grid.ColumnDefinitions>
@@ -126,11 +126,15 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="10px"/>
                         <RowDefinition Height="auto"/>
+                        <RowDefinition Height="10px"/>
+                        <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Button Content="Start Network" Grid.Row="0" Grid.Column="0" Width="90" Click="BtnStartRendezVous"/>
                     <Button Content="Start Kinect" Grid.Row="0" Grid.Column="1"  Width="90" Click="BtnStartAll"/>
                     <Button Content="Stop" Grid.Row="2" Grid.Column="0" Width="90" Click="BtnStopClick"/>
                     <Button Content="Quit" Grid.Row="2" Grid.Column="1" Width="90" Click="BtnQuitClick"/>
+                    <Button Content="Load Config" Grid.Row="4" Grid.Column="0" Width="90" Click="BtnLoadClick"/>
+                    <Button Content="Save Config" Grid.Row="4" Grid.Column="1" Width="90" Click="BtnSaveClick"/>
                 </Grid>
             </GroupBox>
         </Grid>

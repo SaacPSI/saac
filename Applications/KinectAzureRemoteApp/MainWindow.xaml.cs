@@ -114,7 +114,7 @@ namespace KinectAzureRemoteApp
             get => PipelineConfiguration.RendezVousHost;
             set => SetProperty(ref PipelineConfiguration.RendezVousHost, value);
         }
-        public void DelegateMethodColorResolution(string val)
+        public void DelegateMethodIpList(string val)
         {
             Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = val;
         }
@@ -125,6 +125,9 @@ namespace KinectAzureRemoteApp
         public MainWindow()
         {
             DataContext = this;
+            InitializeComponent();
+            PipelineConfiguration.ClockPort = PipelineConfiguration.CommandPort = 0;
+            PipelineConfiguration.AutomaticPipelineRun = true;
             resolutionDictionary = new Dictionary<Resolution, Tuple<float, float>>
             {
                  { Resolution.R1920_1080, new Tuple<float, float>(1920.0f, 1080.0f) }
@@ -150,7 +153,6 @@ namespace KinectAzureRemoteApp
             ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
-            InitializeComponent();
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
             Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
             RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
@@ -164,13 +166,13 @@ namespace KinectAzureRemoteApp
         private void RefreshUIFromConfiguration()
         {
             ConfigurationUI.RendezVousPort = (int)Properties.Settings.Default.rendezVousServerPort;
-            Audio.IsChecked = Properties.Settings.Default.audio = Configuration.StreamAudio;
-            Skeleton.IsChecked = Properties.Settings.Default.skeleton = Configuration.StreamSkeleton;
-            RGB.IsChecked = Properties.Settings.Default.rgb = Configuration.StreamVideo;
-            Depth.IsChecked = Properties.Settings.Default.depth = Configuration.StreamDepth;
-            DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration = Configuration.StreamDepthCalibration;
-            IMU.IsChecked = Properties.Settings.Default.IMU = Configuration.StreamIMU;
-            PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse = Configuration.RendezVousAddress;
+            Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
+            Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
+            RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
+            Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
+            DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
+            IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
+            PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
             if (Configuration.VideoResolution != null)
             {
                 bool found = false;
@@ -301,7 +303,7 @@ namespace KinectAzureRemoteApp
                     }
                     break;
                 case RendezVousPipeline.Command.Status:
-                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, KinectStreams == null ? "Not Initialised": KinectStreams.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
+                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, KinectStreams == null ? "Not Initialised": Pipeline.Pipeline.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
                     break;
             }
         }
@@ -325,9 +327,9 @@ namespace KinectAzureRemoteApp
 
             //disable ui
             DataFormular.IsEnabled = false;
-            KinectStreams = new KinectAzureRemoteStreams(Pipeline.Pipeline, Configuration);
+            var ap = Pipeline.CreateSubpipeline("Azure");
+            KinectStreams = new KinectAzureRemoteStreams(ap, Configuration);
             Pipeline.AddProcess(KinectStreams.GenerateProcess());
-            KinectStreams.RunAsync();
             State = "Running";
         }
 
@@ -398,6 +400,17 @@ namespace KinectAzureRemoteApp
             StopKinect();
             DataFormular.IsEnabled = true;
             RendezVousGrid.IsEnabled = true;
+        }
+
+        private void BtnLoadClick(object sender, RoutedEventArgs e)
+        {
+            RefreshUIFromConfiguration();
+            UpdateLayout();
+        }
+
+        private void BtnSaveClick(object sender, RoutedEventArgs e)
+        {
+            RefreshConfigurationFromUI();
         }
     }
 }

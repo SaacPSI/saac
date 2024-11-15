@@ -53,8 +53,6 @@ namespace SAAC.RendezVousPipelineServices
             Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
             processNames = new List<string>();
-            if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort == 0)
-                throw new Exception("It is not possible to have AutomaticPipelineRun without ClockServer.");
             if (this.Configuration.DatasetName.Length > 4)
             {
                 if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
@@ -101,7 +99,7 @@ namespace SAAC.RendezVousPipelineServices
                 return;
             if (!StartRendezVousRelay())
                 return;
-            if (this.Configuration.AutomaticPipelineRun)
+            if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort != 0)
                 RunPipeline();
             isStarted = true;
         }
@@ -234,10 +232,12 @@ namespace SAAC.RendezVousPipelineServices
         {
             if (rendezvousRelay == null)
                 return false;
-            if (rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
-                processNames.Add(newProcess.Name);
-            else 
+            processNames.Add(newProcess.Name);
+            if (!rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
+            {
+                processNames.Remove(newProcess.Name);
                 return false;
+            }
             return true;
         }
 
@@ -328,6 +328,8 @@ namespace SAAC.RendezVousPipelineServices
                 if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint) 
                 { 
                     remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
+                    if (this.Configuration.AutomaticPipelineRun)
+                        RunPipeline();
                     return;
                 }
             }
