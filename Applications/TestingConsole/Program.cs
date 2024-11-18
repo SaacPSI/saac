@@ -26,6 +26,9 @@ using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
 using static Emgu.CV.VideoCapture;
 using SAAC.Bodies;
 using Microsoft.Psi.AzureKinect;
+using Microsoft.Psi.Audio;
+using SAAC.KinectAzureRemoteServices;
+using SAAC.RemoteConnectors;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -557,14 +560,17 @@ namespace TestingConsole
             //configuration.Diagnostics = DiagnosticsMode.Store;
             configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "127.0.0.1";
+            configuration.RendezVousHost = "10.44.192.99";
 
             // Topic for positions
             //configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+           // configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
             //configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+            RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
+            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
+            configuration1.RendezVousApplicationName = "KinectStreaming";
+            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
 
             // Nuitrack/Realsense process
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
@@ -579,16 +585,25 @@ namespace TestingConsole
             //nuitrackSensor.OutBodies.PipeTo(converter.InBodiesNuitrack);
             //converter.PipeTo(bodiesWriter);
             //pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
-
+            //var azureP = pipeline.CreateSubpipeline();
+            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, azureP);
             pipeline.Start();
 
-            var azureP = pipeline.CreateSubpipeline();
 
-            SAAC.RemoteConnectors.KinectAzureRemoteStreams azure = new SAAC.RemoteConnectors.KinectAzureRemoteStreams(azureP);
-            azure.GenerateProcess();
-            azureP.RunAsync();
+            //var azureP = pipeline.CreateSubpipeline();
 
-                pipeline.CommandEmitter.Post((Command.Status, "Unity"), DateTime.Now);
+            //RemoteImporter remoteImporter = new RemoteImporter(azureP, "127.0.0.1", 11413);
+            //remoteImporter.Connected.WaitOne();
+            //var conn = remoteImporter.Importer.OpenStream<Shared<Microsoft.Psi.Imaging.EncodedImage>>("Kinect_RemoteKinectAzureServer_RGB");
+            //conn.Do(message => {
+            //    Console.WriteLine($"Messagerecived");
+            //});
+            //azureP.RunAsync();
+            // SAAC.KinectAzureRemoteServices.KinectAzureRemoteComponent azure = new SAAC.KinectAzureRemoteServices.KinectAzureRemoteComponent(pipeline, azureP);
+
+
+
+            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), DateTime.Now);
             //var p = pipeline.CreateSubpipeline();
             //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
             //timer1.Do((d, e) => {
@@ -596,6 +611,9 @@ namespace TestingConsole
             //});
 
 
+            Console.WriteLine("Press any key to send command.");
+            Console.ReadLine();
+            pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
             // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();

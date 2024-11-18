@@ -3,6 +3,7 @@ using Microsoft.Psi.Data;
 using Microsoft.Psi.Remoting;
 using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
+using Microsoft.Psi.Interop.Rendezvous;
 
 namespace SAAC.KinectAzureRemoteServices
 {
@@ -10,8 +11,8 @@ namespace SAAC.KinectAzureRemoteServices
     {
         protected RendezVousPipeline server;
 
-        public KinectAzureRemoteComponent(RendezVousPipeline server, Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteComponent), LogStatus? log = null)
-            : base(parent, configuration, name, log)
+        public KinectAzureRemoteComponent(RendezVousPipeline server, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteComponent), LogStatus? log = null)
+            : base(null, configuration, name, log)
         {
             this.server = server;
             this.server.AddConnectingProcess(Configuration.RendezVousApplicationName, GenerateProcess());
@@ -20,13 +21,28 @@ namespace SAAC.KinectAzureRemoteServices
         protected override Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
         {
             Emitter<T>? stream = base.Connection<T>(name, remoteImporter);
-            if(stream != null)
+            if (stream != null)
             {
                 Session? session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);
                 var storeName = server.GetStoreName(name, Configuration.RendezVousApplicationName, session);
                 server.CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, base.pipeline, stream.Type, stream, !server.Configuration.NotStoredTopics.Contains(name));
             }
             return stream;
+        }
+
+        protected override void Process(Rendezvous.Process p)
+        {
+            if (p.Name == Configuration.RendezVousApplicationName)
+            {
+                this.pipeline = this.server.CreateSubpipeline(p.Name);
+                base.Process(p);
+                if (this.server.Configuration.AutomaticPipelineRun)
+                {
+                    this.pipeline.RunAsync();
+                    this.server.Log($"SubPipeline {p.Name} started.");
+                    this.server.TriggerNewProcessEvent(p.Name);
+                }
+            }
         }
     }
 }

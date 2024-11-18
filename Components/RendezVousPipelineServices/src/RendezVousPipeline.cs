@@ -30,11 +30,11 @@ namespace SAAC.RendezVousPipelineServices
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public EventHandler<string>? RemovedProcess;
         public delegate void LogStatus(string log);
+        public LogStatus Log;
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
 
         protected List<string> processNames; 
-        protected LogStatus log;
         protected bool isStarted;
         protected bool isPipelineRunning;
         protected string name;
@@ -48,7 +48,7 @@ namespace SAAC.RendezVousPipelineServices
         {
             this.name = name;
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
-            this.log = log ?? ((log) => { Console.WriteLine(log); });
+            this.Log = log ?? ((log) => { Console.WriteLine(log); });
             commandFormat = new PsiFormatCommand();
             Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
@@ -88,7 +88,7 @@ namespace SAAC.RendezVousPipelineServices
             }
             catch(Exception ex) 
             {
-                log($"{ex.Message}\n{ex.InnerException}");
+                Log($"{ex.Message}\n{ex.InnerException}");
             }
             return isPipelineRunning;
         }
@@ -283,15 +283,15 @@ namespace SAAC.RendezVousPipelineServices
             }
             rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
             rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
-            rendezvousRelay.Error += (s, e) => { log(e.Message); log(e.HResult.ToString()); };
+            rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
             rendezVous.Start();
-            log("RendezVous started!");
+            Log("RendezVous started!");
             return true;
         }
 
         protected void ProcessAdded(object? sender, Process process)
         {
-            log($"Process {process.Name}");
+            Log($"Process {process.Name}");
             if (processNames.Contains(process.Name))
                 return;
             if (process.Name.Contains(CommandProcessName))
@@ -352,12 +352,12 @@ namespace SAAC.RendezVousPipelineServices
                         {
                             Subpipeline commandSubPipeline = new Subpipeline(Pipeline, process.Name);
                             var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
-                            p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, $"p2m-{process.Name}");
+                            p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             if (this.Configuration.AutomaticPipelineRun)
                             {
                                 commandSubPipeline.RunAsync();
-                                log($"SubPipeline {process.Name} started.");
+                                Log($"SubPipeline {process.Name} started.");
                             }
                             return;
                         }
@@ -384,7 +384,7 @@ namespace SAAC.RendezVousPipelineServices
                             if (this.Configuration.AutomaticPipelineRun)
                             {
                                 processSubPipeline.RunAsync();
-                                log($"SubPipeline {process.Name} started.");
+                                Log($"SubPipeline {process.Name} started.");
                             }
                             return;
                         }
@@ -407,7 +407,7 @@ namespace SAAC.RendezVousPipelineServices
                         continue;
                     foreach (var stream in endpoint.Streams)
                     {
-                        log($"\tStream {stream.StreamName}");
+                        Log($"\tStream {stream.StreamName}");
                         if (Configuration.TopicsTypes.ContainsKey(stream.StreamName))
                         {
                             Type type = Configuration.TopicsTypes[stream.StreamName];
@@ -425,12 +425,12 @@ namespace SAAC.RendezVousPipelineServices
                         continue;
                     foreach (var stream in source.Streams)
                     {
-                        log($"\tStream {stream.StreamName}");
+                        Log($"\tStream {stream.StreamName}");
                         elementAdded += Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
                     }
                 }
             }
-            log($"Process {process.Name} sources added : {elementAdded}");
+            Log($"Process {process.Name} sources added : {elementAdded}");
             if (elementAdded == 0 && session != null)
             {
                 processSubPipeline.Dispose();
@@ -441,7 +441,7 @@ namespace SAAC.RendezVousPipelineServices
             else if (this.Configuration.AutomaticPipelineRun)
             {
                 processSubPipeline.RunAsync();
-                log($"SubPipeline {process.Name} started.");
+                Log($"SubPipeline {process.Name} started.");
                 TriggerNewProcessEvent(process.Name);
             }
             //Dataset?.Save();
@@ -459,7 +459,7 @@ namespace SAAC.RendezVousPipelineServices
             var storeName = GetStoreName(streamName, processName, session);
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
             if (Configuration.Debug)
-                tcpSource.Do((d, e) => { log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
+                tcpSource.Do((d, e) => { Log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             if (transformerType != null)
             {
                 dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{processName}-{streamName}_transformer"]);
@@ -478,7 +478,7 @@ namespace SAAC.RendezVousPipelineServices
             var importer = source.ToRemoteImporter(p);
             if (!importer.Connected.WaitOne())
             {
-                log($"Failed to connect to {streamName}");
+                Log($"Failed to connect to {streamName}");
                 return false;
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
@@ -487,7 +487,7 @@ namespace SAAC.RendezVousPipelineServices
                 Type type = Type.GetType(streamInfo.TypeName);
                 var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
                 if (Configuration.Debug)
-                    stream.Do((d, e) => { log($"Recieve {storeName.Item2}-{streamInfo.Name} data @{e} : {d}"); });
+                    stream.Do((d, e) => { Log($"Recieve {storeName.Item2}-{streamInfo.Name} data @{e} : {d}"); });
                 CreateConnectorAndStore(streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
             } 
             return true;

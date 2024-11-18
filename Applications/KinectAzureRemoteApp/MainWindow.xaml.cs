@@ -8,6 +8,7 @@ using System.Net;
 using Microsoft.Psi.Diagnostics;
 using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
+using SharpDX;
 
 namespace KinectAzureRemoteApp
 {
@@ -63,10 +64,17 @@ namespace KinectAzureRemoteApp
             set => SetProperty(ref Configuration, value);
         }
 
+
         public RendezVousPipelineConfiguration PipelineConfigurationUI
         {
             get => PipelineConfiguration;
             set => SetProperty(ref PipelineConfiguration, value);
+        }
+
+        public int ServerPort
+        {
+            get => PipelineConfigurationUI.RendezVousPort;
+            set => SetProperty(ref PipelineConfigurationUI.RendezVousPort, value);
         }
 
         private string commandSource = "Server";
@@ -95,37 +103,13 @@ namespace KinectAzureRemoteApp
         public enum Resolution{ Native, R1920_1080, R960_540, R640_360, Custom };
         private Dictionary<Resolution, Tuple<float, float>> resolutionDictionary;
         public List<Resolution> ResolutionsList { get; }
-
-        private Resolution colorResolution = Resolution.R640_360;
-        public Resolution ColorResolution
-        {
-            get => colorResolution;
-            set => SetProperty(ref colorResolution, value);
-        }
-        public void DelegateMethodColorResolution(Resolution val)
-        {
-            ColorResolution = val;
-        }
-
-     
         public List<string> IPsList { get; }
-        public string IPSelected
-        {
-            get => PipelineConfiguration.RendezVousHost;
-            set => SetProperty(ref PipelineConfiguration.RendezVousHost, value);
-        }
-        public void DelegateMethodIpList(string val)
-        {
-            Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = val;
-        }
-
         private RendezVousPipeline? Pipeline;
         private KinectAzureRemoteStreams? KinectStreams;
 
         public MainWindow()
         {
             DataContext = this;
-            InitializeComponent();
             PipelineConfiguration.ClockPort = PipelineConfiguration.CommandPort = 0;
             PipelineConfiguration.AutomaticPipelineRun = true;
             resolutionDictionary = new Dictionary<Resolution, Tuple<float, float>>
@@ -140,7 +124,7 @@ namespace KinectAzureRemoteApp
             {
                 ResolutionsList.Add(name);
             }
-            IPsList = new List<string>();
+            IPsList = new List<string> {"localhost"};
             foreach(var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             {
                 IPsList.Add(ip.ToString()); 
@@ -153,6 +137,7 @@ namespace KinectAzureRemoteApp
             ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
+            InitializeComponent();
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
             Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
             RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
@@ -160,7 +145,21 @@ namespace KinectAzureRemoteApp
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
             PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
+            ColoRes.SelectedIndex = ResolutionsList.IndexOf((Resolution)Properties.Settings.Default.videoResolution);
             UpdateLayout();
+            IPs.SelectionChanged += IPs_SelectionChanged;
+            ColoRes.SelectionChanged += ColoRes_SelectionChanged;
+        }
+
+        private void IPs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = (string)IPs.SelectedValue;
+        }
+
+        private void ColoRes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Properties.Settings.Default.videoResolution = (int)ColoRes.SelectedValue;
         }
 
         private void RefreshUIFromConfiguration()
@@ -173,6 +172,7 @@ namespace KinectAzureRemoteApp
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
             PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
             if (Configuration.VideoResolution != null)
             {
                 bool found = false;
@@ -180,7 +180,7 @@ namespace KinectAzureRemoteApp
                 {
                     if (tuple.Value.Item1 == Configuration.VideoResolution.Item1 && tuple.Value.Item2 == Configuration.VideoResolution.Item2)
                     {
-                        Properties.Settings.Default.videoResolution = (int)(colorResolution = tuple.Key);
+                        Properties.Settings.Default.videoResolution = (int)tuple.Key;
                         found = true;
                         break;
                     }
@@ -188,11 +188,12 @@ namespace KinectAzureRemoteApp
                 if (!found)
                 {
                     resolutionDictionary[Resolution.Custom] = Configuration.VideoResolution;
-                    Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Custom);
+                    Properties.Settings.Default.videoResolution = (int)Resolution.Custom;
                 }
             }
             else
-                Properties.Settings.Default.videoResolution = (int)(colorResolution =  Resolution.Native);
+                Properties.Settings.Default.videoResolution = (int)Resolution.Native;
+            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.Save();
             UpdateLayout();
         }
@@ -207,28 +208,8 @@ namespace KinectAzureRemoteApp
             Configuration.StreamDepth = Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
             Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
-
             Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
-            if (Configuration.VideoResolution != null)
-            {
-                bool found = false;
-                foreach (var tuple in resolutionDictionary)
-                {
-                    if (tuple.Value.Item1 == Configuration.VideoResolution.Item1 && tuple.Value.Item2 == Configuration.VideoResolution.Item2)
-                    {
-                        Properties.Settings.Default.videoResolution = (int)(colorResolution = tuple.Key);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    resolutionDictionary[Resolution.Custom] = Configuration.VideoResolution;
-                    Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Custom);
-                }
-            }
-            else
-                Properties.Settings.Default.videoResolution = (int)(colorResolution = Resolution.Native);
+            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.Save();
         }
 
@@ -268,7 +249,7 @@ namespace KinectAzureRemoteApp
 
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
-            if (CommandSource != source)
+            if ($"{CommandSource}-Command" != source)
                 return;
             var args = message.Data.Item2.Split([';']);
 
@@ -278,13 +259,22 @@ namespace KinectAzureRemoteApp
             switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
-                    UpdateConfigurationFromArgs(args);
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        UpdateConfigurationFromArgs(args);
+                    }));
                     break;
                 case RendezVousPipeline.Command.Run:
-                    SetupKinect();
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        SetupKinect();
+                    }));
                     break;
                 case RendezVousPipeline.Command.Stop:
-                    StopKinect();
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        StopKinect();
+                    }));
                     break;
                 case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
@@ -327,9 +317,9 @@ namespace KinectAzureRemoteApp
 
             //disable ui
             DataFormular.IsEnabled = false;
-            var ap = Pipeline.CreateSubpipeline("Azure");
-            KinectStreams = new KinectAzureRemoteStreams(ap, Configuration);
+            KinectStreams = new KinectAzureRemoteStreams(Pipeline?.CreateSubpipeline("Azure"), Configuration);
             Pipeline.AddProcess(KinectStreams.GenerateProcess());
+            KinectStreams.RunAsync();
             State = "Running";
         }
 

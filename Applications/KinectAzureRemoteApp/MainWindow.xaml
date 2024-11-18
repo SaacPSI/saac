@@ -56,10 +56,10 @@
                         <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RendezVousServerIp}"/>
 
                         <Label Grid.Row="1" Grid.Column="0" Content="Server Port :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=PipelineConfigurationUI.RendezVousPort}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ServerPort}"/>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="IP to use :" FontWeight="Bold"/>
-                        <ComboBox Grid.Row="2" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}" SelectedItem="{Binding Path=ConfigurationUI.RendezVousAddress}"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}"/>
 
                         <Label Grid.Row="3" Grid.Column="0" Content="Application UID :" FontWeight="Bold"/>
                         <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousApplicationName}"/>
@@ -105,7 +105,7 @@
                             <CheckBox Grid.Row="0" Grid.Column="0" Name="Audio" Content="Audio"/>
                             <CheckBox Grid.Row="1" Grid.Column="0" Name="Skeleton" Content="Skeleton"/>
                             <CheckBox Grid.Row="2" Grid.Column="0" Name="RGB" Content="RGB"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" Name="ColoRes" ItemsSource="{Binding Path=ResolutionsList}" SelectedItem="{Binding Path=ColorResolution}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Name="ColoRes" ItemsSource="{Binding Path=ResolutionsList}"/>
                             <TextBox Grid.Row="2" Grid.Column="2" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.EncodingVideoLevel}"/>
                             <CheckBox Grid.Row="3" Grid.Column="0" Name="Depth" Content="Depth"/>
                             <CheckBox Grid.Row="4" Grid.Column="0" Name="DepthCalibration" Content="DepthCalibration"/>
