@@ -23,4 +23,8 @@
     <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-mod" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
+  </ItemGroup>
+
  </Project>

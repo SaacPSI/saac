@@ -5,7 +5,6 @@ using Microsoft.Psi.Audio;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Azure.Kinect.Sensor;
-using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 
 namespace SAAC.RemoteConnectors
 {
@@ -45,12 +44,10 @@ namespace SAAC.RemoteConnectors
         /// </summary>
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
-        public delegate void LogStatus(string log);
-
         public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
 
         protected Pipeline pipeline;
-        protected LogStatus logStatus;
+        protected SAAC.LogStatus logStatus;
 
         public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector), LogStatus? log = null)
         {
@@ -76,7 +73,7 @@ namespace SAAC.RemoteConnectors
             return remoteImporter.Importer.OpenStream<T>(name).Out;
         }
 
-        public EventHandler<Process> GenerateProcess()
+        public EventHandler<Rendezvous.Process> GenerateProcess()
         {
             return (_, p) =>
             {
@@ -84,7 +81,7 @@ namespace SAAC.RemoteConnectors
             };
         }
 
-        protected virtual void Process(Process p)
+        protected virtual void Process(Rendezvous.Process p)
         {
             if (p.Name == Configuration.RendezVousApplicationName)
             {

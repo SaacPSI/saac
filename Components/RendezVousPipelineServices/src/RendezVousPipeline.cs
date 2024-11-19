@@ -29,7 +29,6 @@ namespace SAAC.RendezVousPipelineServices
         public RendezVousPipelineConfiguration Configuration { get; private set; }
         public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
         public EventHandler<string>? RemovedProcess;
-        public delegate void LogStatus(string log);
         public LogStatus Log;
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
@@ -483,6 +482,8 @@ namespace SAAC.RendezVousPipelineServices
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
+                if (!Configuration.TopicsTypes.ContainsKey(streamInfo.Name))
+                    continue;
                 var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);
                 var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);

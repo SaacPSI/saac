@@ -11,8 +11,8 @@ namespace SAAC.KinectAzureRemoteServices
     {
         protected RendezVousPipeline server;
 
-        public KinectAzureRemoteComponent(RendezVousPipeline server, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteComponent), LogStatus? log = null)
-            : base(null, configuration, name, log)
+        public KinectAzureRemoteComponent(RendezVousPipeline server, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteComponent))
+            : base(null, configuration, name, server.Log)
         {
             this.server = server;
             this.server.AddConnectingProcess(Configuration.RendezVousApplicationName, GenerateProcess());

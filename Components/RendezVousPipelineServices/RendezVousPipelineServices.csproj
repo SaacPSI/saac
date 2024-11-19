@@ -22,5 +22,9 @@
     <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-mod" />
     <PackageReference Include="Microsoft.Psi.Spatial.Euclidean" Version="0.19.100.1-beta" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
+  </ItemGroup>
 
 </Project>
