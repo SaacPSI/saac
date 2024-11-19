@@ -560,17 +560,17 @@ namespace TestingConsole
             //configuration.Diagnostics = DiagnosticsMode.Store;
             configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "10.44.192.99";
+            configuration.RendezVousHost = "localhost";
 
             // Topic for positions
-            //configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-           // configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            //configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
-            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
-            configuration1.RendezVousApplicationName = "KinectStreaming";
-            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
+            //KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
+            //configuration1.RendezVousApplicationName = "KinectStreaming";
+            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
 
             // Nuitrack/Realsense process
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");

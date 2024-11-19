@@ -482,16 +482,14 @@ namespace SAAC.RendezVousPipelineServices
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
-                if (!Configuration.TopicsTypes.ContainsKey(streamInfo.Name))
+                if (/*!Configuration.TopicsTypes.ContainsKey(streamInfo.Name) ||*/ streamName != streamInfo.Name)
                     continue;
                 var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);
-                var stream = importer.Importer.OpenDynamicStream(streamInfo.Name);
-                if (Configuration.Debug)
-                    stream.Do((d, e) => { Log($"Recieve {storeName.Item2}-{streamInfo.Name} data @{e} : {d}"); });
-                CreateConnectorAndStore(streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, stream, storeSteam);  
-            } 
-            return true;
+                typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this, [streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, typeof(Importer).GetMethod("OpenStream").MakeGenericMethod(type).Invoke(importer.Importer, [streamInfo.Name, null, null]), storeSteam]);
+                return true;
+            }
+            return false;
         }
     }
 }
