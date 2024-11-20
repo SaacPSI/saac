@@ -20,8 +20,8 @@ namespace SAAC.RemoteConnectors
 
         // Network
         public TransportKind ConnectionType { get; set; } = TransportKind.Tcp;
-        public string RendezVousAddress { get; set; } = "localhost";
-        public int RendezVousPort { get; set; } = 11411;
+        public string IpToUse { get; set; } = "localhost";
+        public int StartingPort { get; set; } = 11411;
         public string RendezVousApplicationName { get; set; } = "RemoteKinectAzureServer";
     }
 }

@@ -16,7 +16,7 @@ namespace SAAC.RemoteConnectors
 
         public void Start(Action<DateTime> notifyCompletionTime)
         {
-            Server = new RendezvousServer(Configuration.RendezVousPort);
+            Server = new RendezvousServer(Configuration.StartingPort);
             Server.Rendezvous.TryAddProcess(GenerateProcess());
             Server.Error += (s, e) => { OutConnectionError.Post(e.HResult, ParentPipeline.GetCurrentTime()); };
             Server.Start();

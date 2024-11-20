@@ -134,7 +134,7 @@ namespace KinectAzureRemoteApp
 
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             ServerPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            ConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.remotePort);
+            ConfigurationUI.StartingPort = (int)(Properties.Settings.Default.remotePort);
             ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
@@ -145,7 +145,7 @@ namespace KinectAzureRemoteApp
             Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
-            PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            PipelineConfiguration.RendezVousHost = Configuration.IpToUse = Properties.Settings.Default.IpToUse;
             IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
             ColoRes.SelectedIndex = ResolutionsList.IndexOf((Resolution)Properties.Settings.Default.videoResolution);
             UpdateLayout();
@@ -155,7 +155,7 @@ namespace KinectAzureRemoteApp
 
         private void IPs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = (string)IPs.SelectedValue;
+            Configuration.IpToUse = PipelineConfiguration.RendezVousHost = (string)IPs.SelectedValue;
         }
 
         private void ColoRes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -165,7 +165,7 @@ namespace KinectAzureRemoteApp
 
         private void RefreshUIFromConfiguration()
         {
-            ConfigurationUI.RendezVousPort = (int)Properties.Settings.Default.remotePort;
+            ConfigurationUI.StartingPort = (int)Properties.Settings.Default.remotePort;
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             ServerPort = (int)(Properties.Settings.Default.rendezVousServerPort);
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
@@ -175,7 +175,7 @@ namespace KinectAzureRemoteApp
             DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
-            PipelineConfiguration.RendezVousHost = Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse;
+            PipelineConfiguration.RendezVousHost = Configuration.IpToUse = Properties.Settings.Default.IpToUse;
             IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
             if (Configuration.VideoResolution != null)
             {
@@ -204,7 +204,7 @@ namespace KinectAzureRemoteApp
 
         private void RefreshConfigurationFromUI()
         {
-            Properties.Settings.Default.remotePort = (uint)ConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.remotePort = (uint)ConfigurationUI.StartingPort;
             Properties.Settings.Default.rendezVousServerPort = (uint)ServerPort;
             Configuration.StreamAudio = Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false);
             Configuration.StreamSkeleton = Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
@@ -212,7 +212,7 @@ namespace KinectAzureRemoteApp
             Configuration.StreamDepth = Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
             Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
-            Configuration.RendezVousAddress = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
+            Configuration.IpToUse = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.ApplicationName = ConfigurationUI.RendezVousApplicationName;
             Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
@@ -237,8 +237,8 @@ namespace KinectAzureRemoteApp
                     Configuration.VideoResolution = null;
                 else
                     Configuration.VideoResolution = new Tuple<float, float>(videoWidth, videoHeigth);
-                Configuration.RendezVousAddress = args[11];
-                Configuration.RendezVousPort = int.Parse(args[12]);
+                Configuration.IpToUse = args[11];
+                Configuration.StartingPort = int.Parse(args[12]);
             } 
             catch(Exception ex)
             {

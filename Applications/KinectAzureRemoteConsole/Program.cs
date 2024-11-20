@@ -45,8 +45,8 @@ namespace KinectAzureRemoteConsole
                     config.VideoResolution = null;
                 else
                     config.VideoResolution = new Tuple<float, float>(videoWidth, videoHeigth);
-                config.RendezVousAddress = args[12];
-                config.RendezVousPort = int.Parse(args[13]);
+                config.IpToUse = args[12];
+                config.StartingPort = int.Parse(args[13]);
 
                 PipelineSetup(p, config, clockAddress, clockPort);
                 // RunAsync the pipeline in non-blocking mode.
