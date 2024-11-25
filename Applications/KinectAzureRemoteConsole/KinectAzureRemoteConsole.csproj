@@ -1,14 +1,71 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+	  <TargetFramework>net48</TargetFramework>
+	  <LangVersion>Preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Components\KinectAzureRemoteConnector\KinectAzureRemoteConnector.csproj" />
+    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\onnxruntime_providers_tensorrt.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.sensor\1.4.1\build\netstandard2.0\..\..\lib\native\amd64\release\depthengine_2_0.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\directml.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking\1.1.2\build\netstandard2.0\..\..\content\dnn_model_2_0_lite_op11.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking\1.1.2\build\netstandard2.0\..\..\content\dnn_model_2_0_op11.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.sensor\1.4.1\build\netstandard2.0\..\..\lib\native\amd64\release\k4a.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.sensor\1.4.1\build\netstandard2.0\..\..\lib\native\amd64\release\k4a.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking\1.1.2\build\netstandard2.0\..\..\lib\native\amd64\release\k4abt.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.sensor\1.4.1\build\netstandard2.0\..\..\lib\native\amd64\release\k4arecord.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.sensor\1.4.1\build\netstandard2.0\..\..\lib\native\amd64\release\k4arecord.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\onnxruntime.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\onnxruntime_providers_cuda.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\onnxruntime_providers_shared.dll" />
   </ItemGroup>
 
 </Project>

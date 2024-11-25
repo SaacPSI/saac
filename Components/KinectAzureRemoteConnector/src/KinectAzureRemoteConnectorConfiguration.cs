@@ -17,5 +17,9 @@
         /// </summary>
         public string RendezVousApplicationName { get; set; } = "RemoteKinectAzureServer";
 
+        /// <summary>
+        /// Gets or sets display debug info on message recieved.
+        /// </summary>
+        public bool Debug { get; set; } = false;
     }
 }

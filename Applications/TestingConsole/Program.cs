@@ -568,9 +568,10 @@ namespace TestingConsole
             configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
             RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
-            //KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
-            //configuration1.RendezVousApplicationName = "KinectStreaming";
-            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
+            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
+            configuration1.RendezVousApplicationName = "KinectStreaming";
+            configuration1.Debug = true;
+            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
 
             // Nuitrack/Realsense process
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
@@ -614,6 +615,15 @@ namespace TestingConsole
             Console.WriteLine("Press any key to send command.");
             Console.ReadLine();
             pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
+
+            //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
+            //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);
+            //importer.Connected.WaitOne();
+            //while (importer.Importer.AvailableStreams.Count() == 0) Thread.Sleep(200);
+            //var stream = importer.Importer.OpenStream<List<AzureKinectBody>>("Kinect_KinectStreaming_Bodies");
+            //stream.Out.Do((d, e) => { Console.WriteLine(d); });
+            //nuitrackSubPipeline.RunAsync();
+
             // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();

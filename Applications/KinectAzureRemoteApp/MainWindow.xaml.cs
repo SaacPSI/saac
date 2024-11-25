@@ -8,7 +8,8 @@ using System.Net;
 using Microsoft.Psi.Diagnostics;
 using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
-using SharpDX;
+using Microsoft.Psi.AzureKinect;
+using System.Windows.Media.Animation;
 
 namespace KinectAzureRemoteApp
 {
@@ -100,9 +101,8 @@ namespace KinectAzureRemoteApp
         }
 
         //ToDo add more resolution definition
-        public enum Resolution{ Native, R1920_1080, R960_540, R640_360, Custom };
-        private Dictionary<Resolution, Tuple<float, float>> resolutionDictionary;
-        public List<Resolution> ResolutionsList { get; }
+        public List<Microsoft.Azure.Kinect.Sensor.ColorResolution> ResolutionsList { get; }
+        public List<Microsoft.Azure.Kinect.Sensor.FPS> FPSList { get; }
         public List<string> IPsList { get; }
         private RendezVousPipeline? Pipeline;
         private KinectAzureRemoteStreams? KinectStreams;
@@ -112,17 +112,15 @@ namespace KinectAzureRemoteApp
             DataContext = this;
             PipelineConfiguration.ClockPort = PipelineConfiguration.CommandPort = 0;
             PipelineConfiguration.AutomaticPipelineRun = true;
-            resolutionDictionary = new Dictionary<Resolution, Tuple<float, float>>
-            {
-                 { Resolution.R1920_1080, new Tuple<float, float>(1920.0f, 1080.0f) }
-                ,{ Resolution.R960_540, new Tuple<float, float>(960.0f, 540.0f) }
-                ,{ Resolution.R640_360, new Tuple<float, float>(640.0f, 360.0f) }
-                ,{ Resolution.Custom, new Tuple<float, float>(640.0f, 360.0f) }
-            };
-            ResolutionsList = new List<Resolution>();
-            foreach (Resolution name in Enum.GetValues(typeof(Resolution)))
+            ResolutionsList = new List<Microsoft.Azure.Kinect.Sensor.ColorResolution>();
+            foreach (Microsoft.Azure.Kinect.Sensor.ColorResolution name in Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.ColorResolution)))
             {
                 ResolutionsList.Add(name);
+            }
+            FPSList = new List<Microsoft.Azure.Kinect.Sensor.FPS>();
+            foreach (Microsoft.Azure.Kinect.Sensor.FPS name in Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.FPS)))
+            {
+                FPSList.Add(name);
             }
             IPsList = new List<string> {"localhost"};
             foreach(var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
@@ -137,7 +135,7 @@ namespace KinectAzureRemoteApp
             ConfigurationUI.StartingPort = (int)(Properties.Settings.Default.remotePort);
             ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
-            Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
+            Configuration.VideoResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
             InitializeComponent();
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
             Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
@@ -147,10 +145,17 @@ namespace KinectAzureRemoteApp
             IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
             PipelineConfiguration.RendezVousHost = Configuration.IpToUse = Properties.Settings.Default.IpToUse;
             IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
-            ColoRes.SelectedIndex = ResolutionsList.IndexOf((Resolution)Properties.Settings.Default.videoResolution);
+            ColoRes.SelectedIndex = ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution);
+            FPS.SelectedIndex = FPSList.IndexOf((Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS);
             UpdateLayout();
             IPs.SelectionChanged += IPs_SelectionChanged;
             ColoRes.SelectionChanged += ColoRes_SelectionChanged;
+            FPS.SelectionChanged += FPS_SelectionChanged;
+        }
+
+        private void FPS_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            Configuration.FPS = (Microsoft.Azure.Kinect.Sensor.FPS)FPS.SelectedValue;
         }
 
         private void IPs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -160,7 +165,7 @@ namespace KinectAzureRemoteApp
 
         private void ColoRes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            Properties.Settings.Default.videoResolution = (int)ColoRes.SelectedValue;
+            Configuration.VideoResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)ColoRes.SelectedValue;
         }
 
         private void RefreshUIFromConfiguration()
@@ -177,27 +182,8 @@ namespace KinectAzureRemoteApp
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             PipelineConfiguration.RendezVousHost = Configuration.IpToUse = Properties.Settings.Default.IpToUse;
             IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
-            if (Configuration.VideoResolution != null)
-            {
-                bool found = false;
-                foreach (var tuple in resolutionDictionary)
-                {
-                    if (tuple.Value.Item1 == Configuration.VideoResolution.Item1 && tuple.Value.Item2 == Configuration.VideoResolution.Item2)
-                    {
-                        Properties.Settings.Default.videoResolution = (int)tuple.Key;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    resolutionDictionary[Resolution.Custom] = Configuration.VideoResolution;
-                    Properties.Settings.Default.videoResolution = (int)Resolution.Custom;
-                }
-            }
-            else
-                Properties.Settings.Default.videoResolution = (int)Resolution.Native;
-            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
+            ColoRes.SelectedIndex = ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution);
+            FPS.SelectedIndex = FPSList.IndexOf((Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS);
             Properties.Settings.Default.Save();
             UpdateLayout();
         }
@@ -213,6 +199,9 @@ namespace KinectAzureRemoteApp
             Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
             Configuration.IpToUse = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
+            Properties.Settings.Default.videoResolution =ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Configuration.VideoResolution);
+            Properties.Settings.Default.FPS = FPSList.IndexOf((Microsoft.Azure.Kinect.Sensor.FPS)Configuration.FPS);
+            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.ApplicationName = ConfigurationUI.RendezVousApplicationName;
             Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
@@ -231,12 +220,8 @@ namespace KinectAzureRemoteApp
                 Configuration.StreamDepthCalibration = bool.Parse(args[6]);
                 Configuration.StreamIMU = bool.Parse(args[7]);
                 Configuration.EncodingVideoLevel = int.Parse(args[8]);
-                float videoWidth = float.Parse(args[9]);
-                float videoHeigth = float.Parse(args[10]);
-                if (videoWidth == 0.0 || videoHeigth == 0)
-                    Configuration.VideoResolution = null;
-                else
-                    Configuration.VideoResolution = new Tuple<float, float>(videoWidth, videoHeigth);
+                Configuration.VideoResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)int.Parse(args[9]);
+                Configuration.FPS = (Microsoft.Azure.Kinect.Sensor.FPS)int.Parse(args[10]);
                 Configuration.IpToUse = args[11];
                 Configuration.StartingPort = int.Parse(args[12]);
             } 
@@ -323,8 +308,14 @@ namespace KinectAzureRemoteApp
 
             //disable ui
             DataFormular.IsEnabled = false;
-            KinectStreams = new KinectAzureRemoteStreams(Pipeline?.CreateSubpipeline("Azure"), Configuration);
+            var pipeline = Microsoft.Psi.Pipeline.Create("AzureKinectSample", DeliveryPolicy.LatestMessage);
+            KinectStreams = new SAAC.RemoteConnectors.KinectAzureRemoteStreams(pipeline, Configuration);
+            //RendezvousClient client = new RendezvousClient(RendezVousServerIp, PipelineConfiguration.RendezVousPort);
+            //client.Start();
+            //client.Connected.WaitOne();
+            //client.Rendezvous.TryAddProcess(KinectStreams.GenerateProcess());
             Pipeline.AddProcess(KinectStreams.GenerateProcess());
+
             KinectStreams.RunAsync();
             State = "Running";
         }

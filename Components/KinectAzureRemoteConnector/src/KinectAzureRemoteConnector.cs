@@ -70,7 +70,10 @@ namespace SAAC.RemoteConnectors
                 return null;
             }
             logStatus(Configuration.RendezVousApplicationName + " stream " + name + " connected.");
-            return remoteImporter.Importer.OpenStream<T>(name).Out;
+            var stream = remoteImporter.Importer.OpenStream<T>(name).Out;
+            if (Configuration.Debug)
+                stream.Do((m, e) => { logStatus($"Message recieved on {name} @{e.OriginatingTime} : {m}"); });
+            return stream;
         }
 
         public EventHandler<Rendezvous.Process> GenerateProcess()

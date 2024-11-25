@@ -235,6 +235,7 @@ namespace SAAC.RendezVousPipelineServices
             if (!rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
             {
                 processNames.Remove(newProcess.Name);
+                Log($"Failed to AddProcess {newProcess.Name}");
                 return false;
             }
             return true;
@@ -423,10 +424,7 @@ namespace SAAC.RendezVousPipelineServices
                     if (source == null)
                         continue;
                     foreach (var stream in source.Streams)
-                    {
-                        Log($"\tStream {stream.StreamName}");
                         elementAdded += Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
-                    }
                 }
             }
             Log($"Process {process.Name} sources added : {elementAdded}");
@@ -482,8 +480,9 @@ namespace SAAC.RendezVousPipelineServices
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
-                if (/*!Configuration.TopicsTypes.ContainsKey(streamInfo.Name) ||*/ streamName != streamInfo.Name)
+                if (!Configuration.TopicsTypes.ContainsKey(streamInfo.Name) || streamName != streamInfo.Name)
                     continue;
+                Log($"\tStream {streamName}");
                 var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);
                 typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this, [streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, typeof(Importer).GetMethod("OpenStream").MakeGenericMethod(type).Invoke(importer.Importer, [streamInfo.Name, null, null]), storeSteam]);

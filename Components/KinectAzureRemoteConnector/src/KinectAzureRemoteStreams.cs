@@ -25,6 +25,8 @@ namespace SAAC.RemoteConnectors
 
             AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
             configKinect.DeviceIndex = Configuration.KinectDeviceIndex;
+            configKinect.ColorResolution = Configuration.VideoResolution;
+            configKinect.CameraFPS = Configuration.FPS;
             if (Configuration.StreamSkeleton == true)
                 configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
             Sensor = new AzureKinectSensor(ParentPipeline, configKinect);
@@ -47,10 +49,7 @@ namespace SAAC.RemoteConnectors
             if (Configuration.StreamVideo == true)
             {
                 RemoteExporter imageExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                if (Configuration.VideoResolution != null)
-                    imageExporter.Exporter.Write(Sensor.ColorImage.Resize(Configuration.VideoResolution.Item1, Configuration.VideoResolution.Item2).EncodeJpeg(Configuration.EncodingVideoLevel), $"Kinect_{Configuration.RendezVousApplicationName}_RGB");
-                else
-                    imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"Kinect_{Configuration.RendezVousApplicationName}_RGB");
+                imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"Kinect_{Configuration.RendezVousApplicationName}_RGB");
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamDepth == true)

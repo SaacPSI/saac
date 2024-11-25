@@ -85,7 +85,7 @@
                         <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.KinectDeviceIndex}"/>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Stream Port :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="2"  Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.RendezVousPort}"/>
+                        <TextBox Grid.Row="2"  Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.StartingPort}"/>
 
                         <GroupBox Header="Data Type" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="3" >
                         <Grid>
@@ -93,7 +93,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
@@ -105,8 +106,9 @@
                             <CheckBox Grid.Row="0" Grid.Column="0" Name="Audio" Content="Audio"/>
                             <CheckBox Grid.Row="1" Grid.Column="0" Name="Skeleton" Content="Skeleton"/>
                             <CheckBox Grid.Row="2" Grid.Column="0" Name="RGB" Content="RGB"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" Name="ColoRes" ItemsSource="{Binding Path=ResolutionsList}"/>
-                            <TextBox Grid.Row="2" Grid.Column="2" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.EncodingVideoLevel}"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" Name="ColoRes" ItemsSource="{Binding Path=ResolutionsList}"/>
+                                <ComboBox Grid.Row="2" Grid.Column="2" Name="FPS" ItemsSource="{Binding Path=FPSList}"/>
+                                <TextBox Grid.Row="2" Grid.Column="3" TextWrapping="Wrap" Text="{Binding Path=ConfigurationUI.EncodingVideoLevel}"/>
                             <CheckBox Grid.Row="3" Grid.Column="0" Name="Depth" Content="Depth"/>
                             <CheckBox Grid.Row="4" Grid.Column="0" Name="DepthCalibration" Content="DepthCalibration"/>
                             <CheckBox Grid.Row="5" Grid.Column="0" Name="IMU" Content="IMU"/>

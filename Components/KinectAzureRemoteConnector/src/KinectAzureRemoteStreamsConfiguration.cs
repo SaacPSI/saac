@@ -16,7 +16,8 @@ namespace SAAC.RemoteConnectors
 
         // Configuration for video stream
         public int EncodingVideoLevel { get; set; } = 90;
-        public Tuple<float, float>? VideoResolution { get; set; } = new Tuple<float, float>(640.0f, 360.0f);
+        public Microsoft.Azure.Kinect.Sensor.ColorResolution VideoResolution { get; set; } = Microsoft.Azure.Kinect.Sensor.ColorResolution.R1080p;
+        public Microsoft.Azure.Kinect.Sensor.FPS FPS { get; set; } = Microsoft.Azure.Kinect.Sensor.FPS.FPS30;
 
         // Network
         public TransportKind ConnectionType { get; set; } = TransportKind.Tcp;
