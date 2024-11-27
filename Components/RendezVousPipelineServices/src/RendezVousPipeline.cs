@@ -493,15 +493,9 @@ namespace SAAC.RendezVousPipelineServices
         }
 
         void ISourceComponent.Start(Action<DateTime> notifyCompletionTime)
-        {
-            RunPipeline();
-            notifyCompletionTime(this.Pipeline.GetCurrentTime());
-        }
+        {}
 
         void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
-        {
-            Stop();
-            notifyCompleted();
-        }
+        {}
     }
 }
