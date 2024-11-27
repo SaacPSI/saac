@@ -8,12 +8,13 @@ using static Microsoft.Psi.Interop.Rendezvous.Operators;
 using System.IO;
 using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
+using Microsoft.Psi.Components;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class RendezVousPipeline : ConnectorsAndStoresCreator
+    public class RendezVousPipeline : ConnectorsAndStoresCreator, ISourceComponent
     {
         public const string ClockSynchProcessName = "ClockSynch";
         public const string DiagnosticsProcessName = "Diagnostics";
@@ -489,6 +490,18 @@ namespace SAAC.RendezVousPipelineServices
                 return true;
             }
             return false;
+        }
+
+        void ISourceComponent.Start(Action<DateTime> notifyCompletionTime)
+        {
+            RunPipeline();
+            notifyCompletionTime(this.Pipeline.GetCurrentTime());
+        }
+
+        void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
+        {
+            Stop();
+            notifyCompleted();
         }
     }
 }
