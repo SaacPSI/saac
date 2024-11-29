@@ -209,9 +209,9 @@ namespace SAAC.RendezVousPipelineServices
             }
         }
 
-        public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
+        public Pipeline CreateSubpipeline(string name = "SaaCSubpipeline")
         {
-            return new Subpipeline(Pipeline, name);
+            return Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name);
         }
 
         public void TriggerNewProcessEvent(string name)
@@ -481,8 +481,9 @@ namespace SAAC.RendezVousPipelineServices
             }
             foreach (var streamInfo in importer.Importer.AvailableStreams)
             {
-                if (!Configuration.TopicsTypes.ContainsKey(streamInfo.Name) || streamName != streamInfo.Name)
-                    continue;
+                // This is on hold as it constraint more the use of the rendezVousPipeline system.
+                //if (!Configuration.TopicsTypes.ContainsKey(streamInfo.Name) || streamName != streamInfo.Name)
+                //    continue;
                 Log($"\tStream {streamName}");
                 var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);

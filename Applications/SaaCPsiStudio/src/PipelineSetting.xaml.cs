@@ -4,12 +4,13 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32;
 using SAAC.RendezVousPipelineServices;
-using static System.Net.Mime.MediaTypeNames;
 using System.Windows.Controls;
-using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using SharpDX;
 using Microsoft.Psi.Data;
+using SAAC.KinectAzureRemoteServices;
+using SAAC.RemoteConnectors;
+using Microsoft.Psi;
+using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
+using System.Windows.Media.Animation;
 
 namespace SaaCPsiStudio
 {
@@ -119,7 +120,7 @@ namespace SaaCPsiStudio
             DataContext = this;
 
             configuration = new RendezVousPipelineConfiguration();
-            configuration.RendezVousHost = "127.0.0.1"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+            configuration.RendezVousHost = "localhost"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
             configuration.DatasetPath = "D:/Stores/SAAC/";
             configuration.DatasetName = "SAAC.pds";
             configuration.AutomaticPipelineRun = true;
@@ -129,13 +130,6 @@ namespace SaaCPsiStudio
             //configuration.TypesSerializers.Add();
             //configuration.NotStoredTopics.Add();
 
-            // Topic for positions
-            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(SAAC.Helpers.MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(SAAC.Helpers.MatrixToCoordinateSystem));
-
-            configuration.StreamToStore.Add("Head", "Unity");
-            configuration.StreamToStore.Add("Cube", "Unity");
-
             InitializeComponent();
         }
 
@@ -144,10 +138,10 @@ namespace SaaCPsiStudio
             server?.Dataset?.Save();
             return server?.Dataset;
         }
-
         public void RunPipeline()
         {
             server?.RunPipeline();
+            server?.CommandEmitter.Post((Command.Run, "KinectStreaming"), server.Pipeline.GetCurrentTime());
         }
 
         public void StopPipeline()
@@ -163,7 +157,11 @@ namespace SaaCPsiStudio
         private void BtnStartClick(object sender, RoutedEventArgs e)
         {
             status = "";
-            server = new RendezVousPipeline(configuration, "SaaCPsiStudioApplication", null, (log) => { Status += $"{log}\n"; });
+            server = new RendezVousPipeline(configuration, "Server", null, (log) => { Status += $"{log}\n"; });
+            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
+            configuration1.RendezVousApplicationName = "KinectStreaming";
+            configuration1.Debug = true;
+            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(server, configuration1);
             server.Start();
         }
 
@@ -194,6 +192,11 @@ namespace SaaCPsiStudio
                 return;
             log.CaretIndex = log.Text.Length;
             log.ScrollToEnd();
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            server?.Stop();
         }
     }
 }

@@ -37,37 +37,37 @@ namespace SAAC.RemoteConnectors
                 AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
                 AudioCapture audioCapture = new AudioCapture(ParentPipeline, configuration);
                 RemoteExporter soundExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                soundExporter.Exporter.Write(audioCapture.Out, $"Kinect_{Configuration.RendezVousApplicationName}_Audio");
+                soundExporter.Exporter.Write(audioCapture.Out, $"{Configuration.RendezVousApplicationName}_Audio");
                 exporters.Add(soundExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamSkeleton == true)
             {
                 RemoteExporter skeletonExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                skeletonExporter.Exporter.Write(Sensor.Bodies, $"Kinect_{Configuration.RendezVousApplicationName}_Bodies");
+                skeletonExporter.Exporter.Write(Sensor.Bodies, $"{Configuration.RendezVousApplicationName}_Bodies");
                 exporters.Add(skeletonExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamVideo == true)
             {
                 RemoteExporter imageExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"Kinect_{Configuration.RendezVousApplicationName}_RGB");
+                imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"{Configuration.RendezVousApplicationName}_RGB");
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamDepth == true)
             {
                 RemoteExporter depthExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                depthExporter.Exporter.Write(Sensor.DepthImage.EncodePng(), $"Kinect_{Configuration.RendezVousApplicationName}_Depth");
+                depthExporter.Exporter.Write(Sensor.DepthImage.EncodePng(), $"{Configuration.RendezVousApplicationName}_Depth");
                 exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamDepthCalibration == true)
             {
                 RemoteExporter depthCalibrationExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                depthCalibrationExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, $"Kinect_{Configuration.RendezVousApplicationName}_Calibration");
+                depthCalibrationExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, $"{Configuration.RendezVousApplicationName}_Calibration");
                 exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
             if (Configuration.StreamIMU == true)
             {
                 RemoteExporter imuExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
-                imuExporter.Exporter.Write(Sensor.Imu, $"Kinect_{Configuration.RendezVousApplicationName}_IMU");
+                imuExporter.Exporter.Write(Sensor.Imu, $"{Configuration.RendezVousApplicationName}_IMU");
                 exporters.Add(imuExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
 

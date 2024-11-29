@@ -5,9 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KinectAzureRemoteApp"
         mc:Ignorable="d"
-        Title="KinectAzureRemoteApp" Height="550" Width="400">
+        Title="KinectAzureRemoteApp" Height="550" Width="800">
     <UserControl>
-        <Grid Margin="0,0,0,-115">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -31,11 +36,7 @@
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>
+                    </Grid.RowDefinitions>
 
                 <CheckBox Grid.Row="0" Grid.Column="0" Name="Diagnostics" Content="Diagnostics" FontWeight="Bold"/>
                 <GroupBox Name="RendezVousGrid" Header="RendezVous Configuration" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="1" >
@@ -49,8 +50,10 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
 
                         <Label Grid.Row="0" Grid.Column="0" Content="Server IP :" FontWeight="Bold"/>
                         <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RendezVousServerIp}"/>
@@ -66,7 +69,13 @@
 
                         <Label Grid.Row="4" Grid.Column="0" Content="Command Source :" FontWeight="Bold"/>
                         <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=CommandSource}"/>
-                    </Grid>
+                        
+                        <Label Grid.Row="5" Grid.Column="0" Content="Dataset Path:" FontWeight="Bold"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=DatasetPath}"/>
+
+                        <Label Grid.Row="6" Grid.Column="0" Content="Dataset Name:" FontWeight="Bold"/>
+                        <TextBox Grid.Row="6" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=DatasetName}"/>
+                        </Grid>
                 </GroupBox>
                 <GroupBox Header="Kinect Configuraton" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
                     <Grid>
@@ -139,6 +148,12 @@
                     <Button Content="Save Config" Grid.Row="4" Grid.Column="1" Width="90" Click="BtnSaveClick"/>
                 </Grid>
             </GroupBox>
+        </Grid>
+        <GroupBox Header="Log" FontWeight="Bold" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,20" Grid.RowSpan="2" >
+            <ScrollViewer>
+                <TextBox x:Name="Log" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" IsEnabled="False" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Logs}" TextChanged="Log_TextChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </ScrollViewer>
+        </GroupBox>
         </Grid>
     </UserControl>
 </Window>

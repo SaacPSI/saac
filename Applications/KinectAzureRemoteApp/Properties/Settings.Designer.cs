@@ -190,5 +190,29 @@ namespace KinectAzureRemoteApp.Properties {
                 this["FPS"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DatasetPath {
+            get {
+                return ((string)(this["DatasetPath"]));
+            }
+            set {
+                this["DatasetPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DatasetName {
+            get {
+                return ((string)(this["DatasetName"]));
+            }
+            set {
+                this["DatasetName"] = value;
+            }
+        }
     }
 }

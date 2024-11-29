@@ -1,15 +1,14 @@
 ﻿using Microsoft.Psi;
-using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Interop.Rendezvous;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Net;
-using Microsoft.Psi.Diagnostics;
+using Microsoft.Win32;
 using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
-using Microsoft.Psi.AzureKinect;
-using System.Windows.Media.Animation;
+using SAAC.KinectAzureRemoteServices;
+using System.Windows.Controls;
+using SharpDX;
 
 namespace KinectAzureRemoteApp
 {
@@ -45,6 +44,18 @@ namespace KinectAzureRemoteApp
             State = status;
         }
 
+        // LOG
+        private string logs = "";
+        public string Logs
+        {
+            get => logs;
+            set => SetProperty(ref logs, value);
+        }
+        public void DelegateMethod(string logs)
+        {
+            Logs = logs;
+        }
+
         private KinectAzureRemoteStreamsConfiguration Configuration = new KinectAzureRemoteStreamsConfiguration();
         private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
         
@@ -65,11 +76,32 @@ namespace KinectAzureRemoteApp
             set => SetProperty(ref Configuration, value);
         }
 
-
         public RendezVousPipelineConfiguration PipelineConfigurationUI
         {
             get => PipelineConfiguration;
             set => SetProperty(ref PipelineConfiguration, value);
+        }
+
+        // DatasetPath
+        public string DatasetPath
+        {
+            get => PipelineConfiguration.DatasetPath;
+            set => SetProperty(ref PipelineConfiguration.DatasetPath, value);
+        }
+        public void DelegateMethodDatasetPath(string path)
+        {
+            PipelineConfiguration.DatasetPath = path;
+        }
+
+        // DatasetName
+        public string DatasetName
+        {
+            get => PipelineConfiguration.DatasetName;
+            set => SetProperty(ref PipelineConfiguration.DatasetName, value);
+        }
+        public void DelegateMethodDatasetName(string path)
+        {
+            PipelineConfiguration.DatasetName = path;
         }
 
         public int ServerPort
@@ -89,23 +121,14 @@ namespace KinectAzureRemoteApp
             CommandSource = commandSource;
         }
 
-        private string log = "";
-        public string Log
-        {
-            get => log;
-            set => SetProperty(ref log, value);
-        }
-        public void DelegateMethodLog(string log)
-        {
-            Log = log;
-        }
+    
 
         //ToDo add more resolution definition
         public List<Microsoft.Azure.Kinect.Sensor.ColorResolution> ResolutionsList { get; }
         public List<Microsoft.Azure.Kinect.Sensor.FPS> FPSList { get; }
         public List<string> IPsList { get; }
         private RendezVousPipeline? Pipeline;
-        private KinectAzureRemoteStreams? KinectStreams;
+        private KinectAzureStreamsComponent? KinectStreams;
 
         public MainWindow()
         {
@@ -136,6 +159,8 @@ namespace KinectAzureRemoteApp
             ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
             ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
             Configuration.VideoResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
+            PipelineConfiguration.DatasetName = Properties.Settings.Default.DatasetName;
+            PipelineConfiguration.DatasetPath = Properties.Settings.Default.DatasetPath;
             InitializeComponent();
             Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
             Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
@@ -184,6 +209,7 @@ namespace KinectAzureRemoteApp
             IPs.SelectedIndex = IPsList.IndexOf(PipelineConfiguration.RendezVousHost);
             ColoRes.SelectedIndex = ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution);
             FPS.SelectedIndex = FPSList.IndexOf((Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS);
+     
             Properties.Settings.Default.Save();
             UpdateLayout();
         }
@@ -205,6 +231,8 @@ namespace KinectAzureRemoteApp
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.ApplicationName = ConfigurationUI.RendezVousApplicationName;
             Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
+            Properties.Settings.Default.DatasetName = PipelineConfiguration.DatasetName;
+            Properties.Settings.Default.DatasetPath = PipelineConfiguration.DatasetPath;
             Properties.Settings.Default.Save();
         }
 
@@ -295,7 +323,7 @@ namespace KinectAzureRemoteApp
             RendezVousGrid.IsEnabled = false;
             PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
             PipelineConfiguration.CommandDelegate = CommandRecieved;
-            Pipeline = new RendezVousPipeline(PipelineConfiguration, ConfigurationUI.RendezVousApplicationName, RendezVousServerIp);
+            Pipeline = new RendezVousPipeline(PipelineConfiguration, ConfigurationUI.RendezVousApplicationName, RendezVousServerIp, (log) => { Logs += $"{log}\n"; });
             State = "Waiting for server";
             Pipeline.Start();
             State = "Ready to start Kinect";
@@ -308,14 +336,10 @@ namespace KinectAzureRemoteApp
 
             //disable ui
             DataFormular.IsEnabled = false;
-            var pipeline = Microsoft.Psi.Pipeline.Create("AzureKinectSample", DeliveryPolicy.LatestMessage);
-            KinectStreams = new SAAC.RemoteConnectors.KinectAzureRemoteStreams(pipeline, Configuration);
-            //RendezvousClient client = new RendezvousClient(RendezVousServerIp, PipelineConfiguration.RendezVousPort);
-            //client.Start();
-            //client.Connected.WaitOne();
-            //client.Rendezvous.TryAddProcess(KinectStreams.GenerateProcess());
-            Pipeline.AddProcess(KinectStreams.GenerateProcess());
-
+            Configuration.StreamSkeleton = true;
+            KinectStreams = new SAAC.KinectAzureRemoteServices.KinectAzureStreamsComponent(Pipeline, Configuration);
+            //Pipeline.AddProcess(KinectStreams.GenerateProcess());
+            KinectStreams.GenerateProcess();
             KinectStreams.RunAsync();
             State = "Running";
         }
@@ -398,6 +422,25 @@ namespace KinectAzureRemoteApp
         private void BtnSaveClick(object sender, RoutedEventArgs e)
         {
             RefreshConfigurationFromUI();
+        }
+
+        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            TextBox? log = sender as TextBox;
+            if (log == null)
+                return;
+            log.CaretIndex = log.Text.Length;
+            log.ScrollToEnd();
+        }
+
+        private void BtnBrowseNameClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                PipelineConfiguration.DatasetPath = openFileDialog.FileName.Substring(0, openFileDialog.FileName.IndexOf(openFileDialog.SafeFileName));
+                PipelineConfiguration.DatasetName = openFileDialog.SafeFileName;
+            }
         }
     }
 }
