@@ -8,7 +8,6 @@ using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
 using SAAC.KinectAzureRemoteServices;
 using System.Windows.Controls;
-using SharpDX;
 
 namespace KinectAzureRemoteApp
 {
@@ -135,6 +134,7 @@ namespace KinectAzureRemoteApp
             DataContext = this;
             PipelineConfiguration.ClockPort = PipelineConfiguration.CommandPort = 0;
             PipelineConfiguration.AutomaticPipelineRun = true;
+            PipelineConfiguration.RecordIncomingProcess = false;
             ResolutionsList = new List<Microsoft.Azure.Kinect.Sensor.ColorResolution>();
             foreach (Microsoft.Azure.Kinect.Sensor.ColorResolution name in Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.ColorResolution)))
             {
@@ -225,7 +225,7 @@ namespace KinectAzureRemoteApp
             Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
             Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
             Configuration.IpToUse = Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
-            Properties.Settings.Default.videoResolution =ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Configuration.VideoResolution);
+            Properties.Settings.Default.videoResolution = ResolutionsList.IndexOf((Microsoft.Azure.Kinect.Sensor.ColorResolution)Configuration.VideoResolution);
             Properties.Settings.Default.FPS = FPSList.IndexOf((Microsoft.Azure.Kinect.Sensor.FPS)Configuration.FPS);
             Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;

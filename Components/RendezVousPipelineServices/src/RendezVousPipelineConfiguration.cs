@@ -12,6 +12,7 @@ namespace SAAC.RendezVousPipelineServices
         public RendezVousPipeline.DiagnosticsMode Diagnostics = RendezVousPipeline.DiagnosticsMode.Off;
         public bool Debug = false;
         public bool AutomaticPipelineRun = false;
+        public bool RecordIncomingProcess = true;
         public RendezVousPipeline.SessionNamingMode SessionMode = RendezVousPipeline.SessionNamingMode.Increment;
         public RendezVousPipeline.StoreMode StoreMode = RendezVousPipeline.StoreMode.Independant;
         public string DatasetPath = "";

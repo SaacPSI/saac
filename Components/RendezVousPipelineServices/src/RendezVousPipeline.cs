@@ -285,7 +285,7 @@ namespace SAAC.RendezVousPipelineServices
             rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
             rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
             rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
-            rendezVous.Start();
+           // rendezVous.Start();
             Log("RendezVous started!");
             return true;
         }
@@ -317,7 +317,8 @@ namespace SAAC.RendezVousPipelineServices
                             ProcessAddedClock(process);
                         break;
                     default:
-                        ProcessAddedData(process);
+                        if(Configuration.RecordIncomingProcess)
+                            ProcessAddedData(process);
                         break;
                 }
         }

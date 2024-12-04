@@ -6,6 +6,7 @@ using Microsoft.Psi;
 using SAAC.RemoteConnectors;
 using SAAC.RendezVousPipelineServices;
 using Microsoft.Psi.Imaging;
+using System.Runtime.InteropServices;
 
 namespace SAAC.KinectAzureRemoteServices
 {
@@ -36,6 +37,7 @@ namespace SAAC.KinectAzureRemoteServices
                 configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
             pipeline = server.CreateSubpipeline(name);
             Sensor = new AzureKinectSensor(pipeline, configKinect);
+            var session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);
 
             List<Rendezvous.Endpoint> exporters = new List<Rendezvous.Endpoint>();
             if (Configuration.StreamAudio == true)
@@ -46,7 +48,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter soundExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 soundExporter.Exporter.Write(audioCapture.Out, streamName);
                 exporters.Add(soundExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}" , server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, audioCapture.GetType(), audioCapture.Out);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}" , session, pipeline, audioCapture.GetType(), audioCapture.Out);
             }
             if (Configuration.StreamSkeleton == true)
             {
@@ -54,7 +56,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter skeletonExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 skeletonExporter.Exporter.Write(Sensor.Bodies, streamName);
                 exporters.Add(skeletonExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, Sensor.Bodies.GetType(), Sensor.Bodies);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.Bodies.GetType(), Sensor.Bodies);
             }
             if (Configuration.StreamVideo == true)
             {
@@ -62,7 +64,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter imageExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), streamName);
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel).GetType(), Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel).Out);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel).GetType(), Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel).Out);
             }
             if (Configuration.StreamDepth == true)
             {
@@ -70,7 +72,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter depthExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 depthExporter.Exporter.Write(Sensor.DepthImage.EncodePng(), streamName);
                 exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, Sensor.DepthImage.EncodePng().GetType(), Sensor.DepthImage.EncodePng().Out);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.DepthImage.EncodePng().GetType(), Sensor.DepthImage.EncodePng().Out);
             }
             if (Configuration.StreamDepthCalibration == true)
             {
@@ -78,7 +80,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter depthCalibrationExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 depthCalibrationExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, streamName);
                 exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo);
             }
             if (Configuration.StreamIMU == true)
             {
@@ -86,7 +88,7 @@ namespace SAAC.KinectAzureRemoteServices
                 RemoteExporter imuExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 imuExporter.Exporter.Write(Sensor.Imu, streamName);
                 exporters.Add(imuExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName), pipeline, Sensor.Imu.GetType(), Sensor.Imu);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.Imu.GetType(), Sensor.Imu);
             }
 
             server.TriggerNewProcessEvent(Configuration.RendezVousApplicationName);

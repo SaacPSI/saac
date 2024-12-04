@@ -15,6 +15,9 @@ public abstract class PsiImporter<T> : IPsiImporter
 {
     public string TopicName = "Topic";
     protected bool IsInitialized = false;
+    public delegate void RecieveMessage(T message, DateTime time);
+    public RecieveMessage onRecieved;
+
 
     protected PsiPipelineManager PsiManager;
 
@@ -30,7 +33,10 @@ public abstract class PsiImporter<T> : IPsiImporter
         PsiManager.RegisterComponentImporter(TopicName, this);
     }
 
-    protected abstract void Process(T message, Envelope enveloppe);
+    protected virtual void Process(T message, Envelope enveloppe)
+    {
+        onRecieved(message, enveloppe.OriginatingTime);
+    }
 
     public override void ConnectionToImporter(RemoteImporter importer)
     {
