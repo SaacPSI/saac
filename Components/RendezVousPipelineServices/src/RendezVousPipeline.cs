@@ -498,6 +498,8 @@ namespace SAAC.RendezVousPipelineServices
         {}
 
         void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
-        {}
+        {
+            notifyCompleted();
+        }
     }
 }
