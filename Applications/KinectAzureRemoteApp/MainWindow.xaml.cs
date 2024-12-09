@@ -275,6 +275,7 @@ namespace KinectAzureRemoteApp
             if (args[0] != ConfigurationUI.RendezVousApplicationName)
                 return;
 
+            Pipeline?.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
             switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
