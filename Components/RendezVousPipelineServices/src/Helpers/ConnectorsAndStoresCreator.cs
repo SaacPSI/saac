@@ -3,17 +3,16 @@ using Microsoft.Psi;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class ConnectorsAndStoresCreator
+    public class ConnectorsAndStoresCreator : ConnectorsManager
     {
         public Dictionary<string, Dictionary<string, PsiExporter>> Stores { get; protected set; }
-        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; protected set; }
         public string StorePath { get; set; }
 
-        public ConnectorsAndStoresCreator(string storePath = "", Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+        public ConnectorsAndStoresCreator(string storePath = "", Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null, string name = nameof(ConnectorsAndStoresCreator))
+            : base(connectors, name)
         {
             StorePath = storePath;
             Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
-            Connectors = connectors ?? new Dictionary<string, Dictionary<string, ConnectorInfo>>();
         }
 
         public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam = true)

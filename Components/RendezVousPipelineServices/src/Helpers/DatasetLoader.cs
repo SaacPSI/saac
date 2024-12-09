@@ -3,18 +3,17 @@ using Microsoft.Psi.Data;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class DatasetLoader
+    public class DatasetLoader : ConnectorsManager
     {
         public Dictionary<string, Dictionary<string, PsiImporter>> Stores { get; protected set; }
-        public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; protected set; }
 
         protected Pipeline? pipeline;
 
-        public DatasetLoader(Pipeline pipeline)
+        public DatasetLoader(Pipeline pipeline, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null, string name = nameof(DatasetLoader))
+            : base(connectors)
         {
             this.pipeline = pipeline;
             Stores = new Dictionary<string, Dictionary<string, PsiImporter>>();
-            Connectors = new Dictionary<string, Dictionary<string, ConnectorInfo>>();
         }
 
         public bool Load(string dataset, string? sessionName = null)
@@ -32,6 +31,8 @@ namespace SAAC.RendezVousPipelineServices
                 foreach (var partition in session.Partitions)
                     foreach (var streamMetadata in partition.AvailableStreams)
                         isGood &= LoadStoreAndCreateConnector(session, partition, streamMetadata);
+                if (NewProcess != null)
+                    NewProcess(this, (session.Name, Connectors));
             }
             return isGood;
         }
@@ -53,7 +54,7 @@ namespace SAAC.RendezVousPipelineServices
                 if (!Connectors.ContainsKey(streamMetadata.StoreName))
                     Connectors.Add(streamMetadata.StoreName, new Dictionary<string, ConnectorInfo>());
                 Type producedType = Type.GetType(streamMetadata.TypeName);
-                Connectors[streamMetadata.StoreName].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(store, [streamMetadata.Name, null, null])));
+                Connectors[session.Name].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(store, [streamMetadata.Name, null, null])));
             }
             catch (Exception ex)
             {

@@ -28,8 +28,6 @@ namespace SAAC.RendezVousPipelineServices
         public Dataset? Dataset { get; private set; }
         public Pipeline Pipeline { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
-        public EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)>? NewProcess;
-        public EventHandler<string>? RemovedProcess;
         public LogStatus Log;
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
@@ -37,16 +35,15 @@ namespace SAAC.RendezVousPipelineServices
         protected List<string> processNames; 
         protected bool isStarted;
         protected bool isPipelineRunning;
-        protected string name;
         protected PsiFormatCommand commandFormat;
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
-        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
+        public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+            : base("" , connectors, name)
         {
-            this.name = name;
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
             this.Log = log ?? ((log) => { Console.WriteLine(log); });
             commandFormat = new PsiFormatCommand();
@@ -73,9 +70,6 @@ namespace SAAC.RendezVousPipelineServices
                 rendezvousRelay = rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
             isStarted = isPipelineRunning = false;
         }
-
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
 
         public bool RunPipeline()
         {
