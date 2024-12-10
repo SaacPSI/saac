@@ -22,7 +22,7 @@ namespace SAAC.RendezVousPipelineServices
                 CreateStore(p, session, streamName, storeName, stream);
         }
 
-        public void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
+        public virtual void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
         {
             if (Stores.ContainsKey(session.Name) && Stores[session.Name].ContainsKey(storeName))
             {

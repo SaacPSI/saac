@@ -1,6 +1,8 @@
 ﻿using Microsoft.Psi;
+using Microsoft.Psi.Data;
 using SAAC;
 using SAAC.RendezVousPipelineServices;
+using System.Linq;
 
 namespace RendezVousPipelineServices
 {
@@ -11,14 +13,17 @@ namespace RendezVousPipelineServices
         public ReplayPipelineConfiguration Configuration { get; private set; }
 
         private DatasetLoader loader;
+        private SortedSet<string> ReadOnlySessionsAndStores;
 
         public ReplayPipeline(ReplayPipelineConfiguration configuration, string name = nameof(ReplayPipeline), LogStatus? log = null)
             : base(configuration, name, log)
         {
             Configuration = configuration ?? new ReplayPipelineConfiguration();
             loader = new DatasetLoader(Pipeline, Connectors, $"{name}-Loader");
-            if(Dataset == null)
+            if (Dataset == null)
                 throw new ArgumentNullException(nameof(Dataset));
+            else if(Configuration.NewDataset)
+                Dataset.SaveAs($@"{StorePath}\{Dataset.Name}_replayed.pds");
         }
 
         public override void AddNewProcessEvent(EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)> handler)
@@ -35,7 +40,22 @@ namespace RendezVousPipelineServices
 
         public bool LoadDatasetAndConnectors(string? sessionName = null)
         {
-            return loader.Load(Dataset, sessionName);
+            if (loader.Load(Dataset, sessionName))
+            {
+                if (Configuration.ReadOnlySessionsAndStores)
+                { 
+                    foreach (var session in Connectors)
+                    {
+                        foreach (var connectorPair in session.Value)
+                        {
+                            ReadOnlySessionsAndStores.Add(connectorPair.Value.StoreName);
+                            ReadOnlySessionsAndStores.Add(connectorPair.Value.SessionName);
+                        }
+                    }
+                }
+                return true;
+            }
+            return false;
         }
 
         protected override void RunAsync()
@@ -55,6 +75,13 @@ namespace RendezVousPipelineServices
                     Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, true));
                     break;
             }
+        }
+
+        public override void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
+        {
+            if (ReadOnlySessionsAndStores.Contains(storeName) || ReadOnlySessionsAndStores.Contains(session.Name))
+                throw new InvalidOperationException("Trying to write a Store or a Session that is readonly");
+            base.CreateStore(pipeline, session, streamName, storeName, source);
         }
     }
 }
