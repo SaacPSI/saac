@@ -66,32 +66,33 @@ namespace SAAC.RendezVousPipelineServices
         {
             (var bytes, int offset, int count) = this.serializer.SerializeMessage(message, envelope.OriginatingTime);
 
-            try
+
+            if (this.clients.Count != 0)
             {
-                if (this.clients.Count != 0)
+                List<TcpClient> clientsToRemove = new List<TcpClient>();
+                foreach (var client in this.clients)
                 {
-                    List<TcpClient> clientsToRemove = new List<TcpClient>();
-                    foreach (var client in this.clients)
+                    if (!client.Connected)
                     {
-                        if (!client.Connected)
-                        {
-                            clientsToRemove.Add(client);
-                            continue;
-                        }
+                        clientsToRemove.Add(client);
+                        continue;
+                    }
+                    try
+                    {
                         var stream = client.GetStream();
                         stream.Write(BitConverter.GetBytes(count), 0, sizeof(int));
                         stream.Write(bytes, offset, count);
                     }
-                    this.clients = (List<TcpClient>)this.clients.Intersect(clientsToRemove);
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine($"TcpWriterMulti Exception: {ex.Message}");
+                        clientsToRemove.Add(client);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"TcpWriter Exception: {ex.Message}");
-
-                // Restart the server
-                this.Stop();
-                this.Start();
+                clientsToRemove.ForEach(client =>
+                {
+                    this.clients.Remove(client);
+                });
             }
         }
 

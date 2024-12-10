@@ -616,6 +616,11 @@ namespace TestingConsole
             Console.ReadLine();
             pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
 
+
+            Console.WriteLine("Press any key to send command.");
+            Console.ReadLine();
+            pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
+
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
             //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);
             //importer.Connected.WaitOne();

@@ -9,32 +9,26 @@ using System.IO;
 using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
 using Microsoft.Psi.Components;
+using RendezVousPipelineServices;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class RendezVousPipeline : ConnectorsAndStoresCreator, ISourceComponent
+    public class RendezVousPipeline : DatasetPipeline, ISourceComponent
     {
         public const string ClockSynchProcessName = "ClockSynch";
         public const string DiagnosticsProcessName = "Diagnostics";
         public const string CommandProcessName = "Command";
 
-        public enum SessionNamingMode { Unique, Increment, Overwrite };
-        public enum StoreMode { Independant, Process, Dictionnary };
-        public enum DiagnosticsMode { Off, Store, Export };
         public enum Command { Initialize, Run, Stop, Restart, Close, Status };
 
-        public Dataset? Dataset { get; private set; }
-        public Pipeline Pipeline { get; private set; }
         public RendezVousPipelineConfiguration Configuration { get; private set; }
-        public LogStatus Log;
         public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
 
         protected List<string> processNames; 
         protected bool isStarted;
-        protected bool isPipelineRunning;
         protected PsiFormatCommand commandFormat;
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
@@ -42,49 +36,17 @@ namespace SAAC.RendezVousPipelineServices
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
-            : base("" , connectors, name)
+            : base(configuration, name, log)
         {
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
-            this.Log = log ?? ((log) => { Console.WriteLine(log); });
             commandFormat = new PsiFormatCommand();
-            Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
             processNames = new List<string>();
-            if (this.Configuration.DatasetName.Length > 4)
-            {
-                if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
-                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
-                else
-                { 
-                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
-                    Dataset.Save(); // throw exception here if the path is not correct
-                }
-                StorePath = this.Configuration.DatasetPath;
-            }
-            else
-                Dataset = null;
-
             if (rendezVousServerAddress == null)
                 rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);
             else
                 rendezvousRelay = rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
             isStarted = isPipelineRunning = false;
-        }
-
-        public bool RunPipeline()
-        {
-            if (isPipelineRunning)
-                return true;
-            try
-            {
-                Pipeline.RunAsync();
-                isPipelineRunning = true;
-            }
-            catch(Exception ex) 
-            {
-                Log($"{ex.Message}\n{ex.InnerException}");
-            }
-            return isPipelineRunning;
         }
 
         public void Start()
@@ -98,119 +60,13 @@ namespace SAAC.RendezVousPipelineServices
             isStarted = true;
         }
 
-        public void Stop()
+        public override void Stop()
         {
             if (!isStarted)
                 return;
             rendezVous.Stop();
-            if (isPipelineRunning)
-                Pipeline.Dispose();
-            Dataset?.Save();
-            isStarted = isPipelineRunning = false;
-        }
-
-        public Session? GetSession(string sessionName)
-        {
-            if (Dataset != null)
-            {
-                if (sessionName.EndsWith("."))
-                {
-                    Session? sessionTmp = null;
-                    foreach (var session in Dataset.Sessions)
-                    {
-                        if (session != null && session.Name.Contains(sessionName))
-                        {
-                            if (sessionTmp != null)
-                            {
-                                if (session.Name.Replace(sessionName, "").CompareTo(sessionTmp.Name.Replace(sessionName, "")) < 0)
-                                    continue;
-                            }
-                            sessionTmp = session;
-                        }
-                    }
-                    return sessionTmp;
-                }
-                else
-                {
-                    foreach (var session in Dataset.Sessions)
-                    {
-                        if (session != null && session.Name == sessionName)
-                            return session;
-                    }
-                }
-            }      
-            return null;
-        }
-
-        public Session? CreateOrGetSession(string sessionName)
-        {
-            if (Dataset == null)
-                return null;
-            foreach (var session in Dataset.Sessions)
-                if (session != null && session.Name == sessionName)
-                    return session;
-            return Dataset.AddEmptySession(sessionName);
-        }
-
-        public Session? CreateIterativeSession(string sessionName)
-        {
-            if (Dataset == null)
-                return null;
-            int iterator = 0;
-            foreach (var session in Dataset.Sessions)
-                if (session != null && session.Name.Contains(sessionName))
-                    iterator++;
-            return Dataset.AddEmptySession($"{sessionName}.{iterator:D3}");
-        }
-
-        public Session? CreateOrGetSessionFromMode(string sessionName)
-        {
-            switch (Configuration.SessionMode)
-            {
-                case SessionNamingMode.Unique:
-                    return CreateOrGetSession(Configuration.SessionName);
-                case SessionNamingMode.Overwrite:
-                    return CreateOrGetSession(Configuration.SessionName + sessionName);
-                case SessionNamingMode.Increment:
-                default:
-                    return CreateIterativeSession(Configuration.SessionName + sessionName);
-            }
-        }
-
-        public (string, string) GetStoreName(string streamName, string processName, Session? session)
-        {
-            switch (Configuration.StoreMode)
-            {
-                case StoreMode.Process:
-                    return (streamName, processName);
-                case StoreMode.Dictionnary:
-                    if (Configuration.StreamToStore.ContainsKey(streamName) && session != null)
-                    {
-                        string storeName = Configuration.StreamToStore[streamName];
-                        if (storeName.Contains("%s"))
-                            storeName = storeName.Replace("%s", session.Name);
-                        if (storeName.Contains("%p"))
-                        {
-                            storeName = storeName.Replace("%p", processName);
-                            return (streamName, storeName);
-                        }
-                        return ($"{processName}-{streamName}", storeName);
-                    }
-                    goto default;
-                default:
-                case StoreMode.Independant:
-                    return (streamName, $"{processName}-{streamName}");
-            }
-        }
-
-        public Pipeline CreateSubpipeline(string name = "SaaCSubpipeline")
-        {
-            return Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name);
-        }
-
-        public void TriggerNewProcessEvent(string name)
-        {
-            NewProcess?.Invoke(this, (name, Connectors));
+            base.Stop();
+            isStarted = false;
         }
 
         public bool AddConnectingProcess(string name, EventHandler<Process> eventProcess)

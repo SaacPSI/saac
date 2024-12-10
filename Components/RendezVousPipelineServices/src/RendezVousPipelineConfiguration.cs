@@ -1,28 +1,19 @@
-﻿using System.Threading.Tasks;
+﻿using RendezVousPipelineServices;
 
 namespace SAAC.RendezVousPipelineServices
 {
-    public class RendezVousPipelineConfiguration
+    public class RendezVousPipelineConfiguration : DatasetPipelineConfiguration
     {
         public string RendezVousHost = "localhost";
         public int RendezVousPort = 13331;
         public int DiagnosticPort = 11512;
         public int CommandPort = 11511;
         public int ClockPort = 11510;
-        public RendezVousPipeline.DiagnosticsMode Diagnostics = RendezVousPipeline.DiagnosticsMode.Off;
-        public bool Debug = false;
-        public bool AutomaticPipelineRun = false;
         public bool RecordIncomingProcess = true;
-        public RendezVousPipeline.SessionNamingMode SessionMode = RendezVousPipeline.SessionNamingMode.Increment;
-        public RendezVousPipeline.StoreMode StoreMode = RendezVousPipeline.StoreMode.Independant;
-        public string DatasetPath = "";
-        public string DatasetName = "";
-        public string SessionName = "";
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
         public Dictionary<string, Type> Transformers = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();
         public List<string> NotStoredTopics = new List<string>();
-        public Dictionary<string, string> StreamToStore = new Dictionary<string, string>();
         public Helpers.PipeToMessage<(RendezVousPipeline.Command, string)>.Do? CommandDelegate;
 
         public RendezVousPipelineConfiguration(bool addRegularSerializers = true) 

@@ -31,8 +31,7 @@ namespace SAAC.RendezVousPipelineServices
                 foreach (var partition in session.Partitions)
                     foreach (var streamMetadata in partition.AvailableStreams)
                         isGood &= LoadStoreAndCreateConnector(session, partition, streamMetadata);
-                if (NewProcess != null)
-                    NewProcess(this, (session.Name, Connectors));
+                TriggerNewProcessEvent(session.Name);
             }
             return isGood;
         }
