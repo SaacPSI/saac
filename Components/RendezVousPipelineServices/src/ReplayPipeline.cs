@@ -2,7 +2,6 @@
 using Microsoft.Psi.Data;
 using SAAC;
 using SAAC.RendezVousPipelineServices;
-using System.Linq;
 
 namespace RendezVousPipelineServices
 {
@@ -13,17 +12,22 @@ namespace RendezVousPipelineServices
         public ReplayPipelineConfiguration Configuration { get; private set; }
 
         private DatasetLoader loader;
-        private SortedSet<string> ReadOnlySessionsAndStores;
+        private SortedSet<string> ReadOnlyStores;
 
         public ReplayPipeline(ReplayPipelineConfiguration configuration, string name = nameof(ReplayPipeline), LogStatus? log = null)
             : base(configuration, name, log)
         {
             Configuration = configuration ?? new ReplayPipelineConfiguration();
             loader = new DatasetLoader(Pipeline, Connectors, $"{name}-Loader");
+            ReadOnlyStores = new SortedSet<string>();
             if (Dataset == null)
                 throw new ArgumentNullException(nameof(Dataset));
-            else if(Configuration.NewDataset)
-                Dataset.SaveAs($@"{StorePath}\{Dataset.Name}_replayed.pds");
+            else if(Configuration.DatasetBackup)
+            {
+                var filename = Dataset.Filename;
+                Dataset.SaveAs(Dataset.Filename.Insert(Dataset.Filename.Length - 4, "_backup"));
+                Dataset.Filename = filename;
+            }
         }
 
         public override void AddNewProcessEvent(EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)> handler)
@@ -42,17 +46,10 @@ namespace RendezVousPipelineServices
         {
             if (loader.Load(Dataset, sessionName))
             {
-                if (Configuration.ReadOnlySessionsAndStores)
-                { 
-                    foreach (var session in Connectors)
-                    {
-                        foreach (var connectorPair in session.Value)
-                        {
-                            ReadOnlySessionsAndStores.Add(connectorPair.Value.StoreName);
-                            ReadOnlySessionsAndStores.Add(connectorPair.Value.SessionName);
-                        }
-                    }
-                }
+                this.Connectors = loader.Connectors;
+                foreach (var session in Connectors)
+                    foreach (var connectorPair in session.Value)
+                        ReadOnlyStores.Add(connectorPair.Value.StoreName);
                 return true;
             }
             return false;
@@ -79,9 +76,20 @@ namespace RendezVousPipelineServices
 
         public override void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
         {
-            if (ReadOnlySessionsAndStores.Contains(storeName) || ReadOnlySessionsAndStores.Contains(session.Name))
-                throw new InvalidOperationException("Trying to write a Store or a Session that is readonly");
+            if (ReadOnlyStores.Contains(storeName))
+                throw new InvalidOperationException("Trying to write a Store that is readonly");
             base.CreateStore(pipeline, session, streamName, storeName, source);
+        }
+
+        public override (string, string) GetStoreName(string streamName, string processName, Session? session)
+        {
+            var names = base.GetStoreName(streamName, processName, session);
+            if (ReadOnlyStores.Contains(names.Item2))
+            {
+                Log($"ReplayPipeline - GetStoreName : {names.Item2} already exist as Store Importer, switching name to {names.Item2}_{name}.");
+                names.Item2 = $"{names.Item2}_{name}";
+            }
+            return names;
         }
     }
 }

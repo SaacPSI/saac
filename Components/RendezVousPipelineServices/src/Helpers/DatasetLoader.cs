@@ -50,8 +50,8 @@ namespace SAAC.RendezVousPipelineServices
                 }
                 else
                     store = Stores[session.Name][streamMetadata.StoreName];
-                if (!Connectors.ContainsKey(streamMetadata.StoreName))
-                    Connectors.Add(streamMetadata.StoreName, new Dictionary<string, ConnectorInfo>());
+                if (!Connectors.ContainsKey(session.Name))
+                    Connectors.Add(session.Name, new Dictionary<string, ConnectorInfo>());
                 Type producedType = Type.GetType(streamMetadata.TypeName);
                 Connectors[session.Name].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(store, [streamMetadata.Name, null, null])));
             }

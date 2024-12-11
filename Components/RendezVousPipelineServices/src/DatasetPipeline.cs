@@ -20,12 +20,15 @@ namespace RendezVousPipelineServices
 
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
 
+        private List<Pipeline> subpipelines;
+
         public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(RendezVousPipeline), LogStatus? log = null)
             : base("", null, name)
         {
             this.Log = log ?? ((log) => { Console.WriteLine(log); });
             Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             Configuration = configuration ?? new DatasetPipelineConfiguration();
+            subpipelines = new List<Pipeline>();
             if (this.Configuration.DatasetName.Length > 4)
             {
                 if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
@@ -67,7 +70,12 @@ namespace RendezVousPipelineServices
         public virtual void Stop()
         {
             if (isPipelineRunning)
+            {
                 Pipeline.Dispose();
+                foreach(Pipeline sub in subpipelines)
+                    sub.Dispose();
+                subpipelines.Clear();
+            }
             Dataset?.Save();
             isPipelineRunning = false;
             Log("Pipeline Stopped.");
@@ -141,7 +149,7 @@ namespace RendezVousPipelineServices
             }
         }
 
-        public (string, string) GetStoreName(string streamName, string processName, Session? session)
+        public virtual (string, string) GetStoreName(string streamName, string processName, Session? session)
         {
             switch (Configuration.StoreMode)
             {
@@ -169,8 +177,8 @@ namespace RendezVousPipelineServices
 
         public Pipeline CreateSubpipeline(string name = "SaaCSubpipeline")
         {
-            return Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name);
+            subpipelines.Add(Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name));
+            return subpipelines.Last();
         }
-
     }
 }
