@@ -94,7 +94,10 @@ namespace SAAC.PipelineServices
             if (rendezvousRelay == null)
                 return false;
             if (rendezvousRelay.Rendezvous.TryRemoveProcess(processName))
+            {
                 processNames.Remove(processName);
+                Connectors.Remove(processName);
+            }
             else
                 return false;
             return true;
@@ -295,8 +298,12 @@ namespace SAAC.PipelineServices
 
         private void RendezvousProcessRemoved(object sender, Process e)
         {
-            var subpipeline = Pipeline.GetElementsOfType<Subpipeline>().Find(x => x.Name == e.Name);
-            subpipeline?.Dispose();
+            Pipeline subpipeline = subpipelines.Find(x => x.Name == e.Name);
+            if (subpipeline != default(Pipeline))
+            {
+                subpipeline.Dispose();
+                Connectors.Remove(e.Name);
+            }
             RemovedProcess?.Invoke(this, e.Name);
         }
 

@@ -18,7 +18,7 @@ namespace SAAC.PipelineServices
 
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
 
-        private List<Pipeline> subpipelines;
+        protected List<Pipeline> subpipelines;
 
         public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
             : base("", null, name)
