@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class ConnectorInfo
     {

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     using System;
     using System.Diagnostics;

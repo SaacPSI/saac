@@ -1,7 +1,7 @@
 ﻿using Microsoft.Psi.Data;
 using Microsoft.Psi;
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public abstract class ConnectorsAndStoresCreator : ConnectorsManager
     {

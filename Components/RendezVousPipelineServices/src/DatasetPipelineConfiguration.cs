@@ -1,5 +1,5 @@
 ﻿
-namespace RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class DatasetPipelineConfiguration
     {

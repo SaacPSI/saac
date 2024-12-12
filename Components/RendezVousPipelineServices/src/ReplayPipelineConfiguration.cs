@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 
-namespace RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class ReplayPipelineConfiguration : DatasetPipelineConfiguration
     {

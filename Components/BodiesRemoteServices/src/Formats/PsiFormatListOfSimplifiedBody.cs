@@ -4,7 +4,7 @@ using SAAC.Bodies;
 using Microsoft.Azure.Kinect.BodyTracking;
 using static SAAC.Bodies.SimplifiedBody;
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class PsiFormatListOfSimplifiedBody : IPsiFormat
     {

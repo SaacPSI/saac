@@ -1,7 +1,7 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public abstract class ConnectorsManager
     {

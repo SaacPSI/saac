@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 
-namespace SAAC.RendezVousPipelineServices.Helpers
+namespace SAAC.PipelineServices.Helpers
 {
     /// <summary>
     /// Class that transform pipeline data to message forwarded to the delegate given.

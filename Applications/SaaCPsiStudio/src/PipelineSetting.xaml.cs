@@ -3,14 +3,11 @@ using System.Windows;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Win32;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 using System.Windows.Controls;
 using Microsoft.Psi.Data;
-using SAAC.KinectAzureRemoteServices;
 using SAAC.RemoteConnectors;
-using Microsoft.Psi;
-using static SAAC.RendezVousPipelineServices.RendezVousPipeline;
-using System.Windows.Media.Animation;
+using static SAAC.PipelineServices.RendezVousPipeline;
 
 namespace SaaCPsiStudio
 {
@@ -141,7 +138,7 @@ namespace SaaCPsiStudio
         public void RunPipeline()
         {
             server?.RunPipeline();
-            server?.CommandEmitter.Post((Command.Run, "KinectStreaming"), server.Pipeline.GetCurrentTime());
+            server?.CommandEmitter.Post((Command.Run, "All"), server.Pipeline.GetCurrentTime());
         }
 
         public void StopPipeline()
@@ -158,10 +155,6 @@ namespace SaaCPsiStudio
         {
             status = "";
             server = new RendezVousPipeline(configuration, "Server", null, (log) => { Status += $"{log}\n"; });
-            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
-            configuration1.RendezVousApplicationName = "KinectStreaming";
-            configuration1.Debug = true;
-            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(server, configuration1);
             server.Start();
         }
 

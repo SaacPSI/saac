@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class RebooterRendezVousPipeline : RendezVousPipeline
     {
@@ -12,9 +12,9 @@ namespace SAAC.RendezVousPipelineServices
             memory = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>();
         }
 
-        public RebootableSubPipeline CreateRebootableSubpipeline(string name = "SaaCSubpipeline")
+        public Pipeline CreateRebootableSubpipeline(string name = "SaaCSubpipeline")
         {
-            RebootableSubPipeline p = new RebootableSubPipeline(base.Pipeline, name);
+            Pipeline p = this.CreateSubpipeline(name);
             p.PipelineCompleted += SubPipelineCompleted;
             p.PipelineRun += SubPipelineRun; 
             return p;
@@ -22,19 +22,24 @@ namespace SAAC.RendezVousPipelineServices
 
         private void SubPipelineRun(object sender, PipelineRunEventArgs e)
         {
-            RebootableSubPipeline? p = sender as RebootableSubPipeline;
+            Pipeline? p = sender as Pipeline;
             if (p == null)
                 return;
             if (memory.ContainsKey(p.Name))
-                p.RestoreComponentsData(memory[p.Name]);
+                foreach (var component in RebootableExtensions.GetElementsOfType<IRebootingComponent>(p))
+                    if (memory[p.Name].ContainsKey(component.ToString()))
+                        component.RestoreData(memory[p.Name][component.ToString()]);
         }
 
         private void SubPipelineCompleted(object sender, PipelineCompletedEventArgs e)
         {
-            RebootableSubPipeline? p = sender as RebootableSubPipeline;
+            Pipeline? p = sender as Pipeline;
             if (p == null)
                 return;
-            memory.Add(p.Name, p.GetComponentsData());
+            Dictionary<string, Dictionary<string, object>> data = new Dictionary<string, Dictionary<string, object>>();
+            foreach (var component in RebootableExtensions.GetElementsOfType<IRebootingComponent>(p))
+                data.Add(component.ToString(), component.StoreData());
+            memory.Add(p.Name, data);
         }
     }
 }

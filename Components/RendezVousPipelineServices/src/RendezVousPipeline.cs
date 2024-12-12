@@ -5,15 +5,12 @@ using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using static Microsoft.Psi.Interop.Rendezvous.Operators;
-using System.IO;
-using Microsoft.Psi.Interop.Transport;
 using Microsoft.Psi.Diagnostics;
 using Microsoft.Psi.Components;
-using RendezVousPipelineServices;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
-namespace SAAC.RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class RendezVousPipeline : DatasetPipeline, ISourceComponent
     {

@@ -1,10 +1,8 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
-using SAAC;
-using SAAC.RendezVousPipelineServices;
 using System.IO;
 
-namespace RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class DatasetPipeline : ConnectorsAndStoresCreator
     {
@@ -22,7 +20,7 @@ namespace RendezVousPipelineServices
 
         private List<Pipeline> subpipelines;
 
-        public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(RendezVousPipeline), LogStatus? log = null)
+        public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
             : base("", null, name)
         {
             this.Log = log ?? ((log) => { Console.WriteLine(log); });

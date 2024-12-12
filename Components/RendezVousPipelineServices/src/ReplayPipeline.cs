@@ -1,9 +1,7 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
-using SAAC;
-using SAAC.RendezVousPipelineServices;
 
-namespace RendezVousPipelineServices
+namespace SAAC.PipelineServices
 {
     public class ReplayPipeline : DatasetPipeline
     {

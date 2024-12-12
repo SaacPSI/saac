@@ -1,4 +1,4 @@
-﻿namespace SAAC.RendezVousPipelineServices
+﻿namespace SAAC.PipelineServices
 {
     public interface IRebootingComponent
     {

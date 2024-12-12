@@ -1,6 +1,4 @@
-﻿using RendezVousPipelineServices;
-
-namespace SAAC.RendezVousPipelineServices
+﻿namespace SAAC.PipelineServices
 {
     public class RendezVousPipelineConfiguration : DatasetPipelineConfiguration
     {
