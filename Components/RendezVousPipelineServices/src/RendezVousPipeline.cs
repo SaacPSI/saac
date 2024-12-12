@@ -58,6 +58,7 @@ namespace SAAC.RendezVousPipelineServices
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort != 0)
                 RunPipeline();
             isStarted = true;
+            TriggerNewProcessEvent("PsiPipeline");
         }
 
         public override void Stop()
@@ -67,6 +68,7 @@ namespace SAAC.RendezVousPipelineServices
             rendezVous.Stop();
             base.Stop();
             isStarted = false;
+            TriggerNewProcessEvent("PsiPipeline");
         }
 
         public bool AddConnectingProcess(string name, EventHandler<Process> eventProcess)
