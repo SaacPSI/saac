@@ -46,7 +46,7 @@ namespace RendezVousPipelineServices
                     Pipeline.RunAsync(ReplayDescriptor.ReplayAll);
                     break;
                 case ReplayType.RealTime:
-                    Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+                    Pipeline.Run(ReplayDescriptor.ReplayAllRealTime);
                     break;
                 case ReplayType.IntervalFullSpeed:
                     Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, false)); 
