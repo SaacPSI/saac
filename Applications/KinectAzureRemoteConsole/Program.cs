@@ -14,6 +14,7 @@ namespace KinectAzureRemoteConsole
         public KinectAzureRemote(string[] args)
         {
             configRdv.ClockPort = configRdv.CommandPort = 0;
+            configRdv.RecordIncomingProcess = false;
             string server = args[0];
             configRdv.RendezVousPort = int.Parse(args[1]);
             commandServer = args[2];

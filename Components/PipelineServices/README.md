@@ -1,4 +1,4 @@
-# RendezVousPipelineServices
+# PipelineServices
 
 ## Summary
 Project handling network connections with automatic storing data stream to store. This project works with the Psi.Runtime package of Pipeline branch tant can be found in our [fork](https://github.com/SaacPSI/psi).
