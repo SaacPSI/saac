@@ -4,9 +4,8 @@ using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
 using SAAC.RemoteConnectors;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 using Microsoft.Psi.Imaging;
-using System.Runtime.InteropServices;
 
 namespace SAAC.KinectAzureRemoteServices
 {

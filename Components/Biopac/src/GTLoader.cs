@@ -22,8 +22,8 @@ namespace SAAC.BiopacDataIntegration
             dataPath = datasetPath.Substring(0, datasetPath.LastIndexOf('\\'));
             store = PsiStore.Create(pipeline, "Biopac", dataPath);
             var dataset = Dataset.Load(datasetPath);
-            var session = dataset.CreateSession("Biopac");
-            session.AddPsiStorePartition("Biopac", dataPath);
+            var session = dataset.AddEmptySession("Biopac");
+            session.AddPartitionFromPsiStoreAsync("Biopac", dataPath);
             dataset.Save();
         }
 

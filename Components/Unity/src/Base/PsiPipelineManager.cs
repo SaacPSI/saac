@@ -10,6 +10,7 @@ using System.Threading;
 using System.Linq;
 using Microsoft.Psi.Serialization;
 using System.Net;
+using SAAC.PipelineServices;
 
 public class PsiPipelineManager : MonoBehaviour
 {
@@ -187,7 +188,7 @@ public class PsiPipelineManager : MonoBehaviour
                     {
                         commandSubPipeline = Pipeline.Create(process.Name);
                         var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, PsiFormatCommandString.GetFormat(), null, true, stream.StreamName);
-                        SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)> p2m = new SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, CommandHandling, process.Name);
+                        SAAC.PipelineServices.Helpers.PipeToMessage<(Command, string)> p2m = new SAAC.PipelineServices.Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, CommandHandling, process.Name);
                         Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                         if (CommandEmitterPort != 0)
                         {
@@ -353,15 +354,15 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
-    public TcpWriter<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers, bool register = false)
+    public TcpWriterMulti<T> GetTcpWriter<T>(string topic, Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> serializers, bool register = false)
     {
-        TcpWriter<T> tcpWriter = new TcpWriter<T>(GetPipeline(), ExportersStartingPort + exporterCount++, serializers, topic);
+        TcpWriterMulti<T> tcpWriter = new TcpWriterMulti<T>(GetPipeline(), ExportersStartingPort + exporterCount++, serializers, topic);
         if (register)
             RegisterTCPWriter(tcpWriter, topic);
         return tcpWriter;
     }
 
-    public void RegisterTCPWriter<T>(TcpWriter<T> writer, string topic)
+    public void RegisterTCPWriter<T>(TcpWriterMulti<T> writer, string topic)
     {
         if (HostAddress.Length == 0)
             HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();

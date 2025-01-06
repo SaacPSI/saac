@@ -1,5 +1,5 @@
 ﻿using SAAC.RemoteConnectors;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 
 namespace KinectAzureRemoteConsole
 {

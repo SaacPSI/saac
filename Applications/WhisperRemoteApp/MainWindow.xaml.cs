@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Net;
 using Microsoft.Psi.Diagnostics;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 
 namespace WhisperRemoteApp
 {
@@ -107,7 +107,7 @@ namespace WhisperRemoteApp
         }
 
         private RendezVousPipeline? Pipeline;
-        private Subpipeline WhipserPipeline; // to modify/remove
+        private Pipeline WhipserPipeline; // to modify/remove
 
         public MainWindow()
         {

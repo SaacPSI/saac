@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Components\KinectAzureRemoteConnector\KinectAzureRemoteConnector.csproj" />
+    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

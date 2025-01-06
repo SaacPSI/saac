@@ -5,7 +5,7 @@ using System.Windows;
 using System.Net;
 using Microsoft.Win32;
 using SAAC.RemoteConnectors;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 using SAAC.KinectAzureRemoteServices;
 using System.Windows.Controls;
 

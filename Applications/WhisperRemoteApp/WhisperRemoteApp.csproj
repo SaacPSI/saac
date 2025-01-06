@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\RendezVousPipelineServices.csproj" />
+    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\PipelineServices.csproj" />
     <ProjectReference Include="..\..\Components\Whisper\Whisper.csproj" />
   </ItemGroup>
 

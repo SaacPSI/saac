@@ -3,6 +3,7 @@ using Microsoft.Psi;
 using System;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Interop.Transport;
+using SAAC.PipelineServices;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
@@ -20,7 +21,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
     protected DateTime Timestamp = DateTime.UtcNow;
 
 #if PSI_TCP_STREAMS
-    private TcpWriter<T> TcpWriter;
+    private TcpWriterMulti<T> TcpWriter;
 #endif
     private RemoteExporter Exporter;
 

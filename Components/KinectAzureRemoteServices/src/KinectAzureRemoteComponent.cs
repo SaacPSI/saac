@@ -2,7 +2,7 @@
 using Microsoft.Psi.Data;
 using Microsoft.Psi.Remoting;
 using SAAC.RemoteConnectors;
-using SAAC.RendezVousPipelineServices;
+using SAAC.PipelineServices;
 using Microsoft.Psi.Interop.Rendezvous;
 
 namespace SAAC.KinectAzureRemoteServices
