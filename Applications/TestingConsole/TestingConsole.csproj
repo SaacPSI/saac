@@ -29,7 +29,7 @@
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj" />
     <ProjectReference Include="..\..\Components\Nuitrack\Nuitrack.csproj" />
-    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\PipelineServices.csproj" />
+    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,8 +6,6 @@ using Microsoft.Win32;
 using SAAC.PipelineServices;
 using System.Windows.Controls;
 using Microsoft.Psi.Data;
-using SAAC.RemoteConnectors;
-using static SAAC.PipelineServices.RendezVousPipeline;
 
 namespace SaaCPsiStudio
 {
@@ -138,7 +136,7 @@ namespace SaaCPsiStudio
         public void RunPipeline()
         {
             server?.RunPipeline();
-            server?.CommandEmitter.Post((Command.Run, "All"), server.Pipeline.GetCurrentTime());
+            server?.CommandEmitter.Post((RendezVousPipeline.Command.Run, "All"), server.Pipeline.GetCurrentTime());
         }
 
         public void StopPipeline()

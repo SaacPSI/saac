@@ -64,7 +64,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C
 		Components\Unity\src\Base\PsiImporter.cs = Components\Unity\src\Base\PsiImporter.cs
 		Components\Unity\src\Base\PsiPipelineManager.cs = Components\Unity\src\Base\PsiPipelineManager.cs
 		Components\Unity\src\Base\PsiSerializerReflexion.cs = Components\Unity\src\Base\PsiSerializerReflexion.cs
-		Components\RendezVousPipelineServices\src\Helpers\TcpWriterMulti.cs = Components\RendezVousPipelineServices\src\Helpers\TcpWriterMulti.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"
@@ -102,7 +101,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2F15214A-C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SaaCPsiStudio", "Applications\SaaCPsiStudio\SaaCPsiStudio.csproj", "{501E57D8-CFB0-4F4B-AFA5-D81ED31C7C92}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PipelineServices", "Components\RendezVousPipelineServices\PipelineServices.csproj", "{934AF3B8-E8E9-4F06-92F4-E07213A606BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PipelineServices", "Components\PipelineServices\PipelineServices.csproj", "{934AF3B8-E8E9-4F06-92F4-E07213A606BF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteServices", "Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj", "{F4550663-C436-487A-9F3E-1F5EB7E74C6C}"
 EndProject

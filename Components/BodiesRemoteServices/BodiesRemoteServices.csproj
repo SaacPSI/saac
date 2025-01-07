@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
-    <ProjectReference Include="..\RendezVousPipelineServices\PipelineServices.csproj" />
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
  

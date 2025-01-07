@@ -45,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RendezVousPipelineServices\PipelineServices.csproj" />
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>
