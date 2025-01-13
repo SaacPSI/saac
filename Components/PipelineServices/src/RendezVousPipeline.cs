@@ -32,18 +32,16 @@ namespace SAAC.PipelineServices
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
+        public RendezVousPipeline(Pipeline parent, RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+            : base(parent, configuration, name, log)
+        {
+            Initialize(configuration, name,rendezVousServerAddress, log, connectors);
+        }
+
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
             : base(configuration, name, log)
         {
-            Configuration = configuration ?? new RendezVousPipelineConfiguration();
-            commandFormat = new PsiFormatCommand();
-            CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
-            processNames = new List<string>();
-            if (rendezVousServerAddress == null)
-                rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);
-            else
-                rendezvousRelay = rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
-            isStarted = isPipelineRunning = false;
+            Initialize(configuration, name, rendezVousServerAddress, log, connectors);
         }
 
         public void Start()
@@ -354,6 +352,19 @@ namespace SAAC.PipelineServices
         void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
             notifyCompleted();
+        }
+
+        private void Initialize(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+        {
+            Configuration = configuration ?? new RendezVousPipelineConfiguration();
+            commandFormat = new PsiFormatCommand();
+            CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
+            processNames = new List<string>();
+            if (rendezVousServerAddress == null)
+                rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);
+            else
+                rendezvousRelay = rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
+            isStarted = isPipelineRunning = false;
         }
     }
 }

@@ -469,7 +469,7 @@ public class PsiPipelineManager : MonoBehaviour
             this.logBuffer.Clear();
             foreach (string log in LogBufferCopy)
             {
-                Debug.Log(log);
+                Debug.Log(log);0
                 logBuffer += $"{log}\n";
             }
             if (text != null)

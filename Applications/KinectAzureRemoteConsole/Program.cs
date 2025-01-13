@@ -90,7 +90,7 @@ namespace KinectAzureRemoteConsole
             switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
-                        UpdateConfigurationFromArgs(args);
+                    UpdateConfigurationFromArgs(args);
                     break;
                 case RendezVousPipeline.Command.Run:
                     SetupKinect();

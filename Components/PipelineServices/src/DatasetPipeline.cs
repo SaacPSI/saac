@@ -20,31 +20,32 @@ namespace SAAC.PipelineServices
 
         protected List<Pipeline> subpipelines;
 
+        protected bool OwningPipeline;
+
+        public DatasetPipeline(Pipeline pipeline, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
+            : base("", null, name)
+        {
+            OwningPipeline = false;
+            Pipeline = pipeline;
+            Initialize(configuration, log);
+        }
+
         public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
             : base("", null, name)
         {
-            this.Log = log ?? ((log) => { Console.WriteLine(log); });
+            OwningPipeline = true;
             Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
-            Configuration = configuration ?? new DatasetPipelineConfiguration();
-            subpipelines = new List<Pipeline>();
-            if (this.Configuration.DatasetName.Length > 4)
-            {
-                if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
-                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
-                else
-                {
-                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
-                    Dataset.Save(); // throw exception here if the path is not correct
-                }
-                StorePath = this.Configuration.DatasetPath;
-            }
-            else
-                Dataset = null;
-            StorePath = this.Configuration.DatasetPath;
+            Initialize(configuration, log);
         }
 
         public bool RunPipeline()
         {
+            if (!OwningPipeline)
+            {
+                Log($"{name} does not own Pipeline, it cannot be started from here.");
+                return isPipelineRunning;
+            }
+            
             if (isPipelineRunning)
                 return true;
             try
@@ -67,6 +68,12 @@ namespace SAAC.PipelineServices
 
         public virtual void Stop()
         {
+            if (!OwningPipeline)
+            {
+                Log($"{name} does not own Pipeline, it cannot be stroped from here.");
+                return;
+            }
+
             if (isPipelineRunning)
             {
                 Pipeline.Dispose();
@@ -177,6 +184,28 @@ namespace SAAC.PipelineServices
         {
             subpipelines.Add(Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name));
             return subpipelines.Last();
+        }
+
+        private void Initialize(DatasetPipelineConfiguration? configuration = null, LogStatus? log = null)
+        {
+            this.Log = log ?? ((log) => { Console.WriteLine(log); });
+            Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
+            Configuration = configuration ?? new DatasetPipelineConfiguration();
+            subpipelines = new List<Pipeline>();
+            if (this.Configuration.DatasetName.Length > 4)
+            {
+                if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
+                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
+                else
+                {
+                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
+                    Dataset.Save(); // throw exception here if the path is not correct
+                }
+                StorePath = this.Configuration.DatasetPath;
+            }
+            else
+                Dataset = null;
+            StorePath = this.Configuration.DatasetPath;
         }
     }
 }
