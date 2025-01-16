@@ -35,7 +35,7 @@ namespace SAAC.PipelineServices
         public RendezVousPipeline(Pipeline parent, RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
             : base(parent, configuration, name, log)
         {
-            Initialize(configuration, name,rendezVousServerAddress, log, connectors);
+            Initialize(configuration, name, rendezVousServerAddress, log, connectors);
         }
 
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
@@ -44,11 +44,11 @@ namespace SAAC.PipelineServices
             Initialize(configuration, name, rendezVousServerAddress, log, connectors);
         }
 
-        public void Start()
+        public void Start(TimeInterval? interval = null)
         {
             if (isStarted)
                 return;
-            if (!StartRendezVousRelay())
+            if (!StartRendezVousRelay(interval))
                 return;
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort != 0)
                 RunPipeline();
@@ -101,10 +101,14 @@ namespace SAAC.PipelineServices
             return true;
         }
 
-        protected bool StartRendezVousRelay()
+        protected bool StartRendezVousRelay(TimeInterval? interval = null)
         {
             if (rendezvousRelay == null)
                 return false;
+            rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
+            rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
+            rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
+            rendezVous.Start();
             if (Dataset != null)
             {
                 switch (Configuration.Diagnostics)
@@ -121,7 +125,7 @@ namespace SAAC.PipelineServices
             }
             if (Configuration.ClockPort != 0)
             {
-                var remoteClock = new RemoteClockExporter(Configuration.ClockPort);
+                var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
                 AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
             }
             if (Configuration.CommandPort != 0)
@@ -130,10 +134,6 @@ namespace SAAC.PipelineServices
                 CommandEmitter.PipeTo(writer.In);
                 AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
             }
-            rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
-            rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
-            rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
-            rendezVous.Start();
             Log("RendezVous started!");
             return true;
         }
@@ -156,8 +156,9 @@ namespace SAAC.PipelineServices
                     ProcessAddedDiagnotics(process);
                 else
                     return;
-            } 
+            }
             else
+            {
                 switch (process.Name)
                 {
                     case ClockSynchProcessName:
@@ -165,19 +166,20 @@ namespace SAAC.PipelineServices
                             ProcessAddedClock(process);
                         break;
                     default:
-                        if(Configuration.RecordIncomingProcess)
+                        if (Configuration.RecordIncomingProcess)
                             ProcessAddedData(process);
                         break;
                 }
+            }
         }
 
         protected void ProcessAddedClock(Process process)
         {
             foreach (var endpoint in process.Endpoints)
             {
-                if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint) 
+                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remoteClockEndpoint) 
                 { 
-                    remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
+                    remoteClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
                     if (this.Configuration.AutomaticPipelineRun)
                         RunPipeline();
                     return;

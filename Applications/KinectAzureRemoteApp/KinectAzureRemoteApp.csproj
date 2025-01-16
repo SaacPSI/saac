@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-modTest" />
+    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-modRPC2" />
   </ItemGroup>
 
   <ItemGroup>

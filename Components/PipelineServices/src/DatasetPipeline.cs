@@ -8,6 +8,7 @@ namespace SAAC.PipelineServices
     {
         public Dataset? Dataset { get; private set; }
         public Pipeline Pipeline { get; private set; }
+
         public LogStatus Log;
 
         public enum SessionNamingMode { Unique, Increment, Overwrite };
@@ -22,11 +23,12 @@ namespace SAAC.PipelineServices
 
         protected bool OwningPipeline;
 
-        public DatasetPipeline(Pipeline pipeline, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
+        public DatasetPipeline(Pipeline parent, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
             : base("", null, name)
         {
             OwningPipeline = false;
-            Pipeline = pipeline;
+            Pipeline = parent;
+
             Initialize(configuration, log);
         }
 
@@ -34,7 +36,7 @@ namespace SAAC.PipelineServices
             : base("", null, name)
         {
             OwningPipeline = true;
-            Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
+            Pipeline = Pipeline.Create(name, enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             Initialize(configuration, log);
         }
 
@@ -189,7 +191,6 @@ namespace SAAC.PipelineServices
         private void Initialize(DatasetPipelineConfiguration? configuration = null, LogStatus? log = null)
         {
             this.Log = log ?? ((log) => { Console.WriteLine(log); });
-            Pipeline = Pipeline.Create(enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
             Configuration = configuration ?? new DatasetPipelineConfiguration();
             subpipelines = new List<Pipeline>();
             if (this.Configuration.DatasetName.Length > 4)

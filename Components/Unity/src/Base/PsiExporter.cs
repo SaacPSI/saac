@@ -18,7 +18,7 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
     public bool IsInitialized { get; private set; } = false;
 
     protected float DataTime;
-    protected DateTime Timestamp = DateTime.UtcNow;
+    protected DateTime Timestamp = DateTime.MinValue;
 
 #if PSI_TCP_STREAMS
     private TcpWriterMulti<T> TcpWriter;

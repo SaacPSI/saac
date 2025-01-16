@@ -554,6 +554,15 @@ namespace TestingConsole
 
         static void Main(string[] args)
         {
+            ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
+            replayConfig.AutomaticPipelineRun = false;
+            replayConfig.DatasetBackup = true;
+            replayConfig.DatasetPath = "D:\\Stores\\Webcam\\";
+            replayConfig.DatasetName = "webcam.pds";
+
+            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            replayPipeline.LoadDatasetAndConnectors();
+
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = true;
             configuration.Debug = true;
@@ -561,17 +570,19 @@ namespace TestingConsole
             configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
             configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "localhost";
+            configuration.CommandDelegate = CommandDel;
 
             // Topic for positions
             configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
             configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
             configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
-            KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
-            configuration1.RendezVousApplicationName = "KinectStreaming";
-            configuration1.Debug = true;
-            KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
+            RendezVousPipeline pipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server");
+            //RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
+            //KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
+            //configuration1.RendezVousApplicationName = "KinectStreaming";
+            //configuration1.Debug = true;
+            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
 
             // Nuitrack/Realsense process
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
@@ -588,8 +599,9 @@ namespace TestingConsole
             //pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
             //var azureP = pipeline.CreateSubpipeline();
             //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, azureP);
+            
             pipeline.Start();
-
+            replayPipeline.RunPipeline();
 
             //var azureP = pipeline.CreateSubpipeline();
 
@@ -614,12 +626,12 @@ namespace TestingConsole
 
             Console.WriteLine("Press any key to send command.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
+            pipeline.CommandEmitter.Post((Command.Status, "Unity"), replayPipeline.Pipeline.GetCurrentTime());
 
 
             Console.WriteLine("Press any key to send command.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Run, "KinectStreaming"), pipeline.Pipeline.GetCurrentTime());
+            pipeline.CommandEmitter.Post((Command.Status, "Unity"), replayPipeline.Pipeline.GetCurrentTime());
 
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
             //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);
@@ -632,7 +644,8 @@ namespace TestingConsole
             // Waiting for an out key
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
-            pipeline.Stop();
+            //pipeline.Stop();
+            replayPipeline.Stop();
         }
     }
 }
