@@ -13,6 +13,8 @@
 	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
 	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
  
  </Project>

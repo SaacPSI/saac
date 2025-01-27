@@ -17,6 +17,6 @@ public class PsiFormatVector3
 
     public static System.Numerics.Vector3 ReadVector3(BinaryReader reader)
     {
-        return new System.Numerics.Vector3((float)reader.ReadDouble(), (float)reader.ReadDouble(), (float)reader.ReadDouble());
+        return new System.Numerics.Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
     }
 }
