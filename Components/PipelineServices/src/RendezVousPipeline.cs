@@ -3,10 +3,10 @@ using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Interop.Serialization;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
-using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
-using static Microsoft.Psi.Interop.Rendezvous.Operators;
 using Microsoft.Psi.Diagnostics;
 using Microsoft.Psi.Components;
+using Microsoft.Psi.Interop.Transport;
+using System.Runtime.InteropServices;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -64,7 +64,7 @@ namespace SAAC.PipelineServices
             isStarted = false;
         }
 
-        public bool AddConnectingProcess(string name, EventHandler<Process> eventProcess)
+        public bool AddConnectingProcess(string name, EventHandler<Rendezvous.Process> eventProcess)
         {
             if (rendezvousRelay == null)
                 return false;
@@ -73,7 +73,7 @@ namespace SAAC.PipelineServices
             return true;
         }
 
-        public bool AddProcess(Process newProcess)
+        public bool AddProcess(Rendezvous.Process newProcess)
         {
             if (rendezvousRelay == null)
                 return false;
@@ -99,6 +99,64 @@ namespace SAAC.PipelineServices
             else
                 return false;
             return true;
+        }
+
+        public void GenerateTCPEnpoint<T>(Pipeline parent, int port, IProducer<T> producer, string streamName, ref Rendezvous.Process process)
+        {
+            Type type = typeof(T);
+            if (!Configuration.TypesSerializers.ContainsKey(type))
+                throw new Exception($"Missing serializer of type {type} in configuration.");
+            TcpWriter<T> writer = new TcpWriter<T>(parent, port, Configuration.TypesSerializers[type].GetFormat());
+            producer.PipeTo(writer);
+            process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost, streamName));
+        }
+
+        public bool GenerateTCPProcessFromConnectors(string storeName, int startingPort)
+        {
+            if (Connectors.ContainsKey(storeName))
+                return GenerateTCPProcessFromConnectors(storeName, Connectors[storeName], startingPort);
+            return false;
+        }
+
+        public bool GenerateTCPProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        {
+            Rendezvous.Process process = new Rendezvous.Process(processName);
+            Pipeline parent = CreateSubpipeline(processName);
+            foreach (var connector in connectors)
+            {
+                var producer = connector.Value.DataType.GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
+                typeof(RendezVousPipeline).GetMethod("GenerateTCPEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this, [parent, startingPort++, producer, connector.Key, process]);
+            }
+            parent.RunAsync();
+            return AddProcess(process);
+        }
+
+         public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process)
+        {
+            RemoteExporter writer = new RemoteExporter(parent, port, TransportKind.Tcp);
+            foreach (var connector in connectors)
+            {
+                var producer = connector.Value.DataType.GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
+                // Marshal.SizeOf(connector.Value.DataType) > 4096 if trur allow only one stream in exporter ?
+                typeof(Exporter).GetMethod("Write").MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096]);
+            }
+            process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
+        }
+
+        public bool GeneraterRmoteProcessFromConnectors(string storeName, int startingPort)
+        {
+            if (Connectors.ContainsKey(storeName))
+                return GenerateRemoteProcessFromConnectors(storeName, Connectors[storeName], startingPort);
+            return false;
+        }
+
+        public bool GenerateRemoteProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        {
+            Rendezvous.Process process = new Rendezvous.Process(processName);
+            Pipeline parent = CreateSubpipeline(processName);
+            GenerateRemoteEnpoint(parent, startingPort, connectors, ref process);
+            parent.RunAsync();
+            return AddProcess(process);
         }
 
         protected bool StartRendezVousRelay(TimeInterval? interval = null)
@@ -138,7 +196,7 @@ namespace SAAC.PipelineServices
             return true;
         }
 
-        protected void ProcessAdded(object? sender, Process process)
+        protected void ProcessAdded(object? sender, Rendezvous.Process process)
         {
             Log($"Process {process.Name}");
             if (processNames.Contains(process.Name))
@@ -173,7 +231,7 @@ namespace SAAC.PipelineServices
             }
         }
 
-        protected void ProcessAddedClock(Process process)
+        protected void ProcessAddedClock(Rendezvous.Process process)
         {
             foreach (var endpoint in process.Endpoints)
             {
@@ -187,7 +245,7 @@ namespace SAAC.PipelineServices
             }
         }
 
-        protected void ProcessAddedCommand(Process process)
+        protected void ProcessAddedCommand(Rendezvous.Process process)
         {
             if (Configuration.CommandDelegate == null)
                 return;
@@ -195,7 +253,7 @@ namespace SAAC.PipelineServices
             {
                 if (endpoint is Rendezvous.TcpSourceEndpoint)
                 {
-                    TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
+                    Rendezvous.TcpSourceEndpoint? source = endpoint as Rendezvous.TcpSourceEndpoint;
                     if (source == null)
                         continue;
                     foreach (var stream in endpoint.Streams)
@@ -218,13 +276,13 @@ namespace SAAC.PipelineServices
             }
         }
 
-        protected void ProcessAddedDiagnotics(Process process)
+        protected void ProcessAddedDiagnotics(Rendezvous.Process process)
         {
             foreach (var endpoint in process.Endpoints)
             {
                 if (endpoint is Rendezvous.RemoteExporterEndpoint)
                 {
-                    RemoteExporterEndpoint? source = endpoint as RemoteExporterEndpoint;
+                    Rendezvous.RemoteExporterEndpoint? source = endpoint as Rendezvous.RemoteExporterEndpoint;
                     if (source == null)
                         continue;
                     foreach (var stream in source.Streams)
@@ -245,7 +303,7 @@ namespace SAAC.PipelineServices
             }
         }
 
-        protected void ProcessAddedData(Process process)
+        protected void ProcessAddedData(Rendezvous.Process process)
         {
             int elementAdded = 0;
             Subpipeline processSubPipeline = new Subpipeline(Pipeline, process.Name);
@@ -254,7 +312,7 @@ namespace SAAC.PipelineServices
             {
                 if (endpoint is Rendezvous.TcpSourceEndpoint)
                 {
-                    TcpSourceEndpoint? source = endpoint as TcpSourceEndpoint;
+                    Rendezvous.TcpSourceEndpoint? source = endpoint as Rendezvous.TcpSourceEndpoint;
                     if (source == null)
                         continue;
                     foreach (var stream in endpoint.Streams)
@@ -272,7 +330,7 @@ namespace SAAC.PipelineServices
                 }
                 else if (endpoint is Rendezvous.RemoteExporterEndpoint)
                 {
-                    RemoteExporterEndpoint? source = endpoint as RemoteExporterEndpoint;
+                    Rendezvous.RemoteExporterEndpoint? source = endpoint as Rendezvous.RemoteExporterEndpoint;
                     if (source == null)
                         continue;
                     foreach (var stream in source.Streams)
@@ -296,7 +354,7 @@ namespace SAAC.PipelineServices
             //Dataset?.Save();
         }
 
-        private void RendezvousProcessRemoved(object sender, Process e)
+        private void RendezvousProcessRemoved(object sender, Rendezvous.Process e)
         {
             Pipeline subpipeline = subpipelines.Find(x => x.Name == e.Name);
             if (subpipeline != default(Pipeline))
@@ -307,7 +365,7 @@ namespace SAAC.PipelineServices
             RemovedProcess?.Invoke(this, e.Name);
         }
 
-        protected void Connection<T>(string streamName, string processName, Session? session, TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
+        protected void Connection<T>(string streamName, string processName, Session? session, Rendezvous.TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
             var storeName = GetStoreName(streamName, processName, session);
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
@@ -326,7 +384,7 @@ namespace SAAC.PipelineServices
                 CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, p, typeof(T), tcpSource, storeSteam);
         }
 
-        protected bool Connection(string streamName, string processName, Session? session, RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
+        protected bool Connection(string streamName, string processName, Session? session, Rendezvous.RemoteExporterEndpoint source, Pipeline p, bool storeSteam)
         {
             var importer = source.ToRemoteImporter(p);
             if (!importer.Connected.WaitOne())
