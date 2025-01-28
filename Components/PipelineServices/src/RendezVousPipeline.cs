@@ -163,7 +163,7 @@ namespace SAAC.PipelineServices
         {
             if (rendezvousRelay == null)
                 return false;
-            rendezvousRelay.Rendezvous.ProcessAdded += ProcessAdded;
+            rendezvousRelay.Rendezvous.ProcessAdded += RendezvousProcessAdded;
             rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
             rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
             rendezVous.Start();
@@ -196,7 +196,7 @@ namespace SAAC.PipelineServices
             return true;
         }
 
-        protected void ProcessAdded(object? sender, Rendezvous.Process process)
+        protected void RendezvousProcessAdded(object? sender, Rendezvous.Process process)
         {
             Log($"Process {process.Name}");
             if (processNames.Contains(process.Name))
