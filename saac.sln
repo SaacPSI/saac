@@ -118,6 +118,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GlobalHelpers", "Components
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{8788DD89-F75B-4C7C-AFD6-E93532253076}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinectic", "Skinectic\Skinectic.csproj", "{F538F267-2910-45AE-8273-967952EF3FB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -350,6 +352,14 @@ Global
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|x64.ActiveCfg = Release|Any CPU
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|x64.Build.0 = Release|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|x64.Build.0 = Debug|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|x64.ActiveCfg = Release|Any CPU
+		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -390,6 +400,7 @@ Global
 		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{C4EA4895-C3D1-471B-B1ED-FF019FCCBDA7} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{8788DD89-F75B-4C7C-AFD6-E93532253076} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{F538F267-2910-45AE-8273-967952EF3FB1} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
