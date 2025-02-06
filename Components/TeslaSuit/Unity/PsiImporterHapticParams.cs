@@ -1,5 +1,6 @@
 using Microsoft.Psi;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public class PsiImporterHapticParams : PsiImporter<HapticParams>
 {

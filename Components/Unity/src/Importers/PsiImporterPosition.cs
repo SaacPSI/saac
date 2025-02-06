@@ -1,6 +1,7 @@
 using Microsoft.Psi;
 using System.Collections.Generic;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public class PsiImporterPosition : PsiImporter<System.Numerics.Vector3>
 {

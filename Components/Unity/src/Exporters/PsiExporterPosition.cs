@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public class PsiExporterPosition
     : PsiExporter<System.Numerics.Vector3>

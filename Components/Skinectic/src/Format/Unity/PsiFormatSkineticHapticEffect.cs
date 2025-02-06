@@ -1,29 +1,23 @@
-﻿using SAAC.PipelineServices;
+﻿using SAAC.Skinectic;
 using Microsoft.Psi.Interop.Serialization;
 using System.IO;
 
-namespace SAAC.Skinetic
+namespace SAAC.PsiFormats
 {
-    public class SkineticHapticEffect
+    public class PsiFormatSkineticHapticEffect
     {
-        public string Name;
-        public bool IsActive;
-    }
-
-    public class PsiFormatSkineticHapticEffect : IPsiFormat
-    {
-        public dynamic GetFormat()
+        public static Format<SkineticHapticEffect> GetFormat()
         {
             return new Format<SkineticHapticEffect>(WriteSkineticHapticEffect, ReadSkineticHapticEffect);
         }
 
-        public void WriteSkineticHapticEffect(SkineticHapticEffect effect, BinaryWriter writer)
+        public static void WriteSkineticHapticEffect(SkineticHapticEffect effect, BinaryWriter writer)
         {
             writer.Write(effect.Name);
             writer.Write(effect.IsActive);
         }
 
-        public SkineticHapticEffect ReadSkineticHapticEffect(BinaryReader reader)
+        public static SkineticHapticEffect ReadSkineticHapticEffect(BinaryReader reader)
         {
             SkineticHapticEffect effect = new SkineticHapticEffect();
             effect.Name = reader.ReadString();

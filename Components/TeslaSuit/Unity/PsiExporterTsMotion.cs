@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using TsAPI.Types;
 using TsSDK;
 using UnityEngine;
-
+using SAAC.PsiFormat;
 
 public class TsMotionSerializer : PsiASerializer<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>>
 {

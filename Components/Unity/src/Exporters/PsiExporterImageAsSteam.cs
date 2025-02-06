@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public class PsiImageExporterAsStream : PsiExporter<byte[]>
 {

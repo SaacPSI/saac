@@ -26,7 +26,6 @@
     <ProjectReference Include="..\..\Components\BodiesRemoteServices\BodiesRemoteServices.csproj" />
     <ProjectReference Include="..\..\Components\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
-    <ProjectReference Include="..\..\Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj" />
     <ProjectReference Include="..\..\Components\Nuitrack\Nuitrack.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public class PsiExporterPositionOrientation
     : PsiExporter<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>
@@ -22,7 +23,7 @@ public class PsiExporterPositionOrientation
 #if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetSerializer()
     {
-        return PsiFormatPositionOrientation.GetFormat();
+        return PsiFormatTupleOfVector.GetFormat();
     }
 #endif
 }

@@ -26,15 +26,9 @@ In **Exporters** folder:
 * PsiExporterMatrix4x4  : exporter to the localToWorld matrix of the gameobject.
 
 In **Formats** folder:
-* PsiFormatBoolean : (De)Serialization for boolean. 
-* PsiFormatBytes : (De)Serialization for byte array. 
-* PsiFormatDateTime : (De)Serialization for DateTime. 
 * PsiFormatImage : (De)Serialization for image. 
-* PsiFormatInteger : (De)Serialization for int and enum. 
-* PsiFormatMatrix4x4 : (De)Serialization for matrix 4x4. 
-* PsiFormatPositionAndOrientation : (De)Serialization for a tuple of Vector3 used in PsiPositionOrientationExporter. 
-* PsiFormatString : (De)Serialization for string. 
-* PsiFormatVector3 : (De)Serialization for Vector3. 
+* Basics formats can be found on in the PsiFormats project, the dll can be add inside Unity.
+* Others formats can be found in projects under the folders Formats/Unity/ 
 
 In **Importers** folder:
 * PsiImportePosition : example of importer to set position of the gameobject.

@@ -27,6 +27,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
+    <ProjectReference Include="..\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>
 
 </Project>

@@ -27,8 +27,6 @@ using static Emgu.CV.VideoCapture;
 using SAAC.Bodies;
 using Microsoft.Psi.AzureKinect;
 using Microsoft.Psi.Audio;
-using SAAC.KinectAzureRemoteServices;
-using SAAC.RemoteConnectors;
 //using SAAC.Ollama;
 
 namespace TestingConsole

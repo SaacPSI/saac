@@ -78,16 +78,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Formats", "Formats", "{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0}"
 	ProjectSection(SolutionItems) = preProject
-		Components\Unity\src\Formats\PsiFormatBoolean.cs = Components\Unity\src\Formats\PsiFormatBoolean.cs
-		Components\Unity\src\Formats\PsiFormatBytes.cs = Components\Unity\src\Formats\PsiFormatBytes.cs
-		Components\Unity\src\Formats\PsiFormatDateTime.cs = Components\Unity\src\Formats\PsiFormatDateTime.cs
 		Components\Unity\src\Formats\PsiFormatImage.cs = Components\Unity\src\Formats\PsiFormatImage.cs
-		Components\Unity\src\Formats\PsiFormatInteger.cs = Components\Unity\src\Formats\PsiFormatInteger.cs
-		PsiFormatListOfSimplifiedBody.cs = PsiFormatListOfSimplifiedBody.cs
-		Components\Unity\src\Formats\PsiFormatMatrix4x4.cs = Components\Unity\src\Formats\PsiFormatMatrix4x4.cs
-		Components\Unity\src\Formats\PsiFormatPositionOrientation.cs = Components\Unity\src\Formats\PsiFormatPositionOrientation.cs
-		Components\Unity\src\Formats\PsiFormatString.cs = Components\Unity\src\Formats\PsiFormatString.cs
-		Components\Unity\src\Formats\PsiFormatVector3.cs = Components\Unity\src\Formats\PsiFormatVector3.cs
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Groups", "Components\Groups\Groups.csproj", "{65613648-C5B7-4AD1-9FA2-6816C54239E9}"
@@ -118,7 +109,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GlobalHelpers", "Components
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{8788DD89-F75B-4C7C-AFD6-E93532253076}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinectic", "Skinectic\Skinectic.csproj", "{F538F267-2910-45AE-8273-967952EF3FB1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsiFormats", "Components\PsiFormats\PsiFormats.csproj", "{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinectic", "Components\Skinectic\Skinectic.csproj", "{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -352,14 +345,22 @@ Global
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|x64.ActiveCfg = Release|Any CPU
 		{8788DD89-F75B-4C7C-AFD6-E93532253076}.Release|x64.Build.0 = Release|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Debug|x64.Build.0 = Debug|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|x64.ActiveCfg = Release|Any CPU
-		{F538F267-2910-45AE-8273-967952EF3FB1}.Release|x64.Build.0 = Release|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Debug|x64.Build.0 = Debug|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Release|x64.ActiveCfg = Release|Any CPU
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}.Release|x64.Build.0 = Release|Any CPU
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Debug|Any CPU.Build.0 = Debug|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Debug|x64.ActiveCfg = Debug|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Debug|x64.Build.0 = Debug|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|Any CPU.ActiveCfg = Release|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|Any CPU.Build.0 = Release|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|x64.ActiveCfg = Release|x64
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -400,7 +401,8 @@ Global
 		{D5F0CFEF-757F-4082-9A09-7EBF301A65D4} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{C4EA4895-C3D1-471B-B1ED-FF019FCCBDA7} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{8788DD89-F75B-4C7C-AFD6-E93532253076} = {6E0AB730-7080-4E97-865C-A21250A4567F}
-		{F538F267-2910-45AE-8273-967952EF3FB1} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

@@ -8,6 +8,7 @@ using TsAPI.Types;
 using TsSDK;
 using Unity.VisualScripting;
 using UnityEngine;
+using SAAC.PsiFormat;
 
 public struct HapticParams
 {

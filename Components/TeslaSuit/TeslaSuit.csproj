@@ -5,7 +5,6 @@
 	  <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
 	  <PlatformTarget>x64</PlatformTarget>
 	  <Platforms>x64</Platforms>
 	  <UseWPF>true</UseWPF>
@@ -18,11 +17,6 @@
     <Compile Remove="Unity\PsiExporterTsMotion.cs" />
     <Compile Remove="Unity\PsiExporterTsPPG.cs" />
     <Compile Remove="Unity\PsiExporterTsRawPPG.cs" />
-    <Compile Remove="Unity\PsiFormatHapicParams.cs" />
-    <Compile Remove="Unity\PsiFormatHapicPlayable.cs" />
-    <Compile Remove="Unity\PsiFormatTsMotion.cs" />
-    <Compile Remove="Unity\PsiFormatTsPPG.cs" />
-    <Compile Remove="Unity\PsiFormatTsRawPPG.cs" />
     <Compile Remove="Unity\PsiImporterHapticParams.cs" />
     <Compile Remove="Unity\PsiTsHapicPlayer.cs" />
   </ItemGroup>
@@ -31,17 +25,8 @@
     <None Include="Unity\PsiExporterTsMotion.cs" />
     <None Include="Unity\PsiExporterTsPPG.cs" />
     <None Include="Unity\PsiExporterTsRawPPG.cs" />
-    <None Include="Unity\PsiFormatHapicParams.cs" />
-    <None Include="Unity\PsiFormatHapicPlayable.cs" />
-    <None Include="Unity\PsiFormatTsMotion.cs" />
-    <None Include="Unity\PsiFormatTsPPG.cs" />
-    <None Include="Unity\PsiFormatTsRawPPG.cs" />
     <None Include="Unity\PsiImporterHapticParams.cs" />
     <None Include="Unity\PsiTsHapicPlayer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.DeviceManagement" Version="0.19.100.1-beta" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,5 +40,9 @@
     <Reference Include="TsSDK">
       <HintPath>dep\TsSDK.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="src\Formats\Unity\" />
   </ItemGroup>
 </Project>
