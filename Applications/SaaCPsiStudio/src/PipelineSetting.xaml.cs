@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using SAAC.PipelineServices;
 using System.Windows.Controls;
 using Microsoft.Psi.Data;
+using Microsoft.Psi;
 
 namespace SaaCPsiStudio
 {
@@ -133,7 +134,7 @@ namespace SaaCPsiStudio
             server?.Dataset?.Save();
             return server?.Dataset;
         }
-        public void RunPipeline()
+        public void RunPipeline(TimeInterval timeInterval)
         {
             server?.RunPipeline();
             server?.CommandEmitter.Post((RendezVousPipeline.Command.Run, "All"), server.Pipeline.GetCurrentTime());
@@ -174,6 +175,11 @@ namespace SaaCPsiStudio
         public string GetAnnotation()
         {
             return null;
+        }
+
+        public bool IsReplayble()
+        {
+            return false;
         }
 
         private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
