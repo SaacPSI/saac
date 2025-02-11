@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi;
-using SAAC.PsiFormat;
+using SAAC.PsiFormats;
 
 public class PsiExporterImage : PsiExporter<Microsoft.Psi.Imaging.Image>
 {

@@ -31,141 +31,6 @@ using Microsoft.Psi.Audio;
 
 namespace TestingConsole
 {
-    public class PsiFormatBoolean
-    {
-        public static Format<bool> GetFormat()
-        {
-            return new Format<bool>(WriteBoolean, ReadBoolean);
-        }
-
-        public static void WriteBoolean(bool boolean, BinaryWriter writer)
-        {
-            writer.Write(boolean);
-        }
-
-        public static bool ReadBoolean(BinaryReader reader)
-        {
-            return reader.ReadBoolean();
-        }
-    }
-
-    public class PsiFormaChar
-    {
-        public static Format<char> GetFormat()
-        {
-            return new Format<char>(WriteChar, ReadChar);
-        }
-
-        public static void WriteChar(char character, BinaryWriter writer)
-        {
-            writer.Write(character);
-        }
-
-        public static char ReadChar(BinaryReader reader)
-        {
-            return reader.ReadChar();
-        }
-    }
-
-    public class PsiFormatString
-    {
-        public static Format<string> GetFormat()
-        {
-            return new Format<string>(WriteString, ReadSring);
-        }
-
-        public static void WriteString(string data, BinaryWriter writer)
-        {
-            writer.Write(data);
-        }
-
-        public static string ReadSring(BinaryReader reader)
-        {
-            return reader.ReadString();
-        }
-    }
-    public class PsiFormatPositionAndOrientation
-    {
-        public static Format<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetFormat()
-        {
-            return new Format<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>(WritePositionOrientation, ReadPositionOrientation);
-        }
-
-        public static void WritePositionOrientation(Tuple<System.Numerics.Vector3, System.Numerics.Vector3> point3D, BinaryWriter writer)
-        {
-            writer.Write((double)point3D.Item1.X);
-            writer.Write((double)point3D.Item1.Y);
-            writer.Write((double)point3D.Item1.Z);
-            writer.Write((double)point3D.Item2.X);
-            writer.Write((double)point3D.Item2.Y);
-            writer.Write((double)point3D.Item2.Z);
-        }
-
-        public static Tuple<System.Numerics.Vector3, System.Numerics.Vector3> ReadPositionOrientation(BinaryReader reader)
-        {
-            return new Tuple<System.Numerics.Vector3, System.Numerics.Vector3>(new System.Numerics.Vector3((float)reader.ReadDouble(), (float)reader.ReadDouble(), (float)reader.ReadDouble()),
-                            new System.Numerics.Vector3((float)reader.ReadDouble(), (float)reader.ReadDouble(), (float)reader.ReadDouble()));
-        }
-    }
-
-    public class PsiFormatImage
-    {
-        public static Format<Image> GetFormat()
-        {
-            return new Format<Image>(WriteImage, ReadImage);
-        }
-
-        public static void WriteImage(Image image, BinaryWriter writer)
-        {
-            int bytesPerPixel = image.BitsPerPixel / 8;
-            writer.Write(image.Width);
-            writer.Write(image.Height);
-            writer.Write((int)image.PixelFormat);
-            writer.Write(bytesPerPixel);
-            writer.Write(image.ReadBytes(image.Width * image.Height * bytesPerPixel));
-        }
-
-        public static Image ReadImage(BinaryReader reader)
-        {
-            int width = reader.ReadInt32();
-            int height = reader.ReadInt32();
-            PixelFormat format = (PixelFormat)reader.ReadInt32();
-            int bytesPerPixel = reader.ReadInt32();
-            byte[] data = reader.ReadBytes(width * height * bytesPerPixel);
-            Microsoft.Psi.Imaging.Image image = null;
-            unsafe
-            {
-                fixed (byte* p = data)
-                {
-                    IntPtr ptr = (IntPtr)p;
-                    image = new Microsoft.Psi.Imaging.Image(ptr, width, height, width * bytesPerPixel, format);
-                }
-            }
-            return image;
-        }
-    }
-
-    public class PsiFormatBytes
-    {
-        public static Format<byte[]> GetFormat()
-        {
-            return new Format<byte[]>(WriteBytes, ReadBytes);
-        }
-
-        public static void WriteBytes(byte[] image, BinaryWriter writer)
-        {
-            writer.Write(image.Length);
-            writer.Write(image);
-        }
-
-        public static byte[] ReadBytes(BinaryReader reader)
-        {
-            int length = reader.ReadInt32();
-            byte[] data = reader.ReadBytes(length);
-            return data;
-        }
-    }
-
     internal class Program
     {
         //*****Uncomment OpenFace, Microsoft.Psi.Imaging and Microsoft.Psi.AzureKinect
@@ -552,14 +417,14 @@ namespace TestingConsole
 
         static void Main(string[] args)
         {
-            ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
-            replayConfig.AutomaticPipelineRun = false;
-            replayConfig.DatasetBackup = true;
-            replayConfig.DatasetPath = "D:\\Stores\\Webcam\\";
-            replayConfig.DatasetName = "webcam.pds";
+            //ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
+            //replayConfig.AutomaticPipelineRun = false;
+            //replayConfig.DatasetBackup = true;
+            //replayConfig.DatasetPath = "D:\\Stores\\Webcam\\";
+            //replayConfig.DatasetName = "webcam.pds";
 
-            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            replayPipeline.LoadDatasetAndConnectors();
+            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            //replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = true;
@@ -571,11 +436,11 @@ namespace TestingConsole
             configuration.CommandDelegate = CommandDel;
 
             // Topic for positions
-            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("RightController", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Player-Position", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Player-State", typeof(string), new PsiFormatString());
+            configuration.AddTopicFormatAndTransformer("Player-Actions", typeof(int), new PsiFormatInteger());
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server");
+            RendezVousPipeline pipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
             //RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
             //KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
             //configuration1.RendezVousApplicationName = "KinectStreaming";
@@ -599,7 +464,7 @@ namespace TestingConsole
             //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, azureP);
             
             pipeline.Start();
-            replayPipeline.RunPipeline();
+            //replayPipeline.RunPipeline();
 
             //var azureP = pipeline.CreateSubpipeline();
 
@@ -624,12 +489,12 @@ namespace TestingConsole
 
             Console.WriteLine("Press any key to send command.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Status, "Unity"), replayPipeline.Pipeline.GetCurrentTime());
+            pipeline.CommandEmitter.Post((Command.Run, "Unity"), pipeline.Pipeline.GetCurrentTime());
 
 
             Console.WriteLine("Press any key to send command.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Status, "Unity"), replayPipeline.Pipeline.GetCurrentTime());
+            pipeline.CommandEmitter.Post((Command.Stop, "Unity"), pipeline.Pipeline.GetCurrentTime());
 
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
             //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);
@@ -643,7 +508,7 @@ namespace TestingConsole
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
             //pipeline.Stop();
-            replayPipeline.Stop();
+            pipeline.Stop();
         }
     }
 }

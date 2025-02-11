@@ -69,11 +69,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"
 	ProjectSection(SolutionItems) = preProject
+		Components\Unity\src\Exporters\PsiExporterDateTime.cs = Components\Unity\src\Exporters\PsiExporterDateTime.cs
 		Components\Unity\src\Exporters\PsiExporterImage.cs = Components\Unity\src\Exporters\PsiExporterImage.cs
 		Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs = Components\Unity\src\Exporters\PsiExporterImageAsSteam.cs
+		Components\Unity\src\Exporters\PsiExporterInteger.cs = Components\Unity\src\Exporters\PsiExporterInteger.cs
 		Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs = Components\Unity\src\Exporters\PsiExporterMatrix4x4.cs
 		Components\Unity\src\Exporters\PsiExporterPosition.cs = Components\Unity\src\Exporters\PsiExporterPosition.cs
 		Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs = Components\Unity\src\Exporters\PsiExporterPositionOrientation.cs
+		Components\Unity\src\Exporters\PsiExporterString.cs = Components\Unity\src\Exporters\PsiExporterString.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Formats", "Formats", "{EB4DADF8-6E6E-4FE0-B0DF-793E74A2FFD0}"
