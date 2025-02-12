@@ -23,8 +23,8 @@ namespace SAAC.PipelineServices
 
         protected bool OwningPipeline;
 
-        public DatasetPipeline(Pipeline parent, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
-            : base("", null, name)
+        public DatasetPipeline(Pipeline parent, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+            : base("", connectors, name)
         {
             OwningPipeline = false;
             Pipeline = parent;
@@ -32,8 +32,8 @@ namespace SAAC.PipelineServices
             Initialize(configuration, log);
         }
 
-        public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null)
-            : base("", null, name)
+        public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+            : base("", connectors, name)
         {
             OwningPipeline = true;
             Pipeline = Pipeline.Create(name, enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);

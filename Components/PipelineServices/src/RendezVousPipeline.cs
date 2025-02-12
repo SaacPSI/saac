@@ -33,15 +33,15 @@ namespace SAAC.PipelineServices
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
         public RendezVousPipeline(Pipeline parent, RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
-            : base(parent, configuration, name, log)
+            : base(parent, configuration, name, log, connectors)
         {
-            Initialize(configuration, name, rendezVousServerAddress, log, connectors);
+            Initialize(configuration, name, rendezVousServerAddress, log);
         }
 
         public RendezVousPipeline(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
-            : base(configuration, name, log)
+            : base(configuration, name, log, connectors)
         {
-            Initialize(configuration, name, rendezVousServerAddress, log, connectors);
+            Initialize(configuration, name, rendezVousServerAddress, log);
         }
 
         public void Start(TimeInterval? interval = null)
@@ -124,7 +124,7 @@ namespace SAAC.PipelineServices
             Pipeline parent = CreateSubpipeline(processName);
             foreach (var connector in connectors)
             {
-                var producer = connector.Value.DataType.GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
+                var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 typeof(RendezVousPipeline).GetMethod("GenerateTCPEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this, [parent, startingPort++, producer, connector.Key, process]);
             }
             parent.RunAsync();
@@ -136,7 +136,7 @@ namespace SAAC.PipelineServices
             RemoteExporter writer = new RemoteExporter(parent, port, TransportKind.Tcp);
             foreach (var connector in connectors)
             {
-                var producer = connector.Value.DataType.GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
+                var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?
                 typeof(Exporter).GetMethod("Write").MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096]);
             }
@@ -414,7 +414,7 @@ namespace SAAC.PipelineServices
             notifyCompleted();
         }
 
-        private void Initialize(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
+        private void Initialize(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
         {
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
             commandFormat = new PsiFormatCommand();
