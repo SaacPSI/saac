@@ -7,13 +7,15 @@ using SAAC.PipelineServices;
 using System.Windows.Controls;
 using Microsoft.Psi.Data;
 using Microsoft.Psi;
+using Microsoft.Psi.PsiStudio.PipelinePlugin;
+using Casper.Formats;
 
-namespace SaaCPsiStudio
+namespace Casper
 {
     /// <summary>
     /// Interaction logic for PipelineSetting.xaml
     /// </summary>
-    public partial class PipelineSetting : Window, INotifyPropertyChanged, Microsoft.Psi.PsiStudio.IPsiStudioPipeline
+    public partial class PipelineSetting : Window, INotifyPropertyChanged, Microsoft.Psi.PsiStudio.PipelinePlugin.IPsiStudioPipeline
     {
         private RendezVousPipelineConfiguration configuration;
 
@@ -117,14 +119,40 @@ namespace SaaCPsiStudio
 
             configuration = new RendezVousPipelineConfiguration();
             configuration.RendezVousHost = "localhost"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
-            configuration.DatasetPath = "D:/Stores/SAAC/";
-            configuration.DatasetName = "SAAC.pds";
+            configuration.DatasetPath = "D:/Stores/Casper/";
+            configuration.DatasetName = "Casper.pds";
             configuration.AutomaticPipelineRun = true;
             configuration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
 
-            //configuration.TopicsTypes.Add();
-            //configuration.TypesSerializers.Add();
-            //configuration.NotStoredTopics.Add();
+            configuration.AddTopicFormatAndTransformer("Vitesse Tapis", typeof(float), new PsiFormatFloat());
+            configuration.AddTopicFormatAndTransformer("D1-Poubelle", typeof(int), new PsiFormatInteger());
+            configuration.TopicsTypes.Add("D2-Poubelle", typeof(int));
+            configuration.AddTopicFormatAndTransformer("Batteries", typeof(PsiBatterie), new PsiFormatBat());
+            configuration.AddTopicFormatAndTransformer("Module status", typeof((int, string)), new PsiFormatIntString());
+            configuration.AddTopicFormatAndTransformer("Area", typeof((int, bool, string)), new PsiFormatIntBoolString());
+            configuration.TopicsTypes.Add("E1-extincteur", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("E2-extincteur", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Gaze", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Grab", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Collision sol", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Collision tapis", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Collision batterie", typeof((int, bool, string)));
+            configuration.TopicsTypes.Add("Commande TV", typeof(float));
+            configuration.TopicsTypes.Add("Levier", typeof(float));
+            configuration.AddTopicFormatAndTransformer("TV", typeof((int, int, int, string)), new PsiFormatTV());
+            configuration.TopicsTypes.Add("M1-Module Selectionne", typeof(string));
+            configuration.TopicsTypes.Add("M2-Module Selectionne", typeof(string));
+            configuration.TopicsTypes.Add("ERROR", typeof(bool));
+            configuration.TopicsTypes.Add("M2-Validation", typeof(bool));
+            configuration.TopicsTypes.Add("M1-Validation", typeof(bool));
+            configuration.TopicsTypes.Add("M1-ModuleOut", typeof(bool));
+            configuration.TopicsTypes.Add("M2-ModuleOut", typeof(bool));
+            configuration.TopicsTypes.Add("Bouton urgence", typeof(bool));
+            configuration.AddTopicFormatAndTransformer("Porte1 ouverture", typeof((bool, System.Numerics.Vector3)), new PsiFormatBoolVector3());
+            configuration.TopicsTypes.Add("Porte2 ouverture", typeof((bool, System.Numerics.Vector3)));
+            configuration.AddTopicFormatAndTransformer("Right", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector());
+            configuration.TopicsTypes.Add("Left", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
+            configuration.TopicsTypes.Add("Head", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
 
             InitializeComponent();
         }
@@ -177,11 +205,6 @@ namespace SaaCPsiStudio
             return null;
         }
 
-        public bool IsReplayble()
-        {
-            return false;
-        }
-
         private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             TextBox? log = sender as TextBox;
@@ -193,7 +216,22 @@ namespace SaaCPsiStudio
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            server?.Stop();
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            server?.Pipeline.Dispose();
+        }
+
+        public DateTime GetStartTime()
+        {
+            return server == null ? DateTime.MinValue : server.Pipeline.StartTime;
+        }
+
+        public PipelineReplaybleMode GetReplaybleMode()
+        {
+            return PipelineReplaybleMode.Not;
         }
     }
 }

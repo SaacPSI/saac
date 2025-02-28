@@ -19,7 +19,7 @@
             CommandDelegate = null;
             if (addRegularSerializers)
             {
-                TypesSerializers.Add(typeof(bool), new PsiFormatBoolean());
+                TypesSerializers.Add(typeof(bool), new PsiFormatFloat());
                 TypesSerializers.Add(typeof(char), new PsiFormatChar());
                 TypesSerializers.Add(typeof(int), new PsiFormatInteger());
                 TypesSerializers.Add(typeof(string), new PsiFormatString());
