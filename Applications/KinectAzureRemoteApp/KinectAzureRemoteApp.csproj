@@ -15,17 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-modRPC2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Psi">
-      <HintPath>..\..\..\psi\Sources\Runtime\Microsoft.Psi\bin\Release\netstandard2.0\Microsoft.Psi.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

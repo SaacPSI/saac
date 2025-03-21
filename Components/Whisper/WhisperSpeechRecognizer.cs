@@ -229,7 +229,7 @@ namespace SAAC.Whisper
             }
             var code = GetLanguageCode(configuration.Language);
             var builder = WhisperFactory
-                .FromPath(modelFilename, false, configuration.LibrairyPath)
+                .FromPath(modelFilename, false)
                 .CreateBuilder()
                 .WithLanguage(code)
                 .WithProgressHandler(OnProgress)

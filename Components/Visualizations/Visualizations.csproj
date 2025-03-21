@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Msagl.WpfGraphControl" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
     <PackageReference Include="Microsoft.Psi.Visualization.Windows" Version="0.19.100.1-beta" />
   </ItemGroup>
 

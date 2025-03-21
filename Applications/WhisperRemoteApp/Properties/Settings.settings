@@ -3,19 +3,22 @@
   <Profiles />
   <Settings>
     <Setting Name="rendezVousServerIp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">localhost</Value>
+      <Value Profile="(Default)">10.144.210.101</Value>
     </Setting>
     <Setting Name="rendezVousServerPort" Type="System.UInt32" Scope="User">
-      <Value Profile="(Default)">1234</Value>
+      <Value Profile="(Default)">13331</Value>
     </Setting>
     <Setting Name="remotePort" Type="System.UInt32" Scope="User">
-      <Value Profile="(Default)">11411</Value>
+      <Value Profile="(Default)">11570</Value>
     </Setting>
     <Setting Name="ApplicationName" Type="System.String" Scope="User">
       <Value Profile="(Default)">WhisperStreaming</Value>
     </Setting>
     <Setting Name="IpToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>
+    </Setting>
+    <Setting Name="connectedUser" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">3</Value>
     </Setting>
   </Settings>
 </SettingsFile>

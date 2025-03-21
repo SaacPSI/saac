@@ -15,7 +15,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\RendezVousPipelineServices\PipelineServices.csproj" />
+    <PackageReference Include="Microsoft.Psi.Speech.Windows" Version="0.19.100.1-beta" />
+    <PackageReference Include="Whisper.net" Version="1.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Components\AudioRecording\AudioRecording.csproj" />
+    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
     <ProjectReference Include="..\..\Components\Whisper\Whisper.csproj" />
   </ItemGroup>
 

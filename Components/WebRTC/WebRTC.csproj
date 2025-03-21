@@ -32,6 +32,7 @@
     <PackageReference Include="Concentus" Version="1.1.7" />
     <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
 	<PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.19.100.1-beta" />
+	<PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
 	<PackageReference Include="SIPSorcery" Version="6.2.1" />
 	<PackageReference Include="SIPSorceryMedia" Version="4.0.67-pre" />
 	<PackageReference Include="SIPSorceryMedia.FFmpeg" Version="1.4.1" />

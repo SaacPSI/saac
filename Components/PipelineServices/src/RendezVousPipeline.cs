@@ -57,6 +57,7 @@ namespace SAAC.PipelineServices
 
         public override void Stop()
         {
+            Dataset?.Save();
             if (!isStarted)
                 return;
             rendezVous.Stop();

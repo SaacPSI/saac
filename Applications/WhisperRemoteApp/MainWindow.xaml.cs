@@ -7,6 +7,10 @@ using System.Windows;
 using System.Net;
 using Microsoft.Psi.Diagnostics;
 using SAAC.PipelineServices;
+using SAAC.AudioRecording;
+using Microsoft.Psi.Components;
+using System.Windows.Controls;
+using System.IdentityModel.Protocols.WSTrust;
 
 namespace WhisperRemoteApp
 {
@@ -17,6 +21,7 @@ namespace WhisperRemoteApp
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
+        private AudioProcess audioProcess { get; set; }
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -41,9 +46,10 @@ namespace WhisperRemoteApp
         {
             State = status;
         }
+        // LOG
 
         private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
-        
+
         private string rendezVousServerIp = "localhost";
         public string RendezVousServerIp
         {
@@ -72,6 +78,17 @@ namespace WhisperRemoteApp
             ApplicationName = name;
         }
 
+        private string connectedUser = "3";
+        public string ConnectedUser
+        {
+            get => connectedUser;
+            set => SetProperty(ref connectedUser, value);
+        }
+        public void DelegateMethodCU(string connectedUser)
+        {
+            ConnectedUser = connectedUser;
+        }
+
         private string commandSource = "Server";
         public string CommandSource
         {
@@ -94,7 +111,7 @@ namespace WhisperRemoteApp
             Log = log;
         }
 
-     
+
         public List<string> IPsList { get; }
         public string IPSelected
         {
@@ -122,6 +139,7 @@ namespace WhisperRemoteApp
             Pipeline = null;
 
             PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse;
+            
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
             ApplicationName = Properties.Settings.Default.ApplicationName;
@@ -225,7 +243,7 @@ namespace WhisperRemoteApp
                         Application.Current.Dispatcher.Invoke(new Action(() =>
                         {
                             OnRestart();
-                        }));
+                        })); 
                     }
                     break;
                 case RendezVousPipeline.Command.Status:
@@ -238,31 +256,60 @@ namespace WhisperRemoteApp
         {
             //disable ui
             RendezVousGrid.IsEnabled = false;
-            PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
+            //PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
+            PipelineConfiguration.AutomaticPipelineRun = true;
             PipelineConfiguration.CommandDelegate = CommandRecieved;
-            Pipeline = new RendezVousPipeline(PipelineConfiguration, ApplicationName, RendezVousServerIp);
+            PipelineConfiguration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
+            PipelineConfiguration.SessionName = "RawData";
+            PipelineConfiguration.DatasetPath = @"path\...\";
+            PipelineConfiguration.DatasetName = "Dataset.pds";
+            PipelineConfiguration.RendezVousHost = "10.144.210.101";
+
+            audioProcess = new AudioProcess();
+
+            Pipeline = new RendezVousPipeline(PipelineConfiguration, ApplicationName, RendezVousServerIp, (log) => { Log += $"{log}\n"; });
+            Pipeline.CreateOrGetSessionFromMode("PipelineProcess");
+            Pipeline.Log("Waiting for server");
             State = "Waiting for server";
             Pipeline.Start();
-            State = "Ready to start Kinect";
+            audioProcess.StartAudioPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
+            State = "Ready to start Whisper";
         }
 
         private void SetupWhisper()
         {
             if (Pipeline == null)
                 SetupRendezVous();
-
+            Pipeline.Log("Vad and Whisper initialization");
             //disable ui
             DataFormular.IsEnabled = false;
-            WhipserPipeline = Pipeline.CreateSubpipeline(); // to modify or remove
+            //Method process audio, vad, Whisper
+            audioProcess.StartWhisperPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
+
+            //Pipeline.RunPipeline();
             //Pipeline.AddProcess(KinectStreams.GenerateProcess());
-            WhipserPipeline.RunAsync();
+            //WhipserPipeline.RunAsync();
             State = "Running";
         }
 
+        private void ButtonStartAudioRecording(object sender, RoutedEventArgs e)
+        {
+            audioProcess.StartAudioPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
+        }
+        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            TextBox? log = sender as TextBox;
+            if (log == null)
+                return;
+            log.CaretIndex = log.Text.Length;
+            log.ScrollToEnd();
+        }
         private void StopPipeline()
         {
             // Stop correctly the everything.
             State = "Stopping";
+            
+            Pipeline.Dataset?.Save();
             if (Pipeline != null)
             {
                 Pipeline.Stop();
@@ -318,7 +365,7 @@ namespace WhisperRemoteApp
         {
             State = "Initializing Kinect";
             RefreshConfigurationFromUI();
-            StopWhisper();
+            SetupWhisper();
         }
 
         private void BtnStopClick(object sender, RoutedEventArgs e)

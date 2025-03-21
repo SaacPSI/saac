@@ -116,6 +116,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsiFormats", "Components\Ps
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinectic", "Components\Skinectic\Skinectic.csproj", "{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioRecording", "Components\AudioRecording\AudioRecording.csproj", "{076D9ABC-A5F1-454F-8418-40724F502069}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -364,6 +366,14 @@ Global
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|Any CPU.Build.0 = Release|x64
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|x64.ActiveCfg = Release|x64
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7}.Release|x64.Build.0 = Release|x64
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Debug|x64.ActiveCfg = Debug|x64
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Debug|x64.Build.0 = Debug|x64
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Release|Any CPU.Build.0 = Release|Any CPU
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Release|x64.ActiveCfg = Release|x64
+		{076D9ABC-A5F1-454F-8418-40724F502069}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -406,6 +416,7 @@ Global
 		{8788DD89-F75B-4C7C-AFD6-E93532253076} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{076D9ABC-A5F1-454F-8418-40724F502069} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

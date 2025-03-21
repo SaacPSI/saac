@@ -18,15 +18,13 @@
 	  <PackageId>SAAC-$(AssemblyName)</PackageId>
 	  <AssemblyVersion>0.2</AssemblyVersion>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Spatial.Euclidean" Version="0.19.100.1-beta" />
-  </ItemGroup>
+<ItemGroup>
+  <PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.19.100.1-beta" />
+</ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
-    <ProjectReference Include="..\PsiFormats\PsiFormats.csproj" />
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
 </Project>
