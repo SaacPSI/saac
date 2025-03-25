@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta" />
+    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
   </ItemGroup>
 
   <ItemGroup>
