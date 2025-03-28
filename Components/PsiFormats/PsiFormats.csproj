@@ -3,17 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
-	  <LangVersion>latest</LangVersion>
+	<BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
+	<BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	<LangVersion>latest</LangVersion>
     <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>0.2</AssemblyVersion>
+	  <version>1.0.0-pre</version>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-SAAC" />
+    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
   </ItemGroup>
 
 </Project>

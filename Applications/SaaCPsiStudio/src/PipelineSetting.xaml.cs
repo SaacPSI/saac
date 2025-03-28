@@ -7,13 +7,14 @@ using SAAC.PipelineServices;
 using System.Windows.Controls;
 using Microsoft.Psi.Data;
 using Microsoft.Psi;
+using Microsoft.Psi.PsiStudio.PipelinePlugin;
 
 namespace SaaCPsiStudio
 {
     /// <summary>
     /// Interaction logic for PipelineSetting.xaml
     /// </summary>
-    public partial class PipelineSetting : Window, INotifyPropertyChanged, Microsoft.Psi.PsiStudio.IPsiStudioPipeline
+    public partial class PipelineSetting : Window, INotifyPropertyChanged, Microsoft.Psi.PsiStudio.PipelinePlugin.IPsiStudioPipeline
     {
         private RendezVousPipelineConfiguration configuration;
 
@@ -193,7 +194,23 @@ namespace SaaCPsiStudio
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            server?.Stop();
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            server?.Pipeline.Dispose();
+            Close();
+        }
+
+        public DateTime GetStartTime()
+        {
+            return server == null ? DateTime.MinValue : server.Pipeline.StartTime;
+        }
+
+        public PipelineReplaybleMode GetReplaybleMode()
+        {
+            return PipelineReplaybleMode.Not;
         }
     }
 }

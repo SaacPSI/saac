@@ -18,17 +18,17 @@ namespace SAAC.PipelineServices
         public const string DiagnosticsProcessName = "Diagnostics";
         public const string CommandProcessName = "Command";
 
-        public enum Command { Initialize, Run, Stop, Restart, Close, Status };
+        public enum Command { Initialize, Run, Stop, Reset, Close, Status };
 
         public RendezVousPipelineConfiguration Configuration { get; private set; }
-        public Emitter<(Command, string)> CommandEmitter { get; private set; }
         public delegate void OnCommandReceive(string process, (Command, string) command);
 
+        protected Emitter<(Command, string)> CommandEmitter { get; private set; }
         protected List<string> processNames; 
         protected bool isStarted;
-        protected PsiFormatCommand commandFormat;
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
+        protected Pipeline commandPipeline;
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
@@ -48,20 +48,70 @@ namespace SAAC.PipelineServices
         {
             if (isStarted)
                 return;
+            isStarted = true;
             if (!StartRendezVousRelay(interval))
                 return;
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort != 0)
-                RunPipeline();
-            isStarted = true;
+                RunPipeline(); 
+        }
+
+        public void Start(Action<DateTime> notifyCompletionTime)
+        {
+            Start();
+            notifyCompletionTime(DateTime.MaxValue);
         }
 
         public override void Stop()
         {
             if (!isStarted)
                 return;
-            rendezVous.Stop();
-            base.Stop();
             isStarted = false;
+            base.Stop();
+        }
+        
+        public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
+        {
+            Stop();
+            notifyCompleted();
+        }
+
+        public void Dispose()
+        {
+            Dataset?.Save();
+            rendezVous.Dispose();
+            commandPipeline.Dispose();
+            base.Dispose();
+            Stores = null;
+        }
+
+        public override void Reset(Pipeline? pipeline = null)
+        {
+            base.Reset(pipeline);
+            processNames?.Clear();
+            foreach(Rendezvous.Process prc in rendezvousRelay.Rendezvous.Processes)
+                if (!prc.Name.Contains(CommandProcessName))
+                    rendezvousRelay.Rendezvous.TryRemoveProcess(prc);
+        }
+
+        public bool SendCommand(Command command, string target, string arguments)
+        {
+            if (CommandEmitter != null)
+            {
+                CommandEmitter.Post((command, $"{target};{arguments}"), commandPipeline.GetCurrentTime());
+                return true;
+            }
+            return false;
+        }
+
+        public bool AddSynchClockProcess(TimeInterval interval)
+        {
+            if (Configuration.ClockPort != 0 && !processNames.Contains(ClockSynchProcessName))
+            {
+                var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
+                AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+                return true;
+            }
+            return false;
         }
 
         public bool AddConnectingProcess(string name, EventHandler<Rendezvous.Process> eventProcess)
@@ -111,27 +161,28 @@ namespace SAAC.PipelineServices
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost, streamName));
         }
 
-        public bool GenerateTCPProcessFromConnectors(string storeName, int startingPort)
+        public int GenerateTCPProcessFromConnectors(string storeName, int startingPort)
         {
             if (Connectors.ContainsKey(storeName))
                 return GenerateTCPProcessFromConnectors(storeName, Connectors[storeName], startingPort);
-            return false;
+            return 0;
         }
 
-        public bool GenerateTCPProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        public int GenerateTCPProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
         {
             Rendezvous.Process process = new Rendezvous.Process(processName);
-            Pipeline parent = CreateSubpipeline(processName);
+            Subpipeline parent = CreateSubpipeline(processName);
             foreach (var connector in connectors)
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 typeof(RendezVousPipeline).GetMethod("GenerateTCPEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this, [parent, startingPort++, producer, connector.Key, process]);
             }
-            parent.RunAsync();
-            return AddProcess(process);
+            if (isPipelineRunning)
+                parent.Start((d) => { Log($"SubPipeline {process.Name} started @{d}."); });
+            return AddProcess(process) ? startingPort : 0;
         }
 
-         public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process)
+        public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process)
         {
             RemoteExporter writer = new RemoteExporter(parent, port, TransportKind.Tcp);
             foreach (var connector in connectors)
@@ -159,7 +210,7 @@ namespace SAAC.PipelineServices
             return AddProcess(process);
         }
 
-        protected bool StartRendezVousRelay(TimeInterval? interval = null)
+        protected bool StartRendezVousRelay(TimeInterval? interval = null, bool createSynchClockProcess = true)
         {
             if (rendezvousRelay == null)
                 return false;
@@ -181,17 +232,17 @@ namespace SAAC.PipelineServices
                         break;
                 }
             }
-            if (Configuration.ClockPort != 0)
-            {
-                var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
-                AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
-            }
+            if (interval != null)
+                AddSynchClockProcess(interval);
+            commandPipeline = Pipeline.Create(CommandProcessName,DeliveryPolicy.SynchronousOrThrottle, enableDiagnostics: false);
             if (Configuration.CommandPort != 0)
             {
-                TcpWriterMulti<(Command, string)> writer = new TcpWriterMulti<(Command, string)>(Pipeline, Configuration.CommandPort, commandFormat.GetFormat(), CommandProcessName);
-                CommandEmitter.PipeTo(writer.In);
+                CommandEmitter = commandPipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
+                TcpWriterMulti<(Command, string)> writer = new TcpWriterMulti<(Command, string)>(commandPipeline, Configuration.CommandPort, PsiFormats.PsiFormatCommand.GetFormat(), CommandProcessName);
+                CommandEmitter.PipeTo(writer);
                 AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
             }
+            commandPipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
             Log("RendezVous started!");
             return true;
         }
@@ -260,15 +311,12 @@ namespace SAAC.PipelineServices
                     {
                         if (stream.StreamName == CommandProcessName)
                         {
-                            Subpipeline commandSubPipeline = new Subpipeline(Pipeline, process.Name);
-                            var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, commandSubPipeline, commandFormat.GetFormat(), null, true, stream.StreamName);
-                            p2m = new Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
+                            Subpipeline subCommandPipeline = Subpipeline.Create(commandPipeline, process.Name);
+                            var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, subCommandPipeline, PsiFormats.PsiFormatCommand.GetFormat(), null, true, stream.StreamName);
+                            p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
-                            if (this.Configuration.AutomaticPipelineRun)
-                            {
-                                commandSubPipeline.RunAsync();
-                                Log($"SubPipeline {process.Name} started.");
-                            }
+                            subCommandPipeline.Start((d) => {}); 
+                            Log($"Subpipeline {process.Name} started."); 
                             return;
                         }
                     }
@@ -289,13 +337,11 @@ namespace SAAC.PipelineServices
                     {
                         if (stream.GetType() == typeof(PipelineDiagnostics))
                         {
-                            Subpipeline processSubPipeline = new Subpipeline(Pipeline, process.Name);
+                            Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
                             Connection(stream.StreamName, DiagnosticsProcessName, CreateOrGetSession(Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
                             if (this.Configuration.AutomaticPipelineRun)
-                            {
-                                processSubPipeline.RunAsync();
-                                Log($"SubPipeline {process.Name} started.");
-                            }
+                                processSubPipeline.Start((d) => {});
+                            Log($"SubPipeline {process.Name} started.");
                             return;
                         }
                     }
@@ -347,7 +393,7 @@ namespace SAAC.PipelineServices
             }
             else if (this.Configuration.AutomaticPipelineRun)
             {
-                processSubPipeline.RunAsync();
+                processSubPipeline.Start((d) => { });
                 Log($"SubPipeline {process.Name} started.");
                 TriggerNewProcessEvent(process.Name);
             }
@@ -362,7 +408,7 @@ namespace SAAC.PipelineServices
                 subpipeline.Dispose();
                 Connectors.Remove(e.Name);
             }
-            RemovedProcess?.Invoke(this, e.Name);
+            RemovedEntry?.Invoke(this, e.Name);
         }
 
         protected void Connection<T>(string streamName, string processName, Session? session, Rendezvous.TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
@@ -406,19 +452,9 @@ namespace SAAC.PipelineServices
             return false;
         }
 
-        void ISourceComponent.Start(Action<DateTime> notifyCompletionTime)
-        {}
-
-        void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
-        {
-            notifyCompleted();
-        }
-
         private void Initialize(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
         {
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
-            commandFormat = new PsiFormatCommand();
-            CommandEmitter = Pipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
             processNames = new List<string>();
             if (rendezVousServerAddress == null)
                 rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);

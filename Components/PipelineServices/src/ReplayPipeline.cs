@@ -1,9 +1,10 @@
 ﻿using Microsoft.Psi;
+using Microsoft.Psi.Components;
 using Microsoft.Psi.Data;
 
 namespace SAAC.PipelineServices
 {
-    public class ReplayPipeline : DatasetPipeline
+    public class ReplayPipeline : DatasetPipeline, ISourceComponent
     {
         public enum ReplayType { FullSpeed, RealTime, IntervalFullSpeed, IntervalRealTime };
 
@@ -15,17 +16,38 @@ namespace SAAC.PipelineServices
         public ReplayPipeline(ReplayPipelineConfiguration configuration, string name = nameof(ReplayPipeline), LogStatus? log = null)
             : base(configuration, name, log)
         {
-            Configuration = configuration ?? new ReplayPipelineConfiguration();
-            loader = new DatasetLoader(Pipeline, Connectors, $"{name}-Loader");
+            Initialize(configuration);
+        }
+
+        public ReplayPipeline(Pipeline parent, ReplayPipelineConfiguration configuration, string name = nameof(ReplayPipeline), LogStatus? log = null)
+            : base(parent, configuration, name, log)
+        {
+            Initialize(configuration);
+        }
+
+        public void Start(Action<DateTime> notifyCompletionTime)
+        {
+            RunPipeline();
+            notifyCompletionTime(DateTime.MaxValue);
+        }
+
+        public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
+        {
+            Stop();
+            notifyCompleted();
+        }
+
+        public void Dispose()
+        {
+            ReadOnlyStores.Clear();
+            base.Dispose();
+        }
+
+        public override void Reset(Pipeline? pipeline = null)
+        {
+            base.Reset(pipeline);
             ReadOnlyStores = new SortedSet<string>();
-            if (Dataset == null)
-                throw new ArgumentNullException(nameof(Dataset));
-            else if(Configuration.DatasetBackup)
-            {
-                var filename = Dataset.Filename;
-                Dataset.SaveAs(Dataset.Filename.Insert(Dataset.Filename.Length - 4, "_backup"));
-                Dataset.Filename = filename;
-            }
+            loader = new DatasetLoader(Pipeline, Connectors, $"{name}-Loader");
         }
 
         public override void AddNewProcessEvent(EventHandler<(string, Dictionary<string, Dictionary<string, ConnectorInfo>>)> handler)
@@ -40,14 +62,23 @@ namespace SAAC.PipelineServices
             loader.AddRemoveProcessEvent(handler);
         }
 
-        public bool LoadDatasetAndConnectors(string? sessionName = null)
+        public bool LoadDatasetAndConnectors(ConnectorsManager? manager = null, string ? sessionName = null)
         {
             if (loader.Load(Dataset, sessionName))
             {
                 this.Connectors = loader.Connectors;
+                Log($"Dataset {Dataset?.Name} loaded!");
                 foreach (var session in Connectors)
+                {
+                    Log($"\tSession {session.Key}:");
                     foreach (var connectorPair in session.Value)
+                    {
+                        Log($"\t\tStream {connectorPair.Key}");
                         ReadOnlyStores.Add(connectorPair.Value.StoreName);
+                    }
+                }
+                if (manager != null)
+                    manager.Connectors = Connectors;
                 return true;
             }
             return false;
@@ -88,6 +119,21 @@ namespace SAAC.PipelineServices
                 names.Item2 = $"{names.Item2}_{name}";
             }
             return names;
+        }
+
+        private void Initialize(ReplayPipelineConfiguration configuration)
+        {
+            Configuration = configuration ?? new ReplayPipelineConfiguration();
+            loader = new DatasetLoader(Pipeline, Connectors, $"{name}-Loader");
+            ReadOnlyStores = new SortedSet<string>();
+            if (Dataset == null)
+                throw new ArgumentNullException(nameof(Dataset));
+            else if (Configuration.DatasetBackup)
+            {
+                var filename = Dataset.Filename;
+                Dataset.SaveAs(Dataset.Filename.Insert(Dataset.Filename.Length - 4, "_backup"));
+                Dataset.Filename = filename;
+            }
         }
     }
 }

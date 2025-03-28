@@ -15,7 +15,7 @@
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <PackageId>SAAC-$(AssemblyName)</PackageId>
-	  <AssemblyVersion>0.2</AssemblyVersion>
+	  <version>1.0.0-pre</version>
   </PropertyGroup>
  
  </Project>

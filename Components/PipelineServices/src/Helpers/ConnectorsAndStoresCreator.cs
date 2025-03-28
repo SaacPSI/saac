@@ -15,6 +15,12 @@ namespace SAAC.PipelineServices
             Stores = new Dictionary<string, Dictionary<string, PsiExporter>>();
         }
 
+        public void Dispose()
+        {
+            base.Dispose();
+            Stores = null;
+        }
+
         public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam = true)
         {
             CreateConnector(streamName, storeName, session, type, stream);

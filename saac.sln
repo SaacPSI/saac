@@ -64,7 +64,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C
 		Components\Unity\src\Base\PsiImporter.cs = Components\Unity\src\Base\PsiImporter.cs
 		Components\Unity\src\Base\PsiPipelineManager.cs = Components\Unity\src\Base\PsiPipelineManager.cs
 		Components\Unity\src\Base\PsiSerializerReflexion.cs = Components\Unity\src\Base\PsiSerializerReflexion.cs
-		Components\PipelineServices\src\Helpers\TcpWriterMulti.cs = Components\PipelineServices\src\Helpers\TcpWriterMulti.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"

@@ -16,6 +16,12 @@ namespace SAAC.PipelineServices
             Stores = new Dictionary<string, Dictionary<string, PsiImporter>>();
         }
 
+        public void Dispose()
+        {
+            base.Dispose();
+            Stores = null;
+        }
+
         public bool Load(string dataset, string? sessionName = null)
         {
             return Load(Dataset.Load(dataset), sessionName);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
 using System.IO;
+using System.Windows.Media.Animation;
 
 namespace SAAC.PipelineServices
 {
@@ -15,11 +16,11 @@ namespace SAAC.PipelineServices
         public enum StoreMode { Independant, Process, Dictionnary };
         public enum DiagnosticsMode { Off, Store, Export };
 
-        protected bool isPipelineRunning;
+        protected bool isPipelineRunning = false;
 
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
 
-        protected List<Pipeline> subpipelines;
+        protected List<Subpipeline> subpipelines;
 
         protected bool OwningPipeline;
 
@@ -28,7 +29,6 @@ namespace SAAC.PipelineServices
         {
             OwningPipeline = false;
             Pipeline = parent;
-
             Initialize(configuration, log);
         }
 
@@ -36,7 +36,7 @@ namespace SAAC.PipelineServices
             : base("", connectors, name)
         {
             OwningPipeline = true;
-            Pipeline = Pipeline.Create(name, enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
+            Pipeline = Pipeline.Create(name, enableDiagnostics: this.Configuration?.Diagnostics != DiagnosticsMode.Off);
             Initialize(configuration, log);
         }
 
@@ -63,29 +63,45 @@ namespace SAAC.PipelineServices
             return isPipelineRunning;
         }
 
-        protected virtual void RunAsync()
-        {
-            Pipeline.RunAsync();
-        }
-
         public virtual void Stop()
         {
             if (!OwningPipeline)
             {
-                Log($"{name} does not own Pipeline, it cannot be stroped from here.");
-                return;
+                Log($"{name} does not own Pipeline, it cannot be stopped from here.");
             }
-
-            if (isPipelineRunning)
+            else if (isPipelineRunning)
             {
-                Pipeline.Dispose();
-                foreach(Pipeline sub in subpipelines)
-                    sub.Dispose();
-                subpipelines.Clear();
+                foreach(Subpipeline subpipeline in subpipelines)
+                {
+                    subpipeline.Stop(Pipeline.GetCurrentTime(), () => { });
+                }
+                Pipeline.WaitAll();
+                Log("Pipeline Stopped.");
             }
             Dataset?.Save();
             isPipelineRunning = false;
-            Log("Pipeline Stopped.");
+        }
+
+        public virtual void Reset(Pipeline? pipeline = null)
+        {
+            Dispose();
+            subpipelines.Clear();
+            Connectors.Clear();
+            OwningPipeline = pipeline == null;
+            isPipelineRunning = false;
+            Pipeline = pipeline ?? Pipeline.Create(name, enableDiagnostics: this.Configuration?.Diagnostics != DiagnosticsMode.Off);
+        }
+
+        public void Dispose()
+        {
+            base.Dispose();
+            if (!OwningPipeline)
+            {
+                Log($"{name} does not own Pipeline, it cannot be dispose from here.");
+                subpipelines.Clear();
+                return;
+            }
+            //Pipeline?.Dispose();
         }
 
         public Session? GetSession(string sessionName)
@@ -182,17 +198,22 @@ namespace SAAC.PipelineServices
             }
         }
 
-        public Pipeline CreateSubpipeline(string name = "SaaCSubpipeline")
+        public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
         {
-            subpipelines.Add(Microsoft.Psi.Pipeline.CreateSynchedPipeline(Pipeline, name));
+            subpipelines.Add(Subpipeline.Create(Pipeline, name));
             return subpipelines.Last();
+        }
+
+        protected virtual void RunAsync()
+        {
+            Pipeline.RunAsync();
         }
 
         private void Initialize(DatasetPipelineConfiguration? configuration = null, LogStatus? log = null)
         {
             this.Log = log ?? ((log) => { Console.WriteLine(log); });
             Configuration = configuration ?? new DatasetPipelineConfiguration();
-            subpipelines = new List<Pipeline>();
+            subpipelines = new List<Subpipeline>();
             if (this.Configuration.DatasetName.Length > 4)
             {
                 if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
