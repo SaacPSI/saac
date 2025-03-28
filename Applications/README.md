@@ -24,6 +24,13 @@ It use RendezVous system allowing to start (and stop) kinect streams from the re
 ### Future works
 * Allowing **NamedPipes** protocol
 
+## WhipserRemoteApp
+### Summary
+This application allow the use of Rhode microphone system in conjuction of Whisper to provide a speech to text application that can stream and record audio and transcription locally.
+It use RendezVous system allowing to start (and stop) the application from the remote server with the given configuration.
+### Future works
+* Allowing **NamedPipes** protocol
+
 ## SaaCPsiStudio
 ### Summary
 This is a template to execute \psi pipeline in PsiStudio from our [fork](https://github.com/SaacPSI/psi), branch PsiStudio. It use [Rendez Vous Pipeline](../Components/RendezVousPipelineServices/src/RendezVousPipeline.cs) as main context for executing the pipeline.

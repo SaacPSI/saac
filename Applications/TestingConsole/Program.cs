@@ -20,13 +20,11 @@ using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 using System.IO;
 using SAAC.PipelineServices;
 using SAAC.Helpers;
-using SAAC.Nuitrack;
 using static SAAC.PipelineServices.RendezVousPipeline;
-//using SAAC.KinectAzureRemoteServices;
-using static Emgu.CV.VideoCapture;
-using SAAC.Bodies;
+
 using Microsoft.Psi.AzureKinect;
 using Microsoft.Psi.Audio;
+using System.Windows;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -417,84 +415,46 @@ namespace TestingConsole
 
         static void Main(string[] args)
         {
-            //ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
-            //replayConfig.AutomaticPipelineRun = false;
-            //replayConfig.DatasetBackup = true;
-            //replayConfig.DatasetPath = "D:\\Stores\\Webcam\\";
-            //replayConfig.DatasetName = "webcam.pds";
+            ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
+            replayConfig.AutomaticPipelineRun = false;
+            replayConfig.DatasetBackup = true;
+            replayConfig.DatasetPath = @"D:\Stores\SAAC\";
+            replayConfig.DatasetName = "SAAC.pds";
 
-            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            //replayPipeline.LoadDatasetAndConnectors();
+            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
+            configuration.AutomaticPipelineRun = false;
             configuration.Debug = true;
             //configuration.Diagnostics = DiagnosticsMode.Store;
-            configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";
-            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.DatasetPath = @"D:\Stores\SAAC2\";
+            configuration.DatasetName = "SAAC.pds";
             configuration.RendezVousHost = "localhost";
             configuration.CommandDelegate = CommandDel;
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
 
             // Topic for positions
-            configuration.AddTopicFormatAndTransformer("Player-Position", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Player-State", typeof(string), new PsiFormatString());
-            configuration.AddTopicFormatAndTransformer("Player-Actions", typeof(int), new PsiFormatInteger());
+            configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
-            //RendezVousPipeline pipeline = new RendezVousPipeline(configuration, "Server");
-            //KinectAzureRemoteConnectorConfiguration configuration1 = new KinectAzureRemoteConnectorConfiguration();
-            //configuration1.RendezVousApplicationName = "KinectStreaming";
-            //configuration1.Debug = true;
-            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, configuration1);
-
-            // Nuitrack/Realsense process
-            //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
-            //NuitrackSensorConfiguration sensorConfiguration = new NuitrackSensorConfiguration();
-            //sensorConfiguration.DeviceSerialNumber = "943222070019";
-            //sensorConfiguration.ActivationKey  = "license:35365:LmoTHY7vt5v2Q1A5";
-            //sensorConfiguration.OutputColor = false;
-            //sensorConfiguration.OutputDepth = false;
-            //NuitrackSensor nuitrackSensor = new NuitrackSensor(nuitrackSubPipeline, sensorConfiguration);
-            //BodiesConverter converter = new BodiesConverter(nuitrackSubPipeline);
-            //TcpWriter<List<SAAC.Bodies.SimplifiedBody>> bodiesWriter = new TcpWriter<List<SAAC.Bodies.SimplifiedBody>>(nuitrackSubPipeline, 15562, new PsiFormatListOfSimplifiedBody().GetFormat());
-            //nuitrackSensor.OutBodies.PipeTo(converter.InBodiesNuitrack);
-            //converter.PipeTo(bodiesWriter);
-            //pipeline.AddProcess(new Process("NuitrackProcess", [bodiesWriter.ToRendezvousEndpoint(configuration.RendezVousHost,"Bodies")]));
-            //var azureP = pipeline.CreateSubpipeline();
-            //KinectAzureRemoteComponent service = new KinectAzureRemoteComponent(pipeline, azureP);
-            
+            RendezVousPipeline pipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server", null, null, replayPipeline.Connectors);
             pipeline.Start();
-            //replayPipeline.RunPipeline();
-
-            //var azureP = pipeline.CreateSubpipeline();
-
-            //RemoteImporter remoteImporter = new RemoteImporter(azureP, "127.0.0.1", 11413);
-            //remoteImporter.Connected.WaitOne();
-            //var conn = remoteImporter.Importer.OpenStream<Shared<Microsoft.Psi.Imaging.EncodedImage>>("Kinect_RemoteKinectAzureServer_RGB");
-            //conn.Do(message => {
-            //    Console.WriteLine($"Messagerecived");
-            //});
-            //azureP.RunAsync();
-            // SAAC.KinectAzureRemoteServices.KinectAzureRemoteComponent azure = new SAAC.KinectAzureRemoteServices.KinectAzureRemoteComponent(pipeline, azureP);
-
-
-
-            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), DateTime.Now);
-            //var p = pipeline.CreateSubpipeline();
-            //var timer1 = Timers.Timer(p, TimeSpan.FromSeconds(1));
-            //timer1.Do((d, e) => {
-            //    pipeline.CommandEmitter.Post((Command.Status, "Unity"), e.OriginatingTime);
-            //});
-
-
-            Console.WriteLine("Press any key to send command.");
+            //pipeline.GenerateTCPProcessFromConnectors("Unity", 11551);
+ 
+            Console.WriteLine("Press any key to send RUN command to Unity.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Run, "Unity"), pipeline.Pipeline.GetCurrentTime());
+            pipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
+            replayPipeline?.RunPipeline();
 
-
-            Console.WriteLine("Press any key to send command.");
+            Console.WriteLine("Press any key to send RESET command to Unity.");
             Console.ReadLine();
-            pipeline.CommandEmitter.Post((Command.Stop, "Unity"), pipeline.Pipeline.GetCurrentTime());
+            pipeline.SendCommand(RendezVousPipeline.Command.Reset, "UnityB", "");
+
+            Console.WriteLine("Press any key to send STOP command to Unity.");
+            Console.ReadLine();
+            pipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
             //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);

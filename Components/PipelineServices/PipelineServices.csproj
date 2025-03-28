@@ -4,7 +4,6 @@
 	  <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
 	  <PlatformTarget>x64</PlatformTarget>
 	  <Platforms>x64</Platforms>
 	  <UseWPF>true</UseWPF>
@@ -16,7 +15,7 @@
 	  <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	  <PackageId>SAAC-$(AssemblyName)</PackageId>
-	  <AssemblyVersion>0.2</AssemblyVersion>
+	  <version>1.0.0-pre</version>
   </PropertyGroup>
   
   <ItemGroup>

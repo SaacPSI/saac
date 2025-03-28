@@ -8,6 +8,7 @@ namespace SAAC.PipelineServices
     using System.Net;
     using System.Net.Sockets;
     using System.Threading;
+    using System.Collections.Generic;
     using Microsoft.Psi;
     using Microsoft.Psi.Interop.Rendezvous;
     using Microsoft.Psi.Interop.Serialization;
@@ -19,7 +20,7 @@ namespace SAAC.PipelineServices
     /// <typeparam name="T">The type of the messages.</typeparam>
     public class TcpWriterMulti<T> : IConsumer<T>, IDisposable
     {
-        private readonly IFormatSerializer serializer;
+        private readonly IFormatSerializer<T> serializer;
         private readonly string name;
 
         private TcpListener listener;
@@ -33,12 +34,12 @@ namespace SAAC.PipelineServices
         /// <param name="port">The connection port.</param>
         /// <param name="serializer">The serializer to use to serialize messages.</param>
         /// <param name="name">An optional name for the component.</param>
-        public TcpWriterMulti(Pipeline pipeline, int port, IFormatSerializer serializer, string name = nameof(TcpWriterMulti<T>))
+        public TcpWriterMulti(Pipeline pipeline, int port, IFormatSerializer<T> serializer, string name = nameof(TcpWriterMulti<T>))
         {
             this.serializer = serializer;
             this.name = name;
             this.Port = port;
-            this.In = pipeline.CreateReceiver<T>(this, this.Receive, $"{name}-In");
+            this.In = pipeline.CreateReceiver<T>(this, this.Receive, nameof(this.In));
             this.listener = new TcpListener(IPAddress.Any, port);
             this.clients = new List<TcpClient>();
             Start();

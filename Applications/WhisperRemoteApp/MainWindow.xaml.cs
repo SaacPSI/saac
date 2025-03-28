@@ -124,7 +124,6 @@ namespace WhisperRemoteApp
         }
 
         private RendezVousPipeline? Pipeline;
-        private Pipeline WhipserPipeline; // to modify/remove
 
         public MainWindow()
         {
@@ -237,7 +236,7 @@ namespace WhisperRemoteApp
                         Close();
                     }));
                     break;
-                case RendezVousPipeline.Command.Restart:
+                case RendezVousPipeline.Command.Reset:
                     if (UpdateConfigurationFromArgs(args))
                     {
                         Application.Current.Dispatcher.Invoke(new Action(() =>
@@ -247,7 +246,7 @@ namespace WhisperRemoteApp
                     }
                     break;
                 case RendezVousPipeline.Command.Status:
-                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, WhipserPipeline == null ? "Not Initialised": WhipserPipeline.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
+                    Pipeline?.SendCommand(RendezVousPipeline.Command.Status, source, Pipeline == null ? "Not Initialised": Pipeline.Pipeline.StartTime.ToString());
                     break;
             }
         }
@@ -263,7 +262,7 @@ namespace WhisperRemoteApp
             PipelineConfiguration.SessionName = "RawData";
             PipelineConfiguration.DatasetPath = @"path\...\";
             PipelineConfiguration.DatasetName = "Dataset.pds";
-            PipelineConfiguration.RendezVousHost = "10.144.210.101";
+            PipelineConfiguration.RendezVousHost = "localhost";
 
             audioProcess = new AudioProcess();
 
@@ -319,13 +318,13 @@ namespace WhisperRemoteApp
         private void StopWhisper()
         {
             State = "Stopping Whisper";
-            if (WhipserPipeline != null && Pipeline != null)
+            if (Pipeline != null)
             {
                 if(!Pipeline.RemoveProcess(ApplicationName))
                     Console.WriteLine("error remove rendezvous");
                 try
                 {
-                    WhipserPipeline.Dispose();
+                    Pipeline.Dispose();
                 }
                 catch(Exception ex) 
                 {
