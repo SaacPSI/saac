@@ -2,6 +2,7 @@
 
 ## Summary
 Project interfacing component with Nuitrack API to provide tracking informations and video streams, see https://github.com/3DiVi/nuitrack-sdk/
+The CSharp warpper can be found at https://github.com/3DiVi/nuitrack-sdk/blob/master/Nuitrack/lib/csharp/nuitrack.net.dll
 
 ## Files
 * [NuitrackSensorConfiguration](src/NuitrackSensorConfiguration.cs) is the configuration class.
