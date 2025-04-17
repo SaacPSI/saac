@@ -138,7 +138,7 @@ namespace SaaCPsiStudio
         public void RunPipeline(TimeInterval timeInterval)
         {
             server?.RunPipeline();
-            server?.CommandEmitter.Post((RendezVousPipeline.Command.Run, "All"), server.Pipeline.GetCurrentTime());
+            server?.SendCommand(RendezVousPipeline.Command.Run, "*", "");
         }
 
         public void StopPipeline()

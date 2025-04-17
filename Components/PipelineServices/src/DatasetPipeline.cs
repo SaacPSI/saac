@@ -63,7 +63,7 @@ namespace SAAC.PipelineServices
             return isPipelineRunning;
         }
 
-        public virtual void Stop()
+        public virtual void Stop(int msTimeout = 1000)
         {
             if (!OwningPipeline)
             {
@@ -75,7 +75,7 @@ namespace SAAC.PipelineServices
                 {
                     subpipeline.Stop(Pipeline.GetCurrentTime(), () => { });
                 }
-                Pipeline.WaitAll();
+                Pipeline.WaitAll(msTimeout);
                 Log("Pipeline Stopped.");
             }
             Dataset?.Save();

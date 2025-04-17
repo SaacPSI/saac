@@ -8,6 +8,7 @@ using SAAC.RemoteConnectors;
 using SAAC.PipelineServices;
 using SAAC.KinectAzureRemoteServices;
 using System.Windows.Controls;
+using Microsoft.Psi.Components;
 
 namespace KinectAzureRemoteApp
 {
@@ -303,7 +304,7 @@ namespace KinectAzureRemoteApp
                         Close();
                     }));
                     break;
-                case RendezVousPipeline.Command.Restart:
+                case RendezVousPipeline.Command.Reset:
                     if (UpdateConfigurationFromArgs(args))
                     {
                         Application.Current.Dispatcher.Invoke(new Action(() =>
@@ -313,7 +314,7 @@ namespace KinectAzureRemoteApp
                     }
                     break;
                 case RendezVousPipeline.Command.Status:
-                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, KinectStreams == null ? "Not Initialised": Pipeline.Pipeline.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
+                    Pipeline?.SendCommand(RendezVousPipeline.Command.Status, "*", KinectStreams == null ? "Not Initialised" : Pipeline.Pipeline.StartTime.ToString());
                     break;
             }
         }

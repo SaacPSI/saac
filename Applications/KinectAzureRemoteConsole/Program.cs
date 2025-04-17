@@ -102,7 +102,7 @@ namespace KinectAzureRemoteConsole
                     StopKinect();
                     client.Stop();
                     throw new Exception("Ugly way to close");
-                case RendezVousPipeline.Command.Restart:
+                case RendezVousPipeline.Command.Reset:
                     if (UpdateConfigurationFromArgs(args))
                     {
                         StopKinect();

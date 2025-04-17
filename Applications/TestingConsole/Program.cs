@@ -421,8 +421,8 @@ namespace TestingConsole
             replayConfig.DatasetPath = @"D:\Stores\SAAC\";
             replayConfig.DatasetName = "SAAC.pds";
 
-            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            replayPipeline.LoadDatasetAndConnectors();
+            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            //replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = false;
@@ -439,22 +439,22 @@ namespace TestingConsole
             configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
             configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server", null, null, replayPipeline.Connectors);
+            RendezVousPipeline pipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server", null, null/*, replayPipeline.Connectors*/);
             pipeline.Start();
             //pipeline.GenerateTCPProcessFromConnectors("Unity", 11551);
  
             Console.WriteLine("Press any key to send RUN command to Unity.");
             Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
-            replayPipeline?.RunPipeline();
+            pipeline.SendCommand(RendezVousPipeline.Command.Run, "Unity", "");
+            //replayPipeline?.RunPipeline();
 
             Console.WriteLine("Press any key to send RESET command to Unity.");
             Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Reset, "UnityB", "");
+            pipeline.SendCommand(RendezVousPipeline.Command.Reset, "Unity", "");
 
             Console.WriteLine("Press any key to send STOP command to Unity.");
             Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
+            pipeline.SendCommand(RendezVousPipeline.Command.Stop, "Unity", "");
 
             //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
             //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);

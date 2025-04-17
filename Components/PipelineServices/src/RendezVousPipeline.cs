@@ -61,13 +61,13 @@ namespace SAAC.PipelineServices
             notifyCompletionTime(DateTime.MaxValue);
         }
 
-        public override void Stop()
+        public override void Stop(int msTimeout = 1000)
         {
             Dataset?.Save();
             if (!isStarted)
                 return;
             isStarted = false;
-            base.Stop();
+            base.Stop(msTimeout);
         }
         
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
@@ -353,7 +353,7 @@ namespace SAAC.PipelineServices
         protected void ProcessAddedData(Rendezvous.Process process)
         {
             int elementAdded = 0;
-            Subpipeline processSubPipeline = new Subpipeline(Pipeline, process.Name);
+            Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
             Session? session = CreateOrGetSessionFromMode(process.Name);
             foreach (var endpoint in process.Endpoints)
             {

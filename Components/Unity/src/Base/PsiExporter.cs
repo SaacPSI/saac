@@ -3,13 +3,11 @@ using Microsoft.Psi;
 using System;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi.Interop.Transport;
-using SAAC.PipelineServices;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
     public string TopicName = "Topic";
     public float DataPerSecond = 0.0f;
-    public bool AutoRegister = false;
 
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
 
@@ -19,11 +17,6 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 
     protected float DataTime;
     protected DateTime Timestamp = DateTime.MinValue;
-
-#if PSI_TCP_STREAMS
-    private TcpWriterMulti<T> TcpWriter;
-#endif
-    private RemoteExporter Exporter;
 
     // Start is called before the first frame update
     public virtual void Start()
@@ -47,23 +40,20 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
             {
 #if PSI_TCP_STREAMS
                 case PsiPipelineManager.ExportType.TCPWriter:
-                    TcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer(), AutoRegister);
-                    Out.PipeTo(TcpWriter);
+                    TcpWriter<T> tcpWriter = PsiManager.GetTcpWriter<T>(TopicName, GetSerializer());
+                    Out.PipeTo(tcpWriter);
                     break;
 #endif
                 default:
                     {
                         RemoteExporter exporter;
-                        PsiManager.GetRemoteExporter(ExportType, out Exporter);
-                        Exporter.Exporter.Write(Out, TopicName);
-                        if (!AutoRegister)
-                            PsiManager.RegisterExporter(ref exporter);
+                        PsiManager.GetRemoteExporter(ExportType, out exporter);
+                        exporter.Exporter.Write(Out, TopicName);
+                        PsiManager.RegisterExporter(ref exporter);
                     }
                     break;
             }
             IsInitialized = true;
-            if (AutoRegister)
-                PsiManager.onInitialized += OnProcessStart;
         }
         catch (Exception e)
         {
@@ -89,19 +79,4 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 #if PSI_TCP_STREAMS
     protected abstract Microsoft.Psi.Interop.Serialization.IFormatSerializer<T> GetSerializer();
 #endif
-
-    private void OnProcessStart()
-    {
-        switch (ExportType)
-        {
-#if PSI_TCP_STREAMS
-            case PsiPipelineManager.ExportType.TCPWriter:
-                PsiManager.RegisterTCPWriter(TcpWriter, TopicName);
-                break;
-#endif
-            default:
-                PsiManager.RegisterExporter(ref exporter);
-                break;
-        }
-    }
 }
