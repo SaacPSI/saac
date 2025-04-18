@@ -429,8 +429,8 @@ namespace TestingConsole
             replayConfig.DatasetName = "FinalDataset.pds";
             replayConfig.ProgressReport = new Reporter();
 
-            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            replayPipeline.LoadDatasetAndConnectors();
+            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            //replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = false;

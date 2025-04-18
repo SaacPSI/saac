@@ -8,6 +8,7 @@ using SAAC.RemoteConnectors;
 using SAAC.PipelineServices;
 using SAAC.KinectAzureRemoteServices;
 using System.Windows.Controls;
+using Microsoft.Psi.Components;
 
 namespace KinectAzureRemoteApp
 {

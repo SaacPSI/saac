@@ -11,13 +11,13 @@ using System.Linq;
 using Microsoft.Psi.Serialization;
 using System.Net;
 using SAAC.PsiFormats;
-using SAAC.PipelineServices;
+using UnityEngine.Rendering;
 
 public class PsiPipelineManager : MonoBehaviour
 {
     public const string ClockSynchProcessName = "ClockSynch";
     public const string CommandProcessName = "Command";
-    public enum Command { Initialize, Run, Stop, Restart, Close, Status };
+    public enum Command { Initialize, Run, Stop, Reset, Close, Status };
 
     private RendezvousClient rendezVousClient;
     private Rendezvous.Process process;
@@ -39,7 +39,7 @@ public class PsiPipelineManager : MonoBehaviour
     private Dictionary<string, Rendezvous.TcpSourceEndpoint> sourceEndpoint;
     private Dictionary<string, RemoteImporter> remoteImporters;
     private List<string> exportedTopics;
-    private List<Pipeline> subPipelines;
+    private List<Subpipeline> subPipelines;
 
     private List<string> logBuffer;
     private TMP_Text text;
@@ -50,13 +50,13 @@ public class PsiPipelineManager : MonoBehaviour
 
     public enum PsiManagerStartMode { Manual, Connection, Automatic };
     public PsiManagerStartMode StartMode = PsiManagerStartMode.Automatic;
-    public int StreamNumberExpectedAtStart = 0;
+    public int ExporterNumberExpectedAtStart = 0;
     public string RendezVousServerAddress = "";
     public int RendezVousServerPort = 13331;
-    public string RendezVousAppName = "Unity";
-    public string HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
-    public List<string> WaitedRendezVousApp;
-    public List<string> AccpetedRendezVousApp;
+    public string UsedProcessName = "Unity";
+    public string UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+    public List<string> WaitedProcess;
+    public List<string> AcceptedProcess;
     public delegate void PsiEvent();
     public PsiEvent onConnected;
     public PsiEvent onInitialized;
@@ -77,7 +77,7 @@ public class PsiPipelineManager : MonoBehaviour
         sourceEndpoint = new Dictionary<string, Rendezvous.TcpSourceEndpoint>();
         remoteImporters = new Dictionary<string, RemoteImporter>();
         logBuffer = new List<string>();
-        subPipelines = new List<Pipeline>();
+        subPipelines = new List<Subpipeline>();
         exporterCount = waitedRendezVousCount = 0;
         initializedEventTriggered = false;
         text = null;
@@ -130,21 +130,21 @@ public class PsiPipelineManager : MonoBehaviour
                 return;
             }
             AddLog("PsiPipelineManager : Connected with rendezvous server!");
-            commandPipeline = Pipeline.Create($"{RendezVousAppName}-{CommandProcessName}");
+            commandPipeline = Pipeline.Create(CommandProcessName);
             if (CommandEmitterPort != 0)
             {
-                TcpWriterMulti<(Command, string)> writer = new TcpWriterMulti<(Command, string)>(commandPipeline, CommandEmitterPort, PsiFormatCommandString.GetFormat(), CommandProcessName);
-                CommandEmitter = commandPipeline.CreateEmitter<(Command, string)>(this, $"{RendezVousAppName}-{CommandProcessName}");
+                TcpWriter<(Command, string)> writer = new TcpWriter<(Command, string)>(commandPipeline, CommandEmitterPort, PsiFormatCommandString.GetFormat(), CommandProcessName);
+                CommandEmitter = commandPipeline.CreateEmitter<(Command, string)>(this, $"{UsedProcessName}-{CommandProcessName}");
                 CommandEmitter.PipeTo(writer.In);
-                if (HostAddress.Length == 0)
-                    HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
-                var commandProcess = new Rendezvous.Process($"{RendezVousAppName}-{CommandProcessName}");
-                commandProcess.AddEndpoint(writer.ToRendezvousEndpoint(HostAddress, CommandProcessName));
+                if (UsedAddress.Length == 0)
+                    UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+                var commandProcess = new Rendezvous.Process($"{UsedProcessName}-{CommandProcessName}");
+                commandProcess.AddEndpoint(writer.ToRendezvousEndpoint(UsedAddress, CommandProcessName));
                 rendezVousClient.Rendezvous.TryAddProcess(commandProcess);
             }
             commandPipeline.RunAsync();
             rendezVousClient.Rendezvous.ProcessRemoved += ProcessRemoved;
-            rendezVousClient.Error += RendezVousClientError;
+            rendezVousClient.Error += RendezVousClient_Error;
             rendezVousClient.Rendezvous.ProcessAdded += ProcessAdded;
         }
         catch (Exception e)
@@ -165,7 +165,7 @@ public class PsiPipelineManager : MonoBehaviour
         {
             ProcessAddedClock(process);
         }
-        else if (process.Name.Contains(CommandProcessName) && process.Name != $"{RendezVousAppName}-{CommandProcessName}")
+        else if (process.Name.Contains(CommandProcessName))
         {
             ProcessAddedCommand(process);
         }
@@ -175,7 +175,7 @@ public class PsiPipelineManager : MonoBehaviour
         }
 
         if (State <= PsiPipelineManagerState.Connected)
-            State = waitedRendezVousCount >= WaitedRendezVousApp.Count ? PsiPipelineManagerState.Served : PsiPipelineManagerState.Connected;
+            State = waitedRendezVousCount >= WaitedProcess.Count ? PsiPipelineManagerState.Served : PsiPipelineManagerState.Connected;
         if (State == PsiPipelineManagerState.Served && onConnected != null)
             onConnected();
     }
@@ -210,8 +210,8 @@ public class PsiPipelineManager : MonoBehaviour
                         var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, PsiFormatCommandString.GetFormat(), null, true, stream.StreamName);
                         SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)> p2m = new SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, CommandHandling, process.Name);
                         Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
-                        commandSubPipeline.Start((d) => { });
-                        AddLog($"SubPipeline {process.Name} started.");
+                        commandSubPipeline.Start((d) => {});
+                        AddLog($"PsiPipelineManager : Subpipeline {process.Name} started.");
                         return;
                     }
                 }
@@ -221,7 +221,7 @@ public class PsiPipelineManager : MonoBehaviour
 
     protected void ProcessAddedData(Rendezvous.Process process)
     {
-        if (!WaitedRendezVousApp.Contains(process.Name) && !AccpetedRendezVousApp.Contains(process.Name))
+        if (!WaitedProcess.Contains(process.Name) && !AcceptedProcess.Contains(process.Name))
             return;
 
         Subpipeline subPipeline = Subpipeline.Create(pipeline, process.Name);
@@ -255,36 +255,36 @@ public class PsiPipelineManager : MonoBehaviour
                 }
             }
         }
-        if (WaitedRendezVousApp.Contains(process.Name))
+        if (WaitedProcess.Contains(process.Name))
             waitedRendezVousCount++;
         subPipelines.Add(subPipeline);
-        subPipeline.RunAsync();
+        if (State == PsiPipelineManagerState.Running)
+            subPipeline.Start((d) => { });
+        AddLog($"PsiPipelineManager : Subpipeline {process.Name} started.");
     }
 
     protected void CommandHandling(string processName, Message<(Command, string)> message)
     {
-        if (message.Data.Item2 != RendezVousAppName && message.Data.Item2.Length != 0)
+        var args = message.Data.Item2.Split(';');
+        if (args[0] != UsedProcessName && message.Data.Item2.Length != 0)
             return;
         Command command = (Command)message.Data.Item1;
         AddLog($"PsiPipelineManager Recieve Command {command} from {processName} @{message.OriginatingTime} with argument {message.Data.Item2} \n");
         switch (command)
         {
-            case Command.Restart:
-                State = PsiPipelineManagerState.Instantiated;
-                StartPsi();
+            case Command.Reset:
+                Reset();
+                if (CommandEmitter != null)
+                    CommandEmitter.Post((Command.Status, State.ToString()), commandPipeline.GetCurrentTime());
                 break;
             case Command.Initialize:
                 InitializeExporters();
-                AddProcess();
+                AddManagerProcess();
                 break;
             case Command.Run:
                 StartMode = PsiManagerStartMode.Automatic;
                 break;
             case Command.Close:
-                commandPipeline.Dispose();
-                rendezVousClient.Stop();
-                StopPsi();
-                break;
             case Command.Stop:
                 StopPsi();
                 break;
@@ -295,7 +295,7 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
-    private void RendezVousClientError(object sender, Exception e)
+    private void RendezVousClient_Error(object sender, Exception e)
     {
         AddLog($"PsiPipelineManager Exception in rendezVousClient: {e.Message} \n {e.InnerException} \n {e.Source} \n {e.StackTrace}");
     }
@@ -310,40 +310,50 @@ public class PsiPipelineManager : MonoBehaviour
             initializedEventTriggered = true;
             State = PsiPipelineManagerState.Initializing;
         }
-        if (initializedEventTriggered)
+        if (this.exporterCount == 0)
             State = PsiPipelineManagerState.Initializing;
     }
 
-    public void AddProcess()
+    public void AddProcess(Rendezvous.Process process)
+    {
+        if (State > PsiPipelineManagerState.Initializing)
+            return;
+        rendezVousClient.Rendezvous.TryAddProcess(process);
+        AddLog($"PsiPipelineManager : Add process {process.Name} with {process.Endpoints.Count()} endpoints.");
+    }
+
+    public void AddManagerProcess()
     {
         if (State > PsiPipelineManagerState.Initializing)
             return;
 
         Rendezvous.Process proc = GetProcess();
         int count = proc.Endpoints.Count();
-        if (StreamNumberExpectedAtStart != 0 && count < StreamNumberExpectedAtStart)
+        if (ExporterNumberExpectedAtStart != 0 && count < ExporterNumberExpectedAtStart)
             return;
         rendezVousClient.Rendezvous.TryAddProcess(proc);
-        AddLog($"PsiPipelineManager : Add process with {count} endpoints.");
+        AddLog($"PsiPipelineManager : Add process {proc.Name} with {count} endpoints.");
         State = PsiPipelineManagerState.Initialized;
     }
 
-    private void StopPsi()
+    private void StopPsi(int waitedMillisec = 1000)
     {
         State = PsiPipelineManagerState.Stopped;
-        if (connectionThread.IsAlive)
+        if (connectionThread != null && connectionThread.IsAlive)
             connectionThread.Abort();
         if (commandPipeline != null)
-            commandPipeline.Dispose();
+            commandPipeline.WaitAll(waitedMillisec);
+        foreach (Subpipeline subP in subPipelines)
+            subP.Stop(pipeline.GetCurrentTime(), () => { AddLog($"PsiPipelineManager : Subpipeline {subP.Name} stopped."); });
         if (pipeline != null)
-            pipeline.Dispose();
-        foreach (Pipeline subP in subPipelines)
-            subP.Dispose();
+            pipeline.WaitAll(waitedMillisec);
+        pipeline = null;
+        rendezVousClient.Stop();
     }
 
     protected RemoteExporter CreateRemoteExporter()
     {
-        return new RemoteExporter(GetPipeline(), ExportersStartingPort + exporterCount++, TransportKind.Tcp);
+        return new RemoteExporter(GetPipeline(), ExportersStartingPort + exporterCount++, TransportKind.NamedPipes);
     }
 
     public void GetRemoteExporter(ExportType type, out RemoteExporter exporter)
@@ -368,12 +378,12 @@ public class PsiPipelineManager : MonoBehaviour
 
     public void RegisterExporter(ref RemoteExporter exporter)
     {
-        if (HostAddress.Length == 0)
-            HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+        if (UsedAddress.Length == 0)
+            UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         if (exportersRegistered.Contains(exporter) == false)
         {
             exportersRegistered.Add(exporter);
-            GetProcess().AddEndpoint(exporter.ToRendezvousEndpoint(HostAddress));
+            GetProcess().AddEndpoint(exporter.ToRendezvousEndpoint(UsedAddress));
         }
     }
 
@@ -386,19 +396,19 @@ public class PsiPipelineManager : MonoBehaviour
 
     public void RegisterTCPWriter<T>(TcpWriter<T> writer, string topic)
     {
-        if (HostAddress.Length == 0)
-            HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+        if (UsedAddress.Length == 0)
+            UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         AddLog($"PsiPipelineManager : Add {topic} endpoint to process.");
-        GetProcess().AddEndpoint(writer.ToRendezvousEndpoint(HostAddress, topic));
+        GetProcess().AddEndpoint(writer.ToRendezvousEndpoint(UsedAddress, topic));
     }
 
     public Pipeline GetPipeline()
     {
         if (pipeline == null)
         {
-            pipeline = Pipeline.Create(RendezVousAppName);
-            if (HostAddress.Length == 0)
-                HostAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+            pipeline = Pipeline.Create(UsedProcessName);
+            if (UsedAddress.Length == 0)
+                UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
         }
         return pipeline;
     }
@@ -406,7 +416,7 @@ public class PsiPipelineManager : MonoBehaviour
     public Rendezvous.Process GetProcess()
     {
         if (process == null)
-            process = new Rendezvous.Process(RendezVousAppName, "1.0");
+            process = new Rendezvous.Process(UsedProcessName, "1.0");
         return process;
     }
 
@@ -427,15 +437,15 @@ public class PsiPipelineManager : MonoBehaviour
             };
             pipeline.RunAsync();
             State = PsiPipelineManagerState.Running;
-            AddLog($"PsiPipelineManager : pipeline running {pipeline.GetCurrentTime()}");
+            AddLog($"PsiPipelineManager : pipeline running!");
         }
     }
 
-    public void StartPsi()
+    public void StartRendezVous()
     {
         if (State < PsiPipelineManagerState.Connecting)
         {
-            AddLog($"PsiPipelineManager: IP used {HostAddress}");
+            AddLog($"PsiPipelineManager: IP used {UsedAddress}");
             if (TextLogObject != null && text == null)
             {
                 text = TextLogObject.GetComponent<TMP_Text>();
@@ -450,6 +460,37 @@ public class PsiPipelineManager : MonoBehaviour
         }
     }
 
+    public void Reset()
+    {
+        try
+        {
+            if (rendezVousClient != null)
+            {
+                foreach (Rendezvous.Process prc in rendezVousClient.Rendezvous.Processes)
+                    if (!prc.Name.Contains(CommandProcessName))
+                        rendezVousClient.Rendezvous.TryRemoveProcess(prc);
+
+#if PSI_TCP_STREAMS
+                sourceEndpoint.Clear();
+#endif
+                remoteImporters.Clear();
+            }
+
+            if (pipeline != null)
+            {
+                pipeline.Dispose();
+                pipeline = Pipeline.Create(UsedProcessName);
+            }
+        }
+        catch (Exception e)
+        {
+            AddLog($"PipelineManager : Reset error: {e.Message}");
+            pipeline = Pipeline.Create(UsedProcessName);
+        }
+        AddLog("PipelineManager reset complete !");
+        State = PsiPipelineManagerState.Connected;
+    }
+
     // Start is called before the first frame update
     void Start()
     { }
@@ -460,19 +501,19 @@ public class PsiPipelineManager : MonoBehaviour
         {
             case PsiManagerStartMode.Connection:
                 if (State == PsiPipelineManagerState.Instantiated)
-                    StartPsi();
+                    StartRendezVous();
                 break;
             case PsiManagerStartMode.Automatic:
                 switch (State)
                 {
                     case PsiPipelineManagerState.Instantiated:
-                        StartPsi();
+                        StartRendezVous();
                         break;
                     case PsiPipelineManagerState.Served:
                         InitializeExporters();
                         break;
                     case PsiPipelineManagerState.Initializing:
-                        AddProcess();
+                        AddManagerProcess();
                         break;
                     case PsiPipelineManagerState.Initialized:
                         StartPipeline();
@@ -501,8 +542,6 @@ public class PsiPipelineManager : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        commandPipeline.Dispose();
-        rendezVousClient.Stop();
         StopPsi();
     }
 }
