@@ -1,7 +1,6 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
 using System.IO;
-using System.Windows.Media.Animation;
 
 namespace SAAC.PipelineServices
 {
@@ -29,6 +28,7 @@ namespace SAAC.PipelineServices
         {
             OwningPipeline = false;
             Pipeline = parent;
+            Pipeline.PipelineRun += TriggerRun;
             Initialize(configuration, log);
         }
 
@@ -40,7 +40,7 @@ namespace SAAC.PipelineServices
             Initialize(configuration, log);
         }
 
-        public bool RunPipeline()
+        public bool RunPipelineAndSubpipelines()
         {
             if (!OwningPipeline)
             {
@@ -52,9 +52,17 @@ namespace SAAC.PipelineServices
                 return true;
             try
             {
-                RunAsync();
                 isPipelineRunning = true;
+                PipelineRunAsync();
                 Log("Pipeline running.");
+                foreach (Subpipeline sub in subpipelines)
+                {
+                    if (sub.StartTime != DateTime.MinValue)
+                    {
+                        sub.Start((d) => { });
+                        Log($"SubPipeline {sub.Name} started.");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -63,7 +71,7 @@ namespace SAAC.PipelineServices
             return isPipelineRunning;
         }
 
-        public virtual void Stop()
+        public virtual void Stop(int maxWaitingTime = 100)
         {
             if (!OwningPipeline)
             {
@@ -75,7 +83,7 @@ namespace SAAC.PipelineServices
                 {
                     subpipeline.Stop(Pipeline.GetCurrentTime(), () => { });
                 }
-                Pipeline.WaitAll();
+                Pipeline.WaitAll(maxWaitingTime);
                 Log("Pipeline Stopped.");
             }
             Dataset?.Save();
@@ -95,13 +103,13 @@ namespace SAAC.PipelineServices
         public void Dispose()
         {
             base.Dispose();
+            subpipelines.Clear();
             if (!OwningPipeline)
             {
-                Log($"{name} does not own Pipeline, it cannot be dispose from here.");
-                subpipelines.Clear();
+                Log($"{name} does not own Pipeline, it cannot be dispose from here.");           
                 return;
             }
-            //Pipeline?.Dispose();
+            Pipeline?.Dispose();
         }
 
         public Session? GetSession(string sessionName)
@@ -204,7 +212,14 @@ namespace SAAC.PipelineServices
             return subpipelines.Last();
         }
 
-        protected virtual void RunAsync()
+        protected virtual void TriggerRun(object sender, PipelineRunEventArgs e)
+        {
+            isPipelineRunning = true;
+            foreach (Subpipeline sub in subpipelines)
+                sub.Start((d) => { });
+        }
+
+        protected virtual void PipelineRunAsync()
         {
             Pipeline.RunAsync();
         }

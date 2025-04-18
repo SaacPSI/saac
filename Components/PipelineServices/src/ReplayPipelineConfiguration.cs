@@ -7,5 +7,6 @@ namespace SAAC.PipelineServices
         public ReplayPipeline.ReplayType ReplayType = ReplayPipeline.ReplayType.RealTime;
         public TimeInterval ReplayInterval = TimeInterval.Infinite;
         public bool DatasetBackup = true;
+        public System.IProgress<double> ProgressReport = null;
     }
 }

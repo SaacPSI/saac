@@ -27,7 +27,7 @@ namespace SAAC.PipelineServices
 
         public void Start(Action<DateTime> notifyCompletionTime)
         {
-            RunPipeline();
+            RunPipelineAndSubpipelines();
             notifyCompletionTime(DateTime.MaxValue);
         }
 
@@ -84,21 +84,21 @@ namespace SAAC.PipelineServices
             return false;
         }
 
-        protected override void RunAsync()
+        protected override void PipelineRunAsync()
         {
             switch(Configuration.ReplayType)
             {
                 case ReplayType.FullSpeed:
-                    Pipeline.RunAsync(ReplayDescriptor.ReplayAll);
+                    Pipeline.RunAsync(ReplayDescriptor.ReplayAll, Configuration.ProgressReport);
                     break;
                 case ReplayType.RealTime:
-                    Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+                    Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime, Configuration.ProgressReport);
                     break;
                 case ReplayType.IntervalFullSpeed:
-                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, false)); 
+                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, false), Configuration.ProgressReport); 
                     break;
                 case ReplayType.IntervalRealTime:
-                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, true));
+                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, true), Configuration.ProgressReport);
                     break;
             }
         }

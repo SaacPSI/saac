@@ -49,10 +49,10 @@ namespace SAAC.PipelineServices
             if (isStarted)
                 return;
             isStarted = true;
-            if (!StartRendezVousRelay(interval))
+            if (!StartRendezVousRelay(interval ?? TimeInterval.Infinite))
                 return;
             if (this.Configuration.AutomaticPipelineRun && this.Configuration.ClockPort != 0)
-                RunPipeline(); 
+                RunPipelineAndSubpipelines();
         }
 
         public void Start(Action<DateTime> notifyCompletionTime)
@@ -61,13 +61,14 @@ namespace SAAC.PipelineServices
             notifyCompletionTime(DateTime.MaxValue);
         }
 
-        public override void Stop()
+        public override void Stop(int maxWaitingTime = 1000)
         {
             Dataset?.Save();
             if (!isStarted)
                 return;
             isStarted = false;
-            base.Stop();
+            rendezVous.Stop();
+            base.Stop(maxWaitingTime);
         }
         
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
@@ -106,7 +107,7 @@ namespace SAAC.PipelineServices
 
         public bool AddSynchClockProcess(TimeInterval interval)
         {
-            if (Configuration.ClockPort != 0 && !processNames.Contains(ClockSynchProcessName))
+            if (!processNames.Contains(ClockSynchProcessName))
             {
                 var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
                 AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
@@ -233,7 +234,7 @@ namespace SAAC.PipelineServices
                         break;
                 }
             }
-            if (interval != null)
+            if (this.Configuration.ClockPort != 0)
                 AddSynchClockProcess(interval);
             commandPipeline = Pipeline.Create(CommandProcessName,DeliveryPolicy.SynchronousOrThrottle, enableDiagnostics: false);
             if (Configuration.CommandPort != 0)
@@ -291,7 +292,7 @@ namespace SAAC.PipelineServices
                 { 
                     remoteClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
                     if (this.Configuration.AutomaticPipelineRun)
-                        RunPipeline();
+                        RunPipelineAndSubpipelines();
                     return;
                 }
             }
@@ -340,9 +341,11 @@ namespace SAAC.PipelineServices
                         {
                             Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
                             Connection(stream.StreamName, DiagnosticsProcessName, CreateOrGetSession(Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
-                            if (this.Configuration.AutomaticPipelineRun)
+                            if (isPipelineRunning)
+                            {
                                 processSubPipeline.Start((d) => {});
-                            Log($"SubPipeline {process.Name} started.");
+                                Log($"SubPipeline {process.Name} started.");
+                            }
                             return;
                         }
                     }
@@ -353,7 +356,7 @@ namespace SAAC.PipelineServices
         protected void ProcessAddedData(Rendezvous.Process process)
         {
             int elementAdded = 0;
-            Subpipeline processSubPipeline = new Subpipeline(Pipeline, process.Name);
+            Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
             Session? session = CreateOrGetSessionFromMode(process.Name);
             foreach (var endpoint in process.Endpoints)
             {
@@ -392,12 +395,12 @@ namespace SAAC.PipelineServices
                     Dataset?.RemoveSession(session);
                 return;
             }
-            else if (this.Configuration.AutomaticPipelineRun)
+            else if (isPipelineRunning)
             {
                 processSubPipeline.Start((d) => { });
                 Log($"SubPipeline {process.Name} started.");
-                TriggerNewProcessEvent(process.Name);
             }
+            TriggerNewProcessEvent(process.Name);
             //Dataset?.Save();
         }
 

@@ -413,13 +413,21 @@ namespace TestingConsole
             Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
         }
 
+        public class Reporter : System.IProgress<double>
+        {
+            public void Report(double value)
+            {
+               Console.WriteLine($"Progress @ {value}");
+            }
+        }
         static void Main(string[] args)
         {
             ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
             replayConfig.AutomaticPipelineRun = false;
             replayConfig.DatasetBackup = true;
-            replayConfig.DatasetPath = @"D:\Stores\SAAC\";
-            replayConfig.DatasetName = "SAAC.pds";
+            replayConfig.DatasetPath = @"D:\Stores\datasetAurelien\";
+            replayConfig.DatasetName = "FinalDataset.pds";
+            replayConfig.ProgressReport = new Reporter();
 
             ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
             replayPipeline.LoadDatasetAndConnectors();
@@ -427,48 +435,41 @@ namespace TestingConsole
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = false;
             configuration.Debug = true;
-            //configuration.Diagnostics = DiagnosticsMode.Store;
-            configuration.DatasetPath = @"D:\Stores\SAAC2\";
-            configuration.DatasetName = "SAAC.pds";
+            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            configuration.DatasetName = "RendezVousPipeline.pds";
             configuration.RendezVousHost = "localhost";
-            configuration.CommandDelegate = CommandDel;
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
 
-            // Topic for positions
+            // Topics to receive from Unity
+            // do a all-in management of streams
             configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
             configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
             configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
 
-            RendezVousPipeline pipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server", null, null, replayPipeline.Connectors);
-            pipeline.Start();
-            //pipeline.GenerateTCPProcessFromConnectors("Unity", 11551);
- 
+            // Instantiate the class that manage the RendezVous system and the pipeline execution?
+            RendezVousPipeline rdvPipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server");
+
+            // Register an action when receive the incoming connection from Unity
+            //rdvPipeline.AddNewProcessEvent(OnNewProcess);
+
+            // Start the rendezVous and the pipeline
+            rdvPipeline.Start();
+
             Console.WriteLine("Press any key to send RUN command to Unity.");
             Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
-            replayPipeline?.RunPipeline();
-
-            Console.WriteLine("Press any key to send RESET command to Unity.");
-            Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Reset, "UnityB", "");
+            rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
+            replayPipeline.RunPipelineAndSubpipelines();
 
             Console.WriteLine("Press any key to send STOP command to Unity.");
             Console.ReadLine();
-            pipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
+            rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
-            //Pipeline nuitrackSubPipeline = pipeline.CreateSubpipeline("NuitrackSubPipeline");
-            //RemoteImporter importer = new RemoteImporter(nuitrackSubPipeline, "localhost", 11411);
-            //importer.Connected.WaitOne();
-            //while (importer.Importer.AvailableStreams.Count() == 0) Thread.Sleep(200);
-            //var stream = importer.Importer.OpenStream<List<AzureKinectBody>>("Kinect_KinectStreaming_Bodies");
-            //stream.Out.Do((d, e) => { Console.WriteLine(d); });
-            //nuitrackSubPipeline.RunAsync();
-
-            // Waiting for an out key
+            // Waiting for an out key to Stop
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
-            //pipeline.Stop();
-            pipeline.Stop();
+            rdvPipeline.Stop();
+            replayPipeline.Stop();
         }
     }
 }
