@@ -38,5 +38,10 @@ namespace SAAC.PipelineServices
                 Stores[session.Name].Add(storeName, store);
             }
         }
+        public void Dispose()
+        {
+            base.Dispose();
+            Stores = null;
+        }
     }
 }

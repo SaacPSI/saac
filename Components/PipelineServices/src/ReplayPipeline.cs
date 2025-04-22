@@ -1,8 +1,41 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Data;
+using System.Windows.Media.Animation;
 
 namespace SAAC.PipelineServices
 {
+    public class progressChecker : System.IProgress<double>
+    {
+        public RendezVousPipeline rdvP;
+        public ReplayPipeline replayP;
+        public double lastValue = -1;
+        public double lastLastValue = -1;
+        public bool isPipelineEnded = false;
+        public progressChecker(RendezVousPipeline pipeline, ReplayPipeline replayPipeline)
+        {
+            rdvP = pipeline;
+            replayP = replayPipeline;
+        }
+        public void Report(double value)
+        {
+            //Console.WriteLine($"Progress: {value}");
+            if (!isPipelineEnded && value >= 0.781/*value == lastValue && value == lastLastValue*/)
+            {
+                rdvP.Dataset.Save();
+                replayP.Dataset.Save();
+
+                rdvP?.Stop();
+                replayP?.Stop();
+                //rdvP.Dispose();
+                replayP.Dispose();
+                isPipelineEnded = true;
+                Console.WriteLine("Pipeline Ended");
+            }
+            /*lastLastValue = lastValue;
+            lastValue = value;*/
+        }
+    }
+
     public class ReplayPipeline : DatasetPipeline
     {
         public enum ReplayType { FullSpeed, RealTime, IntervalFullSpeed, IntervalRealTime };
@@ -53,7 +86,25 @@ namespace SAAC.PipelineServices
             return false;
         }
 
-        protected override void RunAsync()
+        protected override void RunAsync(System.IProgress<double> progress)
+        {
+            switch (Configuration.ReplayType)
+            {
+                case ReplayType.FullSpeed:
+                    Pipeline.RunAsync(ReplayDescriptor.ReplayAll, progress);
+                    break;
+                case ReplayType.RealTime:
+                    Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime, progress);
+                    break;
+                case ReplayType.IntervalFullSpeed:
+                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, false), progress);
+                    break;
+                case ReplayType.IntervalRealTime:
+                    Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, true), progress);
+                    break;
+            }
+        }
+        /*protected override void RunAsync()
         {
             switch(Configuration.ReplayType)
             {
@@ -61,7 +112,7 @@ namespace SAAC.PipelineServices
                     Pipeline.RunAsync(ReplayDescriptor.ReplayAll);
                     break;
                 case ReplayType.RealTime:
-                    Pipeline.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+                    Pipeline.Run(ReplayDescriptor.ReplayAllRealTime);
                     break;
                 case ReplayType.IntervalFullSpeed:
                     Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, false)); 
@@ -70,7 +121,7 @@ namespace SAAC.PipelineServices
                     Pipeline.RunAsync(new ReplayDescriptor(Configuration.ReplayInterval, true));
                     break;
             }
-        }
+        }*/
 
         public override void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
         {
@@ -88,6 +139,11 @@ namespace SAAC.PipelineServices
                 names.Item2 = $"{names.Item2}_{name}";
             }
             return names;
+        }
+        public void Dispose()
+        {
+            ReadOnlyStores.Clear();
+            base.Dispose();
         }
     }
 }

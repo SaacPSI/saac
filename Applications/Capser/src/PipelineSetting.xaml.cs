@@ -118,12 +118,20 @@ namespace Casper
             DataContext = this;
 
             configuration = new RendezVousPipelineConfiguration();
-            configuration.RendezVousHost = "localhost"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
-            configuration.DatasetPath = "D:/Stores/Casper/";
-            configuration.DatasetName = "Casper.pds";
             configuration.AutomaticPipelineRun = true;
             configuration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
+            configuration.DatasetName = "Casper";
+            configuration.DatasetPath = "D:/Stores/Casper/";
+            configuration.DatasetName = "Dataset.pds";
+            configuration.RendezVousHost = "localhost"; //Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
 
+            SpecifyTopicTypeForEachStream();
+
+            InitializeComponent();
+        }
+
+        private void SpecifyTopicTypeForEachStream()
+        {
             configuration.AddTopicFormatAndTransformer("Vitesse Tapis", typeof(float), new PsiFormatFloat());
             configuration.AddTopicFormatAndTransformer("D1-Poubelle", typeof(int), new PsiFormatInteger());
             configuration.TopicsTypes.Add("D2-Poubelle", typeof(int));
@@ -153,8 +161,6 @@ namespace Casper
             configuration.AddTopicFormatAndTransformer("Right", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector());
             configuration.TopicsTypes.Add("Left", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
             configuration.TopicsTypes.Add("Head", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>));
-
-            InitializeComponent();
         }
 
         public Dataset GetDataset()
@@ -182,6 +188,7 @@ namespace Casper
         {
             status = "";
             server = new RendezVousPipeline(configuration, "Server", null, (log) => { Status += $"{log}\n"; });
+
             server.Start();
         }
 

@@ -28,7 +28,7 @@ namespace SAAC.PipelineServices
         {
             OwningPipeline = false;
             Pipeline = parent;
-
+            Pipeline.PipelineRun += TriggerRun;
             Initialize(configuration, log);
         }
 
@@ -40,7 +40,7 @@ namespace SAAC.PipelineServices
             Initialize(configuration, log);
         }
 
-        public bool RunPipeline()
+        public bool RunPipeline(System.IProgress<double> progress = null)
         {
             if (!OwningPipeline)
             {
@@ -52,9 +52,19 @@ namespace SAAC.PipelineServices
                 return true;
             try
             {
-                RunAsync();
                 isPipelineRunning = true;
+                //PipelineRunAsync();
+                RunAsync(progress);
+                //isPipelineRunning = true;
                 Log("Pipeline running.");
+                foreach(Subpipeline sub in subpipelines)
+                {
+                    if(sub.StartTime != DateTime.MinValue)
+                    {
+                        sub.Start((d) => { });
+                        Log($"SubPipeline {sub.Name} started.");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -62,10 +72,11 @@ namespace SAAC.PipelineServices
             }
             return isPipelineRunning;
         }
-
-        protected virtual void RunAsync()
+        
+        protected virtual void RunAsync(System.IProgress<double> progress = null)
         {
-            Pipeline.RunAsync();
+            Pipeline.RunAsync(null, progress);
+            //Pipeline.Run();
         }
 
         public virtual void Stop()
@@ -75,13 +86,19 @@ namespace SAAC.PipelineServices
                 Log($"{name} does not own Pipeline, it cannot be stroped from here.");
                 return;
             }
-
-            if (isPipelineRunning)
+            else if (isPipelineRunning)
             {
-                Pipeline.Dispose();
+                foreach(Subpipeline subpipeline in subpipelines)
+                {
+                    subpipeline.Stop(Pipeline.GetCurrentTime(), () => { });
+                    subpipeline.Dispose();
+                }
+                Pipeline.WaitAll(1000);
+                //Log("Pipeline Stopped");
+                /*Pipeline.Dispose();
                 foreach(Pipeline sub in subpipelines)
                     sub.Dispose();
-                subpipelines.Clear();
+                subpipelines.Clear();*/
             }
             Dataset?.Save();
             isPipelineRunning = false;
@@ -208,5 +225,24 @@ namespace SAAC.PipelineServices
                 Dataset = null;
             StorePath = this.Configuration.DatasetPath;
         }
+
+        protected virtual void TriggerRun(object sender, PipelineRunEventArgs e)
+        {
+            isPipelineRunning = true;
+            foreach(Subpipeline sub in  subpipelines)
+                sub.Start((d) => { });
+        }
+        public void Dispose()
+        {
+            base.Dispose();
+            subpipelines.Clear();
+            if (!OwningPipeline)
+            {
+                Log($"{name} does not own Pipeline, it cannot be dispose from here.");
+                return;
+            }
+            Pipeline?.Dispose();
+        }
+
     }
 }

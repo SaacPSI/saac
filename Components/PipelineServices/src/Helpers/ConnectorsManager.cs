@@ -46,5 +46,11 @@ namespace SAAC.PipelineServices
 
         /// <inheritdoc/>
         public override string ToString() => this.name;
+        public virtual void Dispose()
+        {
+            /*NewEntry = null;
+            RemovedEntry = null;*/
+            Connectors.Clear();
+        }
     }
 }
