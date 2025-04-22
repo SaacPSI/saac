@@ -68,4 +68,8 @@
     <Content Remove="C:\Users\AurélienM\.nuget\packages\microsoft.azure.kinect.bodytracking.onnxruntime\1.10.0\build\netstandard2.0\..\..\lib\native\amd64\release\onnxruntime_providers_shared.dll" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.3-beta-mod1" />
+  </ItemGroup>
+
 </Project>

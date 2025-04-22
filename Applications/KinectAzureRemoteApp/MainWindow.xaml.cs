@@ -323,6 +323,7 @@ namespace KinectAzureRemoteApp
             RendezVousGrid.IsEnabled = false;
             PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
             PipelineConfiguration.CommandDelegate = CommandRecieved;
+            PipelineConfiguration.SessionMode = RendezVousPipeline.SessionNamingMode.Unique; 
             Pipeline = new RendezVousPipeline(PipelineConfiguration, ConfigurationUI.RendezVousApplicationName, RendezVousServerIp, (log) => { Logs += $"{log}\n"; });
             State = "Waiting for server";
             Pipeline.Start();
@@ -348,6 +349,8 @@ namespace KinectAzureRemoteApp
         {
             // Stop correctly the everything.
             State = "Stopping";
+            StopKinect();
+            Pipeline.Dataset.Save();
             if (Pipeline != null)
             {
                 Pipeline.Stop();

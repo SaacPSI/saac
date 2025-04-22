@@ -2,7 +2,7 @@
   "profiles": {
     "KinectAzureRemoteConsole": {
       "commandName": "Project",
-      "commandLineArgs": "localhost 13331 Server KinectStreaming"
+      "commandLineArgs": "10.144.210.101 13331 Server KinectStreaming1 0 false true true false false false 90 1 1 10.144.210.10 11600"
     }
   }
 }

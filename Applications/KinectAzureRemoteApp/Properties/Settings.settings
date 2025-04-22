@@ -30,7 +30,7 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="ApplicationName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">KinectStreaming</Value>
+      <Value Profile="(Default)">KinectStreaming1</Value>
     </Setting>
     <Setting Name="IpToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>

@@ -7,6 +7,7 @@ namespace SAAC.RendezVousPipelineServices
     {
         public Dictionary<string, Dictionary<string, PsiImporter>> Stores { get; protected set; }
         public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; protected set; }
+        public EventHandler<string>? NewProcess;
 
         protected Pipeline? pipeline;
 
@@ -35,7 +36,10 @@ namespace SAAC.RendezVousPipelineServices
             }
             return isGood;
         }
-
+        public void TriggerNewProcessEvent(string name)
+        {
+            NewProcess?.Invoke(this, name);
+        }
         private bool LoadStoreAndCreateConnector(Session session, IPartition partition, IStreamMetadata streamMetadata)
         {
             try

@@ -278,7 +278,7 @@ namespace SAAC.RendezVousPipelineServices
             }
             if (Configuration.CommandPort != 0)
             { 
-                TcpWriter<(Command, string)> writer = new TcpWriter<(Command, string)>(Pipeline, Configuration.CommandPort, commandFormat.GetFormat(), CommandProcessName);
+                TcpWriterMulti<(Command, string)> writer = new TcpWriterMulti<(Command, string)>(Pipeline, Configuration.CommandPort, commandFormat.GetFormat(), CommandProcessName);
                 CommandEmitter.PipeTo(writer.In);
                 AddProcess(new Rendezvous.Process($"{name}-{CommandProcessName}", [writer.ToRendezvousEndpoint(Configuration.RendezVousHost, CommandProcessName)]));
             }
@@ -317,7 +317,7 @@ namespace SAAC.RendezVousPipelineServices
                             ProcessAddedClock(process);
                         break;
                     default:
-                        ProcessAddedData(process);
+                       // ProcessAddedData(process);
                         break;
                 }
         }
@@ -497,6 +497,8 @@ namespace SAAC.RendezVousPipelineServices
         {}
 
         void ISourceComponent.Stop(DateTime finalOriginatingTime, Action notifyCompleted)
-        {}
+        {
+            notifyCompleted();
+        }
     }
 }
