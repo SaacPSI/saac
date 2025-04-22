@@ -425,12 +425,12 @@ namespace TestingConsole
             ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
             replayConfig.AutomaticPipelineRun = false;
             replayConfig.DatasetBackup = true;
-            replayConfig.DatasetPath = @"D:\Stores\datasetAurelien\";
-            replayConfig.DatasetName = "FinalDataset.pds";
+            replayConfig.DatasetPath = @"D:\Stores\SAAC\";
+            replayConfig.DatasetName = "SAAC.pds";
             replayConfig.ProgressReport = new Reporter();
 
-            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            //replayPipeline.LoadDatasetAndConnectors();
+            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = false;

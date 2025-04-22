@@ -436,6 +436,14 @@ public class PsiPipelineManager : MonoBehaviour
                 StopPsi();
             };
             pipeline.RunAsync();
+            foreach (Subpipeline sub in subpipelines)
+            {
+                if (sub.StartTime != DateTime.MinValue)
+                {
+                    sub.Start((d) => { });
+                    Log($"SubPipeline {sub.Name} started.");
+                }
+            }
             State = PsiPipelineManagerState.Running;
             AddLog($"PsiPipelineManager : pipeline running!");
         }
