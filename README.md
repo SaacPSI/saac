@@ -11,12 +11,11 @@ Four folders:
 - Interop containing projects that wrapper of third part librairy see [Interop](Interop/README.md) for more details.
 - Dependencies containing third part librairies for interop wrappers.
 
-
 ## Roadmap
-Adding components and improving code/documentation.
+Full compatibility with Unity.
 
 ## Project status
-We are currently focused on finishing some developpement for our architecture and test it in few experiments.
+In production: improving code/documentation.
 
 ## Authors and acknowledgment
 - Cédric Dumas cedric.dumas@imt-atlantique.fr
@@ -24,7 +23,7 @@ We are currently focused on finishing some developpement for our architecture an
 - Alexandre Kabil alexandre.kabil@lisn.upsaclay.fr
 - Aurélien Lechappé aurelien.lechappe@imt-atlantique.fr
 - Arnaud Allemang-Trivalle arnaud.allemang-trivalle@imt-atlantique.fr
-- Aurélien Milliat aurelien.milliat@imt-atlantique.fr
+- Aurélien Milliat aurelien.milliat@gmail.com
 
 ## License
 CeCILL-C see [LICENSE.md](LICENSE.md)
