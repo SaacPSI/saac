@@ -7,6 +7,7 @@ using Microsoft.Psi.Diagnostics;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Interop.Transport;
 using System.Runtime.InteropServices;
+using System.Diagnostics.Eventing.Reader;
 
 // USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
 
@@ -109,8 +110,17 @@ namespace SAAC.PipelineServices
         {
             if (!processNames.Contains(ClockSynchProcessName))
             {
-                var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
-                AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+                if (OwningPipeline)
+                {
+                    var remoteClock = new RemoteClockExporter(Configuration.ClockPort);
+                    AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+                }
+                else
+                {
+                    var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
+                    AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
+                }
+
                 return true;
             }
             return false;
@@ -288,9 +298,16 @@ namespace SAAC.PipelineServices
         {
             foreach (var endpoint in process.Endpoints)
             {
-                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remoteClockEndpoint) 
-                { 
-                    remoteClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
+                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint) 
+                {
+                    remotePipelineClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
+                    if (this.Configuration.AutomaticPipelineRun)
+                        RunPipelineAndSubpipelines();
+                    return;
+                }
+                else if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
+                {
+                    remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
                     if (this.Configuration.AutomaticPipelineRun)
                         RunPipelineAndSubpipelines();
                     return;

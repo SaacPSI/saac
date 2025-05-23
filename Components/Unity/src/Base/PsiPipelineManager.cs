@@ -184,10 +184,16 @@ public class PsiPipelineManager : MonoBehaviour
     {
         foreach (var endpoint in process.Endpoints)
         {
-            if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remoteClockEndpoint)
+            if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint)
             {
+                remotePipelineClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
                 AddLog($"PsiPipelineManager : Remote clock found!");
-                remoteClockEndpoint.ToRemotePipelineClockImporter(pipeline);
+                return;
+            }
+            else if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
+            {
+                remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
+                AddLog($"PsiPipelineManager : Remote clock found!");
                 return;
             }
         }

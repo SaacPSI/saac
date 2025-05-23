@@ -55,14 +55,14 @@ namespace SAAC.PipelineServices
                 isPipelineRunning = true;
                 PipelineRunAsync();
                 Log("Pipeline running.");
-                foreach (Subpipeline sub in subpipelines)
-                {
-                    if (sub.StartTime == DateTime.MinValue)
-                    {
-                        sub.Start((d) => { });
-                        Log($"SubPipeline {sub.Name} started.");
-                    }
-                }
+                //foreach (Subpipeline sub in subpipelines)
+                //{
+                //    if (sub.StartTime == DateTime.MinValue)
+                //    {
+                //        sub.Start((d) => { });
+                //        Log($"SubPipeline {sub.Name} started.");
+                //    }
+                //}
             }
             catch (Exception ex)
             {
@@ -215,14 +215,14 @@ namespace SAAC.PipelineServices
         protected virtual void TriggerRun(object sender, PipelineRunEventArgs e)
         {
             isPipelineRunning = true; 
-            foreach (Subpipeline sub in subpipelines)
-            {
-                if (sub.StartTime == DateTime.MinValue)
-                {
-                    sub.Start((d) => { });
-                    Log($"SubPipeline {sub.Name} started.");
-                }
-            }
+            //foreach (Subpipeline sub in subpipelines)
+            //{
+            //    if (sub.StartTime == DateTime.MinValue)
+            //    {
+            //        sub.Start((d) => { });
+            //        Log($"SubPipeline {sub.Name} started.");
+            //    }
+            //}
         }
 
         protected virtual void PipelineRunAsync()
