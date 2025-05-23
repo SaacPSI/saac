@@ -10,11 +10,15 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyVersion>0.2</AssemblyVersion>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
+    <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\psi\Sources\Runtime\Microsoft.Psi.Interop\Microsoft.Psi.Interop.csproj" />
   </ItemGroup>
 
 </Project>

@@ -427,7 +427,7 @@ namespace TestingConsole
             //replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
+            configuration.AutomaticPipelineRun = false;
             configuration.Debug = true;
             //configuration.Diagnostics = DiagnosticsMode.Store;
             configuration.DatasetPath = "D:\\Stores\\RendezVousPipeline\\";

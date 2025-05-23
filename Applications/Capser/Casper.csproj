@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.19.100.1-beta" />
   </ItemGroup>
 

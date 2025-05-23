@@ -31,9 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="nuitrack.net">
-      <HintPath>..\..\..\PsiWorks\PsiComponents\Nuitrack\nuitrack.net.dll</HintPath>
-    </Reference>
     <Reference Include="TsAPI">
       <HintPath>..\..\Components\TeslaSuit\dep\TsApi.dll</HintPath>
     </Reference>

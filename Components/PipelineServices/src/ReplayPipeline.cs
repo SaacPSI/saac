@@ -1,5 +1,7 @@
 ﻿using Microsoft.Psi;
+using Microsoft.Psi.Components;
 using Microsoft.Psi.Data;
+using System.Numerics;
 using System.Windows.Media.Animation;
 
 namespace SAAC.PipelineServices
@@ -11,30 +13,65 @@ namespace SAAC.PipelineServices
         public double lastValue = -1;
         public double lastLastValue = -1;
         public bool isPipelineEnded = false;
+        public DateTime sameValueTime = DateTime.MinValue;
+        public double sameValue = 0;
         public progressChecker(RendezVousPipeline pipeline, ReplayPipeline replayPipeline)
         {
             rdvP = pipeline;
             replayP = replayPipeline;
+            this.AppStatusIn = replayPipeline.Pipeline.CreateReceiver<DateTime>(this, ReceiverMessage, nameof(this.AppStatusIn));
+            //this.AppStatusOut = replayPipeline.Pipeline.CreateEmitter<string>(this, nameof(this.AppStatusOut));
         }
+
+        private void ReceiverMessage(DateTime arg1, Envelope envelope)
+        {
+            AppStatusOut.Post("message", replayP.Pipeline.GetCurrentTime());
+        }
+
         public void Report(double value)
         {
-            //Console.WriteLine($"Progress: {value}");
-            if (!isPipelineEnded && value >= 0.781/*value == lastValue && value == lastLastValue*/)
+            if (isPipelineEnded) return;
+            
+            if(replayP.Pipeline.GetCurrentTime() >= sameValueTime.AddMilliseconds(10000) && value == lastValue)
             {
-                rdvP.Dataset.Save();
-                replayP.Dataset.Save();
+                if(value == sameValue)
+                {
+                    rdvP.Dataset.Save();
+                    replayP.Dataset.Save();
 
-                rdvP?.Stop();
-                replayP?.Stop();
-                //rdvP.Dispose();
-                replayP.Dispose();
-                isPipelineEnded = true;
-                Console.WriteLine("Pipeline Ended");
+                    try
+                    {
+                        rdvP?.Stop();
+                        replayP?.Stop();
+                        rdvP.Dispose();
+                        replayP.Dispose();
+                    }
+                    catch { }
+                    isPipelineEnded = true;
+                    Console.WriteLine("Pipeline Ended");
+                }
+
+                sameValueTime = replayP.Pipeline.GetCurrentTime();
+                sameValue = value;
             }
-            /*lastLastValue = lastValue;
-            lastValue = value;*/
+
+            /*if (!isPipelineEnded && value >= 0.781*//*value == lastValue && value == lastLastValue*//*) //0.781
+            {
+                
+            }*/
+            lastValue = value;
+
+            //Console.WriteLine($"Progress: {value}");
         }
+
+        public void GetEmitter(Emitter<string> emitter)
+        {
+            AppStatusOut = emitter;
+        }
+        public Receiver<DateTime> AppStatusIn { get; set; }
+        public Emitter<string> AppStatusOut { get; set; }
     }
+    
 
     public class ReplayPipeline : DatasetPipeline
     {

@@ -40,6 +40,13 @@ namespace SAAC.PipelineServices
         }
         public void Dispose()
         {
+            foreach (var session in Stores)
+            {
+                foreach(var store in session.Value)
+                {
+                    store.Value.Dispose();
+                }
+            }
             base.Dispose();
             Stores = null;
         }

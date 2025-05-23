@@ -360,6 +360,7 @@ namespace SAAC.PipelineServices
             else if (isPipelineRunning)
             {
                 processSubPipeline.RunAsync();
+                //subpipelines.Add(processSubPipeline);
                 Log($"SubPipeline {process.Name} started.");
             }
             TriggerNewProcessEvent(process.Name);
@@ -380,7 +381,8 @@ namespace SAAC.PipelineServices
         protected void Connection<T>(string streamName, string processName, Session? session, Rendezvous.TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
             var storeName = GetStoreName(streamName, processName, session);
-            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            //var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            var tcpSource = SAAC.PipelineServices.Helpers.Operators.ToTcpSourceSaac<T>(source, p, deserializer, null, true, $"{processName}-{streamName}");
             if (Configuration.Debug)
                 tcpSource.Do((d, e) => { Log($"Receive {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             if (transformerType != null)

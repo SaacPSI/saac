@@ -62,11 +62,8 @@
         </GroupBox>
         <Button Content="Start RendezVous" Grid.Row="6" Grid.Column="0" Width="100" Click="BtnStartClick"/>
         <Button Content="Stop RendezVous" Grid.Row="6" Grid.Column="1" Width="100" Click="BtnStopClick"/>
-
-        <GroupBox Header="Log" FontWeight="Bold" Grid.Column="1" >
-            <ScrollViewer>
-                <TextBox x:Name="Log" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" IsEnabled="False" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Status}" TextChanged="Log_TextChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-            </ScrollViewer>
+        <GroupBox Header="Log" FontWeight="Bold" Grid.Column="1" Margin="0,0,0,5" Grid.ColumnSpan="6" >
+            <TextBox x:Name="Log" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Status}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="145" Width="357" ForceCursor="True"/>
         </GroupBox>
     </Grid>
 </Window>
