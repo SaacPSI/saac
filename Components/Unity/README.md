@@ -67,7 +67,7 @@ Add the PsiPiplineManager in a GameObject and configure it
 
 **Exporters Max Low Frequency Streams** Not used for the moment, will be used with [RemoteExporter](https://github.com/microsoft/psi/blob/master/Sources/Runtime/Microsoft.Psi/Remoting/RemoteExporter.cs).
 
-**Exporters Starting Port** Starting port for exporter each new exporter will increment this number.
+**Exporters Starting Port** Starting port for exporter each new exporter will increment this number. **Make sure it's same range than others \psi application!**
 
 **Text Log Object** Optionnal object to log in scene the \psi part of the application. If not set log will be displayed in the console.
 
@@ -76,7 +76,7 @@ Add the PsiPiplineManager in a GameObject and configure it
 ## *Android version*
 First add **PSI_TCP_STREAMS** in **Scripting Define Symbols** in **Player Settings**. 
 
-Then add exporters \& importers, for new type of serialization, you may need to add :
+Then add exporters \& importers, for new type of serialization, you may need to add to not trigger reflexion code genration :
 * A serializer in PsiAddedSerializer, and then in the PsiPiplineManager :
     
         protected void InitializeSerializer(KnownSerializers serializers)
@@ -87,6 +87,10 @@ Then add exporters \& importers, for new type of serialization, you may need to 
             serializers.Register<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>, TupleOfVector3Serializer>();
         }
 
+        Make sure to use TCPWriter and in server for streams needed by Unity: 
+        
+ ![Exporter](./docs/exporter.jpg) 
+
 * A need PsiFormat of the type.
 * Create the component(s) of using the base class PsiExporter/PsiImporter.
 * Use your component(s)!
@@ -95,5 +99,4 @@ Then add exporters \& importers, for new type of serialization, you may need to 
         configuration.AddTopicFormatAndTransformer("Position1", typeof(System.Numerics.Vector3), new PsiFormatVector3());
         configuration.AddTopicFormatAndTransformer("Position2", typeof(System.Numerics.Vector3), new PsiFormatVector3());
         configuration.AddTopicFormatAndTransformer("State", typeof(bool), new PsiFormatBoolean());
-
 

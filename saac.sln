@@ -90,6 +90,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2F15214A-C326-43F2-B84A-6F19AD7E9D84}"
 	ProjectSection(SolutionItems) = preProject
 		Components\Unity\docs\bcl_configuration.jpg = Components\Unity\docs\bcl_configuration.jpg
+		Components\Unity\docs\exporter.jpg = Components\Unity\docs\exporter.jpg
 		Components\Unity\docs\pipeline_manager.jpg = Components\Unity\docs\pipeline_manager.jpg
 	EndProjectSection
 EndProject

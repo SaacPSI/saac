@@ -2,6 +2,7 @@
 
 ## Summary
 Project handling network connections with automatic storing data stream to store. This project works with the Psi.Runtime &  Psi.Interop packages of **Pipeline** branch tant can be found in our [fork](https://github.com/SaacPSI/psi).
+See [PipelineServices](PipelineServices.md) for examples.
 
 ## Files
 * [Connector Info](src/ConnectorInfo.cs) class that store information form a datastream and allow bridge between pipelines.
