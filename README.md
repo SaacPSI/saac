@@ -12,10 +12,10 @@ Four folders:
 - Dependencies containing third part librairies for interop wrappers.
 
 ## Roadmap
-Full compatibility with Unity.
+Interop of \psi with [Plume](https://github.com/liris-xr/PLUME-Python/tree/master/plume).
 
 ## Project status
-In production: improving code/documentation.
+In production
 
 ## Authors and acknowledgment
 - Cédric Dumas cedric.dumas@imt-atlantique.fr
