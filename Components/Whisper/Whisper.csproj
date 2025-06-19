@@ -25,8 +25,15 @@
         <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
         <PackageReference Include="Microsoft.Psi.Speech" Version="0.19.100.1-beta" />
         <PackageReference Include="System.Composition" Version="8.0.0" />
-        <PackageReference Include="Whisper.net" Version="1.5.0" />
+        <PackageReference Include="Whisper.net" Version="1.8.1" />
+        <PackageReference Include="Whisper.net.Runtime" Version="1.8.1" />
         <PackageReference Include="Whisper.net.Runtime.Cublas" Version="1.4.7" Condition="'$(UseCUBLAS)' == 'true'" />
+        <PackageReference Include="Whisper.net.Runtime.Cuda" Version="1.8.1" />
+        <PackageReference Include="Whisper.net.Runtime.Cuda.Windows" Version="1.8.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\CollaborationAnalysisFramework\Components\Speech\SpeechProcess\SpeechProcess.csproj" />
     </ItemGroup>
 
 </Project>

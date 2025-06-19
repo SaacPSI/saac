@@ -200,9 +200,16 @@ namespace SAAC.PipelineServices
         {
             if (!processNames.Contains(ClockSynchProcessName))
             {
-                var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
-                AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)]));
-                return true;
+                if (!OwningPipeline)
+                {
+                    var remoteClock = new RemotePipelineClockExporter(Pipeline, Configuration.ClockPort, interval);
+                    return AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)])); ;
+                }
+                else
+                {
+                    var remoteClock = new RemoteClockExporter(Configuration.ClockPort);
+                    return AddProcess(new Rendezvous.Process(ClockSynchProcessName, [remoteClock.ToRendezvousEndpoint(Configuration.RendezVousHost)])); ;
+                }
             }
             return false;
         }
@@ -246,9 +253,16 @@ namespace SAAC.PipelineServices
         {
             foreach (var endpoint in process.Endpoints)
             {
-                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remoteClockEndpoint) 
-                { 
-                    remoteClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
+                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint)
+                {
+                    remotePipelineClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
+                    if (this.Configuration.AutomaticPipelineRun)
+                        RunPipeline();
+                    return;
+                }
+                else if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
+                {
+                    remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
                     if (this.Configuration.AutomaticPipelineRun)
                         RunPipeline();
                     return;
@@ -382,6 +396,8 @@ namespace SAAC.PipelineServices
         {
             var storeName = GetStoreName(streamName, processName, session);
             //var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            //var tcpSource = new Microsoft.Psi.Interop.Transport.TEST.TcpSource<T>(p, source.Host, source.Port, deserializer);
+
             var tcpSource = SAAC.PipelineServices.Helpers.Operators.ToTcpSourceSaac<T>(source, p, deserializer, null, true, $"{processName}-{streamName}");
             if (Configuration.Debug)
                 tcpSource.Do((d, e) => { Log($"Receive {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });

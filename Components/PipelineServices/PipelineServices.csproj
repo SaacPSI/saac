@@ -20,10 +20,10 @@
   </PropertyGroup>
 <ItemGroup>
   <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
+  <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
 </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\psi\Sources\Runtime\Microsoft.Psi\Microsoft.Psi.csproj" />
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>

@@ -1,12 +1,15 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.Psi;
+using SpeechProcess;
 using Whisper.net.Ggml;
 
 namespace SAAC.Whisper
 {
     public sealed class WhisperSpeechRecognizerConfiguration 
-    { 
+    {
+        public FusionSpeechProcessing speechProcessing;
+        public int userID { get; set; } = 0;
         public string ModelDirectory { get; set; } = "";
 
         public string LibrairyPath { get; set; } = "./whisper.dll";
