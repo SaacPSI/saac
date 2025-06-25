@@ -38,5 +38,6 @@ In **Helpers** folder:
 * [Tcp Writer Multi](src/Helpers/TcpWriterMulti.cs) modification of the \psi TCPWriter allowing multi TcpSource connections.
 
 ## Curent issues
+* Replay : for lengthy datasets sometimes Unity seems to stop receving data for a period of time.
 
 ## Future works
