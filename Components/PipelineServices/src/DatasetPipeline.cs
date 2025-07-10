@@ -36,7 +36,7 @@ namespace SAAC.PipelineServices
             : base("", connectors, name)
         {
             OwningPipeline = true;
-            Pipeline = Pipeline.Create(name, enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off);
+            Pipeline = Pipeline.Create(name, enableDiagnostics: configuration?.Diagnostics != DiagnosticsMode.Off, threadCount: 20);
             Initialize(configuration, log);
         }
 

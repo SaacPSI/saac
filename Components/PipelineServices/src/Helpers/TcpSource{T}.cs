@@ -133,7 +133,7 @@ namespace SAAC.PipelineServices.Helpers
 
             // deserialize the frame bytes into (T, DateTime)
             (var data, var originatingTime) = this.deserializer.DeserializeMessage(this.frameBuffer, 0, frameLength);
-            Trace.WriteLine($"TcpSource ReadNextFrame {originatingTime}:{this.port}. Retrying ...");
+            //Trace.WriteLine($"TcpSource ReadNextFrame {originatingTime}:{this.port}. Retrying ...");
             return this.useSourceOriginatingTimes ? (data, originatingTime) : (data, this.pipeline.GetCurrentTime());
         }
 

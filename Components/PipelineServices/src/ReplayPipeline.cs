@@ -30,12 +30,18 @@ namespace SAAC.PipelineServices
 
         public void Report(double value)
         {
+            //Console.WriteLine($"TEST_1_Value {value} && Pipeline Ended {isPipelineEnded}");
+
             if (isPipelineEnded) return;
             
-            if(replayP.Pipeline.GetCurrentTime() >= sameValueTime.AddMilliseconds(10000) && value == lastValue)
+            //Console.WriteLine($"TEST_1_Value {value}");
+
+            if (replayP.Pipeline.GetCurrentTime() >= sameValueTime.AddMilliseconds(10000) && value == lastValue)
             {
+                //Console.WriteLine($"TEST_2_Value {value} = lastValue {lastValue}");
                 if(value == sameValue)
                 {
+                    //Console.WriteLine($"TEST_3_Value {value} = sameValue {sameValue}");
                     rdvP.Dataset.Save();
                     replayP.Dataset.Save();
 
@@ -49,6 +55,7 @@ namespace SAAC.PipelineServices
                     catch { }
                     isPipelineEnded = true;
                     Console.WriteLine("Pipeline Ended");
+                    //System.Environment.Exit(1);
                 }
 
                 sameValueTime = replayP.Pipeline.GetCurrentTime();
