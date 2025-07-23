@@ -31,6 +31,12 @@ It use RendezVous system allowing to start (and stop) the application from the r
 ### Future works
 * Allowing **NamedPipes** protocol
 
+## VideoRemoteApp
+### Summary
+This application stream screenshot of desktop or application throught network. This application allow, for example the streaming of a Unity server application without impacting the performance of the app.
+### Future works
+* Allowing **NamedPipes** protocol
+
 ## SaaCPsiStudio
 ### Summary
 This is a template to execute \psi pipeline in PsiStudio from our [fork](https://github.com/SaacPSI/psi), branch PsiStudio. It use [Rendez Vous Pipeline](../Components/RendezVousPipelineServices/src/RendezVousPipeline.cs) as main context for executing the pipeline.

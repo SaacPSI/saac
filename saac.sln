@@ -118,6 +118,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinectic", "Components\Ski
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioRecording", "Components\AudioRecording\AudioRecording.csproj", "{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoRemoteApp", "Applications\VideoRemoteApp\VideoRemoteApp.csproj", "{F4A6045D-CF77-115D-332A-6526E753BE72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -374,6 +376,14 @@ Global
 		{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}.Release|Any CPU.Build.0 = Release|x64
 		{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}.Release|x64.ActiveCfg = Release|x64
 		{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}.Release|x64.Build.0 = Release|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Debug|Any CPU.Build.0 = Debug|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Debug|x64.ActiveCfg = Debug|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Debug|x64.Build.0 = Debug|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|Any CPU.ActiveCfg = Release|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|Any CPU.Build.0 = Release|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|x64.ActiveCfg = Release|x64
+		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -417,6 +427,7 @@ Global
 		{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{B7D862D7-DAD6-CB4A-F327-EE515097FC5E} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{F4A6045D-CF77-115D-332A-6526E753BE72} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
