@@ -21,10 +21,8 @@ using System.IO;
 using SAAC.PipelineServices;
 using SAAC.Helpers;
 using static SAAC.PipelineServices.RendezVousPipeline;
-
-using Microsoft.Psi.AzureKinect;
-using Microsoft.Psi.Audio;
 using System.Windows;
+using PLUME;
 //using SAAC.Ollama;
 
 namespace TestingConsole
@@ -420,8 +418,24 @@ namespace TestingConsole
                Console.WriteLine($"Progress @ {value}");
             }
         }
+
+        static void PlumeSample()
+        {
+            DatasetPipelineConfiguration config = new DatasetPipelineConfiguration();
+            config.AutomaticPipelineRun = false;
+            config.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            config.DatasetPath = @"E:\SAAC\Stores\";
+            config.DatasetName = "SAAC.pds";
+
+            PlumeDatasetPipeline pipeline = new PlumeDatasetPipeline(config, "exampleParser");
+            pipeline.LoadPlumeFile(@"E:\SAAC\record.plm", new Dictionary<string, Type>() { { "Main Camera", typeof(MathNet.Spatial.Euclidean.CoordinateSystem) } });
+            pipeline.Dispose();
+        }
         static void Main(string[] args)
         {
+            PlumeSample();
+            return;
+
             ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
             replayConfig.AutomaticPipelineRun = false;
             replayConfig.DatasetBackup = true;

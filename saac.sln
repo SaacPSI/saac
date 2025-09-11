@@ -90,7 +90,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2F15214A-C326-43F2-B84A-6F19AD7E9D84}"
 	ProjectSection(SolutionItems) = preProject
 		Components\Unity\docs\bcl_configuration.jpg = Components\Unity\docs\bcl_configuration.jpg
-		Components\Unity\docs\exporter.jpg = Components\Unity\docs\exporter.jpg
 		Components\Unity\docs\pipeline_manager.jpg = Components\Unity\docs\pipeline_manager.jpg
 	EndProjectSection
 EndProject
@@ -119,6 +118,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioRecording", "Components\AudioRecording\AudioRecording.csproj", "{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoRemoteApp", "Applications\VideoRemoteApp\VideoRemoteApp.csproj", "{F4A6045D-CF77-115D-332A-6526E753BE72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PLUME", "Components\PLUME\PLUME.csproj", "{F62C1640-677A-7829-3704-D7659AC74D3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlumeInterop", "Interop\PlumeInterop\PlumeInterop.csproj", "{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -384,6 +387,22 @@ Global
 		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|Any CPU.Build.0 = Release|x64
 		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|x64.ActiveCfg = Release|x64
 		{F4A6045D-CF77-115D-332A-6526E753BE72}.Release|x64.Build.0 = Release|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Debug|Any CPU.Build.0 = Debug|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Debug|x64.ActiveCfg = Debug|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Debug|x64.Build.0 = Debug|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Release|Any CPU.ActiveCfg = Release|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Release|Any CPU.Build.0 = Release|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Release|x64.ActiveCfg = Release|x64
+		{F62C1640-677A-7829-3704-D7659AC74D3E}.Release|x64.Build.0 = Release|x64
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Debug|x64.Build.0 = Debug|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Release|x64.ActiveCfg = Release|Any CPU
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -428,6 +447,8 @@ Global
 		{BE26A597-CD91-4254-B9DF-DB63E41FF9D7} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{B7D862D7-DAD6-CB4A-F327-EE515097FC5E} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{F4A6045D-CF77-115D-332A-6526E753BE72} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{F62C1640-677A-7829-3704-D7659AC74D3E} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3} = {B7EE8A14-5695-41E9-B67E-ACFFC30E971B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

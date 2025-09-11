@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PlumeInterop": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\record.plm"
+    }
+  }
+}

@@ -16,27 +16,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Audio" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Speech" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Speech.Windows" Version="0.19.100.1-beta" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="nuitrack.net">
-      <HintPath>..\..\..\PsiWorks\PsiComponents\Nuitrack\nuitrack.net.dll</HintPath>
-    </Reference>
-    <Reference Include="TsAPI">
-      <HintPath>..\..\Components\TeslaSuit\dep\TsApi.dll</HintPath>
-    </Reference>
-    <Reference Include="TsSDK">
-      <HintPath>..\..\Components\TeslaSuit\dep\TsSDK.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Components\PLUME\PLUME.csproj" />
   </ItemGroup>
 
 
