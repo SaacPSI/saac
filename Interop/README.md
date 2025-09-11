@@ -20,3 +20,6 @@ This functionality was added due to an overflow in data transfert making AcqKnow
 This project is based [Intelligent Human Perception Laboratory](https://www.ihp-lab.org/) OpenSense [repository](https://github.com/intelligent-human-perception-laboratory/OpenSense/).
 
 We added the possibility to get the heads boundingboxes from images ([LandmarkDetectorInterop](OpenFaceInterop/include/LandmarkDetectorInterop.h) method *GetBoundingBoxes*). 
+
+### PlumeInterop
+This project is based [PLUME](https://github.com/liris-xr/PLUME) interop sources.
