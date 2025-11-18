@@ -2,16 +2,9 @@
 using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Data;
-using PLUME.Sample.Unity;
-using SAAC;
 using SAAC.PipelineServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PLUME
+namespace SAAC.PLUME
 {
     public class PlumeDatasetPipeline : DatasetPipeline, ISourceComponent
     {

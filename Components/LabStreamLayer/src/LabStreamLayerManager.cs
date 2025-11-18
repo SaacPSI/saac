@@ -1,11 +1,11 @@
 ﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using SAAC;
 using static LSL.liblsl;
+using System;
+using System.Management;
 
-namespace LabStreamLayer
+namespace SAAC.LabStreamLayer
 {
-    public class LabStreamLayerManager : ISourceComponent, IDisposable
+    public class LabStreamLayerManager : IDisposable
     {
         public bool IsRunning { get; private set; }
         public Dictionary<string, ILabStreamLayerComponent> LabStreamComponents { get; private set; }
@@ -19,8 +19,9 @@ namespace LabStreamLayer
         private Thread? thread;
         private int maxBufferLength;
         private int updateSleepTime;
+        private double lslStratTime;
 
-        public LabStreamLayerManager(Pipeline pipeline, int updateSleepTime = 500, int maxBufferLength = 512, LogStatus? log = null)
+        public LabStreamLayerManager(Pipeline pipeline, LogStatus? log = null, int updateSleepTime = 500, int maxBufferLength = 512)
         {
             this.pipeline = pipeline;
             this.maxBufferLength = maxBufferLength;
@@ -31,20 +32,18 @@ namespace LabStreamLayer
             thread = null;
         }
 
-        public void Start(Action<DateTime> notifyCompletionTime)
+        public void Start()
         {
             IsRunning = true;
             thread = new Thread(new ThreadStart(this.Update));
             thread.Start();
             log($"Starting LabStreamLayerManager protocol {protocol_version()} library {library_version()}");
-            notifyCompletionTime(DateTime.MaxValue);
         }
 
-        public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
+        public void Stop()
         {
             log("Stoping LabStreamLayerManager");
             Dispose();
-            notifyCompleted();
         }
 
         public void Dispose()
@@ -75,35 +74,38 @@ namespace LabStreamLayer
 
         protected void CreateComponent(StreamInfo info)
         {
-            StreamInlet inlet = new StreamInlet(info, maxBufferLength, postproc_flags: processing_options_t.proc_ALL);
+            StreamInlet inlet = new StreamInlet(info, maxBufferLength, postproc_flags: processing_options_t.proc_clocksync);
             dynamic? labStreamLayerComponent = null;
             switch (info.channel_format())
             {
                 case channel_format_t.cf_undefined:
                     return;
                 case channel_format_t.cf_string:
-                    labStreamLayerComponent = new LabStreamLayerComponent<string>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<string>(ref pipeline, info, inlet, maxBufferLength);
                     break;
                 case channel_format_t.cf_double64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<double>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<double>(ref pipeline, info, inlet, maxBufferLength);
+                    break;
+                case channel_format_t.cf_float32:
+                    labStreamLayerComponent = new LabStreamLayerComponent<float>(ref pipeline, info, inlet, maxBufferLength);
                     break;
                 case channel_format_t.cf_int64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<long>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<long>(ref pipeline, info, inlet, maxBufferLength);
                     break;
                 case channel_format_t.cf_int32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<int>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<int>(ref pipeline, info, inlet, maxBufferLength);
                     break;
                 case channel_format_t.cf_int16:
-                    labStreamLayerComponent = new LabStreamLayerComponent<short>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<short>(ref pipeline, info, inlet, maxBufferLength);
                     break;
                 case channel_format_t.cf_int8:
-                    labStreamLayerComponent = new LabStreamLayerComponent<char>(pipeline, info, inlet, maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<char>(ref pipeline, info, inlet, maxBufferLength);
                     break;
             }
             string key = $"{info.name()}-{info.type()}";
             LabStreamComponents.Add(key, labStreamLayerComponent);
             log($"LabStreamLayerManager component {key} created.");
-            log($"Component info :\n{info.as_xml()}");
+            //log($"Component info :\n{info.as_xml()}");
             NewStream?.Invoke(this, key);
         }
 

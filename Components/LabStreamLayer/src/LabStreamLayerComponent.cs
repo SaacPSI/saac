@@ -2,7 +2,7 @@
 using Microsoft.Psi.Components;
 using static LSL.liblsl;
 
-namespace LabStreamLayer
+namespace SAAC.LabStreamLayer
 {
     public class LabStreamLayerComponent<T> : ILabStreamLayerComponent, ISourceComponent, IProducer<List<T>>, IDisposable
     {
@@ -14,7 +14,6 @@ namespace LabStreamLayer
 
         protected StreamInlet input;
         protected Thread? thread;
-        protected DateTime startTime;
         protected int channelCount;
         protected int samplingDuration;
 
@@ -26,9 +25,9 @@ namespace LabStreamLayer
             input = producer;
             pipeline = parent;
             MaxBufferLength = maxBufferLength;
+            Name = $"{info.name()}-{info.type()}";
             Out = parent.CreateEmitter<List<T>>(this, $"{this.Name}-Out");
             IsRunning = false;
-            Name = $"{info.name()}-{info.type()}";
             thread = null;
             channelCount = StreamInfo.channel_count();
             samplingDuration = StreamInfo.nominal_srate() == 0.0 ? 100 : (int)(1000.0 / StreamInfo.nominal_srate());
@@ -40,7 +39,6 @@ namespace LabStreamLayer
 
         public void Start(Action<DateTime> notifyCompletionTime)
         {
-            startTime = pipeline.GetCurrentTime();
             IsRunning = true;
             input.open_stream();
             thread = new Thread(new ThreadStart(this.updateData));
@@ -69,6 +67,8 @@ namespace LabStreamLayer
                     return typeof(string);
                 case channel_format_t.cf_double64:
                     return typeof(double);
+                case channel_format_t.cf_float32:
+                    return typeof(float);
                 case channel_format_t.cf_int64:
                     return typeof(long);
                 case channel_format_t.cf_int32:
@@ -89,6 +89,8 @@ namespace LabStreamLayer
                     return new string[MaxBufferLength, channelCount]; 
                 case channel_format_t.cf_double64:
                     return new double[MaxBufferLength, channelCount];
+                case channel_format_t.cf_float32:
+                    return new float[MaxBufferLength, channelCount];
                 case channel_format_t.cf_int64:
                     return new long[MaxBufferLength, channelCount];
                 case channel_format_t.cf_int32:
@@ -103,17 +105,24 @@ namespace LabStreamLayer
 
         protected void updateData()
         {
+            double clock = local_clock();
+            DateTime time = pipeline.GetCurrentTime();
             while (IsRunning)
             {
                 dynamic buffer = CreateBuffer();
                 double[] timestamps = new double[MaxBufferLength];
-                int num = input.pull_chunk(buffer, timestamps, 100);
+                int num = input.pull_chunk(buffer, timestamps, 1);
+                double correction = input.time_correction(1);
                 for (int s = 0; s < num; s++)
                 {
                     List<T> data = new List<T>();
                     for (int c = 0; c < channelCount; c++)
                         data.Add(buffer[s, c]);
-                    Out.Post(data, startTime.AddMilliseconds(timestamps[s]));
+
+                    double secondsSinceStart = correction + timestamps[s] - clock;
+                    if (secondsSinceStart < 0)
+                        continue; // skip samples from the past
+                    Out.Post(data, time.AddSeconds(secondsSinceStart));
                 }
                 Thread.Sleep(samplingDuration);
             }

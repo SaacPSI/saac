@@ -1,6 +1,7 @@
-﻿using static LSL.liblsl;
+﻿using System.Linq.Expressions;
+using static LSL.liblsl;
 
-namespace LabStreamLayer
+namespace SAAC.LabStreamLayer
 {
     public interface ILabStreamLayerComponent
     {

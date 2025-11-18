@@ -24,5 +24,6 @@
     <Reference Include="lsl_csharp">
       <HintPath>dep\lsl_csharp.dll</HintPath>
     </Reference>
+    <Reference Include="System.Management" />
   </ItemGroup>
 </Project>

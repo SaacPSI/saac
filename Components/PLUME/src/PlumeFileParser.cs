@@ -3,18 +3,15 @@ using Google.Protobuf.Reflection;
 using MathNet.Spatial.Euclidean;
 using PLUME.Sample;
 using PLUME.Sample.Common;
-using PLUME.Sample.LSL;
 using PLUME.Sample.Unity;
 using PLUME.Sample.Unity.Settings;
 using PLUME.Sample.Unity.UI;
 using PLUME.Sample.Unity.XRITK;
-using SAAC;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Quaternion = PLUME.Sample.Common.Quaternion;
 
-namespace PLUME
+namespace SAAC.PLUME
 {
     public class PlumeFileParser
     {

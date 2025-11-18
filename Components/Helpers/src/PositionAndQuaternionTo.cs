@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi.Spatial.Euclidean;
 
-namespace Helpers
+namespace SAAC.Helpers
 {
     static public class PositionAndQuaternionTo
     {

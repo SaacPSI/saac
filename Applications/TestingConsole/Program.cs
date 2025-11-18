@@ -22,8 +22,10 @@ using SAAC.PipelineServices;
 using SAAC.Helpers;
 using static SAAC.PipelineServices.RendezVousPipeline;
 using System.Windows;
-using PLUME;
+//using PLUME;
 //using SAAC.Ollama;
+using SAAC.LabStreamLayer;
+using static LSL.liblsl;
 
 namespace TestingConsole
 {
@@ -419,20 +421,52 @@ namespace TestingConsole
             }
         }
 
-        static void PlumeSample()
-        {
-            DatasetPipelineConfiguration config = new DatasetPipelineConfiguration();
-            config.AutomaticPipelineRun = false;
-            config.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            config.DatasetPath = @"E:\SAAC\Stores\";
-            config.DatasetName = "SAAC.pds";
+        //static void PlumeSample()
+        //{
+        //    DatasetPipelineConfiguration config = new DatasetPipelineConfiguration();
+        //    config.AutomaticPipelineRun = false;
+        //    config.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+        //    config.DatasetPath = @"E:\SAAC\Stores\";
+        //    config.DatasetName = "SAAC.pds";
 
-            PlumeDatasetPipeline pipeline = new PlumeDatasetPipeline(config, "exampleParser");
-            pipeline.LoadPlumeFile(@"E:\SAAC\record.plm", new Dictionary<string, Type>() { { "Main Camera", typeof(MathNet.Spatial.Euclidean.CoordinateSystem) } });
-            pipeline.Dispose();
-        }
+        //    PlumeDatasetPipeline pipeline = new PlumeDatasetPipeline(config, "exampleParser");
+        //    pipeline.LoadPlumeFile(@"E:\SAAC\record.plm", new Dictionary<string, Type>() { { "Main Camera", typeof(MathNet.Spatial.Euclidean.CoordinateSystem) } });
+        //    pipeline.Dispose();
+        //}
         static void Main(string[] args)
         {
+
+            Random rnd = new Random();
+            // create stream info and outlet
+            StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
+            StreamOutlet outlet = new StreamOutlet(info);
+            float[] data = new float[8];
+            Thread thread = new Thread(() =>
+            {
+                Console.WriteLine("LSL Outlet started...");
+                while (true)
+                {
+                    Thread.Sleep(1000);
+                    // generate random data and send it
+                    for (int k = 0; k < data.Length; k++)
+                        data[k] = rnd.Next(-100, 100);
+                    outlet.push_sample(data);
+                    Console.WriteLine($"PTime : {DateTime.UtcNow}");
+                }
+            });
+
+            Pipeline p = Pipeline.Create();
+            LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);
+            manager.Start();
+            Console.ReadLine();
+            LabStreamLayerComponent<float>? TEST = manager.LabStreamComponents.First().Value as LabStreamLayerComponent<float>;
+            
+            TEST?.Out.Do((m, e) => { Console.WriteLine($"Data @ {e.OriginatingTime}"); });
+
+            p.RunAsync();
+            thread.Start();
+            Console.ReadLine();
+            return;
             //PlumeSample();
             //return;
 

@@ -16,11 +16,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\AudioRecording\AudioRecording.csproj" />
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
+    <ProjectReference Include="..\..\Components\LabStreamLayer\LabStreamLayer.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
-    <ProjectReference Include="..\..\Components\PLUME\PLUME.csproj" />
-    <ProjectReference Include="..\..\Components\WhisperRemoteConnector\WhisperRemoteConnector.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="lsl_csharp">
+      <HintPath>..\..\Components\LabStreamLayer\dep\lsl_csharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
 
 
