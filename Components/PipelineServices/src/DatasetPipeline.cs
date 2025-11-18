@@ -19,7 +19,7 @@ namespace SAAC.PipelineServices
 
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
 
-        protected List<Subpipeline> subpipelines;
+        protected Dictionary<string, Subpipeline> subpipelines;
 
         protected bool OwningPipeline;
 
@@ -79,9 +79,9 @@ namespace SAAC.PipelineServices
             }
             else if (isPipelineRunning)
             {
-                foreach(Subpipeline subpipeline in subpipelines)
+                foreach(var subpipeline in subpipelines)
                 {
-                    subpipeline.Stop(Pipeline.GetCurrentTime(), () => { });
+                    subpipeline.Value.Stop(Pipeline.GetCurrentTime(), () => { });
                 }
                 Pipeline.WaitAll(maxWaitingTime);
                 Log("Pipeline Stopped.");
@@ -206,10 +206,11 @@ namespace SAAC.PipelineServices
             }
         }
 
-        public Subpipeline CreateSubpipeline(string name = "SaaCSubpipeline")
+        public Subpipeline GetOrCreateSubpipeline(string name = "SaaCSubPipeline")
         {
-            subpipelines.Add(Subpipeline.Create(Pipeline, name));
-            return subpipelines.Last();
+            if (!subpipelines.ContainsKey(name))
+                subpipelines.Add(name, Subpipeline.Create(Pipeline, name));
+            return subpipelines[name];
         }
 
         protected virtual void TriggerRun(object sender, PipelineRunEventArgs e)
@@ -234,14 +235,15 @@ namespace SAAC.PipelineServices
         {
             this.Log = log ?? ((log) => { Console.WriteLine(log); });
             Configuration = configuration ?? new DatasetPipelineConfiguration();
-            subpipelines = new List<Subpipeline>();
+            subpipelines = new Dictionary<string, Subpipeline>();
             if (this.Configuration.DatasetName.Length > 4)
             {
-                if (File.Exists(this.Configuration.DatasetPath + this.Configuration.DatasetName))
-                    Dataset = Dataset.Load(this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
+                string fullPath = Path.Combine(this.Configuration.DatasetPath, this.Configuration.DatasetName);
+                if (File.Exists(fullPath))
+                    Dataset = Dataset.Load(fullPath, true);
                 else
                 {
-                    Dataset = new Dataset(this.Configuration.DatasetName, this.Configuration.DatasetPath + this.Configuration.DatasetName, true);
+                    Dataset = new Dataset(Path.GetFileNameWithoutExtension(this.Configuration.DatasetName), fullPath, true);
                     Dataset.Save(); // throw exception here if the path is not correct
                 }
                 StorePath = this.Configuration.DatasetPath;

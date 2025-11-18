@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>net48</TargetFramework>
+	  <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>latest</LangVersion>
+	  <LangVersion>Preview</LangVersion>
+	  <PlatformTarget>x64</PlatformTarget>
+	  <Platforms>x64</Platforms>
+	  <UseWPF>true</UseWPF>
+	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
+	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+	  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="src\WhisperRemoteStreams.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Whisper\Whisper.csproj" />
+  </ItemGroup>
+
+ </Project>

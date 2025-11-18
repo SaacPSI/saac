@@ -26,10 +26,13 @@ It use RendezVous system allowing to start (and stop) kinect streams from the re
 
 ## WhipserRemoteApp
 ### Summary
-This application allow the use of Rhode microphone system in conjuction of Whisper to provide a speech to text application that can stream and record audio and transcription locally.
+This application allow the use microphones system in conjuction of Whisper to provide a speech to text application that can stream and record audio and do a transcription locally.
+It can transcrpit from wav files or dataset in local use.
 It use RendezVous system allowing to start (and stop) the application from the remote server with the given configuration.
 ### Future works
 * Allowing **NamedPipes** protocol
+* Friendly tooltips
+* Input source configuration saving/loading and networked.
 
 ## VideoRemoteApp
 ### Summary

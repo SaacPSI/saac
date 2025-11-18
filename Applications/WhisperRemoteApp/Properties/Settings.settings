@@ -2,13 +2,13 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="WhisperRemoteApp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="rendezVousServerIp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">10.144.210.101</Value>
+    <Setting Name="RendezVousServerIp" Type="System.String" Scope="User">
+      <Value Profile="(Default)">localhost</Value>
     </Setting>
-    <Setting Name="rendezVousServerPort" Type="System.UInt32" Scope="User">
+    <Setting Name="RendezVousServerPort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">13331</Value>
     </Setting>
-    <Setting Name="remotePort" Type="System.UInt32" Scope="User">
+    <Setting Name="RemotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11570</Value>
     </Setting>
     <Setting Name="ApplicationName" Type="System.String" Scope="User">
@@ -17,8 +17,71 @@
     <Setting Name="IpToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>
     </Setting>
-    <Setting Name="connectedUser" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">3</Value>
+    <Setting Name="CommandApplication" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Server</Value>
+    </Setting>
+    <Setting Name="IsServer" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="IsStreaming" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="IsWhisper" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="IsLocalRecording" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="VadBufferLength" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">500</Value>
+    </Setting>
+    <Setting Name="VadStartOffset" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">-250</Value>
+    </Setting>
+    <Setting Name="VadEndOffset" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">-250</Value>
+    </Setting>
+    <Setting Name="VadInitialSilenceTimeout" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">250</Value>
+    </Setting>
+    <Setting Name="VadBabbleTimeout" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1000</Value>
+    </Setting>
+    <Setting Name="VadEndSilenceTimeoutAmbigous" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">250</Value>
+    </Setting>
+    <Setting Name="VadEndSilenceTimeout" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">150</Value>
+    </Setting>
+    <Setting Name="WhisperLanguage" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">17</Value>
+    </Setting>
+    <Setting Name="WhisperModelType" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="WhisperQuantizationType" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="WhisperModelDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">D:\WhisperModels</Value>
+    </Setting>
+    <Setting Name="WhipserLibrairyPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">./whisper.dll</Value>
+    </Setting>
+    <Setting Name="LocalSessionName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LocalStoringMode" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="LocalDatasetPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LocalDatasetName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AudioSourceType" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

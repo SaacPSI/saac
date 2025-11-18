@@ -190,28 +190,36 @@ namespace SAAC.Whisper
             if (!succeed) {
                 tokenSource.Cancel();
                 t.Wait();//Wait deletion to complete
+                configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed, "Download Whisper model timeout."));
                 throw new TimeoutException("Download Whisper model timeout.");
             }
         }
 
-        private async Task DownloadAsync(object state) {
+        private async Task DownloadAsync(object state) 
+        {
             var cancellationToken = (CancellationToken)state;
             var modelType = configuration.ModelType;
             var quantizationType = configuration.QuantizationType;
             var fn = string.Join("__", "ggml", GetTypeModelFileName(modelType), GetQuantizationModelFileName(quantizationType)) + ".bin";
             modelFilename = Path.Combine(configuration.ModelDirectory, fn);
-            if (configuration.ForceDownload || !File.Exists(modelFilename)) {
-                try {
+            if (configuration.ForceDownload || !File.Exists(modelFilename)) 
+            {
+                try 
+                {
+                    configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.InProgress, "Starting download Whisper model..."));
                     Console.WriteLine("Downloading Whisper model.");
-                    using var modelStream = await WhisperGgmlDownloader.GetGgmlModelAsync(modelType, quantizationType, cancellationToken);
+                    using var modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(modelType, quantizationType, cancellationToken);
                     using var fileWriter = File.OpenWrite(modelFilename);
                     const int bufferSize = 32 * 1024 * 1024;
                     await modelStream.CopyToAsync(fileWriter, bufferSize, cancellationToken);//TaskCanceledExpcetion will be thrown at here if canceled
                     Console.WriteLine("Downloaded Whisper model.");
-                } catch (OperationCanceledException ex) {
+                    configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed, "Downloaded Whisper model..."));
+                } 
+                catch (OperationCanceledException ex) 
+                {
                     Console.WriteLine(ex.Message);
                     File.Delete(modelFilename);//Delete incomplete file
-
+                    configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Failed, $"Failed to downloaded Whisper model : {ex.Message}"));
                 }
             }
             if (!configuration.LazyInitialization) {
@@ -229,7 +237,7 @@ namespace SAAC.Whisper
             }
             var code = GetLanguageCode(configuration.Language);
             var builder = WhisperFactory
-                .FromPath(modelFilename, false)
+                .FromPath(modelFilename)
                 .CreateBuilder()
                 .WithLanguage(code)
                 .WithProgressHandler(OnProgress)

@@ -2,12 +2,12 @@
 {
     public class RendezVousPipelineConfiguration : DatasetPipelineConfiguration
     {
-        public string RendezVousHost = "localhost";
-        public int RendezVousPort = 13331;
-        public int DiagnosticPort = 11512;
-        public int CommandPort = 11511;
-        public int ClockPort = 11510;
-        public bool RecordIncomingProcess = true;
+        public string RendezVousHost { get; set; } = "localhost";
+        public int RendezVousPort { get; set; } = 13331;
+        public int DiagnosticPort { get; set; } = 11512;
+        public int CommandPort { get; set; } = 11511;
+        public int ClockPort { get; set; } = 11510;
+        public bool RecordIncomingProcess { get; set; } = true;
         public Dictionary<string, Type> TopicsTypes = new Dictionary<string, Type>();
         public Dictionary<string, Type> Transformers = new Dictionary<string, Type>();
         public Dictionary<Type, IPsiFormat> TypesSerializers = new Dictionary<Type, IPsiFormat>();

@@ -433,21 +433,21 @@ namespace TestingConsole
         }
         static void Main(string[] args)
         {
-            PlumeSample();
-            return;
+            //PlumeSample();
+            //return;
 
-            ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
-            replayConfig.AutomaticPipelineRun = false;
-            replayConfig.DatasetBackup = true;
-            replayConfig.DatasetPath = @"D:\Stores\SAAC\";
-            replayConfig.DatasetName = "SAAC.pds";
-            replayConfig.ProgressReport = new Reporter();
+            //ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
+            //replayConfig.AutomaticPipelineRun = false;
+            //replayConfig.DatasetBackup = true;
+            //replayConfig.DatasetPath = @"D:\Stores\SAAC\";
+            //replayConfig.DatasetName = "SAAC.pds";
+            //replayConfig.ProgressReport = new Reporter();
 
-            ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            replayPipeline.LoadDatasetAndConnectors();
+            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            //replayPipeline.LoadDatasetAndConnectors();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = false;
+            configuration.AutomaticPipelineRun = true;
             configuration.Debug = true;
             configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
             configuration.DatasetName = "RendezVousPipeline.pds";
@@ -460,9 +460,10 @@ namespace TestingConsole
             configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
             configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
             configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(replayPipeline.Pipeline, configuration, "Server");
+            RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
 
             // Register an action when receive the incoming connection from Unity
             //rdvPipeline.AddNewProcessEvent(OnNewProcess);
@@ -473,7 +474,7 @@ namespace TestingConsole
             Console.WriteLine("Press any key to send RUN command to Unity.");
             Console.ReadLine();
             rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
-            replayPipeline.RunPipelineAndSubpipelines();
+            //replayPipeline.RunPipelineAndSubpipelines();
 
             Console.WriteLine("Press any key to send STOP command to Unity.");
             Console.ReadLine();
@@ -483,7 +484,7 @@ namespace TestingConsole
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
             rdvPipeline.Stop();
-            replayPipeline.Stop();
+            //replayPipeline.Stop();
         }
     }
 }

@@ -12,7 +12,7 @@ namespace WhisperRemoteApp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.12.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.14.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -25,37 +25,37 @@ namespace WhisperRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10.144.210.101")]
-        public string rendezVousServerIp {
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
+        public string RendezVousServerIp {
             get {
-                return ((string)(this["rendezVousServerIp"]));
+                return ((string)(this["RendezVousServerIp"]));
             }
             set {
-                this["rendezVousServerIp"] = value;
+                this["RendezVousServerIp"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("13331")]
-        public uint rendezVousServerPort {
+        public uint RendezVousServerPort {
             get {
-                return ((uint)(this["rendezVousServerPort"]));
+                return ((uint)(this["RendezVousServerPort"]));
             }
             set {
-                this["rendezVousServerPort"] = value;
+                this["RendezVousServerPort"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("11570")]
-        public uint remotePort {
+        public uint RemotePort {
             get {
-                return ((uint)(this["remotePort"]));
+                return ((uint)(this["RemotePort"]));
             }
             set {
-                this["remotePort"] = value;
+                this["RemotePort"] = value;
             }
         }
         
@@ -85,13 +85,265 @@ namespace WhisperRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3")]
-        public int connectedUser {
+        [global::System.Configuration.DefaultSettingValueAttribute("Server")]
+        public string CommandApplication {
             get {
-                return ((int)(this["connectedUser"]));
+                return ((string)(this["CommandApplication"]));
             }
             set {
-                this["connectedUser"] = value;
+                this["CommandApplication"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsServer {
+            get {
+                return ((bool)(this["IsServer"]));
+            }
+            set {
+                this["IsServer"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsStreaming {
+            get {
+                return ((bool)(this["IsStreaming"]));
+            }
+            set {
+                this["IsStreaming"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsWhisper {
+            get {
+                return ((bool)(this["IsWhisper"]));
+            }
+            set {
+                this["IsWhisper"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsLocalRecording {
+            get {
+                return ((bool)(this["IsLocalRecording"]));
+            }
+            set {
+                this["IsLocalRecording"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
+        public int VadBufferLength {
+            get {
+                return ((int)(this["VadBufferLength"]));
+            }
+            set {
+                this["VadBufferLength"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-250")]
+        public int VadStartOffset {
+            get {
+                return ((int)(this["VadStartOffset"]));
+            }
+            set {
+                this["VadStartOffset"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-250")]
+        public int VadEndOffset {
+            get {
+                return ((int)(this["VadEndOffset"]));
+            }
+            set {
+                this["VadEndOffset"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
+        public int VadInitialSilenceTimeout {
+            get {
+                return ((int)(this["VadInitialSilenceTimeout"]));
+            }
+            set {
+                this["VadInitialSilenceTimeout"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        public int VadBabbleTimeout {
+            get {
+                return ((int)(this["VadBabbleTimeout"]));
+            }
+            set {
+                this["VadBabbleTimeout"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
+        public int VadEndSilenceTimeoutAmbigous {
+            get {
+                return ((int)(this["VadEndSilenceTimeoutAmbigous"]));
+            }
+            set {
+                this["VadEndSilenceTimeoutAmbigous"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("150")]
+        public int VadEndSilenceTimeout {
+            get {
+                return ((int)(this["VadEndSilenceTimeout"]));
+            }
+            set {
+                this["VadEndSilenceTimeout"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("17")]
+        public int WhisperLanguage {
+            get {
+                return ((int)(this["WhisperLanguage"]));
+            }
+            set {
+                this["WhisperLanguage"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int WhisperModelType {
+            get {
+                return ((int)(this["WhisperModelType"]));
+            }
+            set {
+                this["WhisperModelType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int WhisperQuantizationType {
+            get {
+                return ((int)(this["WhisperQuantizationType"]));
+            }
+            set {
+                this["WhisperQuantizationType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("D:\\WhisperModels")]
+        public string WhisperModelDirectory {
+            get {
+                return ((string)(this["WhisperModelDirectory"]));
+            }
+            set {
+                this["WhisperModelDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("./whisper.dll")]
+        public string WhipserLibrairyPath {
+            get {
+                return ((string)(this["WhipserLibrairyPath"]));
+            }
+            set {
+                this["WhipserLibrairyPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LocalSessionName {
+            get {
+                return ((string)(this["LocalSessionName"]));
+            }
+            set {
+                this["LocalSessionName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int LocalStoringMode {
+            get {
+                return ((int)(this["LocalStoringMode"]));
+            }
+            set {
+                this["LocalStoringMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LocalDatasetPath {
+            get {
+                return ((string)(this["LocalDatasetPath"]));
+            }
+            set {
+                this["LocalDatasetPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LocalDatasetName {
+            get {
+                return ((string)(this["LocalDatasetName"]));
+            }
+            set {
+                this["LocalDatasetName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int AudioSourceType {
+            get {
+                return ((int)(this["AudioSourceType"]));
+            }
+            set {
+                this["AudioSourceType"] = value;
             }
         }
     }

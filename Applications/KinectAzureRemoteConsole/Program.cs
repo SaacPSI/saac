@@ -61,7 +61,7 @@ namespace KinectAzureRemoteConsole
         {
             if (kinect != null) 
                 return;
-            kinect = new KinectAzureRemoteStreams(client.CreateSubpipeline("azure"), configKinect, configKinect.RendezVousApplicationName);
+            kinect = new KinectAzureRemoteStreams(client.GetOrCreateSubpipeline("azure"), configKinect, configKinect.RendezVousApplicationName);
             client.AddProcess(kinect.GenerateProcess());
             kinect.RunAsync();
             client.Log($"SetupKinect done.");

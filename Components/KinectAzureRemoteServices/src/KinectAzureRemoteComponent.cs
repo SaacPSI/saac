@@ -35,7 +35,7 @@ namespace SAAC.KinectAzureRemoteServices
             if (p.Name == Configuration.RendezVousApplicationName)
             {
                 session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);
-                this.pipeline = this.server.CreateSubpipeline(p.Name);
+                this.pipeline = this.server.GetOrCreateSubpipeline(p.Name);
                 base.Process(p);
                 if (this.server.Configuration.AutomaticPipelineRun)
                 {

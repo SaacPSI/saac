@@ -9,7 +9,7 @@
 	  <Platforms>x64</Platforms>
 	  <UseWPF>true</UseWPF>
 	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
   </PropertyGroup>
 

@@ -16,9 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Components\AudioRecording\AudioRecording.csproj" />
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
     <ProjectReference Include="..\..\Components\PLUME\PLUME.csproj" />
+    <ProjectReference Include="..\..\Components\WhisperRemoteConnector\WhisperRemoteConnector.csproj" />
   </ItemGroup>
 
 

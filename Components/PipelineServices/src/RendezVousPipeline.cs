@@ -30,6 +30,7 @@ namespace SAAC.PipelineServices
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
         protected Pipeline commandPipeline;
+        protected List<Rendezvous.Process> rendezvousProcessesToAddWhenActive;
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
@@ -140,12 +141,17 @@ namespace SAAC.PipelineServices
             if (rendezvousRelay == null)
                 return false;
             processNames.Add(newProcess.Name);
-            if (!rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
+            if (rendezVous.IsActive)
             {
-                processNames.Remove(newProcess.Name);
-                Log($"Failed to AddProcess {newProcess.Name}");
-                return false;
+                if (!rendezvousRelay.Rendezvous.TryAddProcess(newProcess))
+                {
+                    processNames.Remove(newProcess.Name);
+                    Log($"Failed to AddProcess {newProcess.Name}");
+                    return false;
+                }
             }
+            else
+                rendezvousProcessesToAddWhenActive.Add(newProcess);
             return true;
         }
 
@@ -183,7 +189,7 @@ namespace SAAC.PipelineServices
         public int GenerateTCPProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
         {
             Rendezvous.Process process = new Rendezvous.Process(processName);
-            Subpipeline parent = CreateSubpipeline(processName);
+            Subpipeline parent = GetOrCreateSubpipeline(processName);
             foreach (var connector in connectors)
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
@@ -216,7 +222,7 @@ namespace SAAC.PipelineServices
         public bool GenerateRemoteProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
         {
             Rendezvous.Process process = new Rendezvous.Process(processName);
-            Pipeline parent = CreateSubpipeline(processName);
+            Pipeline parent = GetOrCreateSubpipeline(processName);
             GenerateRemoteEnpoint(parent, startingPort, connectors, ref process);
             parent.RunAsync();
             return AddProcess(process);
@@ -230,6 +236,9 @@ namespace SAAC.PipelineServices
             rendezvousRelay.Rendezvous.ProcessRemoved += RendezvousProcessRemoved;
             rendezvousRelay.Error += (s, e) => { Log(e.Message); Log(e.HResult.ToString()); };
             rendezVous.Start();
+            foreach (Rendezvous.Process prc in rendezvousProcessesToAddWhenActive)
+                AddProcess(prc);
+            rendezvousProcessesToAddWhenActive.Clear();
             if (Dataset != null)
             {
                 switch (Configuration.Diagnostics)
@@ -356,7 +365,7 @@ namespace SAAC.PipelineServices
                     {
                         if (stream.GetType() == typeof(PipelineDiagnostics))
                         {
-                            Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
+                            Subpipeline processSubPipeline = GetOrCreateSubpipeline(process.Name);
                             Connection(stream.StreamName, DiagnosticsProcessName, CreateOrGetSession(Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
                             if (isPipelineRunning)
                             {
@@ -373,7 +382,7 @@ namespace SAAC.PipelineServices
         protected void ProcessAddedData(Rendezvous.Process process)
         {
             int elementAdded = 0;
-            Subpipeline processSubPipeline = CreateSubpipeline(process.Name);
+            Subpipeline processSubPipeline = GetOrCreateSubpipeline(process.Name);
             Session? session = CreateOrGetSessionFromMode(process.Name);
             foreach (var endpoint in process.Endpoints)
             {
@@ -423,10 +432,9 @@ namespace SAAC.PipelineServices
 
         private void RendezvousProcessRemoved(object sender, Rendezvous.Process e)
         {
-            Pipeline subpipeline = subpipelines.Find(x => x.Name == e.Name);
-            if (subpipeline != default(Pipeline))
+            if (subpipelines.ContainsKey(e.Name) )
             {
-                subpipeline.Dispose();
+                subpipelines[e.Name].Dispose();
                 Connectors.Remove(e.Name);
             }
             RemovedEntry?.Invoke(this, e.Name);
@@ -476,6 +484,7 @@ namespace SAAC.PipelineServices
         private void Initialize(RendezVousPipelineConfiguration? configuration, string name = nameof(RendezVousPipeline), string? rendezVousServerAddress = null, LogStatus? log = null)
         {
             Configuration = configuration ?? new RendezVousPipelineConfiguration();
+            rendezvousProcessesToAddWhenActive = new List<Rendezvous.Process>();
             processNames = new List<string>();
             if (rendezVousServerAddress == null)
                 rendezvousRelay = rendezVous = new RendezvousServer(this.Configuration.RendezVousPort);

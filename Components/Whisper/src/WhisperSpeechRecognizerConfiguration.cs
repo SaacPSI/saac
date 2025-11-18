@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Psi;
 using Whisper.net.Ggml;
+using Whisper.net;
 
 namespace SAAC.Whisper
 {
@@ -36,6 +37,9 @@ namespace SAAC.Whisper
         public double PartialEvalueationInvervalInSeconds { get; set; } = 0.5;
 
         public bool OutputAudio { get; set; } = false;
+
+        public enum EWhisperModelDownloadState { InProgress, Completed, Failed };
+        public EventHandler<(EWhisperModelDownloadState, string)>? OnModelDownloadProgressHandler { get; set; } = null;
 
         public WhisperSpeechRecognizerConfiguration() 
         {

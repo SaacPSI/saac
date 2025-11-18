@@ -1,27 +1,32 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Interop.Rendezvous;
+﻿
+using Microsoft.Psi;
+using Microsoft.Psi.Audio;
+using Microsoft.Psi.Data;
+using Microsoft.Psi.Speech;
+using Microsoft.Win32;
+using SAAC;
+using SAAC.AudioRecording;
+using SAAC.PipelineServices;
+using SAAC.RemoteConnectors;
+using SAAC.Whisper;
 using System.ComponentModel;
+using System.IO;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Net;
-using Microsoft.Psi.Diagnostics;
-using SAAC.PipelineServices;
-using SAAC.AudioRecording;
-using Microsoft.Psi.Components;
 using System.Windows.Controls;
-using System.IdentityModel.Protocols.WSTrust;
 
 namespace WhisperRemoteApp
 {
-
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        private List<User> audioSoucesSetup;
+        private List<(string,int)> micsList = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevicesWithChannels().ToList();
+        private List<string> notTriggerProperties;
 
-        private AudioProcess audioProcess { get; set; }
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -29,26 +34,86 @@ namespace WhisperRemoteApp
         {
             if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             {
+                if (propertyName != null)
+                {
+                    bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
+                    BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                }
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
         #endregion
 
+        private RendezVousPipelineConfiguration pipelineConfiguration;
+        private SystemVoiceActivityDetectorConfiguration vadConfiguration;
+        private SAAC.Whisper.WhisperSpeechRecognizerConfiguration whisperConfiguration;
+        private SAAC.RemoteConnectors.WhisperRemoteStreamsConfiguration remoteConfiguration;
 
-        private string state = "Hello";
+        //General Tab
+        private string state = "Not Initialised";
         public string State
         {
             get => state;
             set => SetProperty(ref state, value);
         }
-        public void DelegateMethodStatus(string status)
-        {
-            State = status;
-        }
-        // LOG
 
-        private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
+        private bool isRemoteServer = true;
+        public bool IsRemoteServer
+        {
+            get => isRemoteServer;
+            set => SetProperty(ref isRemoteServer, value);
+        }
+
+        private bool isStreaming = true;
+        public bool IsStreaming
+        {
+            get => isStreaming;
+            set => SetProperty(ref isStreaming, value);
+        }
+
+        private bool isWhisper = true;
+        public bool IsWhisper
+        {
+            get => isWhisper;
+            set => SetProperty(ref isWhisper, value);
+        }
+
+        private bool isLocalRecording = true;
+        public bool IsLocalRecording
+        {
+            get => isLocalRecording;
+            set => SetProperty(ref isLocalRecording, value);
+        }
+
+        // Audio Tab
+        public enum AudioSource
+        {
+            Microphones,
+            WaveFiles,
+            Dataset
+        }
+
+        private AudioSource selectedAudioSource = AudioSource.Microphones;
+
+        private string audioSourceDatasetPath = "";
+        public string AudioSourceDatasetPath
+        {
+            get => audioSourceDatasetPath;
+            set => SetProperty(ref audioSourceDatasetPath, value);
+        }
+
+        private string audioSourceSessionName = "";
+        public string AudioSourceSessionName
+        {
+            get => audioSourceSessionName;
+            set => SetProperty(ref audioSourceSessionName, value);
+        }
+
+        public List<string> AudioSourceList { get; }
+
+        // Network Tab
+        public List<string> IPsList { get; }
 
         private string rendezVousServerIp = "localhost";
         public string RendezVousServerIp
@@ -56,37 +121,17 @@ namespace WhisperRemoteApp
             get => rendezVousServerIp;
             set => SetProperty(ref rendezVousServerIp, value);
         }
-        public void DelegateMethodRendezVousServerIP(string ip)
-        {
-            RendezVousServerIp = ip;
-        }
 
         public RendezVousPipelineConfiguration PipelineConfigurationUI
         {
-            get => PipelineConfiguration;
-            set => SetProperty(ref PipelineConfiguration, value);
+            get => pipelineConfiguration;
+            set => SetProperty(ref pipelineConfiguration, value);
         }
 
-        private string applicationName = "Whisper";
-        public string ApplicationName
+        public WhisperRemoteStreamsConfiguration WhisperRemoteStreamsConfigurationUI
         {
-            get => applicationName;
-            set => SetProperty(ref applicationName, value);
-        }
-        public void DelegateMethodApplicationName(string name)
-        {
-            ApplicationName = name;
-        }
-
-        private string connectedUser = "3";
-        public string ConnectedUser
-        {
-            get => connectedUser;
-            set => SetProperty(ref connectedUser, value);
-        }
-        public void DelegateMethodCU(string connectedUser)
-        {
-            ConnectedUser = connectedUser;
+            get => remoteConfiguration;
+            set => SetProperty(ref remoteConfiguration, value);
         }
 
         private string commandSource = "Server";
@@ -95,117 +140,327 @@ namespace WhisperRemoteApp
             get => commandSource;
             set => SetProperty(ref commandSource, value);
         }
-        public void DelegateMethodCS(string commandSource)
+
+        //Whipser Tab
+
+        public SystemVoiceActivityDetectorConfiguration VadConfigurationUI
         {
-            CommandSource = commandSource;
+            get => vadConfiguration;
+            set => SetProperty(ref vadConfiguration, value);
         }
 
+        public WhisperSpeechRecognizerConfiguration WhisperConfigurationUI
+        {
+            get => whisperConfiguration;
+            set => SetProperty(ref whisperConfiguration, value);
+        }
+
+        public List<string> WhisperModelsList { get; }
+        public List<string> WhisperQuantizationList { get; }
+        public List<string> WhisperLanguageList { get; }
+        private Dictionary<SAAC.Whisper.Language, string> whisperToVadLanguageConfiguration;
+
+        // LocalRecording Tab
+
+        private string localSessionName = "";
+        public string LocalSessionName
+        {
+            get => localSessionName;
+            set => SetProperty(ref localSessionName, value);
+        }
+
+        private SAAC.Whisper.WhisperAudioProcessing.LocalStorageMode localStoringMode = WhisperAudioProcessing.LocalStorageMode.All;
+
+        private string localDatasetPath = "";
+        public string LocalDatasetPath
+        {
+            get => localDatasetPath;
+            set => SetProperty(ref localDatasetPath, value);
+        }
+
+        private string localDatasetName = "";
+        public string LocalDatasetName
+        {
+            get => localDatasetName;
+            set => SetProperty(ref localDatasetName, value);
+        }
+
+        // Log Tab
         private string log = "";
         public string Log
         {
             get => log;
             set => SetProperty(ref log, value);
         }
-        public void DelegateMethodLog(string log)
-        {
-            Log = log;
-        }
 
 
-        public List<string> IPsList { get; }
-        public string IPSelected
+        // varialbles
+        private enum SetupState
         {
-            get => PipelineConfiguration.RendezVousHost;
-            set => SetProperty(ref PipelineConfiguration.RendezVousHost, value);
-        }
-        public void DelegateMethodColorResolution(string val)
-        {
-            PipelineConfiguration.RendezVousHost = val;
-        }
-
-        private RendezVousPipeline? Pipeline;
+            NotInitialised,
+            PipelineInitialised,
+            AudioInitialised,
+            WhisperInitialised
+        };
+        private SetupState setupState;
+        private RendezVousPipeline? rendezVousPipeline;
+        private Pipeline pipeline;
+        private IAudioSourcesManager audioManager;
+        private WhisperAudioProcessing? whisperAudioProcessing;
+        private WhisperTranscriptionManager? transcriptionManager;
+        private Dataset? localDataset;
+        private bool isMessageBoxOpen;
+        private readonly List<System.Speech.Recognition.RecognizerInfo> availableRecongnisers;
+        private LogStatus internalLog;
 
         public MainWindow()
         {
-            DataContext = this;
-            
-            IPsList = new List<string>();
-            foreach(var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+            internalLog = (log) =>
             {
-                IPsList.Add(ip.ToString()); 
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    Log += $"{log}\n";
+                }));
+            };
+            audioSoucesSetup = new List<User>();
+            notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
+            AudioSourceList = new List<string> { AudioSource.Microphones.ToString(), AudioSource.WaveFiles.ToString(), AudioSource.Dataset.ToString() };
+            
+            IPsList = new List<string>{ "localhost" };
+            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+            {
+                IPsList.Add(ip.ToString());
             }
 
-            Pipeline = null;
+            WhisperModelsList = new List<string>();
+            for (int modelTypeIterator = 0; modelTypeIterator <= (int)Whisper.net.Ggml.GgmlType.LargeV3Turbo; modelTypeIterator++)
+            {
+                WhisperModelsList.Add(((Whisper.net.Ggml.GgmlType)modelTypeIterator).ToString());
+            }
 
-            PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse;
-            
-            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
-            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            ApplicationName = Properties.Settings.Default.ApplicationName;
-            //ConfigurationUI.EncodingVideoLevel = (int)Properties.Settings.Default.encodingLevel;
-            //ConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
-            //Configuration.VideoResolution = resolutionDictionary[(Resolution)Properties.Settings.Default.videoResolution];
-            //Audio.IsChecked = Configuration.StreamAudio = Properties.Settings.Default.audio;
-            //Skeleton.IsChecked = Configuration.StreamSkeleton = Properties.Settings.Default.skeleton;
-            //RGB.IsChecked = Configuration.StreamVideo = Properties.Settings.Default.rgb;
-            //Depth.IsChecked = Configuration.StreamDepth = Properties.Settings.Default.depth;
-            //DepthCalibration.IsChecked = Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration;
-            //IMU.IsChecked = Configuration.StreamIMU = Properties.Settings.Default.IMU;
+            WhisperQuantizationList = new List<string>();
+            for (int quantitazationtypeIterator = 0; quantitazationtypeIterator <= (int)Whisper.net.Ggml.QuantizationType.Q8_0; quantitazationtypeIterator++)
+            {
+                WhisperQuantizationList.Add(((Whisper.net.Ggml.QuantizationType)quantitazationtypeIterator).ToString());
+            }
+
+            WhisperLanguageList = new List<string>();
+            for (int languageTypeIterator = 0; languageTypeIterator <= (int)SAAC.Whisper.Language.Welsh; languageTypeIterator++)
+            {
+                WhisperLanguageList.Add(((SAAC.Whisper.Language)languageTypeIterator).ToString());
+            }
+
+            whisperToVadLanguageConfiguration = new Dictionary<SAAC.Whisper.Language, string> { { SAAC.Whisper.Language.NotSet, "en" }, { SAAC.Whisper.Language.Afrikaans, "af" }, { SAAC.Whisper.Language.Arabic, "ar" }, { SAAC.Whisper.Language.Armenian, "hy" }, { SAAC.Whisper.Language.Azerbaijani, "az" }, { SAAC.Whisper.Language.Belarusian, "be" }, { SAAC.Whisper.Language.Bosnian, "bs" }, { SAAC.Whisper.Language.Bulgarian, "bg" }, { SAAC.Whisper.Language.Catalan, "ca" }, { SAAC.Whisper.Language.Chinese, "zh" }, { SAAC.Whisper.Language.Croatian, "hr" }, { SAAC.Whisper.Language.Czech, "cs" }, { SAAC.Whisper.Language.Danish, "da" }, { SAAC.Whisper.Language.Dutch, "nl" }, { SAAC.Whisper.Language.English, "en" }, { SAAC.Whisper.Language.Estonian, "et" }, { SAAC.Whisper.Language.Finnish, "fi" }, { SAAC.Whisper.Language.French, "fr" }, { SAAC.Whisper.Language.Galician, "gl" }, { SAAC.Whisper.Language.German, "de" }, { SAAC.Whisper.Language.Greek, "el" }, { SAAC.Whisper.Language.Hebrew, "he" }, { SAAC.Whisper.Language.Hindi, "hi" }, { SAAC.Whisper.Language.Hungarian, "hu" }, { SAAC.Whisper.Language.Icelandic, "is" }, { SAAC.Whisper.Language.Indonesian, "id" }, { SAAC.Whisper.Language.Italian, "it" }, { SAAC.Whisper.Language.Japanese, "ja" }, { SAAC.Whisper.Language.Kannada, "kn" }, { SAAC.Whisper.Language.Kazakh, "kk" }, { SAAC.Whisper.Language.Korean, "ko" }, { SAAC.Whisper.Language.Latvian, "lv" }, { SAAC.Whisper.Language.Lithuanian, "lt" }, { SAAC.Whisper.Language.Macedonian, "mk" }, { SAAC.Whisper.Language.Malay, "ms" }, { SAAC.Whisper.Language.Marathi, "mr" }, { SAAC.Whisper.Language.Maori, "mi" }, { SAAC.Whisper.Language.Nepali, "ne" }, { SAAC.Whisper.Language.Norwegian, "no" }, { SAAC.Whisper.Language.Persian, "fa" }, { SAAC.Whisper.Language.Polish, "pl" }, { SAAC.Whisper.Language.Portuguese, "pt" }, { SAAC.Whisper.Language.Romanian, "ro" }, { SAAC.Whisper.Language.Russian, "ru-RU" }, { SAAC.Whisper.Language.Serbian, "sr" }, { SAAC.Whisper.Language.Slovak, "sk" }, { SAAC.Whisper.Language.Slovenian, "sl" }, { SAAC.Whisper.Language.Spanish, "es" }, { SAAC.Whisper.Language.Swahili, "sw" }, { SAAC.Whisper.Language.Swedish, "sv" }, { SAAC.Whisper.Language.Tagalog, "tl" }, { SAAC.Whisper.Language.Tamil, "ta" }, { SAAC.Whisper.Language.Thai, "th" }, { SAAC.Whisper.Language.Turkish, "tr" }, { SAAC.Whisper.Language.Ukrainian, "uk" }, { SAAC.Whisper.Language.Urdu, "ur" }, { SAAC.Whisper.Language.Vietnamese, "vi" }, { SAAC.Whisper.Language.Welsh, "cy" } };
+
+            setupState = SetupState.NotInitialised;
+            rendezVousPipeline = null;
+            pipelineConfiguration = new RendezVousPipelineConfiguration();
+            vadConfiguration = new SystemVoiceActivityDetectorConfiguration();
+            whisperConfiguration = new WhisperSpeechRecognizerConfiguration();
+            remoteConfiguration = new SAAC.RemoteConnectors.WhisperRemoteStreamsConfiguration();
+            DataContext = this;
+
+            isMessageBoxOpen = false;
+            availableRecongnisers = System.Speech.Recognition.SpeechRecognitionEngine.InstalledRecognizers().ToList();
+
             InitializeComponent();
             UpdateLayout();
+            RefreshUIFromConfiguration();
+            GenerateMicrophonesGrid();
+            SetupGeneralTab();
+            SetupAudioTab();
+            SetupNetworkTab();
+            SetupWhipserTab();
+            SetupLocalRecordingTab();
+        }
+   
+        private void SetupGeneralTab()
+        {
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(TranscriptionPathTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<string>(TranscriptionFilenameTextBox, UiGenerator.PathTryParse);
+
+            TranscriptionFilenameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Transcription file already exist, please choose another name or path.", ".docx", TranscriptionPathTextBox);
+        }
+
+        private void SetupAudioTab()
+        {
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(AudioSourceDatasetTextBox, UiGenerator.UriTryParse);
+            AddWavFile();
+        }
+
+        private void SetupNetworkTab()
+        {
+            UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(StreamingPortRangeStartTextBox, int.TryParse);
+            UpdateNetworkTab();
+        }
+
+        private void SetupWhipserTab()
+        {
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadBufferLengthTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadVoiceActivityStartOffsetTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadVoiceActivityEndOffsetTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadInitialSilenceTimeoutTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadBabbleTimeoutTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadEndSilenceTimeoutAmbiguousTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VadEndSilenceTimeoutTextBox, int.TryParse);
+        }
+
+        private void SetupLocalRecordingTab()
+        {
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(LocalRecordingDatasetDirectoryTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<string>(LocalRecordingDatasetNameTextBox, UiGenerator.PathTryParse);
+            LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataser file already exist, make sure to use a different session name.", ".pds", LocalRecordingDatasetDirectoryTextBox);
+        }
+
+        private void UpdateNetworkTab()
+        {
+            BtnStartNet.IsEnabled = isRemoteServer;
+            foreach (UIElement networkUIElement in NetworkGrid.Children)
+                if (!(networkUIElement is CheckBox))
+                    networkUIElement.IsEnabled = isRemoteServer;
+            NetworkStreamingCheckBox.IsEnabled = isRemoteServer;
+            if (isRemoteServer)
+                UpdateStreamingPortRangeStartTextBox();
+        } 
+        private void UpdateStreamingPortRangeStartTextBox()
+        {
+            StreamingPortRangeStartTextBox.IsEnabled = isStreaming & isRemoteServer;
+        }
+
+        private void UpdateWhisperTab()
+        {
+            WhiperGroupBox.IsEnabled = VADGroupBox.IsEnabled = isWhisper;
+        }
+
+        private void UpdateLocalRecordingTab()
+        {
+            foreach (UIElement networkUIElement in LocalRecordingGrid.Children)
+                if (!(networkUIElement is CheckBox))
+                    networkUIElement.IsEnabled = isLocalRecording;
+        }
+
+        private void GenerateMicrophonesGrid()
+        {
+            micsList = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevicesWithChannels().ToList();
+            
+            int micId = -1;
+            foreach (var mics in micsList)
+            {
+                micId++;
+                if (mics.Item2 < 1)
+                    continue;
+
+                UiGenerator.AddRowsDefinitionToGrid(MicrophonesGrid, GridLength.Auto, 1);
+                UiGenerator.SetElementInGrid(MicrophonesGrid, UiGenerator.GenerateLabel(mics.Item1), 0, MicrophonesGrid.RowDefinitions.Count - 1);
+               
+                Grid channelsGrid = UiGenerator.GenerateGrid(GridLength.Auto, 2, 0);
+                UiGenerator.SetElementInGrid(MicrophonesGrid, channelsGrid, 1, MicrophonesGrid.RowDefinitions.Count - 1);
+                for (int channel = 1; channel <= mics.Item2; channel++)
+                {
+                    UiGenerator.AddRowsDefinitionToGrid(channelsGrid, GridLength.Auto, 1);
+                    UiGenerator.SetElementInGrid(channelsGrid, UiGenerator.GenerateLabel($"Channel {channel}"), 0, channelsGrid.RowDefinitions.Count - 1);
+                    TextBox input = UiGenerator.GeneratorTextBox($"i{micId}_{channel}", 50.0);
+                    UiGenerator.SetElementInGrid(channelsGrid, input, 1, channelsGrid.RowDefinitions.Count - 1);
+                    User? oldConfig = audioSoucesSetup.SingleOrDefault((user) => { return user.Microphone == mics.Item1 && user.Channel == channel; });
+                    if (oldConfig is null || oldConfig is default(User))
+                        continue;
+                    input.Text = oldConfig.Id.ToString();
+                }
+            }
         }
 
         private void RefreshUIFromConfiguration()
         {
-            //ConfigurationUI.RendezVousPort = (int)Properties.Settings.Default.rendezVousServerPort;
-            //Audio.IsChecked = Properties.Settings.Default.audio = Configuration.StreamAudio;
-            //Skeleton.IsChecked = Properties.Settings.Default.skeleton = Configuration.StreamSkeleton;
-            //RGB.IsChecked = Properties.Settings.Default.rgb = Configuration.StreamVideo;
-            //Depth.IsChecked = Properties.Settings.Default.depth = Configuration.StreamDepth;
-            //DepthCalibration.IsChecked = Properties.Settings.Default.depthCalibration = Configuration.StreamDepthCalibration;
-            //IMU.IsChecked = Properties.Settings.Default.IMU = Configuration.StreamIMU;
-            PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse;
-            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
-            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            ApplicationName = Properties.Settings.Default.ApplicationName;
-            Properties.Settings.Default.Save();
-            UpdateLayout();
+            // Newtork Tab
+            IsRemoteServer = Properties.Settings.Default.IsServer;
+            IsStreaming = Properties.Settings.Default.IsStreaming;
+            var ipResult = IPsList.Where((ip) => { return ip == Properties.Settings.Default.IpToUse; });
+            RendezVousHostComboBox.SelectedIndex = ipResult.Count() == 0 ? 0 : IPsList.IndexOf(ipResult.First());
+            PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.IpToUse;
+            RendezVousServerIp = Properties.Settings.Default.RendezVousServerIp;
+            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.RendezVousServerPort);
+            WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
+
+            // Audio Tab
+            AudioSourceComboBox.SelectedIndex = Properties.Settings.Default.AudioSourceType;
+
+            //Whisper Tab
+            IsWhisper = Properties.Settings.Default.IsWhisper;
+            VadConfigurationUI.BufferLengthInMs = Properties.Settings.Default.VadBufferLength;
+            VadConfigurationUI.VoiceActivityStartOffsetMs = Properties.Settings.Default.VadStartOffset;
+            VadConfigurationUI.VoiceActivityEndOffsetMs = Properties.Settings.Default.VadEndOffset;
+            VadConfigurationUI.InitialSilenceTimeoutMs = Properties.Settings.Default.VadInitialSilenceTimeout;
+            VadConfigurationUI.BabbleTimeoutMs = Properties.Settings.Default.VadBabbleTimeout;
+            VadConfigurationUI.EndSilenceTimeoutAmbiguousMs = Properties.Settings.Default.VadEndSilenceTimeoutAmbigous;
+            VadConfigurationUI.EndSilenceTimeoutMs = Properties.Settings.Default.VadEndSilenceTimeout;
+
+            LanguageComboBox.SelectedIndex = Properties.Settings.Default.WhisperLanguage;
+            WhisperModelComboBox.SelectedIndex = Properties.Settings.Default.WhisperModelType;
+            WhisperQuantizationComboBox.SelectedIndex = Properties.Settings.Default.WhisperQuantizationType;
+            WhisperModelDirectoryTextBox.Text = Properties.Settings.Default.WhisperModelDirectory;
+            WhisperLibrairyPathTextBox.Text = Properties.Settings.Default.WhipserLibrairyPath;
+
+            //LocalRecording Tab
+            IsLocalRecording = Properties.Settings.Default.IsLocalRecording;
+            LocalSessionName = Properties.Settings.Default.LocalSessionName;
+            switch (Properties.Settings.Default.LocalStoringMode)
+            {
+                case 1:
+                    LocalStoringModeAudio.IsChecked = true;
+                    break;
+                case 2:
+                    LocalStoringModeVADSTT.IsChecked = true;
+                    break;
+                case 3:
+                    LocalStoringModeAll.IsChecked = true;
+                    break;
+            }
+            LocalDatasetPath = Properties.Settings.Default.LocalDatasetPath;
+            LocalDatasetName = Properties.Settings.Default.LocalDatasetName;
+
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
         }
 
         private void RefreshConfigurationFromUI()
         {
-            //Properties.Settings.Default.rendezVousServerPort = (uint)ConfigurationUI.RendezVousPort;
+            // Newtork Tab
+            Properties.Settings.Default.IsServer = IsRemoteServer;
+            Properties.Settings.Default.IsStreaming = IsStreaming;
+            Properties.Settings.Default.IpToUse = pipelineConfiguration.RendezVousHost;
+            Properties.Settings.Default.RendezVousServerIp = RendezVousServerIp;
+            Properties.Settings.Default.RendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.ApplicationName = WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName;
 
-            //Configuration.StreamAudio = Properties.Settings.Default.audio = (bool)(Audio.IsChecked != null ? Audio.IsChecked : false);
-            //Configuration.StreamSkeleton = Properties.Settings.Default.skeleton = (bool)(Skeleton.IsChecked != null ? Skeleton.IsChecked : false);
-            //Configuration.StreamVideo = Properties.Settings.Default.rgb = (bool)(RGB.IsChecked != null ? RGB.IsChecked : false);
-            //Configuration.StreamDepth = Properties.Settings.Default.depth = (bool)(Depth.IsChecked != null ? Depth.IsChecked : false);
-            //Configuration.StreamDepthCalibration = Properties.Settings.Default.depthCalibration = (bool)(DepthCalibration.IsChecked != null ? DepthCalibration.IsChecked : false);
-            //Configuration.StreamIMU = Properties.Settings.Default.IMU = (bool)(IMU.IsChecked != null ? IMU.IsChecked : false);
-            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
-            Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
-            Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
-            Properties.Settings.Default.ApplicationName = ApplicationName;
+            // Audio Tab
+            Properties.Settings.Default.AudioSourceType = AudioSourceComboBox.SelectedIndex;
+
+            // Whisper Tab
+            Properties.Settings.Default.IsWhisper = IsWhisper;
+            Properties.Settings.Default.VadBufferLength = VadConfigurationUI.BufferLengthInMs;
+            Properties.Settings.Default.VadStartOffset = VadConfigurationUI.VoiceActivityStartOffsetMs;
+            Properties.Settings.Default.VadEndOffset = VadConfigurationUI.VoiceActivityEndOffsetMs;
+            Properties.Settings.Default.VadInitialSilenceTimeout = VadConfigurationUI.InitialSilenceTimeoutMs;
+            Properties.Settings.Default.VadBabbleTimeout = VadConfigurationUI.BabbleTimeoutMs;
+            Properties.Settings.Default.VadEndSilenceTimeoutAmbigous = VadConfigurationUI.EndSilenceTimeoutAmbiguousMs;
+            Properties.Settings.Default.VadEndSilenceTimeout = VadConfigurationUI.EndSilenceTimeoutMs;
+
+            Properties.Settings.Default.WhisperLanguage = LanguageComboBox.SelectedIndex;
+            Properties.Settings.Default.WhisperModelType = WhisperModelComboBox.SelectedIndex;
+            Properties.Settings.Default.WhisperQuantizationType = WhisperQuantizationComboBox.SelectedIndex;
+            Properties.Settings.Default.WhisperModelDirectory = WhisperConfigurationUI.ModelDirectory;
+            Properties.Settings.Default.WhipserLibrairyPath = WhisperConfigurationUI.LibrairyPath;
+
+            // Local Recording Tab
+            Properties.Settings.Default.IsLocalRecording = IsLocalRecording;
+            Properties.Settings.Default.LocalSessionName = LocalSessionName;
+            Properties.Settings.Default.LocalStoringMode = (bool)LocalStoringModeAudio.IsChecked ? 1 : ((bool)LocalStoringModeVADSTT.IsChecked ? 2 : 3);
+            Properties.Settings.Default.LocalDatasetPath = LocalDatasetPath;
+            Properties.Settings.Default.LocalDatasetName = LocalDatasetName;
             Properties.Settings.Default.Save();
-        }
 
-        private bool UpdateConfigurationFromArgs(string[] args)
-        {
-            try
-            {
-                
-            } 
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return false;
-            }
-            Application.Current.Dispatcher.Invoke(new Action(() =>
-            {
-                RefreshUIFromConfiguration();
-            }));
-
-            return true;
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
         }
 
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
@@ -215,86 +470,209 @@ namespace WhisperRemoteApp
             
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != ApplicationName)
+            if (args[0] != WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName)
                 return;
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Initialize:
-                    UpdateConfigurationFromArgs(args);
-                    break;
                 case RendezVousPipeline.Command.Run:
-                    SetupWhisper();
-                    break;
-                case RendezVousPipeline.Command.Stop:
-                    StopWhisper();
+                    Start();
                     break;
                 case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        StopPipeline();
                         Close();
                     }));
                     break;
-                case RendezVousPipeline.Command.Reset:
-                    if (UpdateConfigurationFromArgs(args))
-                    {
-                        Application.Current.Dispatcher.Invoke(new Action(() =>
-                        {
-                            OnRestart();
-                        })); 
-                    }
-                    break;
                 case RendezVousPipeline.Command.Status:
-                    Pipeline?.SendCommand(RendezVousPipeline.Command.Status, source, Pipeline == null ? "Not Initialised": Pipeline.Pipeline.StartTime.ToString());
+                    rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, source, rendezVousPipeline == null ? "Not Initialised": rendezVousPipeline.Pipeline.StartTime.ToString());
                     break;
             }
         }
 
-        private void SetupRendezVous()
+        private void SetupTranscription()
         {
-            //disable ui
-            RendezVousGrid.IsEnabled = false;
-            //PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
-            PipelineConfiguration.AutomaticPipelineRun = true;
-            PipelineConfiguration.CommandDelegate = CommandRecieved;
-            PipelineConfiguration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
-            PipelineConfiguration.SessionName = "RawData";
-            PipelineConfiguration.DatasetPath = @"path\...\";
-            PipelineConfiguration.DatasetName = "Dataset.pds";
-            PipelineConfiguration.RendezVousHost = "localhost";
+            if (TranscriptionFilenameTextBox.Text.Length > 5)
+                transcriptionManager = new WhipserTranscriptionToWordManager();
+        }
 
-            audioProcess = new AudioProcess();
+        private void SetupPipeline()
+        {
+            if (setupState >= SetupState.PipelineInitialised) 
+                return;
+            if (isRemoteServer)
+            { 
+                pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+                pipelineConfiguration.AutomaticPipelineRun = true;
+                pipelineConfiguration.CommandDelegate = CommandRecieved;
+                pipelineConfiguration.Debug = false;
+                pipelineConfiguration.RecordIncomingProcess = false;
+                pipelineConfiguration.CommandPort = pipelineConfiguration.ClockPort = 0;
 
-            Pipeline = new RendezVousPipeline(PipelineConfiguration, ApplicationName, RendezVousServerIp, (log) => { Log += $"{log}\n"; });
-            Pipeline.CreateOrGetSessionFromMode("PipelineProcess");
-            Pipeline.Log("Waiting for server");
-            State = "Waiting for server";
-            Pipeline.Start();
-            audioProcess.StartAudioPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
-            State = "Ready to start Whisper";
+                rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
+                rendezVousPipeline.CreateOrGetSessionFromMode("PipelineProcess");
+                rendezVousPipeline.Log("Waiting for server");
+                pipeline = rendezVousPipeline.Pipeline;
+
+                if (!isStreaming)
+                    rendezVousPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(remoteConfiguration.RendezVousApplicationName));
+            }
+            else
+                pipeline = Pipeline.Create("WhisperPipeline");
+            setupState = SetupState.PipelineInitialised;
+        }
+
+        private void SetupAudioSources()
+        {
+            if (setupState >= SetupState.AudioInitialised)
+                return;
+            switch (selectedAudioSource)
+            {
+                case AudioSource.Microphones:
+                    GetMicrophonesConfiguration();
+                    break;
+                case AudioSource.WaveFiles:
+                    GetWaveFilesConfiguration();
+                    break;
+                case AudioSource.Dataset:
+                    GetAudioSourceStreamConfiguration();
+                    break;
+            }
+            if (audioSoucesSetup.Count > 0)
+            {
+                switch(selectedAudioSource)
+                {
+                    case AudioSource.Microphones:
+                        {
+                            AudioMicrophonesManager manager = new AudioMicrophonesManager(pipeline, false);
+                            manager.AddUsers(audioSoucesSetup);
+                            manager.SetupAudioWithoutRDV();
+                            audioManager = manager;
+                        }
+                        break;
+                    case AudioSource.WaveFiles:
+                        {
+                            AudioFilesManager manager = new AudioFilesManager(pipeline); 
+                            List<string> waveFilesSetup = audioSoucesSetup.Select((user) => { return user.Microphone; }).ToList();
+                            manager.SetupAudioFromFiles(waveFilesSetup);
+                            audioManager = manager;
+                        }
+                        break;
+                    case AudioSource.Dataset:
+                        {
+                            AudioDatasetManager manager = new AudioDatasetManager(pipeline);
+                            List<string> streamsSetup = audioSoucesSetup.Select((user) => { return user.Microphone; }).ToList();
+                            manager.OpenAudioStreamsFromDataset(AudioSourceDatasetPath, streamsSetup, AudioSourceSessionName);
+                            audioManager = manager;
+                        }
+                        break;
+                }
+                AddLog(State = "Audio initialised");
+                setupState = SetupState.AudioInitialised;
+            }
+            else
+                MessageBox.Show("Missing audio source configuration, see 'Audio Sources' tab.", "Configuration Missing", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
         }
 
         private void SetupWhisper()
         {
-            if (Pipeline == null)
-                SetupRendezVous();
-            Pipeline.Log("Vad and Whisper initialization");
-            //disable ui
-            DataFormular.IsEnabled = false;
-            //Method process audio, vad, Whisper
-            audioProcess.StartWhisperPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
-
-            //Pipeline.RunPipeline();
-            //Pipeline.AddProcess(KinectStreams.GenerateProcess());
-            //WhipserPipeline.RunAsync();
-            State = "Running";
+            if (setupState >= SetupState.WhisperInitialised)
+                return;
+            if (isWhisper && audioManager != null)
+            {
+                whisperConfiguration.OnModelDownloadProgressHandler = (obj, message) =>
+                    {
+                        if (isMessageBoxOpen)
+                            return;
+                        lock (this)
+                        {
+                            isMessageBoxOpen = true; 
+                            MessageBox.Show(message.Item2, message.Item1.ToString(), MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                            isMessageBoxOpen = false;
+                        }
+                    };
+                try
+                {
+                    if (isStreaming)
+                    {
+                        var remoteWhisper = new SAAC.WhisperRemoteServices.WhiperRemoteComponent(rendezVousPipeline, vadConfiguration, whisperConfiguration, remoteConfiguration, null, transcriptionManager is null ? null : transcriptionManager.GetDelegate(), internalLog);
+                        remoteWhisper.SetupWhisperAudioProcessing(audioManager.GetDictonaryIdAudioStream(), remoteConfiguration.RendezVousApplicationName, localStoringMode);
+                        whisperAudioProcessing = remoteWhisper;
+                    }
+                    else
+                    {
+                        whisperAudioProcessing = new WhisperAudioProcessing(pipeline, vadConfiguration, whisperConfiguration, transcriptionManager is null ? null : transcriptionManager.GetDelegate(), internalLog);
+                        if (IsLocalRecording && localStoringMode > WhisperAudioProcessing.LocalStorageMode.None)
+                        {
+                            Session session;
+                            if (!GetLocalSession(out localDataset, out session))
+                            {
+                                AddLog(State = "Whisper initialised Failed");
+                                AddLog("Unable to create session.");
+                                return;
+                            }
+                            whisperAudioProcessing.SetupUsersWhisper(audioManager.GetDictonaryIdAudioStream(), ref session, LocalDatasetPath, localStoringMode);
+                            localDataset.Save();
+                        }
+                        else
+                            whisperAudioProcessing.SetupUsersWhisper(audioManager.GetDictonaryIdAudioStream());
+                    }
+                    AddLog(State = "Whisper initialised");
+                    setupState = SetupState.WhisperInitialised;
+                }
+                catch (Exception ex)
+                {
+                    AddLog(State = "Whisper initialised Failed");
+                    AddLog($"Error setting up Whisper: {ex.Message}");
+                    MessageBox.Show("Unable to setup Whisper with the current configuration. Please check the settings in 'Whisper' tab.", "Whisper setup error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                }
+            }
         }
 
-        private void ButtonStartAudioRecording(object sender, RoutedEventArgs e)
+        private bool GetLocalDataset(out Dataset dataset)
         {
-            audioProcess.StartAudioPipeline(Pipeline, PipelineConfiguration, int.Parse(connectedUser));
+            try
+            {
+                string fullPath = Path.Combine(LocalDatasetPath, LocalDatasetName);
+                if (File.Exists(fullPath))
+                    dataset = Dataset.Load(fullPath, true);
+                else
+                    dataset = new Dataset(Path.GetFileNameWithoutExtension(LocalDatasetName), fullPath, true);
+                dataset.Save();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Error opening/creating local dataset: {ex.Message}");
+                MessageBox.Show("Unable to create or open the local dataset. Please change the Dataset fields in 'Local Recording' tab", "Dataset error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                dataset = null;
+                return false;
+            }
+            return true;
         }
+
+        private bool GetLocalSession(out Dataset dataset, out Session session)
+        {
+            if (!GetLocalDataset(out dataset))
+            {
+                session = null;
+                return false;
+            }
+            if (dataset.Sessions.Where((s) => { return s.Name == LocalSessionName; }).Count() > 0)
+            {
+                session = null;
+                MessageBox.Show("Unable to create session. Please change the Session Name in 'Local Recording' tab", "Session error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                return false;
+            }
+            session = dataset.AddEmptySession(LocalSessionName);
+            dataset.Save();
+            return true;
+        }
+
+        private void AddLog(string logMessage)
+        {
+            Log += $"{logMessage}\n";
+        }
+
         private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             TextBox? log = sender as TextBox;
@@ -303,75 +681,413 @@ namespace WhisperRemoteApp
             log.CaretIndex = log.Text.Length;
             log.ScrollToEnd();
         }
-        private void StopPipeline()
+
+        private void Stop()
         {
-            // Stop correctly the everything.
-            State = "Stopping";
-            
-            Pipeline.Dataset?.Save();
-            if (Pipeline != null)
+            AddLog(State = "Stopping");
+            localDataset?.Save();
+            transcriptionManager?.WriteTranscription(Path.Combine(TranscriptionPathTextBox.Text, TranscriptionFilenameTextBox.Text));
+            rendezVousPipeline?.RemoveProcess(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);
+            rendezVousPipeline?.Stop();
+            audioManager?.Stop();
+            whisperAudioProcessing?.Stop();
+            pipeline?.Dispose();
+            Application.Current.Shutdown();
+        }
+
+        private void StartNetwork()
+        {
+            SetupPipeline();
+            if (setupState == SetupState.PipelineInitialised)
             {
-                Pipeline.Stop();
+                BtnStartNet.IsEnabled = false;
+                pipeline?.RunAsync();
+                AddLog(State = "Waiting for server");
             }
         }
 
-        private void StopWhisper()
+        private void Start()
         {
-            State = "Stopping Whisper";
-            if (Pipeline != null)
-            {
-                if(!Pipeline.RemoveProcess(ApplicationName))
-                    Console.WriteLine("error remove rendezvous");
-                try
-                {
-                    Pipeline.Dispose();
-                }
-                catch(Exception ex) 
-                {
-                    Console.WriteLine(ex.ToString());
-                }
-            }
-        }
-
-        protected void OnRestart()
-        {
-            StopWhisper();
-            RefreshUIFromConfiguration();
+            SetupTranscription();
+            SetupPipeline();
+            SetupAudioSources();
             SetupWhisper();
+            if (setupState == SetupState.WhisperInitialised)
+            {
+                BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
+                Run();
+                AddLog(State = "Started");
+            }
+        }
+
+        private void Run()
+        {
+            if (rendezVousPipeline is null)
+            { 
+                if (selectedAudioSource != AudioSource.Microphones)
+                {
+                    pipeline?.RunAsync(ReplayDescriptor.ReplayAllRealTime);
+                    pipeline?.PipelineCompleted += MainWindow_PipelineCompleted;
+
+                }
+                else
+                    pipeline?.RunAsync();
+            }
+            else
+                rendezVousPipeline.Start();
+        }
+
+        private void MainWindow_PipelineCompleted(object sender, PipelineCompletedEventArgs e)
+        {
+            switch(selectedAudioSource)
+            {
+                case AudioSource.Microphones:
+                    GetMicrophonesConfiguration();
+                    break;
+                case AudioSource.WaveFiles:
+                    MessageBox.Show("Processing from wavefile(s) completed. \nYou can Quit the application.", "Processing completed", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                    break;
+                case AudioSource.Dataset:
+                    MessageBox.Show("Processing from dataset completed. \nYou can Quit the application.", "Processing completed", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                    break;
+            }
+
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                AddLog(State = "Precssing complete");
+            }));
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            StopPipeline();
-            RefreshConfigurationFromUI();
+            Stop();
             base.OnClosing(e);
-        }
-
-        private void BtnQuitClick(object sender, RoutedEventArgs e)
-        {
-            StopPipeline();
-            Close();
         }
 
         private void BtnStartRendezVous(object sender, RoutedEventArgs e)
         {
-            State = "Initializing RendezVous";
-            RefreshConfigurationFromUI();
-            SetupRendezVous();
+            StartNetwork();
+            e.Handled = true;
         }
 
         private void BtnStartAll(object sender, RoutedEventArgs e)
         {
-            State = "Initializing Kinect";
-            RefreshConfigurationFromUI();
-            SetupWhisper();
+            Start();
+            e.Handled = true;
         }
 
-        private void BtnStopClick(object sender, RoutedEventArgs e)
+        private void BtnQuitClick(object sender, RoutedEventArgs e)
         {
-            StopWhisper();
-            DataFormular.IsEnabled = true;
-            RendezVousGrid.IsEnabled = true;
+            Close();
+            e.Handled = true;
+        }
+
+        private void BtnLoadConfiguration(object sender, RoutedEventArgs e)
+        {
+            RefreshUIFromConfiguration();
+            AddLog(State = "Configuration Loaded");
+            e.Handled = true;
+        }
+
+        private void BtnSaveConfiguration(object sender, RoutedEventArgs e)
+        {
+            RefreshConfigurationFromUI();
+            AddLog(State = "Configuration Saved");
+            e.Handled = true;
+        }
+
+        private void AudioSourceSelected(object sender, RoutedEventArgs e)
+        {
+            MicrophonesGroupBox.Visibility = WavFilesGroupBox.Visibility = AudioSourceDatasetGroupBox.Visibility = Visibility.Collapsed;
+            switch (AudioSourceComboBox.SelectedIndex)
+            {
+                case 0:
+                    selectedAudioSource = AudioSource.Microphones;
+                    MicrophonesGroupBox.Visibility = Visibility.Visible;
+                    GeneralNetworkActivationCheckbox.IsEnabled = GeneralNetworkStreamingCheckBox.IsEnabled = NetworkActivationCheckbox.IsEnabled = true;
+            break;
+                case 1:
+                    selectedAudioSource = AudioSource.WaveFiles;
+                    WavFilesGroupBox.Visibility = Visibility.Visible;
+                    GeneralNetworkStreamingCheckBox.IsChecked = GeneralNetworkActivationCheckbox.IsChecked = NetworkActivationCheckbox.IsChecked = GeneralNetworkStreamingCheckBox.IsEnabled = GeneralNetworkActivationCheckbox.IsEnabled = NetworkActivationCheckbox.IsEnabled =  false;
+                    break;
+                case 2:
+                    selectedAudioSource = AudioSource.Dataset;
+                    AudioSourceDatasetGroupBox.Visibility = Visibility.Visible;
+                    GeneralNetworkStreamingCheckBox.IsChecked = GeneralNetworkActivationCheckbox.IsChecked = NetworkActivationCheckbox.IsChecked = GeneralNetworkStreamingCheckBox.IsEnabled = GeneralNetworkActivationCheckbox.IsEnabled = NetworkActivationCheckbox.IsEnabled = false;
+                    break;
+            }
+
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void BtnRefreshMicrophones(object sender, RoutedEventArgs e)
+        {
+            GetMicrophonesConfiguration();
+            MicrophonesGrid.RowDefinitions.RemoveRange(2, MicrophonesGrid.RowDefinitions.Count - 3);
+            foreach(UIElement element in MicrophonesGrid.Children)
+            {
+                if (element is Grid)
+                {
+                    Grid grid = element as Grid;
+                    grid.Children.RemoveRange(0, grid.Children.Count);
+                }
+            }
+            MicrophonesGrid.Children.RemoveRange(3, MicrophonesGrid.Children.Count - 4);
+            GenerateMicrophonesGrid();
+            e.Handled = true;
+        }
+
+        private void BtnAddWavFile(object sender, RoutedEventArgs e)
+        {
+            AddWavFile();
+            e.Handled = true;
+        }
+
+        private void AddWavFile()
+        {
+            UiGenerator.AddRowsDefinitionToGrid(WaveFilesGrid, GridLength.Auto, 1);
+            int position = WaveFilesGrid.RowDefinitions.Count - 1;
+            TextBox waveFileTextBox = UiGenerator.GeneratePathTextBox(300.0, $"WaveFile_{position}");
+            UiGenerator.SetElementInGrid(WaveFilesGrid, waveFileTextBox, 0, WaveFilesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(WaveFilesGrid, UiGenerator.GenerateBrowseFilenameButton("Browse", waveFileTextBox, "Wave (*.wav)|*.wav"), 1, WaveFilesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(WaveFilesGrid, UiGenerator.GenerateButton("Remove", (sender, e) => { UiGenerator.RemoveRowInGrid(WaveFilesGrid, position); e.Handled = true; }), 2, WaveFilesGrid.RowDefinitions.Count - 1);
+        }
+
+        private void AudioSourceDatasetButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Dataset (*.pds)|*.pds";
+            if (openFileDialog.ShowDialog() == true)
+                AudioSourceDatasetPath = openFileDialog.FileName;
+        }
+
+        private void BtnAudioSourceOpenDataset(object sender, RoutedEventArgs e)
+        {
+            AudioSourceDatasetStreamsGrid.Children.Clear();
+            Dataset dataset = Dataset.Load(AudioSourceDatasetPath);
+            foreach (Session session in dataset.Sessions)
+            {
+                if (audioSourceSessionName != null && session.Name != audioSourceSessionName)
+                    continue;
+                foreach (var partition in session.Partitions)
+                {
+                    foreach (var streamMetadata in partition.AvailableStreams)
+                    {
+                        if (typeof(AudioBuffer) != Type.GetType(streamMetadata.TypeName))
+                            continue;
+                        GenerateAudioSourceDatasetRowStream(streamMetadata.Name);
+                    }
+                }
+            }
+            e.Handled = true;
+        }
+
+        private void GenerateAudioSourceDatasetRowStream(string streamName)
+        {
+            UiGenerator.AddRowsDefinitionToGrid(AudioSourceDatasetStreamsGrid, GridLength.Auto, 1);
+            UiGenerator.SetElementInGrid(AudioSourceDatasetStreamsGrid, UiGenerator.GenerateCheckBox(streamName, false, null, streamName), 0, AudioSourceDatasetStreamsGrid.RowDefinitions.Count - 1);
+        }
+
+        private void CkbActivateNetwork(object sender, RoutedEventArgs e)
+        {
+            UpdateNetworkTab();
+            e.Handled = true;
+        }
+
+        private void CkbActivateStreaming(object sender, RoutedEventArgs e)
+        {
+            UpdateStreamingPortRangeStartTextBox();
+            e.Handled = true;
+        }
+
+        private void CkbActivateWhisper(object sender, RoutedEventArgs e)
+        {
+            UpdateWhisperTab();
+            e.Handled = true;
+        }
+
+        private void CkbActivateLocalRecording(object sender, RoutedEventArgs e)
+        {
+            UpdateLocalRecordingTab();
+            e.Handled = true;
+        }
+
+        private void RendezVousHostSelected(object sender, RoutedEventArgs e)
+        {
+            PipelineConfigurationUI.RendezVousHost = IPsList.ElementAt(RendezVousHostComboBox.SelectedIndex);
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void WhisperLanguageSelected(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            if (WhisperConfigurationUI.Language == (SAAC.Whisper.Language)LanguageComboBox.SelectedIndex)
+                return;
+            var results = availableRecongnisers.Where(info => info.Culture.TwoLetterISOLanguageName == whisperToVadLanguageConfiguration[(SAAC.Whisper.Language)LanguageComboBox.SelectedIndex]);
+            if (results.Count() == 0)
+            {
+                MessageBox.Show("Unable to find matching Windows recognition grammar for the selected Whisper language. Please install it first.", "Language selection", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                VadConfigurationUI.Language = System.Globalization.CultureInfo.CurrentCulture.Name;
+                LanguageComboBox.SelectedIndex = (int)WhisperConfigurationUI.Language;
+            }
+            else
+            {
+                WhisperConfigurationUI.Language = (SAAC.Whisper.Language)LanguageComboBox.SelectedIndex;
+                if (results.Count() > 1)
+                {
+                    var dialog = new CultureInfoWindow(results.ToList());
+                    if (dialog.ShowDialog() == true)
+                        VadConfigurationUI.Language = dialog.SelectedCulture;
+                    else
+                        LanguageComboBox.SelectedIndex = (int)WhisperConfigurationUI.Language;
+                }
+                else
+                    VadConfigurationUI.Language = results.First().Culture.Name;
+            }
+
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void WhisperModelSelected(object sender, RoutedEventArgs e)
+        {
+            WhisperConfigurationUI.ModelType = (Whisper.net.Ggml.GgmlType)WhisperModelComboBox.SelectedIndex;
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void WhisperQuantitzationSelected(object sender, RoutedEventArgs e)
+        {
+            WhisperConfigurationUI.QuantizationType = (Whisper.net.Ggml.QuantizationType)WhisperQuantizationComboBox.SelectedIndex;
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void TranscriptionPathButtonClick(object sender, RoutedEventArgs e)
+        {
+            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                TranscriptionPathTextBox.Text = openFileDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void LocalRecordingDatasetDirectoryButtonClick(object sender, RoutedEventArgs e)
+        {
+            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
+            if (openFileDialog.ShowDialog() == true)
+            { 
+                LocalDatasetPath = openFileDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void LocalRecordingDatasetNameButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Dataset (*.pds)|*.pds";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LocalDatasetPath = openFileDialog.FileName.Substring(0, openFileDialog.FileName.IndexOf(openFileDialog.SafeFileName));
+                LocalDatasetName = openFileDialog.SafeFileName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void WhisperModelDirectoryButtonClick(object sender, RoutedEventArgs e)
+        {
+            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                WhisperModelDirectoryTextBox.Text = WhisperConfigurationUI.ModelDirectory = openFileDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }  
+        }
+
+        private void WhisperLibrairyPathButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Librairy (*.dll)|*.dll";
+            if (openFileDialog.ShowDialog() == true)
+            { 
+                WhisperConfigurationUI.LibrairyPath = openFileDialog.FileName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void LocalStoringModeChecked(object sender, RoutedEventArgs e)
+        {
+            RadioButton button = (RadioButton)sender;
+            switch(button.Name)
+            {
+                case "LocalStoringModeAudio":
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.AudioOnly;
+                    break;
+
+                case "LocalStoringModeVADSTT":
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.VAD_STT;
+                    break;
+
+                case "LocalStoringModeAll":
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.All;
+                    break;
+            }
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void GetMicrophonesConfiguration()
+        {
+            audioSoucesSetup.Clear();
+            foreach (UIElement gridElement in MicrophonesGrid.Children)
+            {
+                if (gridElement is Grid)
+                {
+                    Grid? grid = gridElement as Grid;
+                    foreach (UIElement element in grid?.Children)
+                    {
+                        if (element is TextBox)
+                        {
+                            TextBox? inputText = element as TextBox;
+                            if (inputText is null || inputText.Text.Length < 1)
+                                continue;
+                            string[] micAndChannel = inputText.Name.Split('_');
+                            int micId;
+                            int.TryParse(micAndChannel[0].Substring(1), out micId);
+                            int channel;
+                            int.TryParse(micAndChannel[1], out channel);
+                            audioSoucesSetup.Add(new User(inputText.Text, micsList.ElementAt(micId).Item1, channel));
+                        }
+                    }
+                }   
+            }
+        }
+
+        private void GetWaveFilesConfiguration()
+        {
+            audioSoucesSetup.Clear();
+            foreach (UIElement element in WaveFilesGrid.Children)
+            {
+                if (element is TextBox)
+                {
+                    TextBox? inputText = element as TextBox;
+                    if (inputText is null || inputText.Text.Length < 1)
+                        continue;
+                    audioSoucesSetup.Add(new User(inputText.Text, inputText.Text, 1));
+                }
+            }
+        }
+
+        private void GetAudioSourceStreamConfiguration()
+        {
+            audioSoucesSetup.Clear();
+            foreach (UIElement gridElement in AudioSourceDatasetStreamsGrid.Children)
+            {
+                if (gridElement is CheckBox)
+                {
+                    CheckBox? checkBox = gridElement as CheckBox;
+                    if (checkBox != null && checkBox.IsChecked == true)
+                        audioSoucesSetup.Add(new User(checkBox.Name, checkBox.Name, 1));
+                }
+            }
         }
     }
 }

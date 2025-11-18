@@ -20,7 +20,7 @@ namespace LabStreamLayer
 
         private Pipeline pipeline;
 
-        internal LabStreamLayerComponent(Pipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength) 
+        internal LabStreamLayerComponent(ref Pipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength) 
         {
             StreamInfo = info;
             input = producer;

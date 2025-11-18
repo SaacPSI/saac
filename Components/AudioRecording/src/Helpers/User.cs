@@ -2,12 +2,15 @@ namespace SAAC.AudioRecording
 {
     public class User
     {
-        public int id;
-        public Microphone microphone;
-        public User(int i, Microphone mic)
+        public string Id { get; private set; }
+        public string Microphone { get; private set; }
+        public int Channel { get; private set; }
+
+        public User(string id, string microphone, int channel)
         {
-            id = i;
-            microphone = mic;
+            Id = id;
+            Microphone = microphone;
+            Channel = channel;
         }
     }
 }
