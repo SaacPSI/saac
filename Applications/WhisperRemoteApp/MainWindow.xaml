@@ -257,27 +257,75 @@
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Grid.Column="0" Content="Language :" FontWeight="Bold"/>
-                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Path=WhisperLanguageList}" SelectionChanged="WhisperLanguageSelected" Name="LanguageComboBox" />
-                            <Label Grid.Row="1" Grid.Column="0" Content="Model :" FontWeight="Bold"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Path=WhisperModelsList}" SelectionChanged="WhisperModelSelected" Name="WhisperModelComboBox"/>
-                            <Label Grid.Row="2" Grid.Column="0" Content="Quantization :" FontWeight="Bold"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Path=WhisperQuantizationList}" SelectionChanged="WhisperQuantitzationSelected" Name="WhisperQuantizationComboBox"/>
-                            <Label Grid.Row="3" Grid.Column="0" Content="Model Directory :" FontWeight="Bold"/>
-                            <GroupBox Grid.Row="3" Grid.Column="1" Margin="-5,-5,-5,-5">
+                            <Label Grid.Row="0" Grid.Column="0" Content="Model Type :" FontWeight="Bold"/>
+                            <GroupBox Grid.Row="0" Grid.Column="1" Margin="5">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="50"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0" TextWrapping="Wrap" Text="{Binding Path=WhisperConfigurationUI.ModelDirectory}" Name="WhisperModelDirectoryTextBox"/>
-                                    <Button Grid.Column="1" Content="Browse" Name="WhisperModelDirectoryButton" Click="WhisperModelDirectoryButtonClick"/>
+                                    <RadioButton Grid.Column="0" Content="Generic" GroupName="WhisperModelGroup" Name="WhisperModelGeneric" Checked="WhisperModelChecked"/>
+                                    <RadioButton Grid.Column="1" Content="Specific" GroupName="WhisperModelGroup" Name="WhisperModelSpecific" Checked="WhisperModelChecked"/>
                                 </Grid>
                             </GroupBox>
-                            <Label Grid.Row="4" Grid.Column="0" Content="Librairy Directory :" FontWeight="Bold"/>
-                            <GroupBox Grid.Row="4" Grid.Column="1" Margin="-5,-5,-5,-5">
+                            <Label Grid.Row="1" Grid.Column="0" Content="Language :" FontWeight="Bold"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Path=WhisperLanguageList}" SelectionChanged="WhisperLanguageSelected" Name="LanguageComboBox" />
+                            <GroupBox Grid.Row="2" Grid.ColumnSpan="2" Margin="5" Name="WhipserGenericModelConfiguration">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Model :" FontWeight="Bold"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Path=WhisperModelsList}" SelectionChanged="WhisperModelSelected" Name="WhisperModelComboBox"/>
+                                    <Label Grid.Row="2" Grid.Column="0" Content="Quantization :" FontWeight="Bold"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Path=WhisperQuantizationList}" SelectionChanged="WhisperQuantitzationSelected" Name="WhisperQuantizationComboBox"/>
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Model Directory :" FontWeight="Bold"/>
+                                    <GroupBox Grid.Row="3" Grid.Column="1" Margin="-5,-5,-5,-5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="50"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" TextWrapping="Wrap" Text="{Binding Path=WhisperConfigurationUI.ModelDirectory}" Name="WhisperModelDirectoryTextBox"/>
+                                            <Button Grid.Column="1" Content="Browse" Name="WhisperModelDirectoryButton" Click="WhisperModelDirectoryButtonClick"/>
+                                        </Grid>
+                                    </GroupBox>
+                                </Grid>
+                            </GroupBox>
+                            <GroupBox Grid.Row="2" Grid.ColumnSpan="2" Margin="5" Name="WhipserSpecificModelConfiguration">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Specifc Model Directory :" FontWeight="Bold"/>
+                                    <GroupBox Grid.Row="3" Grid.Column="1" Margin="-5,-5,-5,-5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="50"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" TextWrapping="Wrap" Text="{Binding Path=WhisperConfigurationUI.SpecificModelPath}" Name="WhisperModelSpecficPathTextBox"/>
+                                            <Button Grid.Column="1" Content="Browse" Name="WhisperModelSpecificPathButton" Click="WhisperModelSpecificPathButtonClick"/>
+                                        </Grid>
+                                    </GroupBox>
+                                </Grid>
+                            </GroupBox>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Whipser Librairy :" FontWeight="Bold"/>
+                            <GroupBox Grid.Row="3" Grid.Column="1" Margin="-5,-5,-5,-5">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>

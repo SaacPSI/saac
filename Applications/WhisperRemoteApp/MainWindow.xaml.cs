@@ -305,6 +305,9 @@ namespace WhisperRemoteApp
             UiGenerator.SetTextBoxPreviewTextChecker<int>(VadBabbleTimeoutTextBox, int.TryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(VadEndSilenceTimeoutAmbiguousTextBox, int.TryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(VadEndSilenceTimeoutTextBox, int.TryParse);
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperModelDirectoryTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperModelSpecficPathTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperLibrairyPathTextBox, UiGenerator.UriTryParse);
         }
 
         private void SetupLocalRecordingTab()
@@ -320,7 +323,8 @@ namespace WhisperRemoteApp
             foreach (UIElement networkUIElement in NetworkGrid.Children)
                 if (!(networkUIElement is CheckBox))
                     networkUIElement.IsEnabled = isRemoteServer;
-            NetworkStreamingCheckBox.IsEnabled = isRemoteServer;
+            isStreaming = isRemoteServer ? isStreaming : false;
+            GeneralNetworkStreamingCheckBox.IsEnabled = NetworkStreamingCheckBox.IsEnabled = isRemoteServer;
             if (isRemoteServer)
                 UpdateStreamingPortRangeStartTextBox();
         } 
@@ -395,12 +399,20 @@ namespace WhisperRemoteApp
             VadConfigurationUI.BabbleTimeoutMs = Properties.Settings.Default.VadBabbleTimeout;
             VadConfigurationUI.EndSilenceTimeoutAmbiguousMs = Properties.Settings.Default.VadEndSilenceTimeoutAmbigous;
             VadConfigurationUI.EndSilenceTimeoutMs = Properties.Settings.Default.VadEndSilenceTimeout;
+            VadConfigurationUI.Language = Properties.Settings.Default.VadLanguage; 
 
             LanguageComboBox.SelectedIndex = Properties.Settings.Default.WhisperLanguage;
             WhisperModelComboBox.SelectedIndex = Properties.Settings.Default.WhisperModelType;
             WhisperQuantizationComboBox.SelectedIndex = Properties.Settings.Default.WhisperQuantizationType;
             WhisperModelDirectoryTextBox.Text = Properties.Settings.Default.WhisperModelDirectory;
             WhisperLibrairyPathTextBox.Text = Properties.Settings.Default.WhipserLibrairyPath;
+            if(Properties.Settings.Default.WhisperSpecificModelPath.Length > 0)
+                WhisperConfigurationUI.SpecificModelPath = WhisperModelSpecficPathTextBox.Text = Properties.Settings.Default.WhisperSpecificModelPath;
+           
+            if (Properties.Settings.Default.WhipserModelType)
+                WhisperModelSpecific.IsChecked = true;
+            else
+                WhisperModelGeneric.IsChecked = true;
 
             //LocalRecording Tab
             IsLocalRecording = Properties.Settings.Default.IsLocalRecording;
@@ -445,12 +457,15 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.VadBabbleTimeout = VadConfigurationUI.BabbleTimeoutMs;
             Properties.Settings.Default.VadEndSilenceTimeoutAmbigous = VadConfigurationUI.EndSilenceTimeoutAmbiguousMs;
             Properties.Settings.Default.VadEndSilenceTimeout = VadConfigurationUI.EndSilenceTimeoutMs;
+            Properties.Settings.Default.VadLanguage = VadConfigurationUI.Language;
 
             Properties.Settings.Default.WhisperLanguage = LanguageComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperModelType = WhisperModelComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperQuantizationType = WhisperQuantizationComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperModelDirectory = WhisperConfigurationUI.ModelDirectory;
             Properties.Settings.Default.WhipserLibrairyPath = WhisperConfigurationUI.LibrairyPath;
+            Properties.Settings.Default.WhisperSpecificModelPath = WhisperModelSpecficPathTextBox.Text;
+            Properties.Settings.Default.WhipserModelType = (bool)WhisperModelGeneric.IsChecked;
 
             // Local Recording Tab
             Properties.Settings.Default.IsLocalRecording = IsLocalRecording;
@@ -922,8 +937,8 @@ namespace WhisperRemoteApp
         private void WhisperLanguageSelected(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
-            if (WhisperConfigurationUI.Language == (SAAC.Whisper.Language)LanguageComboBox.SelectedIndex)
-                return;
+            //if (WhisperConfigurationUI.Language == (SAAC.Whisper.Language)LanguageComboBox.SelectedIndex)
+            //    return;
             var results = availableRecongnisers.Where(info => info.Culture.TwoLetterISOLanguageName == whisperToVadLanguageConfiguration[(SAAC.Whisper.Language)LanguageComboBox.SelectedIndex]);
             if (results.Count() == 0)
             {
@@ -993,6 +1008,22 @@ namespace WhisperRemoteApp
             }
         }
 
+        private void WhisperModelChecked(object sender, RoutedEventArgs e)
+        {
+            RadioButton button = (RadioButton)sender;
+            if (button.Name.Contains("Generic"))
+            {
+                WhipserGenericModelConfiguration.Visibility = Visibility.Visible;
+                WhipserSpecificModelConfiguration.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                WhipserGenericModelConfiguration.Visibility = Visibility.Collapsed;
+                WhipserSpecificModelConfiguration.Visibility = Visibility.Visible;
+            }
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
         private void WhisperModelDirectoryButtonClick(object sender, RoutedEventArgs e)
         {
             UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
@@ -1010,6 +1041,17 @@ namespace WhisperRemoteApp
             if (openFileDialog.ShowDialog() == true)
             { 
                 WhisperConfigurationUI.LibrairyPath = openFileDialog.FileName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void WhisperModelSpecificPathButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Binary (*.bin)|*.bin";
+            if (openFileDialog.ShowDialog() == true)
+            { 
+                WhisperConfigurationUI.SpecificModelPath = WhisperModelSpecficPathTextBox.Text = openFileDialog.FileName;
                 BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
             }
         }

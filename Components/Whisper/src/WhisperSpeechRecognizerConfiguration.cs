@@ -6,8 +6,10 @@ using Whisper.net;
 
 namespace SAAC.Whisper
 {
-    public sealed class WhisperSpeechRecognizerConfiguration 
-    { 
+    public sealed class WhisperSpeechRecognizerConfiguration
+    {
+        public string? SpecificModelPath { get; set; } = null;
+
         public string ModelDirectory { get; set; } = "";
 
         public string LibrairyPath { get; set; } = "./whisper.dll";

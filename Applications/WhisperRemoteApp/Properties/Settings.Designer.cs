@@ -346,5 +346,41 @@ namespace WhisperRemoteApp.Properties {
                 this["AudioSourceType"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool WhipserModelType {
+            get {
+                return ((bool)(this["WhipserModelType"]));
+            }
+            set {
+                this["WhipserModelType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WhisperSpecificModelPath {
+            get {
+                return ((string)(this["WhisperSpecificModelPath"]));
+            }
+            set {
+                this["WhisperSpecificModelPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("FR-fr")]
+        public string VadLanguage {
+            get {
+                return ((string)(this["VadLanguage"]));
+            }
+            set {
+                this["VadLanguage"] = value;
+            }
+        }
     }
 }
