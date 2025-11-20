@@ -12,8 +12,6 @@ namespace SAAC.Whisper
 
         public string ModelDirectory { get; set; } = "";
 
-        public string LibrairyPath { get; set; } = "./whisper.dll";
-
         public GgmlType ModelType { get; set; } = GgmlType.Medium;
 
         public QuantizationType QuantizationType { get; set; } = QuantizationType.Q5_1;

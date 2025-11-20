@@ -277,18 +277,6 @@ namespace WhisperRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("./whisper.dll")]
-        public string WhipserLibrairyPath {
-            get {
-                return ((string)(this["WhipserLibrairyPath"]));
-            }
-            set {
-                this["WhipserLibrairyPath"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string LocalSessionName {
             get {

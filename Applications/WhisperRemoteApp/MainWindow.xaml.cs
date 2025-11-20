@@ -307,7 +307,6 @@ namespace WhisperRemoteApp
             UiGenerator.SetTextBoxPreviewTextChecker<int>(VadEndSilenceTimeoutTextBox, int.TryParse);
             UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperModelDirectoryTextBox, UiGenerator.UriTryParse);
             UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperModelSpecficPathTextBox, UiGenerator.UriTryParse);
-            UiGenerator.SetTextBoxOutFocusChecker<Uri>(WhisperLibrairyPathTextBox, UiGenerator.UriTryParse);
         }
 
         private void SetupLocalRecordingTab()
@@ -405,7 +404,6 @@ namespace WhisperRemoteApp
             WhisperModelComboBox.SelectedIndex = Properties.Settings.Default.WhisperModelType;
             WhisperQuantizationComboBox.SelectedIndex = Properties.Settings.Default.WhisperQuantizationType;
             WhisperModelDirectoryTextBox.Text = Properties.Settings.Default.WhisperModelDirectory;
-            WhisperLibrairyPathTextBox.Text = Properties.Settings.Default.WhipserLibrairyPath;
             if(Properties.Settings.Default.WhisperSpecificModelPath.Length > 0)
                 WhisperConfigurationUI.SpecificModelPath = WhisperModelSpecficPathTextBox.Text = Properties.Settings.Default.WhisperSpecificModelPath;
            
@@ -463,7 +461,6 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.WhisperModelType = WhisperModelComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperQuantizationType = WhisperQuantizationComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperModelDirectory = WhisperConfigurationUI.ModelDirectory;
-            Properties.Settings.Default.WhipserLibrairyPath = WhisperConfigurationUI.LibrairyPath;
             Properties.Settings.Default.WhisperSpecificModelPath = WhisperModelSpecficPathTextBox.Text;
             Properties.Settings.Default.WhipserModelType = (bool)WhisperModelGeneric.IsChecked;
 
@@ -1032,17 +1029,6 @@ namespace WhisperRemoteApp
                 WhisperModelDirectoryTextBox.Text = WhisperConfigurationUI.ModelDirectory = openFileDialog.ResultName;
                 BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
             }  
-        }
-
-        private void WhisperLibrairyPathButtonClick(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Librairy (*.dll)|*.dll";
-            if (openFileDialog.ShowDialog() == true)
-            { 
-                WhisperConfigurationUI.LibrairyPath = openFileDialog.FileName;
-                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
-            }
         }
 
         private void WhisperModelSpecificPathButtonClick(object sender, RoutedEventArgs e)
