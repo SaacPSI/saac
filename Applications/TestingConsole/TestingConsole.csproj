@@ -17,9 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
-    <ProjectReference Include="..\..\Components\InteropExtension\InteropExtension.csproj" />
-    <ProjectReference Include="..\..\Components\LabStreamLayer\LabStreamLayer.csproj" />
-    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
+    <ProjectReference Include="..\..\Components\Ollama\Ollama.csproj" />
   </ItemGroup>
 
   <ItemGroup>

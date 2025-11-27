@@ -1,57 +1,84 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
+using OllamaSharp;
 
 namespace SAAC.Ollama
 {
     public class OllamaConnector : IConsumerProducer<string, string>
     { 
-        public Receiver<string> In { get; private set; }
+        public Receiver<string> In { get; }
 
-        public Emitter<string> Out { get; private set; }
+        public Emitter<string> Out { get; }
 
         private OllamaConectorConfiguration Configuration;
         private OllamaApiClient Ollama;
-        private ConversationContextWithResponse? Context;
+        private Chat Chat;
         private string name;
+        private bool isChat;
 
-        public OllamaConnector(Pipeline parent, OllamaConectorConfiguration configuration, string name = nameof(OllamaConnector))
+        public OllamaConnector(Pipeline parent, OllamaConectorConfiguration configuration, bool isChatting, string name = nameof(OllamaConnector))
         {
+            isChat = isChatting;
             this.name = name;
             Configuration = configuration ?? new OllamaConectorConfiguration();
             In = parent.CreateReceiver<string>(parent, Process, $"{name}-In");
             Out = parent.CreateEmitter<string>(parent, $"{name}-Out");
 
             Ollama = new OllamaApiClient(Configuration.OllamaAddress);
-            Context = null;
-            LoadOllamaModel(Configuration.Model);
+            Ollama.SelectedModel = Configuration.Model;
+            Chat = new Chat(Ollama);
         }
 
         /// <inheritdoc/>
         public override string ToString() => this.name;
 
-        private void Process(string message, Envelope envelope) 
+        static public List<string> GetAvailableModel(Uri address)
         {
-            _ = Task.Run(() => StreamOllama(message, envelope).ConfigureAwait(true));
+            var ollama = new OllamaApiClient(address);
+            List<string> availableModels = new List<string>();
+            var result = ollama.ListLocalModelsAsync().Result;
+            foreach (var model in result)
+                availableModels.Add(model.Name);
+            return availableModels;
         }
 
-        private async Task<DateTime> StreamOllama(string message, Envelope envelope)
+        private void Process(string message, Envelope envelope) 
+        {
+            if (isChat)
+                _ = Task.Run(() => StreamChatToOllama(message, envelope).ConfigureAwait(true));
+            else
+                _ = Task.Run(() => StreamSingleToOllama(message, envelope).ConfigureAwait(true));
+        }
+        private async Task<DateTime> StreamChatToOllama(string message, Envelope envelope)
+        {
+            try
+            {
+                string response = "";
+                await foreach (var answerToken in Chat.SendAsync(message))
+                    response += answerToken;
+                Out.Post(response, envelope.OriginatingTime);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return envelope.OriginatingTime;
+        }
+
+        private async Task<DateTime> StreamSingleToOllama(string message, Envelope envelope)
         {
             try 
             {
-                Context = await Ollama.GetCompletion(message, Configuration.Model, Context);
-                Out.Post(Context.Response, envelope.OriginatingTime);
+                string response = "";
+                await foreach (var answerToken in Ollama.GenerateAsync(message))
+                    response += answerToken;
+                Out.Post(response, envelope.OriginatingTime);
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message); 
             }
             return envelope.OriginatingTime;
-        }
-
-        private async Task<DateTime> LoadOllamaModel(string model)
-        {
-            await Ollama.PullModel(model, status => Console.WriteLine($"({status.Percent}%) {status.Status}"));
-            return Out.Pipeline.GetCurrentTime();
         }
     }
 }

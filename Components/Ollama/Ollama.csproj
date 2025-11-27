@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
+    <PackageReference Include="OllamaSharp" Version="5.4.11" />
     <PackageReference Include="System.Net.Http.Json" Version="9.0.0-preview.2.24128.5" />
   </ItemGroup>
 

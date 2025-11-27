@@ -1,6 +1,6 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Interop.Rendezvous;
+//using Microsoft.Psi.Interop.Rendezvous;
 //using WebRTC;
 using Microsoft.Psi.Imaging;
 //using Microsoft.Psi.AzureKinect;
@@ -14,17 +14,17 @@ using SAAC;
 //using SAAC.Bodies;
 using System.Text;
 //using SAAC.Groups;
-using Microsoft.Psi.Interop.Serialization;
-using Microsoft.Psi.Interop.Transport;
-using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
-using System.IO;
-using SAAC.PipelineServices;
-using SAAC.Helpers;
-using static SAAC.PipelineServices.RendezVousPipeline;
+//using Microsoft.Psi.Interop.Serialization;
+//using Microsoft.Psi.Interop.Transport;
+//using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
+//using System.IO;
+//using SAAC.PipelineServices;
+//using SAAC.Helpers;
+//using static SAAC.PipelineServices.RendezVousPipeline;
 using System.Windows;
 //using PLUME;
-//using SAAC.Ollama;
-using SAAC.LabStreamLayer;
+using SAAC.Ollama;
+//using SAAC.LabStreamLayer;
 using static LSL.liblsl;
 
 namespace TestingConsole
@@ -205,15 +205,19 @@ namespace TestingConsole
         //    });
         //}
 
-        //static void testOllama(Pipeline p)
-        //{
-        //    OllamaConectorConfiguration config = new OllamaConectorConfiguration();
-        //    OllamaConnector ollama = new OllamaConnector(p, config);
-        //    KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
+        static void testOllama()
+        {
+            Pipeline p = Pipeline.Create();
+            OllamaConectorConfiguration config = new OllamaConectorConfiguration();
+            config.OllamaAddress = new Uri("http://localhost:11434");
+            config.Model = "gemma3:1b";
+            OllamaConnector ollama = new OllamaConnector(p, config, true);
+            KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
-        //    reader.Out.PipeTo(ollama.In);
-        //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
-        //}
+            reader.Out.PipeTo(ollama.In);
+            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+            p.Run();
+        }
 
         //static void testGroups(Pipeline p)
         //{
@@ -396,7 +400,7 @@ namespace TestingConsole
         //    configuration.RendezVousHost = "127.0.0.1";
 
         //    configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-           
+
         //    RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
         //    pipeline.Start();
@@ -408,10 +412,10 @@ namespace TestingConsole
         //}
 
 
-        static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
-        {
-            Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
-        }
+        //static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        //{
+        //    Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
+        //}
 
         public class Reporter : System.IProgress<double>
         {
@@ -435,103 +439,105 @@ namespace TestingConsole
         //}
         static void Main(string[] args)
         {
-            Pipeline pw = Pipeline.Create();
-            Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
-            websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
-            {
-                Console.WriteLine($"New WebSocket connected: {e.Item1}:{e.Item2}");
-                Emitter<string> emitter = pw.CreateEmitter<string>(pw, "emitter");
-                WebSocketWriter<string>? writer = websocketManager.CreateWebsocketWriter<string>(pw, SAAC.PsiFormats.PsiFormatString.GetFormat(), e.Item1, e.Item2, "testw");
-                emitter.PipeTo(writer);
-                pw.RunAsync();
-                emitter.Post("hello", pw.GetCurrentTime());
-            };
-            websocketManager.Start((e) => { });
-            Console.ReadLine();
-            return;
-            Random rnd = new Random();
-            // create stream info and outlet
-            StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
-            StreamOutlet outlet = new StreamOutlet(info);
-            float[] data = new float[8];
-            Thread thread = new Thread(() =>
-            {
-                Console.WriteLine("LSL Outlet started...");
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                    // generate random data and send it
-                    for (int k = 0; k < data.Length; k++)
-                        data[k] = rnd.Next(-100, 100);
-                    outlet.push_sample(data);
-                    Console.WriteLine($"PTime : {DateTime.UtcNow}");
-                }
-            });
+            testOllama();
+            //Pipeline pw = Pipeline.Create();
 
-            Pipeline p = Pipeline.Create();
-            LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);
-            manager.Start();
-            Console.ReadLine();
-            LabStreamLayerComponent<float>? TEST = manager.LabStreamComponents.First().Value as LabStreamLayerComponent<float>;
-            
-            TEST?.Out.Do((m, e) => { Console.WriteLine($"Data @ {e.OriginatingTime}"); });
-
-            p.RunAsync();
-            thread.Start();
-            Console.ReadLine();
-            return;
-            //PlumeSample();
+            //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
+            //websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
+            //{
+            //    Console.WriteLine($"New WebSocket connected: {e.Item1}:{e.Item2}");
+            //    Emitter<string> emitter = pw.CreateEmitter<string>(pw, "emitter");
+            //    WebSocketWriter<string>? writer = websocketManager.CreateWebsocketWriter<string>(pw, SAAC.PsiFormats.PsiFormatString.GetFormat(), e.Item1, e.Item2, "testw");
+            //    emitter.PipeTo(writer);
+            //    pw.RunAsync();
+            //    emitter.Post("hello", pw.GetCurrentTime());
+            //};
+            //websocketManager.Start((e) => { });
+            //Console.ReadLine();
             //return;
+            //Random rnd = new Random();
+            //// create stream info and outlet
+            //StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
+            //StreamOutlet outlet = new StreamOutlet(info);
+            //float[] data = new float[8];
+            //Thread thread = new Thread(() =>
+            //{
+            //    Console.WriteLine("LSL Outlet started...");
+            //    while (true)
+            //    {
+            //        Thread.Sleep(1000);
+            //        // generate random data and send it
+            //        for (int k = 0; k < data.Length; k++)
+            //            data[k] = rnd.Next(-100, 100);
+            //        outlet.push_sample(data);
+            //        Console.WriteLine($"PTime : {DateTime.UtcNow}");
+            //    }
+            //});
 
-            //ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
-            //replayConfig.AutomaticPipelineRun = false;
-            //replayConfig.DatasetBackup = true;
-            //replayConfig.DatasetPath = @"D:\Stores\SAAC\";
-            //replayConfig.DatasetName = "SAAC.pds";
-            //replayConfig.ProgressReport = new Reporter();
+            //Pipeline p = Pipeline.Create();
+            //LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);
+            //manager.Start();
+            //Console.ReadLine();
+            //LabStreamLayerComponent<float>? TEST = manager.LabStreamComponents.First().Value as LabStreamLayerComponent<float>;
 
-            //ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
-            //replayPipeline.LoadDatasetAndConnectors();
+            //TEST?.Out.Do((m, e) => { Console.WriteLine($"Data @ {e.OriginatingTime}"); });
 
-            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
-            configuration.Debug = true;
-            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "localhost";
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            //p.RunAsync();
+            //thread.Start();
+            //Console.ReadLine();
+            //return;
+            ////PlumeSample();
+            ////return;
 
-            // Topics to receive from Unity
-            // do a all-in management of streams
-            configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
-            configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
-            configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
-            
+            ////ReplayPipelineConfiguration replayConfig = new ReplayPipelineConfiguration();
+            ////replayConfig.AutomaticPipelineRun = false;
+            ////replayConfig.DatasetBackup = true;
+            ////replayConfig.DatasetPath = @"D:\Stores\SAAC\";
+            ////replayConfig.DatasetName = "SAAC.pds";
+            ////replayConfig.ProgressReport = new Reporter();
 
-            // Instantiate the class that manage the RendezVous system and the pipeline execution?
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
+            ////ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
+            ////replayPipeline.LoadDatasetAndConnectors();
 
-            // Register an action when receive the incoming connection from Unity
-            //rdvPipeline.AddNewProcessEvent(OnNewProcess);
+            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            //configuration.AutomaticPipelineRun = true;
+            //configuration.Debug = true;
+            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            //configuration.DatasetName = "RendezVousPipeline.pds";
+            //configuration.RendezVousHost = "localhost";
+            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
 
-            // Start the rendezVous and the pipeline
-            rdvPipeline.Start();
+            //// Topics to receive from Unity
+            //// do a all-in management of streams
+            //configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            //configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            //configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
 
-            Console.WriteLine("Press any key to send RUN command to Unity.");
-            Console.ReadLine();
-            rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
-            //replayPipeline.RunPipelineAndSubpipelines();
 
-            Console.WriteLine("Press any key to send STOP command to Unity.");
-            Console.ReadLine();
-            rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
+            //// Instantiate the class that manage the RendezVous system and the pipeline execution?
+            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
 
-            // Waiting for an out key to Stop
-            Console.WriteLine("Press any key to stop the application.");
-            Console.ReadLine();
-            rdvPipeline.Stop();
-            //replayPipeline.Stop();
+            //// Register an action when receive the incoming connection from Unity
+            ////rdvPipeline.AddNewProcessEvent(OnNewProcess);
+
+            //// Start the rendezVous and the pipeline
+            //rdvPipeline.Start();
+
+            //Console.WriteLine("Press any key to send RUN command to Unity.");
+            //Console.ReadLine();
+            //rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
+            ////replayPipeline.RunPipelineAndSubpipelines();
+
+            //Console.WriteLine("Press any key to send STOP command to Unity.");
+            //Console.ReadLine();
+            //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
+
+            //// Waiting for an out key to Stop
+            //Console.WriteLine("Press any key to stop the application.");
+            //Console.ReadLine();
+            //rdvPipeline.Stop();
+            ////replayPipeline.Stop();
         }
     }
 }
