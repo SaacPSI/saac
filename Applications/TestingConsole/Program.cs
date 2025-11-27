@@ -435,7 +435,20 @@ namespace TestingConsole
         //}
         static void Main(string[] args)
         {
-
+            Pipeline pw = Pipeline.Create();
+            Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
+            websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
+            {
+                Console.WriteLine($"New WebSocket connected: {e.Item1}:{e.Item2}");
+                Emitter<string> emitter = pw.CreateEmitter<string>(pw, "emitter");
+                WebSocketWriter<string>? writer = websocketManager.CreateWebsocketWriter<string>(pw, SAAC.PsiFormats.PsiFormatString.GetFormat(), e.Item1, e.Item2, "testw");
+                emitter.PipeTo(writer);
+                pw.RunAsync();
+                emitter.Post("hello", pw.GetCurrentTime());
+            };
+            websocketManager.Start((e) => { });
+            Console.ReadLine();
+            return;
             Random rnd = new Random();
             // create stream info and outlet
             StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");

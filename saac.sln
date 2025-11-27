@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11217.181 d18.0
+VisualStudioVersion = 18.0.11217.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Components", "Components", "{D2F89990-8127-4341-A73F-9B035978187A}"
 EndProject
@@ -130,6 +130,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhisperRemoteServices", "Components\WhisperRemoteServices\WhisperRemoteServices.csproj", "{E5ECA787-FCA9-7090-949D-C06AFB76CFFA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhisperHelpers", "Components\WhisperHelpers\WhisperHelpers.csproj", "{8187324B-9B58-DA34-07EF-6E16C311105B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropExtension", "Components\InteropExtension\InteropExtension.csproj", "{A8FAF2AF-D928-42FA-8486-031F9717346A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -443,6 +445,14 @@ Global
 		{8187324B-9B58-DA34-07EF-6E16C311105B}.Release|Any CPU.Build.0 = Release|x64
 		{8187324B-9B58-DA34-07EF-6E16C311105B}.Release|x64.ActiveCfg = Release|x64
 		{8187324B-9B58-DA34-07EF-6E16C311105B}.Release|x64.Build.0 = Release|x64
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Debug|x64.Build.0 = Debug|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Release|x64.ActiveCfg = Release|Any CPU
+		{A8FAF2AF-D928-42FA-8486-031F9717346A}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -493,6 +503,7 @@ Global
 		{EE1989FE-64FF-C846-5935-AC8309FEB8A6} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{E5ECA787-FCA9-7090-949D-C06AFB76CFFA} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{8187324B-9B58-DA34-07EF-6E16C311105B} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{A8FAF2AF-D928-42FA-8486-031F9717346A} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

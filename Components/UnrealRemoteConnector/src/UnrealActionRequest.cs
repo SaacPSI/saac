@@ -87,6 +87,4 @@ namespace SAAC.RemoteConnectors
             }
         }
     }
-
-
 }
