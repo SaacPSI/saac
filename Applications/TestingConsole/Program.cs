@@ -215,7 +215,7 @@ namespace TestingConsole
             KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
             reader.Out.PipeTo(ollama.In);
-            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m}"); });
+            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m} \n>"); });
             p.Run();
         }
 

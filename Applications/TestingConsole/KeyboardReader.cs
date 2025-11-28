@@ -39,7 +39,7 @@ namespace KeyboardReader
 
         private void CaptureThreadProc()
         {
-            Console.WriteLine("Ready to send text!");
+            Console.WriteLine(">");
             while (!this.shutdown)
             {
                 var message = Console.ReadLine();
