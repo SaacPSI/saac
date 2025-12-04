@@ -311,7 +311,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="auto"/>
                                     </Grid.RowDefinitions>
-                                    <Label Grid.Row="3" Grid.Column="0" Content="Specifc Model Directory :" FontWeight="Bold"/>
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Specific Model Directory :" FontWeight="Bold"/>
                                     <GroupBox Grid.Row="3" Grid.Column="1" Margin="-5,-5,-5,-5">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
