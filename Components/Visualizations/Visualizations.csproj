@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\Groups\Groups.csproj" />
   </ItemGroup>   
     <ItemGroup>

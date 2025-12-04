@@ -18,14 +18,17 @@ using System.Text;
 //using Microsoft.Psi.Interop.Transport;
 //using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
 //using System.IO;
-//using SAAC.PipelineServices;
+using SAAC.PipelineServices;
 //using SAAC.Helpers;
 //using static SAAC.PipelineServices.RendezVousPipeline;
 using System.Windows;
+using SAAC.GlobalHelpers;
+using SAAC.Helpers;
+using MathNet.Spatial.Euclidean;
 //using PLUME;
-using SAAC.Ollama;
+//using SAAC.Ollama;
 //using SAAC.LabStreamLayer;
-using static LSL.liblsl;
+//using static LSL.liblsl;
 
 namespace TestingConsole
 {
@@ -205,19 +208,19 @@ namespace TestingConsole
         //    });
         //}
 
-        static void testOllama()
-        {
-            Pipeline p = Pipeline.Create();
-            OllamaConectorConfiguration config = new OllamaConectorConfiguration();
-            config.OllamaAddress = new Uri("http://localhost:11434");
-            config.Model = "gemma3:1b";
-            OllamaConnector ollama = new OllamaConnector(p, config, true);
-            KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
+        //static void testOllama()
+        //{
+        //    Pipeline p = Pipeline.Create();
+        //    OllamaConectorConfiguration config = new OllamaConectorConfiguration();
+        //    config.OllamaAddress = new Uri("http://localhost:11434");
+        //    config.Model = "gemma3:1b";
+        //    OllamaConnector ollama = new OllamaConnector(p, config, true);
+        //    KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
-            reader.Out.PipeTo(ollama.In);
-            ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m} \n>"); });
-            p.Run();
-        }
+        //    reader.Out.PipeTo(ollama.In);
+        //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m} \n>"); });
+        //    p.Run();
+        //}
 
         //static void testGroups(Pipeline p)
         //{
@@ -439,7 +442,7 @@ namespace TestingConsole
         //}
         static void Main(string[] args)
         {
-            testOllama();
+            //testOllama();
             //Pipeline pw = Pipeline.Create();
 
             //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
@@ -499,30 +502,36 @@ namespace TestingConsole
             ////ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
             ////replayPipeline.LoadDatasetAndConnectors();
 
-            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            //configuration.AutomaticPipelineRun = true;
-            //configuration.Debug = true;
-            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            //configuration.DatasetName = "RendezVousPipeline.pds";
-            //configuration.RendezVousHost = "localhost";
-            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            configuration.AutomaticPipelineRun = true;
+            configuration.Debug = false;
+            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.RendezVousHost = "localhost";
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            configuration.CommandPort = 0;
 
-            //// Topics to receive from Unity
-            //// do a all-in management of streams
-            //configuration.AddTopicFormatAndTransformer("Champignon", typeof(System.Numerics.Vector3), new PsiFormatVector3());
-            //configuration.AddTopicFormatAndTransformer("Boletus", typeof(System.Numerics.Vector3), new PsiFormatVector3());
-            //configuration.AddTopicFormatAndTransformer("Amanita", typeof(System.Numerics.Vector3), new PsiFormatVector3());
+            // Topics to receive from Unity
+            // do a all-in management of streams
 
+            configuration.AddTopicFormatAndTransformer("Left", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Right", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            configuration.AddTopicFormatAndTransformer("Hand-Left", typeof(Hand), new PsiFormatHand());
+            configuration.AddTopicFormatAndTransformer("Hand-Right", typeof(Hand), new PsiFormatHand());
+            configuration.AddTopicFormatAndTransformer("EyeTracking", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector(), typeof(TupleOfVectorToRay));
+            configuration.AddTopicFormatAndTransformer("GazeEvent", typeof(GazeEvent), new PsiFormatGazeEvent());
+            configuration.AddTopicFormatAndTransformer("GrabEvent", typeof(GrabEvent), new PsiFormatGrabEvent());
 
-            //// Instantiate the class that manage the RendezVous system and the pipeline execution?
-            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
+            // Instantiate the class that manage the RendezVous system and the pipeline execution?
+            RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
 
-            //// Register an action when receive the incoming connection from Unity
-            ////rdvPipeline.AddNewProcessEvent(OnNewProcess);
+            // Register an action when receive the incoming connection from Unity
+            //rdvPipeline.AddNewProcessEvent(OnNewProcess);
 
-            //// Start the rendezVous and the pipeline
-            //rdvPipeline.Start();
+            // Start the rendezVous and the pipeline
+            rdvPipeline.Start();
 
             //Console.WriteLine("Press any key to send RUN command to Unity.");
             //Console.ReadLine();
@@ -530,14 +539,28 @@ namespace TestingConsole
             ////replayPipeline.RunPipelineAndSubpipelines();
 
             //Console.WriteLine("Press any key to send STOP command to Unity.");
-            //Console.ReadLine();
+            Console.ReadLine();
+            Pipeline p = Pipeline.Create();
+            IProducer<Ray3D> et = rdvPipeline.Connectors["Unity"]["EyeTracking"].CreateBridge<Ray3D>(p);
+            IProducer<CoordinateSystem> head = rdvPipeline.Connectors["Unity"]["Head"].CreateBridge<CoordinateSystem>(p);
+        
+            et.Out.Pair(head).Do((tuple, en) => { calcDist(tuple); });
+            p.RunAsync();
             //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
-            //// Waiting for an out key to Stop
-            //Console.WriteLine("Press any key to stop the application.");
-            //Console.ReadLine();
-            //rdvPipeline.Stop();
-            ////replayPipeline.Stop();
+            // Waiting for an out key to Stop
+            Console.WriteLine("Press any key to stop the application.");
+            Console.ReadLine();
+            rdvPipeline.Dispose();
+            //replayPipeline.Stop();
         }
+
+        static void calcDist((Ray3D, CoordinateSystem) values)
+        {
+            Vector3D diff = values.Item2.OffsetToBase - values.Item1.ThroughPoint.ToVector3D();
+            Console.WriteLine($"diff: {diff.X}\t{diff.Y}\t{diff.Z}\t");
+            //Console.WriteLine($"euler: {values.Item1.Direction.X}\t{values.Item1.Direction.Y}\t{values.Item1.Direction.Z}\t");
+        }
+
     }
 }

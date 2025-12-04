@@ -111,6 +111,7 @@ namespace SAAC.PipelineServices
                     client.Dispose();
             this.clients.Clear();
             this.listener.Stop();
+            this.listener.Server.Close();
         }
 
         private void Listen()

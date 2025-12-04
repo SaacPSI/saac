@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
-    <ProjectReference Include="..\..\Components\Ollama\Ollama.csproj" />
+    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,7 +23,19 @@ namespace SAAC.Helpers
 
         public void Process(Tuple<Vector3, Vector3> data, Envelope envelope)
         {
-            Out.Post(new Ray3D(new Point3D(data.Item1.X, data.Item1.Y, data.Item1.Z), UnitVector3D.Create(data.Item2.X, data.Item2.Y, data.Item2.Z)), envelope.OriginatingTime);
+            Out.Post(new Ray3D(new Point3D(data.Item1.X, data.Item1.Y, data.Item1.Z), EulerAnglesToForwardVector(data.Item2)), envelope.OriginatingTime);
+        }
+
+        public static MathNet.Spatial.Euclidean.UnitVector3D EulerAnglesToForwardVector(System.Numerics.Vector3 eulerAngles)
+        {
+            var pitch = eulerAngles.X * System.Math.PI / 180.0;
+            var yaw = eulerAngles.Y * System.Math.PI / 180.0;
+
+            var x = System.Math.Sin(yaw) * System.Math.Cos(pitch);
+            var y = -System.Math.Sin(pitch);
+            var z = System.Math.Cos(yaw) * System.Math.Cos(pitch);
+
+            return new MathNet.Spatial.Euclidean.Vector3D(x, y, z).Normalize();
         }
     }
 }
