@@ -1,8 +1,11 @@
 ﻿using Microsoft.Psi;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Data;
+using System.IO;
 using System.Numerics;
+using System.Windows;
 using System.Windows.Media.Animation;
+//using SaaCPsiStudio.src;
 
 namespace SAAC.PipelineServices
 {
@@ -15,10 +18,12 @@ namespace SAAC.PipelineServices
         public bool isPipelineEnded = false;
         public DateTime sameValueTime = DateTime.MinValue;
         public double sameValue = 0;
-        public progressChecker(RendezVousPipeline pipeline, ReplayPipeline replayPipeline)
+        public List<TextWriter> streamsWriters = new List<TextWriter>();
+        public progressChecker(ReplayPipeline replayPipeline, List<TextWriter> writers, RendezVousPipeline? pipeline = null)
         {
             rdvP = pipeline;
             replayP = replayPipeline;
+            streamsWriters = writers;
             this.AppStatusIn = replayPipeline.Pipeline.CreateReceiver<DateTime>(this, ReceiverMessage, nameof(this.AppStatusIn));
             //this.AppStatusOut = replayPipeline.Pipeline.CreateEmitter<string>(this, nameof(this.AppStatusOut));
         }
@@ -30,32 +35,34 @@ namespace SAAC.PipelineServices
 
         public void Report(double value)
         {
-            //Console.WriteLine($"TEST_1_Value {value} && Pipeline Ended {isPipelineEnded}");
-
             if (isPipelineEnded) return;
-            
-            //Console.WriteLine($"TEST_1_Value {value}");
 
             if (replayP.Pipeline.GetCurrentTime() >= sameValueTime.AddMilliseconds(10000) && value == lastValue)
             {
-                //Console.WriteLine($"TEST_2_Value {value} = lastValue {lastValue}");
                 if(value == sameValue)
                 {
-                    //Console.WriteLine($"TEST_3_Value {value} = sameValue {sameValue}");
-                    rdvP.Dataset.Save();
+                    //replayP.TriggerNewProcessEvent("EndSession");
+
+                    foreach (var writer in streamsWriters)
+                    {
+                        CloseAndDisposeWriter(writer);
+                    }
+                    Console.WriteLine("Writer are closed and Session is ended");
+
+                    if(rdvP != null) rdvP.Dataset.Save();
                     replayP.Dataset.Save();
 
                     try
                     {
-                        rdvP?.Stop();
-                        replayP?.Stop();
-                        rdvP.Dispose();
+                        if (rdvP != null) rdvP?.Stop();
+                        //replayP?.Stop();
+                        if (rdvP != null) rdvP.Dispose();
                         replayP.Dispose();
                     }
-                    catch { }
+                    catch {  }
+                    System.Environment.Exit(0);
                     isPipelineEnded = true;
                     Console.WriteLine("Pipeline Ended");
-                    //System.Environment.Exit(1);
                 }
 
                 sameValueTime = replayP.Pipeline.GetCurrentTime();
@@ -69,6 +76,20 @@ namespace SAAC.PipelineServices
             lastValue = value;
 
             //Console.WriteLine($"Progress: {value}");
+        }
+        public void CloseAndDisposeWriter(TextWriter writer)
+        {
+            StreamWriter streamWriter = (StreamWriter)writer;
+            if (writer == null) return;
+            if (streamWriter.BaseStream.CanWrite)
+            {
+                try { writer.Flush(); }
+                catch (ObjectDisposedException) { Console.WriteLine($"TextWriter {writer.ToString()} Flush exception"); }
+                try { writer.Close(); }
+                catch (ObjectDisposedException) { Console.WriteLine($"TextWriter {writer.ToString()} Close exception"); }
+                try { writer.Dispose(); }
+                catch (ObjectDisposedException) { Console.WriteLine($"TextWriter {writer.ToString()} Dispose exception"); }
+            }
         }
 
         public void GetEmitter(Emitter<string> emitter)

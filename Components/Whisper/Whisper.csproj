@@ -32,8 +32,4 @@
         <PackageReference Include="Whisper.net.Runtime.Cuda.Windows" Version="1.8.1" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\..\..\CollaborationAnalysisFramework\Components\Speech\SpeechProcess\SpeechProcess.csproj" />
-    </ItemGroup>
-
 </Project>

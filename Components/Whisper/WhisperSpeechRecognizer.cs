@@ -15,7 +15,6 @@ using Microsoft.Psi;
 using Microsoft.Psi.Audio;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Speech;
-using SpeechProcess;
 using Whisper.net;
 using Whisper.net.Ggml;
 using static System.Net.Mime.MediaTypeNames;
@@ -1001,6 +1000,37 @@ namespace SAAC.Whisper
             }
         }
     }
-    
 
+    [System.Serializable]
+    public class SpeakerEnergyProfile
+    {
+        private readonly Queue<double> history = new Queue<double>();
+        private readonly int maxSamples;
+
+        public SpeakerEnergyProfile(int maxSamples = 300)
+        {
+            this.maxSamples = maxSamples;
+        }
+
+        public void AddSample(double logEnergy)
+        {
+            if (history.Count >= maxSamples)
+                history.Dequeue();
+            history.Enqueue(logEnergy);
+        }
+
+        public double Percentile90
+        {
+            get
+            {
+                if (!history.Any()) return 0;
+                var queue = history.DeepClone();
+                var sorted = queue.OrderBy(x => x).ToList();
+                int index = (int)(0.8 * (sorted.Count - 1));
+                return sorted[index];
+            }
+        }
+
+        public bool IsReady => history.Count >= 20;
+    }
 }

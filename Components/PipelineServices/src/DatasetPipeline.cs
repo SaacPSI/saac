@@ -242,12 +242,12 @@ namespace SAAC.PipelineServices
         {
             base.Dispose();
             subpipelines.Clear();
-            if (!OwningPipeline)
+            /*if (!OwningPipeline)
             {
                 Log($"{name} does not own Pipeline, it cannot be dispose from here.");
                 return;
             }
-            Pipeline?.Dispose();
+            Pipeline?.Dispose();*/
         }
 
     }
