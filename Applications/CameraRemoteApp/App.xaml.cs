@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace SAAC.KinectAzureRemoteApp
+namespace SAAC.CameraRemoteApp
 {
     /// <summary>
     /// Interaction logic for App.xaml

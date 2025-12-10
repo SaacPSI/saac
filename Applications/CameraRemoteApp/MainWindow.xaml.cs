@@ -15,7 +15,7 @@ using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Components;
 
-namespace KinectAzureRemoteApp
+namespace CameraRemoteApp
 {
 
     /// <summary>
