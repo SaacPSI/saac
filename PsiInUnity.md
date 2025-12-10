@@ -1,4 +1,4 @@
- Platform for Situated Intelligence in Unity
+# Platform for Situated Intelligence in Unity
 Dlls from build will not work as it, some modifications are needed for get it work in Unity (might work with version newer than 2022.1.23f). The solution comes from this issue:
 https://github.com/microsoft/psi/issues/263
 

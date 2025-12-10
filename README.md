@@ -11,8 +11,17 @@ Four folders:
 - Interop containing projects that wrapper of third part librairy see [Interop](Interop/README.md) for more details.
 - Dependencies containing third part librairies for interop wrappers.
 
+## Installation
+* Clone the \psi repo (fork)[https://github.com/SaacPSI/psi] and build the PsiStudio branch.
+* Psi nuget package will be output in builds/PsiPakages, add the folder in your nuget repository configuration.
+
+## Documents
+*[\psi in Unity](PsiInUnity.md)
+*[Remote Exporter Modification](RemoteExporterModification.md)
+*[PsiSutio modifications](PsiStudioModifications.md)
+
 ## Roadmap
-Developping components for interop with [Plume](https://github.com/liris-xr/PLUME-Python/tree/master/plume)
+Developping generic applications
 
 ## Project status
 In production.
