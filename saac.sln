@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.0.11217.181
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Components", "Components", "{D2F89990-8127-4341-A73F-9B035978187A}"
 EndProject
@@ -62,6 +62,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{9100B002-C
 		Components\Unity\src\Base\PsiImporter.cs = Components\Unity\src\Base\PsiImporter.cs
 		Components\Unity\src\Base\PsiPipelineManager.cs = Components\Unity\src\Base\PsiPipelineManager.cs
 		Components\Unity\src\Base\PsiSerializerReflexion.cs = Components\Unity\src\Base\PsiSerializerReflexion.cs
+		Components\PipelineServices\src\Helpers\TcpWriterMulti.cs = Components\PipelineServices\src\Helpers\TcpWriterMulti.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporters", "Exporters", "{FE0BD672-6853-4E38-B553-80C84C992E15}"
@@ -109,37 +110,39 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GlobalHelpers", "Components
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{8788DD89-F75B-4C7C-AFD6-E93532253076}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsiFormats", "Components\PsiFormats\PsiFormats.csproj", "{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsiFormats", "Components\PsiFormats\PsiFormats.csproj", "{922F9EC4-5D63-4C73-9DC3-D02DCEEB0AF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabStreamLayer", "Components\LabStreamLayer\LabStreamLayer.csproj", "{3F01903E-9FA4-4E70-5489-2D5F1491544B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LabStreamLayer", "Components\LabStreamLayer\LabStreamLayer.csproj", "{3F01903E-9FA4-4E70-5489-2D5F1491544B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioRecording", "Components\AudioRecording\AudioRecording.csproj", "{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AudioRecording", "Components\AudioRecording\AudioRecording.csproj", "{B7D862D7-DAD6-CB4A-F327-EE515097FC5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoRemoteApp", "Applications\VideoRemoteApp\VideoRemoteApp.csproj", "{F4A6045D-CF77-115D-332A-6526E753BE72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VideoRemoteApp", "Applications\VideoRemoteApp\VideoRemoteApp.csproj", "{F4A6045D-CF77-115D-332A-6526E753BE72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PLUME", "Components\PLUME\PLUME.csproj", "{F62C1640-677A-7829-3704-D7659AC74D3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLUME", "Components\PLUME\PLUME.csproj", "{F62C1640-677A-7829-3704-D7659AC74D3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlumeInterop", "Interop\PlumeInterop\PlumeInterop.csproj", "{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlumeInterop", "Interop\PlumeInterop\PlumeInterop.csproj", "{9F683FB9-7BA7-295A-CCC7-8EA49694AEF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhisperRemoteConnector", "Components\WhisperRemoteConnector\WhisperRemoteConnector.csproj", "{EE1989FE-64FF-C846-5935-AC8309FEB8A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhisperRemoteConnector", "Components\WhisperRemoteConnector\WhisperRemoteConnector.csproj", "{EE1989FE-64FF-C846-5935-AC8309FEB8A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhisperRemoteServices", "Components\WhisperRemoteServices\WhisperRemoteServices.csproj", "{E5ECA787-FCA9-7090-949D-C06AFB76CFFA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhisperRemoteServices", "Components\WhisperRemoteServices\WhisperRemoteServices.csproj", "{E5ECA787-FCA9-7090-949D-C06AFB76CFFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhisperHelpers", "Components\WhisperHelpers\WhisperHelpers.csproj", "{8187324B-9B58-DA34-07EF-6E16C311105B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhisperHelpers", "Components\WhisperHelpers\WhisperHelpers.csproj", "{8187324B-9B58-DA34-07EF-6E16C311105B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropExtension", "Components\InteropExtension\InteropExtension.csproj", "{A8FAF2AF-D928-42FA-8486-031F9717346A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InteropExtension", "Components\InteropExtension\InteropExtension.csproj", "{A8FAF2AF-D928-42FA-8486-031F9717346A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skinetic", "Components\Skinetic\Skinetic.csproj", "{C8281CEC-BDC0-7A41-0318-3E850F34EA15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skinetic", "Components\Skinetic\Skinetic.csproj", "{C8281CEC-BDC0-7A41-0318-3E850F34EA15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gestures", "Components\Gestures\Gestures.csproj", "{9ED60EC1-37E4-4DA5-B071-D24B92A93A0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gestures", "Components\Gestures\Gestures.csproj", "{9ED60EC1-37E4-4DA5-B071-D24B92A93A0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuitrackRemoteConnector", "Components\NuitrackRemoteConnector\NuitrackRemoteConnector.csproj", "{5EA04E1C-6969-17B4-6486-F701FCB48871}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuitrackRemoteConnector", "Components\NuitrackRemoteConnector\NuitrackRemoteConnector.csproj", "{5EA04E1C-6969-17B4-6486-F701FCB48871}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuitrackRemoteServices", "Components\NuitrackRemoteServices\NuitrackRemoteServices.csproj", "{BC9916AF-E89D-7754-EEE3-D6B3612FD941}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuitrackRemoteServices", "Components\NuitrackRemoteServices\NuitrackRemoteServices.csproj", "{BC9916AF-E89D-7754-EEE3-D6B3612FD941}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectRemoteServices", "Components\KinectRemoteServices\KinectRemoteServices.csproj", "{6E209DF9-0B78-CF84-B801-5DC93AF4B1AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KinectRemoteServices", "Components\KinectRemoteServices\KinectRemoteServices.csproj", "{6E209DF9-0B78-CF84-B801-5DC93AF4B1AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraRemoteApp", "Applications\CameraRemoteApp\CameraRemoteApp.csproj", "{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CameraRemoteApp", "Applications\CameraRemoteApp\CameraRemoteApp.csproj", "{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Casper_Gathering", "Applications\Casper_Gathering\Casper_Gathering\Casper_Gathering.csproj", "{054A84AB-C758-444E-ACCC-4F460A6308EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -493,6 +496,14 @@ Global
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|Any CPU.Build.0 = Release|x64
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|x64.ActiveCfg = Release|x64
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|x64.Build.0 = Release|x64
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Debug|x64.ActiveCfg = Debug|x64
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Debug|x64.Build.0 = Debug|x64
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Release|x64.ActiveCfg = Release|x64
+		{054A84AB-C758-444E-ACCC-4F460A6308EC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -548,6 +559,7 @@ Global
 		{BC9916AF-E89D-7754-EEE3-D6B3612FD941} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{6E209DF9-0B78-CF84-B801-5DC93AF4B1AA} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{054A84AB-C758-444E-ACCC-4F460A6308EC} = {6E0AB730-7080-4E97-865C-A21250A4567F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
