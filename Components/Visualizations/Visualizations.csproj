@@ -16,6 +16,7 @@
 	  <AssemblyName>$(MSBuildProjectName)</AssemblyName>
 	  <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Msagl.WpfGraphControl" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />

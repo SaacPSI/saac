@@ -17,6 +17,7 @@ This project contains vizualations for PsiStudio. In order to work it need as nu
 * [Simplified Body Visualization Object](src/VisualizationObjects/SimplifiedBodyVisualizationObject.cs)
 * [Simplified Flock Group Dictionnary Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupDictionnaryVisualisationObject.cs)
 * [Simplified Flock Group Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupVisualisationObject.cs)
+* [Social Graph XY Visualization Object](src/VisualizationObjects/SocialGraphXYVisualizationObject.cs)
 
 ## Curent issues
 
