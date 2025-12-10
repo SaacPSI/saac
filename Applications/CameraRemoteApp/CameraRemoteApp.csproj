@@ -16,6 +16,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Components\KinectAzureRemoteServices\KinectAzureRemoteServices.csproj" />
+    <ProjectReference Include="..\..\Components\KinectRemoteServices\KinectRemoteServices.csproj" />
+    <ProjectReference Include="..\..\Components\NuitrackRemoteServices\NuitrackRemoteServices.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="nuitrack.net">
+      <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

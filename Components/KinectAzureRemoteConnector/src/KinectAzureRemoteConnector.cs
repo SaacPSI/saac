@@ -19,6 +19,12 @@ namespace SAAC.RemoteConnectors
         /// </summary>
         public Emitter<Shared<EncodedImage>>? OutColorImage { get; private set; }
 
+
+        /// <summary>
+        /// Gets the emitter of color image.
+        /// </summary>
+        public Emitter<Shared<EncodedImage>>? OutInfraredImage { get; private set; }
+
         /// <summary>
         /// Gets the emitter of depth image.
         /// </summary>
@@ -60,6 +66,7 @@ namespace SAAC.RemoteConnectors
             OutDepthDeviceCalibrationInfo = null;
             OutAudio = null;
             OutIMU = null;
+            OutInfraredImage = null;
         }
 
         protected virtual Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
@@ -113,6 +120,11 @@ namespace SAAC.RemoteConnectors
                             else if (stream.StreamName.Contains("RGB"))
                             {
                                 OutColorImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
+                                break;
+                            }
+                            else if (stream.StreamName.Contains("Infrared"))
+                            {
+                                OutInfraredImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
                                 break;
                             }
                             else if (stream.StreamName.Contains("Depth"))

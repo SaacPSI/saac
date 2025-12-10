@@ -23,16 +23,13 @@ namespace SAAC.RemoteConnectors
         {
             int portCount = Configuration.StartingPort + 1;
 
-            AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
-            configKinect.DeviceIndex = Configuration.KinectDeviceIndex;
-            configKinect.ColorResolution = Configuration.VideoResolution;
-            configKinect.CameraFPS = Configuration.FPS;
-            if (Configuration.StreamSkeleton == true)
-                configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
-            Sensor = new AzureKinectSensor(ParentPipeline, configKinect);
+
+            if (Configuration.OutputBodies == true)
+                Configuration.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+            Sensor = new AzureKinectSensor(ParentPipeline, Configuration);
 
             List<Rendezvous.Endpoint> exporters = new List<Rendezvous.Endpoint>();
-            if (Configuration.StreamAudio == true)
+            if (Configuration.OutputAudio == true)
             {
                 AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
                 AudioCapture audioCapture = new AudioCapture(ParentPipeline, configuration);
@@ -40,31 +37,37 @@ namespace SAAC.RemoteConnectors
                 soundExporter.Exporter.Write(audioCapture.Out, $"{Configuration.RendezVousApplicationName}_Audio");
                 exporters.Add(soundExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
-            if (Configuration.StreamSkeleton == true)
+            if (Configuration.OutputBodies == true)
             {
                 RemoteExporter skeletonExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 skeletonExporter.Exporter.Write(Sensor.Bodies, $"{Configuration.RendezVousApplicationName}_Bodies");
                 exporters.Add(skeletonExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
-            if (Configuration.StreamVideo == true)
+            if (Configuration.OutputColor == true)
             {
                 RemoteExporter imageExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 imageExporter.Exporter.Write(Sensor.ColorImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"{Configuration.RendezVousApplicationName}_RGB");
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
-            if (Configuration.StreamDepth == true)
+            if (Configuration.OutputInfrared == true)
+            {
+                RemoteExporter imageExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
+                imageExporter.Exporter.Write(Sensor.InfraredImage.EncodeJpeg(Configuration.EncodingVideoLevel), $"{Configuration.RendezVousApplicationName}_Infrared");
+                exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
+            }
+            if (Configuration.OutputDepth == true)
             {
                 RemoteExporter depthExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 depthExporter.Exporter.Write(Sensor.DepthImage.EncodePng(), $"{Configuration.RendezVousApplicationName}_Depth");
                 exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
-            if (Configuration.StreamDepthCalibration == true)
+            if (Configuration.OutputCalibration == true)
             {
                 RemoteExporter depthCalibrationExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 depthCalibrationExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, $"{Configuration.RendezVousApplicationName}_Calibration");
                 exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(Configuration.IpToUse));
             }
-            if (Configuration.StreamIMU == true)
+            if (Configuration.OutputImu == true)
             {
                 RemoteExporter imuExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 imuExporter.Exporter.Write(Sensor.Imu, $"{Configuration.RendezVousApplicationName}_IMU");

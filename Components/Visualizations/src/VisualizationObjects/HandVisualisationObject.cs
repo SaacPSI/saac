@@ -11,7 +11,7 @@ using MathNet.Spatial.Euclidean;
 namespace SAAC.Visualizations
 {
     /// <summary>
-    /// Implements a visualization object for simplified bodies.
+    /// Implements a visualization object for skeleton hands.
     /// </summary>
     [VisualizationObject("Hand")]
     public class HandVisualisationObject : ModelVisual3DValueVisualizationObject<Hand>

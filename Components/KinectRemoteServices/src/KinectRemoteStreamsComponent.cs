@@ -1,51 +1,45 @@
-﻿using Microsoft.Psi.Audio;
-using Microsoft.Psi.AzureKinect;
+﻿using Microsoft.Psi.Kinect;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Remoting;
 using Microsoft.Psi;
-using SAAC.RemoteConnectors;
 using SAAC.PipelineServices;
 using Microsoft.Psi.Imaging;
+using System.Collections.Generic;
 
 namespace SAAC.RemoteConnectors
 {
-    public class KinectAzureStreamsComponent
+    public class KinectStreamsComponent
     {
-        public KinectAzureRemoteStreamsConfiguration Configuration { get; private set; }
+        public KinectRemoteStreamsComponentConfiguration Configuration { get; private set; }
         public bool LocalStorage { get; private set; }
-        public AzureKinectSensor? Sensor { get; private set; }
+        public KinectSensor? Sensor { get; private set; }
         protected RendezVousPipeline server;
         protected Pipeline pipeline;
         private string name;
 
-        public KinectAzureStreamsComponent(RendezVousPipeline server, KinectAzureRemoteStreamsConfiguration? configuration = null, bool localStorage = true, string name = nameof(KinectAzureStreamsComponent))
+        public KinectStreamsComponent(RendezVousPipeline server, KinectRemoteStreamsComponentConfiguration? configuration = null, bool localStorage = true, string name = nameof(KinectStreamsComponent))
         {
             this.server = server;
             this.name = name;
             LocalStorage = localStorage;
-            Configuration = configuration ?? new KinectAzureRemoteStreamsConfiguration();
+            Configuration = configuration ?? new KinectRemoteStreamsComponentConfiguration();
         }
 
         public Rendezvous.Process GenerateProcess()
         {
             int portCount = Configuration.StartingPort + 1;
-
-            if (Configuration.OutputBodies == true)
-                Configuration.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
             pipeline = server.GetOrCreateSubpipeline(name);
-            Sensor = new AzureKinectSensor(pipeline, Configuration);
+            Sensor = new KinectSensor(pipeline, Configuration);
             var session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);
 
             List<Rendezvous.Endpoint> exporters = new List<Rendezvous.Endpoint>();
             if (Configuration.OutputAudio == true)
             {
                 string streamName = $"{Configuration.RendezVousApplicationName}_Audio";
-                AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
-                AudioCapture audioCapture = new AudioCapture(pipeline, configuration);
                 RemoteExporter soundExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
-                soundExporter.Exporter.Write(audioCapture.Out, streamName);
+                soundExporter.Exporter.Write(Sensor.Audio, streamName);
                 exporters.Add(soundExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}" , session, pipeline, audioCapture.GetType(), audioCapture.Out, LocalStorage);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.Audio.GetType(), Sensor.Audio, LocalStorage);
             }
             if (Configuration.OutputBodies == true)
             {
@@ -64,11 +58,11 @@ namespace SAAC.RemoteConnectors
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
                 server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, compressed.GetType(), compressed.Out, LocalStorage);
             }
-            if (Configuration.OutputInfrared == true)
+            if (Configuration.OutputRGBD == true)
             {
-                string streamName = $"{Configuration.RendezVousApplicationName}_Infrared";
+                string streamName = $"{Configuration.RendezVousApplicationName}_RGBD";
                 RemoteExporter imageExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
-                var compressed = Sensor.InfraredImage.EncodeJpeg(Configuration.EncodingVideoLevel);
+                var compressed = Sensor.RGBDImage.EncodeJpeg(Configuration.EncodingVideoLevel);
                 imageExporter.Exporter.Write(compressed, streamName);
                 exporters.Add(imageExporter.ToRendezvousEndpoint(Configuration.IpToUse));
                 server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, compressed.GetType(), compressed.Out, LocalStorage);
@@ -82,21 +76,39 @@ namespace SAAC.RemoteConnectors
                 exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
                 server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, compressed.GetType(), compressed.Out, LocalStorage);
             }
+            if (Configuration.OutputInfrared == true)
+            {
+                string streamName = $"{Configuration.RendezVousApplicationName}_Infrared";
+                RemoteExporter depthExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
+                var compressed = Sensor.InfraredImage.EncodeJpeg(Configuration.EncodingVideoLevel);
+                depthExporter.Exporter.Write(compressed, streamName);
+                exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, compressed.GetType(), compressed.Out, LocalStorage);
+            }
+            if (Configuration.OutputLongExposureInfrared == true)
+            {
+                string streamName = $"{Configuration.RendezVousApplicationName}_LongExposureInfrared";
+                RemoteExporter depthExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
+                var compressed = Sensor.LongExposureInfraredImage.EncodeJpeg(Configuration.EncodingVideoLevel);
+                depthExporter.Exporter.Write(compressed, streamName);
+                exporters.Add(depthExporter.ToRendezvousEndpoint(Configuration.IpToUse));
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, compressed.GetType(), compressed.Out, LocalStorage);
+            }
+            if (Configuration.OutputColorToCameraMapping == true)
+            {
+                string streamName = $"{Configuration.RendezVousApplicationName}_ColorToCameraMapper";
+                RemoteExporter depthCalibrationExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
+                depthCalibrationExporter.Exporter.Write(Sensor.ColorToCameraMapper, streamName);
+                exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(Configuration.IpToUse));
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.ColorToCameraMapper.GetType(), Sensor.ColorToCameraMapper, LocalStorage);
+            }
             if (Configuration.OutputCalibration == true)
             {
                 string streamName = $"{Configuration.RendezVousApplicationName}_Calibration";
-                RemoteExporter depthCalibrationExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
-                depthCalibrationExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, streamName);
-                exporters.Add(depthCalibrationExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo, LocalStorage);
-            }
-            if (Configuration.OutputImu == true)
-            {
-                string streamName = $"{Configuration.RendezVousApplicationName}_IMU";
                 RemoteExporter imuExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
-                imuExporter.Exporter.Write(Sensor.Imu, streamName);
+                imuExporter.Exporter.Write(Sensor.DepthDeviceCalibrationInfo, streamName);
                 exporters.Add(imuExporter.ToRendezvousEndpoint(Configuration.IpToUse));
-                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.Imu.GetType(), Sensor.Imu, LocalStorage);
+                server.CreateConnectorAndStore(streamName, $"{Configuration.RendezVousApplicationName}-{streamName}", session, pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo, LocalStorage);
             }
 
             server.TriggerNewProcessEvent(Configuration.RendezVousApplicationName);

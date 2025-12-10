@@ -36,15 +36,15 @@ namespace KinectAzureRemoteConsole
             try
             {
                 configKinect.KinectDeviceIndex = int.Parse(args[1]);
-                configKinect.StreamAudio = bool.Parse(args[2]);
-                configKinect.StreamSkeleton = bool.Parse(args[3]);
-                configKinect.StreamVideo = bool.Parse(args[4]);
-                configKinect.StreamDepth = bool.Parse(args[5]);
-                configKinect.StreamDepthCalibration = bool.Parse(args[6]);
-                configKinect.StreamIMU = bool.Parse(args[7]);
+                configKinect.OutputAudio = bool.Parse(args[2]);
+                configKinect.OutputBodies = bool.Parse(args[3]);
+                configKinect.OutputColor = bool.Parse(args[4]);
+                configKinect.OutputDepth = bool.Parse(args[5]);
+                configKinect.OutputCalibration = bool.Parse(args[6]);
+                configKinect.OutputImu = bool.Parse(args[7]);
                 configKinect.EncodingVideoLevel = int.Parse(args[8]);
-                configKinect.VideoResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)int.Parse(args[9]);
-                configKinect.FPS = (Microsoft.Azure.Kinect.Sensor.FPS)int.Parse(args[10]);
+                configKinect.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)int.Parse(args[9]);
+                configKinect.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)int.Parse(args[10]);
                 configKinect.IpToUse = args[11];
                 configKinect.StartingPort = int.Parse(args[12]);
             }

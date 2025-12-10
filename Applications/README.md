@@ -16,13 +16,14 @@ Tools to transfert a video file into a \\psi store including time synchronisatio
 * Make optional the jpeg encoding.
 * Make only audio transfert.
 
-## KinectAzureRemoteApp
+## CameraRemoteApp
 ### Summary
-This application allow to broadcast Azure Kinect streams through a (local) network easily. It store its own configuration and can allow multiple clients with our **RemoteExporter** modification (see [Remote Exporter Modification](../RemoteExporterModification.md)). 
-To be used with [Kinect Azure Remote Connector](../Components/KinectAzureRemoteConnector/README.md).
-It use RendezVous system allowing to start (and stop) kinect streams from the remote server with the given configuration.
+This application allow to broadcast camera streams through a (local) network easily and/or record a dataset locally. It store its own configuration and can allow multiple clients with our **RemoteExporter** modification (see [Remote Exporter Modification](../RemoteExporterModification.md)). 
+To be used with [Kinect Azure Remote Services](../Components/KinectAzureRemoteServices/README.md), [Kinect Remote Services](../Components/KinectRemoteServices/README.md) &  [Nuitrack Remote Services](../Components/NuitrackRemoteServices/README.md).
+It use RendezVous system allowing to start (and stop) camera streams from the remote server with the given configuration (only for KinectAzure atm).
 ### Future works
 * Allowing **NamedPipes** protocol
+* Fully implement configuration over network.
 
 ## WhipserRemoteApp
 ### Summary

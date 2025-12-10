@@ -155,9 +155,9 @@ namespace WhisperRemoteApp
             set => SetProperty(ref whisperConfiguration, value);
         }
 
-        public List<string> WhisperModelsList { get; }
-        public List<string> WhisperQuantizationList { get; }
-        public List<string> WhisperLanguageList { get; }
+        public List<Whisper.net.Ggml.GgmlType> WhisperModelsList { get; }
+        public List<Whisper.net.Ggml.QuantizationType> WhisperQuantizationList { get; }
+        public List<SAAC.Whisper.Language> WhisperLanguageList { get; }
         private Dictionary<SAAC.Whisper.Language, string> whisperToVadLanguageConfiguration;
 
         // LocalRecording Tab
@@ -210,7 +210,7 @@ namespace WhisperRemoteApp
         private WhisperTranscriptionManager? transcriptionManager;
         private Dataset? localDataset;
         private bool isMessageBoxOpen;
-        private readonly List<System.Speech.Recognition.RecognizerInfo> availableRecongnisers;
+        private readonly List<System.Speech.Recognition.RecognizerInfo> availableRecognisers;
         private LogStatus internalLog;
 
         public MainWindow()
@@ -227,29 +227,12 @@ namespace WhisperRemoteApp
             AudioSourceList = new List<string> { AudioSource.Microphones.ToString(), AudioSource.WaveFiles.ToString(), AudioSource.Dataset.ToString() };
             
             IPsList = new List<string>{ "localhost" };
-            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-            {
-                IPsList.Add(ip.ToString());
-            }
+            IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
 
-            WhisperModelsList = new List<string>();
-            for (int modelTypeIterator = 0; modelTypeIterator <= (int)Whisper.net.Ggml.GgmlType.LargeV3Turbo; modelTypeIterator++)
-            {
-                WhisperModelsList.Add(((Whisper.net.Ggml.GgmlType)modelTypeIterator).ToString());
-            }
-
-            WhisperQuantizationList = new List<string>();
-            for (int quantitazationtypeIterator = 0; quantitazationtypeIterator <= (int)Whisper.net.Ggml.QuantizationType.Q8_0; quantitazationtypeIterator++)
-            {
-                WhisperQuantizationList.Add(((Whisper.net.Ggml.QuantizationType)quantitazationtypeIterator).ToString());
-            }
-
-            WhisperLanguageList = new List<string>();
-            for (int languageTypeIterator = 0; languageTypeIterator <= (int)SAAC.Whisper.Language.Welsh; languageTypeIterator++)
-            {
-                WhisperLanguageList.Add(((SAAC.Whisper.Language)languageTypeIterator).ToString());
-            }
-
+            WhisperModelsList = new List<Whisper.net.Ggml.GgmlType>(Enum.GetValues(typeof(Whisper.net.Ggml.GgmlType)).Cast<Whisper.net.Ggml.GgmlType>());
+            WhisperQuantizationList = new List<Whisper.net.Ggml.QuantizationType>(Enum.GetValues(typeof(Whisper.net.Ggml.QuantizationType)).Cast<Whisper.net.Ggml.QuantizationType>());
+            WhisperLanguageList = new List<SAAC.Whisper.Language>(Enum.GetValues(typeof(SAAC.Whisper.Language)).Cast<SAAC.Whisper.Language>());
+   
             whisperToVadLanguageConfiguration = new Dictionary<SAAC.Whisper.Language, string> { { SAAC.Whisper.Language.NotSet, "en" }, { SAAC.Whisper.Language.Afrikaans, "af" }, { SAAC.Whisper.Language.Arabic, "ar" }, { SAAC.Whisper.Language.Armenian, "hy" }, { SAAC.Whisper.Language.Azerbaijani, "az" }, { SAAC.Whisper.Language.Belarusian, "be" }, { SAAC.Whisper.Language.Bosnian, "bs" }, { SAAC.Whisper.Language.Bulgarian, "bg" }, { SAAC.Whisper.Language.Catalan, "ca" }, { SAAC.Whisper.Language.Chinese, "zh" }, { SAAC.Whisper.Language.Croatian, "hr" }, { SAAC.Whisper.Language.Czech, "cs" }, { SAAC.Whisper.Language.Danish, "da" }, { SAAC.Whisper.Language.Dutch, "nl" }, { SAAC.Whisper.Language.English, "en" }, { SAAC.Whisper.Language.Estonian, "et" }, { SAAC.Whisper.Language.Finnish, "fi" }, { SAAC.Whisper.Language.French, "fr" }, { SAAC.Whisper.Language.Galician, "gl" }, { SAAC.Whisper.Language.German, "de" }, { SAAC.Whisper.Language.Greek, "el" }, { SAAC.Whisper.Language.Hebrew, "he" }, { SAAC.Whisper.Language.Hindi, "hi" }, { SAAC.Whisper.Language.Hungarian, "hu" }, { SAAC.Whisper.Language.Icelandic, "is" }, { SAAC.Whisper.Language.Indonesian, "id" }, { SAAC.Whisper.Language.Italian, "it" }, { SAAC.Whisper.Language.Japanese, "ja" }, { SAAC.Whisper.Language.Kannada, "kn" }, { SAAC.Whisper.Language.Kazakh, "kk" }, { SAAC.Whisper.Language.Korean, "ko" }, { SAAC.Whisper.Language.Latvian, "lv" }, { SAAC.Whisper.Language.Lithuanian, "lt" }, { SAAC.Whisper.Language.Macedonian, "mk" }, { SAAC.Whisper.Language.Malay, "ms" }, { SAAC.Whisper.Language.Marathi, "mr" }, { SAAC.Whisper.Language.Maori, "mi" }, { SAAC.Whisper.Language.Nepali, "ne" }, { SAAC.Whisper.Language.Norwegian, "no" }, { SAAC.Whisper.Language.Persian, "fa" }, { SAAC.Whisper.Language.Polish, "pl" }, { SAAC.Whisper.Language.Portuguese, "pt" }, { SAAC.Whisper.Language.Romanian, "ro" }, { SAAC.Whisper.Language.Russian, "ru-RU" }, { SAAC.Whisper.Language.Serbian, "sr" }, { SAAC.Whisper.Language.Slovak, "sk" }, { SAAC.Whisper.Language.Slovenian, "sl" }, { SAAC.Whisper.Language.Spanish, "es" }, { SAAC.Whisper.Language.Swahili, "sw" }, { SAAC.Whisper.Language.Swedish, "sv" }, { SAAC.Whisper.Language.Tagalog, "tl" }, { SAAC.Whisper.Language.Tamil, "ta" }, { SAAC.Whisper.Language.Thai, "th" }, { SAAC.Whisper.Language.Turkish, "tr" }, { SAAC.Whisper.Language.Ukrainian, "uk" }, { SAAC.Whisper.Language.Urdu, "ur" }, { SAAC.Whisper.Language.Vietnamese, "vi" }, { SAAC.Whisper.Language.Welsh, "cy" } };
 
             setupState = SetupState.NotInitialised;
@@ -261,7 +244,7 @@ namespace WhisperRemoteApp
             DataContext = this;
 
             isMessageBoxOpen = false;
-            availableRecongnisers = System.Speech.Recognition.SpeechRecognitionEngine.InstalledRecognizers().ToList();
+            availableRecognisers = System.Speech.Recognition.SpeechRecognitionEngine.InstalledRecognizers().ToList();
 
             InitializeComponent();
             UpdateLayout();
@@ -313,7 +296,7 @@ namespace WhisperRemoteApp
         {
             UiGenerator.SetTextBoxOutFocusChecker<Uri>(LocalRecordingDatasetDirectoryTextBox, UiGenerator.UriTryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<string>(LocalRecordingDatasetNameTextBox, UiGenerator.PathTryParse);
-            LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataser file already exist, make sure to use a different session name.", ".pds", LocalRecordingDatasetDirectoryTextBox);
+            LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataset file already exist, make sure to use a different session name.", ".pds", LocalRecordingDatasetDirectoryTextBox);
         }
 
         private void UpdateNetworkTab()
@@ -329,6 +312,7 @@ namespace WhisperRemoteApp
         } 
         private void UpdateStreamingPortRangeStartTextBox()
         {
+            GeneralNetworkStreamingCheckBox.IsChecked = NetworkStreamingCheckBox.IsChecked = isStreaming;
             StreamingPortRangeStartTextBox.IsEnabled = isStreaming & isRemoteServer;
         }
 
@@ -520,9 +504,10 @@ namespace WhisperRemoteApp
                 pipelineConfiguration.Debug = false;
                 pipelineConfiguration.RecordIncomingProcess = false;
                 pipelineConfiguration.CommandPort = pipelineConfiguration.ClockPort = 0;
+                pipelineConfiguration.DatasetPath = localDatasetPath;
+                pipelineConfiguration.DatasetName = localDatasetName;
 
                 rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
-                rendezVousPipeline.CreateOrGetSessionFromMode("PipelineProcess");
                 rendezVousPipeline.Log("Waiting for server");
                 pipeline = rendezVousPipeline.Pipeline;
 
@@ -936,7 +921,7 @@ namespace WhisperRemoteApp
             e.Handled = true;
             //if (WhisperConfigurationUI.Language == (SAAC.Whisper.Language)LanguageComboBox.SelectedIndex)
             //    return;
-            var results = availableRecongnisers.Where(info => info.Culture.TwoLetterISOLanguageName == whisperToVadLanguageConfiguration[(SAAC.Whisper.Language)LanguageComboBox.SelectedIndex]);
+            var results = availableRecognisers.Where(info => info.Culture.TwoLetterISOLanguageName == whisperToVadLanguageConfiguration[(SAAC.Whisper.Language)LanguageComboBox.SelectedIndex]);
             if (results.Count() == 0)
             {
                 MessageBox.Show("Unable to find matching Windows recognition grammar for the selected Whisper language. Please install it first.", "Language selection", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);

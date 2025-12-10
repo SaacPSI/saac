@@ -19,13 +19,15 @@ namespace SAAC.GlobalHelpers
     public class GazeEvent : IDs
     {
         public EEventType Type { get; private set; }
+        public System.Numerics.Vector3 Position { get; private set; }
         public bool IsGazed { get; private set; }// Statut de l'événement (activé/désactivé)
 
         // Constructeur pour initialiser les valeurs
-        public GazeEvent(EEventType type, string userId, string objectID, bool isGazed)
+        public GazeEvent(EEventType type, string userId, string objectID, System.Numerics.Vector3 position, bool isGazed)
             : base(userId, objectID)
         {
             Type = type;
+            Position = position;
             IsGazed = isGazed;
         }
     }

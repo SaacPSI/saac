@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	  <TargetFramework>net48</TargetFramework>
+  <PropertyGroup>	 
+		<TargetFramework>net48</TargetFramework>
 	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>latest</LangVersion>
 	  <LangVersion>Preview</LangVersion>
 	  <PlatformTarget>x64</PlatformTarget>
@@ -15,16 +14,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.5.192" />
-    <PackageReference Include="Microsoft.Psi.Audio" Version="0.19.100.1-beta-SAAC" />
-    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
-    <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.19.100.1-beta-SAAC" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
+    <ProjectReference Include="..\Nuitrack\Nuitrack.csproj" />
   </ItemGroup>
 
- </Project>
+  <ItemGroup>
+    <Reference Include="nuitrack.net">
+      <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

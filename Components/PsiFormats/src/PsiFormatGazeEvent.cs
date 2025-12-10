@@ -15,6 +15,9 @@ namespace SAAC.PsiFormats
             writer.Write(gazeEvent.UserID);
             writer.Write(gazeEvent.ObjectID);
             writer.Write((int)gazeEvent.Type);
+            writer.Write(gazeEvent.Position.X);
+            writer.Write(gazeEvent.Position.Y);
+            writer.Write(gazeEvent.Position.Z);
             writer.Write(gazeEvent.IsGazed);
         }
 
@@ -23,9 +26,9 @@ namespace SAAC.PsiFormats
             string gazerid = reader.ReadString();
             string objectid = reader.ReadString();
             int type = reader.ReadInt32();
+            System.Numerics.Vector3 position = new System.Numerics.Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             bool status = reader.ReadBoolean();
-
-            return new GazeEvent((EEventType)type, gazerid, objectid, status);
+            return new GazeEvent((EEventType)type, gazerid, objectid, position, status);
         }
     }
 }

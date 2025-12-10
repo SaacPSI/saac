@@ -5,7 +5,7 @@ using SAAC.RemoteConnectors;
 using SAAC.PipelineServices;
 using Microsoft.Psi.Interop.Rendezvous;
 
-namespace SAAC.KinectAzureRemoteServices
+namespace SAAC.RemoteConnectors
 {
     public class KinectAzureRemoteComponent : KinectAzureRemoteConnector
     {
