@@ -141,6 +141,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectRemoteServices", "Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraRemoteApp", "Applications\CameraRemoteApp\CameraRemoteApp.csproj", "{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsiStudioReplayExtension", "Components\PsiStudioReplayExtension\PsiStudioReplayExtension.csproj", "{C757C87C-B73B-B411-E959-E93B8FB3B51D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -493,6 +495,14 @@ Global
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|Any CPU.Build.0 = Release|x64
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|x64.ActiveCfg = Release|x64
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E}.Release|x64.Build.0 = Release|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Debug|Any CPU.Build.0 = Debug|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Debug|x64.ActiveCfg = Debug|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Debug|x64.Build.0 = Debug|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Release|Any CPU.ActiveCfg = Release|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Release|Any CPU.Build.0 = Release|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Release|x64.ActiveCfg = Release|x64
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -548,6 +558,7 @@ Global
 		{BC9916AF-E89D-7754-EEE3-D6B3612FD941} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{6E209DF9-0B78-CF84-B801-5DC93AF4B1AA} = {D2F89990-8127-4341-A73F-9B035978187A}
 		{BCEAC9A5-554E-82C9-C37A-8019B3056D8E} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{C757C87C-B73B-B411-E959-E93B8FB3B51D} = {D2F89990-8127-4341-A73F-9B035978187A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}
