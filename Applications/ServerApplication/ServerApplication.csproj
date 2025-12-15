@@ -21,6 +21,8 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
+    <Nullable>enable</Nullable>
+    <LangVersion>8.0</LangVersion>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,6 +32,8 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
+    <Nullable>enable</Nullable>
+    <LangVersion>8.0</LangVersion>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -94,6 +98,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Components\GlobalHelpers\GlobalHelpers.csproj">
+      <Project>{a149e283-c646-4846-a145-7ebb6f445b44}</Project>
+      <Name>GlobalHelpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj">
+      <Project>{969ef25f-3a11-46b8-838f-752ab2117f1b}</Project>
+      <Name>PipelineServices</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Components\PsiFormats\PsiFormats.csproj">
+      <Project>{cb365381-0324-44c1-aff3-e01732be4b86}</Project>
+      <Name>PsiFormats</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
