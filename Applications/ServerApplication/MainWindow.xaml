@@ -1,0 +1,128 @@
+﻿<Window x:Class="ServerApplication.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ServerApplication"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="566" Width="742">
+    <UserControl>
+        <TabControl Name="Tab">
+            <TabItem Header="Overview">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="96*"/>
+                        <ColumnDefinition Width="11*"/>
+                        <ColumnDefinition Width="140*"/>
+                        <ColumnDefinition Width="62*"/>
+                        <ColumnDefinition Width="185*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="9.695"/>
+                        <RowDefinition Height="105"/>
+                        <RowDefinition Height="auto" MinHeight="36.305"/>
+                        <RowDefinition Height="auto" MinHeight="158"/>
+                        <RowDefinition Height="auto" MinHeight="141.34"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <GroupBox Header="Connected Application State" Name="ConnectionStateConfigurationGroupBox" FontWeight="Bold" Grid.Row="1" Grid.ColumnSpan="5"  Margin="0,15,0,44">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Start connected devices" Name="GeneralConfigurationGroupBox" FontWeight="Bold" Grid.Row="3" Grid.ColumnSpan="5"  Margin="0,11,0,96">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="4" Grid.ColumnSpan="5"  Margin="0,20,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Button Content="Configure Server" Grid.Row="0" Name="BtnConfiguration" Click="BtnSetupConfiguration" Margin="0,5,0,5"/>
+                            <Button Content="Start Network" Grid.Row="1" Name="BtnStart" Click="BtnStartAll" Margin="0,5,0,5"/>
+                            <Button Content="Quit" Grid.Row="2" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Configuration">
+                <Grid Background="#FFE5E5E5" Name="LocalRecordingGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox Grid.Row="0" Content="Activate" Name="LocalRecordingCheckbox" IsChecked="{Binding IsLocalRecording}" Click="CkbActivateLocalRecording" Margin="0,10,0,10"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Session Name :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding LocalSessionName}" Name="LocalRecordingSessionNameTextBox"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Storing :" FontWeight="Bold"/>
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <RadioButton Content="Audio Only" GroupName="LocalStoringModeGroup" Name="LocalStoringModeAudio" Checked="LocalStoringModeChecked"/>
+                        <RadioButton Content="VAD and STT" GroupName="LocalStoringModeGroup" Name="LocalStoringModeVADSTT" Checked="LocalStoringModeChecked"/>
+                        <RadioButton Content="All" GroupName="LocalStoringModeGroup" Name="LocalStoringModeAll" Checked="LocalStoringModeChecked"/>
+                    </StackPanel>
+                    <Label Grid.Row="3" Grid.Column="0" Content="Dataset Directory :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="3" Grid.Column="1" >
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetPath}" Name="LocalRecordingDatasetDirectoryTextBox"/>
+                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetDirectoryButton" Click="LocalRecordingDatasetDirectoryButtonClick"/>
+                        </Grid>
+                    </GroupBox>
+                    <Label Grid.Row="4" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="4" Grid.Column="1" >
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetName}" Name="LocalRecordingDatasetNameTextBox"/>
+                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetNameButton" Click="LocalRecordingDatasetNameButtonClick"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Log">
+                <ScrollViewer>
+                    <TextBox x:Name="Logs"  TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </UserControl>
+</Window>

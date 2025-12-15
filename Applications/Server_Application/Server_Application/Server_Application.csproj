@@ -9,6 +9,7 @@
     <RootNamespace>Casper_Gathering</RootNamespace>
     <AssemblyName>Casper_Gathering</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+	<UseWPF>true</UseWPF>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
