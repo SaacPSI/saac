@@ -1,7 +1,33 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ServerApplication.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="RendezVousHost" Type="System.String" Scope="User">
+      <Value Profile="(Default)">10.144.210.101</Value>
+    </Setting>
+    <Setting Name="RendezVousPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">13331</Value>
+    </Setting>
+    <Setting Name="ClockPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">11510</Value>
+    </Setting>
+    <Setting Name="DatasetPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\\Users\\dapi\\Desktop\\Autres</Value>
+    </Setting>
+    <Setting Name="DatasetName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Dataset.pds</Value>
+    </Setting>
+    <Setting Name="AutomaticPipelineRun" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="SessionName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">RawData</Value>
+    </Setting>
+    <Setting Name="Debug" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="StoreMode" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

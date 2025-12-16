@@ -5,51 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ServerApplication"
         mc:Ignorable="d"
-        Title="MainWindow" Height="566" Width="742">
+        Title="MainWindow" Height="468" Width="1015">
     <UserControl>
         <TabControl Name="Tab">
             <TabItem Header="Overview">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="96*"/>
-                        <ColumnDefinition Width="11*"/>
-                        <ColumnDefinition Width="140*"/>
-                        <ColumnDefinition Width="62*"/>
-                        <ColumnDefinition Width="185*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="9.695"/>
-                        <RowDefinition Height="105"/>
-                        <RowDefinition Height="auto" MinHeight="36.305"/>
-                        <RowDefinition Height="auto" MinHeight="158"/>
-                        <RowDefinition Height="auto" MinHeight="141.34"/>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Connected Application State" Name="ConnectionStateConfigurationGroupBox" FontWeight="Bold" Grid.Row="1" Grid.ColumnSpan="5"  Margin="0,15,0,44">
+                    <GroupBox Header="Connected devices" Name="GeneralConfigurationGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,5,5" Grid.RowSpan="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-                        </Grid>
-                    </GroupBox>
-                    <GroupBox Header="Start connected devices" Name="GeneralConfigurationGroupBox" FontWeight="Bold" Grid.Row="3" Grid.ColumnSpan="5"  Margin="0,11,0,96">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto" MinHeight="0"/>
+                                <RowDefinition Height="auto" MinHeight="0"/>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
@@ -58,71 +35,86 @@
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="4" Grid.ColumnSpan="5"  Margin="0,20,0,0">
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,49">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Button Content="Configure Server" Grid.Row="0" Name="BtnConfiguration" Click="BtnSetupConfiguration" Margin="0,5,0,5"/>
-                            <Button Content="Start Network" Grid.Row="1" Name="BtnStart" Click="BtnStartAll" Margin="0,5,0,5"/>
-                            <Button Content="Quit" Grid.Row="2" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
+                            <Button Content="Start Session" Grid.Row="1" Name="BtnStart" Click="BtnStartClick" Margin="0,5,0,5"/>
+                            <Button Content="Stop Session" Grid.Row="2" Name="BtnStop" Click="BtnStopClick" Margin="0,5,0,5"/>
+                            <Button Content="Quit" Grid.Row="3" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
                         </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="1" Margin="5,5,5,5">
+                        <TextBox x:Name="Logs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="158" ForceCursor="True" Margin="10,0,6,0"/>
                     </GroupBox>
                 </Grid>
             </TabItem>
-            <TabItem Header="Configuration">
+            <TabItem Header="Configuration" x:Name="ConfigurationTab">
                 <Grid Background="#FFE5E5E5" Name="LocalRecordingGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="211*"/>
+                        <RowDefinition Height="72*"/>
                     </Grid.RowDefinitions>
-                    <CheckBox Grid.Row="0" Content="Activate" Name="LocalRecordingCheckbox" IsChecked="{Binding IsLocalRecording}" Click="CkbActivateLocalRecording" Margin="0,10,0,10"/>
-                    <Label Grid.Row="1" Grid.Column="0" Content="Session Name :" FontWeight="Bold"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding LocalSessionName}" Name="LocalRecordingSessionNameTextBox"/>
-                    <Label Grid.Row="2" Grid.Column="0" Content="Storing :" FontWeight="Bold"/>
-                    <StackPanel Grid.Row="2" Grid.Column="1">
-                        <RadioButton Content="Audio Only" GroupName="LocalStoringModeGroup" Name="LocalStoringModeAudio" Checked="LocalStoringModeChecked"/>
-                        <RadioButton Content="VAD and STT" GroupName="LocalStoringModeGroup" Name="LocalStoringModeVADSTT" Checked="LocalStoringModeChecked"/>
-                        <RadioButton Content="All" GroupName="LocalStoringModeGroup" Name="LocalStoringModeAll" Checked="LocalStoringModeChecked"/>
-                    </StackPanel>
-                    <Label Grid.Row="3" Grid.Column="0" Content="Dataset Directory :" FontWeight="Bold"/>
-                    <GroupBox Grid.Row="3" Grid.Column="1" >
+                    <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" Margin="5,5,4,5" Grid.ColumnSpan="2" >
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="117*"/>
+                                <ColumnDefinition Width="192*"/>
+                                <ColumnDefinition Width="155*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetPath}" Name="LocalRecordingDatasetDirectoryTextBox"/>
-                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetDirectoryButton" Click="LocalRecordingDatasetDirectoryButtonClick"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="RendezVous Host :" FontWeight="Bold" Margin="2,4,2,1"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Configuration.RendezVousHost}" Margin="0,5,6,3"/>
+
+                            <Label Grid.Column="0" Content="RendezVous Port :" FontWeight="Bold" Margin="2,3,8,3" Grid.Row="1"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Configuration.RendezVousPort}" Margin="0,5,6,4"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="Clock Port :" FontWeight="Bold" Margin="2,3,8,3"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Configuration.ClockPort}" Margin="0,5,6,3"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="Dataset Store Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="1,31,172,31" Grid.RowSpan="3"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding storeModeList}" SelectionChanged="StoreModeSelected" Name="StoreModeComboBox" Grid.ColumnSpan="2" Margin="0,5,6,3"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="Dataset Path :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="4" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{Binding Path = LocalDatasetPath}" Name="DatasetPathTextBox" Margin="130,5,64,3"/>
+                            <Button Grid.Row="4" Grid.Column="2" Content="Browse" Click="BtnBrowseNameClick" Margin="102,4,6,3"/>
+
+                            <Label Grid.Row="5" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold" Margin="1,2,17,7"/>
+                            <TextBox Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path= LocalDatasetName}" Grid.ColumnSpan="2" Margin="0,5,6,2"/>
+
+                            <Label Grid.Row="6" Grid.Column="0" Content="Session Name :" FontWeight="Bold" Margin="1,4,4,3"/>
+                            <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = LocalSessionName}" Margin="0,5,6,2"/>
+                            <Button Content="Load Configuration" Grid.Row="7" Grid.ColumnSpan="3" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,5,5"/>
+                            <Button Content="Save Configuration" Grid.ColumnSpan="3" Grid.Row="8" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,5,5"/>
                         </Grid>
                     </GroupBox>
-                    <Label Grid.Row="4" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold"/>
-                    <GroupBox Grid.Row="4" Grid.Column="1" >
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="50"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetName}" Name="LocalRecordingDatasetNameTextBox"/>
-                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetNameButton" Click="LocalRecordingDatasetNameButtonClick"/>
-                        </Grid>
-                    </GroupBox>
+
+
                 </Grid>
             </TabItem>
-            <TabItem Header="Log">
-                <ScrollViewer>
-                    <TextBox x:Name="Logs"  TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True"/>
-                </ScrollViewer>
-            </TabItem>
+            
         </TabControl>
     </UserControl>
 </Window>
