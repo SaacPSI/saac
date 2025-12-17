@@ -18,19 +18,26 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Connected devices" Name="GeneralConfigurationGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,5,5" Grid.RowSpan="2">
-                        <Grid>
+                    <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2">
+                        <Grid Name="ConnectedDevicesGrid">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="auto" MinHeight="0"/>
-                                <RowDefinition Height="auto" MinHeight="0"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+              
                             </Grid.RowDefinitions>
                         </Grid>
                     </GroupBox>
@@ -42,11 +49,13 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Button Content="Configure Server" Grid.Row="0" Name="BtnConfiguration" Click="BtnSetupConfiguration" Margin="0,5,0,5"/>
                             <Button Content="Start Session" Grid.Row="1" Name="BtnStart" Click="BtnStartClick" Margin="0,5,0,5"/>
                             <Button Content="Stop Session" Grid.Row="2" Name="BtnStop" Click="BtnStopClick" Margin="0,5,0,5"/>
                             <Button Content="Quit" Grid.Row="3" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
+                            <Button Content="Add Item" Grid.Row="4" Click="BtnAddItem_Click" />
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="1" Margin="5,5,5,5">

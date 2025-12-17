@@ -19,6 +19,7 @@ using SAAC.PipelineServices;
 using SAAC;
 using Microsoft.Psi;
 using System.Windows.Media.Animation;
+using System.Threading;
 
 namespace ServerApplication
 {
@@ -271,6 +272,72 @@ namespace ServerApplication
             else
                 server.Start();
         }
+        private int _rowIndex = 0;
+
+        // Called by a button click
+        private void BtnAddItem_Click(object sender, RoutedEventArgs e)
+        {
+            SpawnEllipseTextButtonsRow();
+        }
+
+        private void SpawnEllipseTextButtonsRow()
+        {
+            UiGenerator.AddRowsDefinitionToGrid(ConnectedDevicesGrid, GridLength.Auto, 1);
+            int position = ConnectedDevicesGrid.RowDefinitions.Count - 1;
+            
+            string processName = $"process_{position}";
+
+            // Ellipse (left)
+            var dot = UiGenerator.GenerateEllipse(size: 14, fill: Brushes.Orange, stroke: Brushes.Orange, strokeThickness: 1, name: $"Dot_{_rowIndex}");
+            dot.Margin = new Thickness(0, 0, 10, 0);
+
+            // TextBox (middle)
+            var tb = UiGenerator.GenerateText(processName, 250, name: $"Text_{_rowIndex}");
+            tb.Margin = new Thickness(0, 0, 10, 0);
+
+            // Button 1 (right)
+            var btnOk = UiGenerator.GenerateButton("Start", (s, e) =>
+            {
+                MessageBox.Show($"OK clicked: {tb.Text}");
+                server.SendCommand(RendezVousPipeline.Command.Run, processName, "");
+            }, name: $"BtnOk_{_rowIndex}");
+            btnOk.Margin = new Thickness(0, 0, 6, 0);
+
+            // Button 2 (right) - remove this row
+            var btnRemove = UiGenerator.GenerateButton("Stop", (s, e) =>
+            {
+                server.SendCommand(RendezVousPipeline.Command.Stop, processName,"");
+            }, name: $"BtnRemove_{_rowIndex}");
+
+            UiGenerator.SetElementInGrid(ConnectedDevicesGrid, dot, 0, ConnectedDevicesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(ConnectedDevicesGrid, tb, 1, ConnectedDevicesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(ConnectedDevicesGrid, btnOk, 2, ConnectedDevicesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(ConnectedDevicesGrid, btnRemove, 3, ConnectedDevicesGrid.RowDefinitions.Count - 1);
+        }
+
+        private void UpdateVisualisationProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        {
+            Thread otherThread = new Thread(ChangeEllipseColorThreadMethod);
+            otherThread.Start(e.Item1); ;
+        }
+
+        private void ChangeEllipseColorThreadMethod(object arguments)
+        {
+            string stringArgument = (string)arguments;
+            bool isConnected = connectedProcess[stringArgument];
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Ellipse ellipse = FindName(stringArgument) as Ellipse;
+                if (ellipse != null)
+                {
+                    if (isConnected) ellipse.Fill = Brushes.Green;
+                    else if (!isConnected) ellipse.Fill = Brushes.DarkRed;
+                }
+            });
+        }
+        private Dictionary<string, bool> connectedProcess = new Dictionary<string, bool>();
+        
         private void BtnBrowseNameClick(object sender, RoutedEventArgs e)
         {
             UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();

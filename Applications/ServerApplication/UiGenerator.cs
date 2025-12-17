@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 
 namespace SAAC
 {
@@ -36,6 +37,18 @@ namespace SAAC
             return label;
         }
 
+        static public TextBlock GenerateText(string text, double width, string name = "")
+        {
+            TextBlock textBlock = new TextBlock();
+
+            textBlock.Text = text;
+            textBlock.Width = width;
+            textBlock.VerticalAlignment = VerticalAlignment.Center;
+            textBlock.TextWrapping = TextWrapping.Wrap;
+            textBlock.Name = name;
+            return textBlock;
+        }
+
         static public Button GenerateButton(string content, RoutedEventHandler onClickHandler, string name = "")
         {
             Button button = new Button();
@@ -57,6 +70,23 @@ namespace SAAC
             };
             return button;
         }
+
+
+        // Similar to your GenerateButton / GenerateTextBox
+        static public Ellipse GenerateEllipse(double size, Brush fill, Brush? stroke = null, double strokeThickness = 1, string name = "")
+        {
+            var e = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = fill,
+                Stroke = stroke ?? Brushes.Transparent,
+                StrokeThickness = strokeThickness,
+                Name = name
+            };
+            return e;
+        }
+
 
         static public CheckBox GenerateCheckBox(string content, bool defaultState = true, RoutedEventHandler? onClickHandler = null, string name = "") 
         {
@@ -192,11 +222,11 @@ namespace SAAC
                 TextBox? text = (obj as TextBox);
                 if (text is null)
                     return;
-                string filename = text.Text = Path.HasExtension(text.Text) ? text.Text : $"{text.Text}{extension}";
+                string filename = text.Text = System.IO.Path.HasExtension(text.Text) ? text.Text : $"{text.Text}{extension}";
                 System.Windows.Data.BindingExpression? binding = text.GetBindingExpression(TextBox.TextProperty);
                 binding?.UpdateSource();
                 if (pathTextBox != null)
-                    filename = Path.Combine(pathTextBox.Text, filename);
+                    filename = System.IO.Path.Combine(pathTextBox.Text, filename);
                 if (File.Exists(filename))
                     MessageBox.Show(message, "File already exist", MessageBoxButton.OK, MessageBoxImage.Hand);
             };
