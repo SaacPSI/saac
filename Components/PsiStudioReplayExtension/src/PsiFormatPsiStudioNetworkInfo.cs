@@ -31,6 +31,7 @@ namespace Microsoft.Psi.PsiStudio
             writer.Write((int)info.Event);
             writer.Write(info.Interval.Left.Ticks);
             writer.Write(info.Interval.Right.Ticks);
+            writer.Write(info.PlaySpeed);
             writer.Write(info.SessionName);
         }
 
@@ -41,7 +42,7 @@ namespace Microsoft.Psi.PsiStudio
         /// <returns>Retuns a new instance of type <see cref="PsiStudioNetworkInfo"/>.</returns>
         public static PsiStudioNetworkInfo ReadPsiStudioNetworkInfo(BinaryReader reader)
         {
-            return new PsiStudioNetworkInfo((PsiStudioNetworkInfo.PsiStudioNetworkEvent)reader.ReadInt32(), new TimeInterval(new DateTime(reader.ReadInt64()), new DateTime(reader.ReadInt64())), reader.ReadString());
+            return new PsiStudioNetworkInfo((PsiStudioNetworkInfo.PsiStudioNetworkEvent)reader.ReadInt32(), new TimeInterval(new DateTime(reader.ReadInt64()), new DateTime(reader.ReadInt64())), reader.ReadDouble(), reader.ReadString());
         }
     }
 }

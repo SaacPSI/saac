@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
+    <ProjectReference Include="..\..\Components\PsiStudioReplayExtension\PsiStudioReplayExtension.csproj" />
   </ItemGroup>
 
   <ItemGroup>

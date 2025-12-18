@@ -27,10 +27,38 @@
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\Groups\Groups.csproj" />
-  </ItemGroup>   
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+
+  <!-- Post-Build Event pour copier les dépendances manquantes -->
+  <Target Name="CopyDependencies" AfterTargets="Build">
+    <PropertyGroup>
+      <OutputDir>$(OutputPath)</OutputDir>
+      <NuGetPackagesPath>$(NuGetPackageRoot)</NuGetPackagesPath>
+    </PropertyGroup>
+
+    <!-- Copier les DLLs Azure Kinect depuis NuGet -->
     <ItemGroup>
-      <Reference Include="PresentationCore" />
-      <Reference Include="PresentationFramework" />
-      <Reference Include="WindowsBase" />
+      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.sensor\*\lib\net462\*.dll" />
+      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.bodytracking\*\lib\net462\*.dll" />
     </ItemGroup>
- </Project>
+
+    <!-- Copier les assemblies du répertoire packages -->
+    <Copy
+      SourceFiles="@(AzureKinectDlls)"
+      DestinationFolder="$(OutputDir)"
+      SkipUnchangedFiles="true"
+      ContinueOnError="true" />
+
+    <!-- Log des fichiers copiés -->
+    <Message
+      Text="Copie des DLLs Azure Kinect vers $(OutputDir)"
+      Importance="high" />
+  </Target>
+
+</Project>

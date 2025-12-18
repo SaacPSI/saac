@@ -41,6 +41,8 @@ namespace SAAC.RemoteConnectors
             {
                 string streamName = $"{Configuration.RendezVousApplicationName}_Audio";
                 AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
+                int index = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ToList().FindIndex(value => { return value.Contains("Azure"); });
+                configuration.DeviceName = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ElementAt(index);
                 AudioCapture audioCapture = new AudioCapture(pipeline, configuration);
                 RemoteExporter soundExporter = new RemoteExporter(pipeline, portCount++, Configuration.ConnectionType);
                 soundExporter.Exporter.Write(audioCapture.Out, streamName);

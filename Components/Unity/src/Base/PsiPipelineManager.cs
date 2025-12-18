@@ -351,6 +351,10 @@ public class PsiPipelineManager : MonoBehaviour
             commandPipeline.WaitAll(waitedMillisec);
         foreach (Subpipeline subP in subPipelines)
             subP.Stop(pipeline.GetCurrentTime(), () => { AddLog($"PsiPipelineManager : Subpipeline {subP.Name} stopped."); });
+        foreach (RemoteExporter exporter in exportersRegistered)
+            exporter.Dispose();
+        foreach (RemoteExporter exporter in exportersRegistered)
+            exporter.Dispose();
         if (pipeline != null)
             pipeline.WaitAll(waitedMillisec);
         pipeline = null;

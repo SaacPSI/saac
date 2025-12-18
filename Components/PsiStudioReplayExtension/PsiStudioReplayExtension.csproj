@@ -14,6 +14,14 @@
   </PropertyGroup>
 
  <ItemGroup>
+   <Compile Remove="src\Unity\PsiStudioReplayCommand.cs" />
+ </ItemGroup>
+
+ <ItemGroup>
+   <None Include="src\Unity\PsiStudioReplayCommand.cs" />
+ </ItemGroup>
+
+ <ItemGroup>
    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
  </ItemGroup>
 
