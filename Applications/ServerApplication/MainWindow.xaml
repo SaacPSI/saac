@@ -21,11 +21,10 @@
                     <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2">
                         <Grid Name="ConnectedDevicesGrid">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>

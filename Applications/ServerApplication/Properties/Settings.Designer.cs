@@ -25,7 +25,7 @@ namespace ServerApplication.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10.144.210.101")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10.144.37.30")]
         public string RendezVousHost {
             get {
                 return ((string)(this["RendezVousHost"]));

@@ -503,13 +503,15 @@ namespace WhisperRemoteApp
                 pipelineConfiguration.CommandDelegate = CommandRecieved;
                 pipelineConfiguration.Debug = false;
                 pipelineConfiguration.RecordIncomingProcess = false;
-                pipelineConfiguration.CommandPort = pipelineConfiguration.ClockPort = 0;
+                //pipelineConfiguration.CommandPort = 
+                pipelineConfiguration.ClockPort = 0;
                 pipelineConfiguration.DatasetPath = localDatasetPath;
                 pipelineConfiguration.DatasetName = localDatasetName;
 
                 rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
                 rendezVousPipeline.Log("Waiting for server");
                 pipeline = rendezVousPipeline.Pipeline;
+                rendezVousPipeline.Start();
 
                 if (!isStreaming)
                     rendezVousPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(remoteConfiguration.RendezVousApplicationName));
@@ -724,7 +726,7 @@ namespace WhisperRemoteApp
                 if (selectedAudioSource != AudioSource.Microphones)
                 {
                     pipeline?.RunAsync(ReplayDescriptor.ReplayAllRealTime);
-                    pipeline?.PipelineCompleted += MainWindow_PipelineCompleted;
+                    pipeline.PipelineCompleted += MainWindow_PipelineCompleted;
 
                 }
                 else

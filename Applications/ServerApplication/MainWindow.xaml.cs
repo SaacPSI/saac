@@ -20,6 +20,7 @@ using SAAC;
 using Microsoft.Psi;
 using System.Windows.Media.Animation;
 using System.Threading;
+using System.Xml.Linq;
 
 namespace ServerApplication
 {
@@ -197,7 +198,7 @@ namespace ServerApplication
             if (setupState >= SetupState.PipelineInitialised)
                 return;
 
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Store;
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
             configuration.Debug = false;
@@ -206,6 +207,7 @@ namespace ServerApplication
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
             server = new RendezVousPipeline(configuration, "Server", null, internalLog);
+            server.AddNewProcessEvent(SpawnProcessRow);
             pipeline = server.Pipeline;
             AddLog("Server initialisation started");
             server.Start();
@@ -213,6 +215,16 @@ namespace ServerApplication
             setupState = SetupState.PipelineInitialised;
         }
 
+        private void SpawnProcessRow(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        {
+            if (e.Item1 == "EndSession") return;
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                SpawnEllipseTextButtonsRow(e.Item1);
+            }));
+
+        }
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
             server?.Dataset?.Save();
@@ -277,38 +289,45 @@ namespace ServerApplication
         // Called by a button click
         private void BtnAddItem_Click(object sender, RoutedEventArgs e)
         {
-            SpawnEllipseTextButtonsRow();
+            //SpawnEllipseTextButtonsRow();
         }
 
-        private void SpawnEllipseTextButtonsRow()
+        private void SpawnEllipseTextButtonsRow(object argument)
         {
+            string suffix = "-Command";
+            string stringArgument = (string)argument;
+            string name = stringArgument.EndsWith(suffix)
+                ? stringArgument.Substring(0, stringArgument.Length - suffix.Length)
+                : stringArgument;
+            
             UiGenerator.AddRowsDefinitionToGrid(ConnectedDevicesGrid, GridLength.Auto, 1);
             int position = ConnectedDevicesGrid.RowDefinitions.Count - 1;
             
-            string processName = $"process_{position}";
-
             // Ellipse (left)
             var dot = UiGenerator.GenerateEllipse(size: 14, fill: Brushes.Orange, stroke: Brushes.Orange, strokeThickness: 1, name: $"Dot_{_rowIndex}");
             dot.Margin = new Thickness(0, 0, 10, 0);
 
             // TextBox (middle)
-            var tb = UiGenerator.GenerateText(processName, 250, name: $"Text_{_rowIndex}");
-            tb.Margin = new Thickness(0, 0, 10, 0);
+            var tb = UiGenerator.GenerateText(name, double.NaN, name: $"Text_{_rowIndex}");
+            tb.Loaded += (s, e) =>
+            {
+                tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                tb.Width = tb.DesiredSize.Width + 10;
+            };
 
             // Button 1 (right)
             var btnOk = UiGenerator.GenerateButton("Start", (s, e) =>
             {
-                MessageBox.Show($"OK clicked: {tb.Text}");
-                server.SendCommand(RendezVousPipeline.Command.Run, processName, "");
+                server.SendCommand(RendezVousPipeline.Command.Run, name, "");
             }, name: $"BtnOk_{_rowIndex}");
-            btnOk.Margin = new Thickness(0, 0, 6, 0);
+            btnOk.Margin = new Thickness(0, 0, 15, 0);
 
             // Button 2 (right) - remove this row
             var btnRemove = UiGenerator.GenerateButton("Stop", (s, e) =>
             {
-                server.SendCommand(RendezVousPipeline.Command.Stop, processName,"");
+                server.SendCommand(RendezVousPipeline.Command.Stop, name, "");
             }, name: $"BtnRemove_{_rowIndex}");
-
+            btnRemove.Margin = new Thickness(0, 0, 15, 0);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, dot, 0, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, tb, 1, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, btnOk, 2, ConnectedDevicesGrid.RowDefinitions.Count - 1);
