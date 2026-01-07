@@ -30,18 +30,24 @@ namespace SAAC.PipelineServices
 
         public virtual void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)
         {
+            PsiExporter store = GetOrCreateStore(pipeline, session, storeName);
+            store.Write(source, streamName);
+        }
+
+        public virtual PsiExporter GetOrCreateStore(Pipeline pipeline, Session session, string storeName)
+        {
             if (Stores.ContainsKey(session.Name) && Stores[session.Name].ContainsKey(storeName))
             {
-                Stores[session.Name][storeName].Write(source, streamName);
+                return Stores[session.Name][storeName];
             }
             else
             {
                 PsiExporter store = PsiStore.Create(pipeline, storeName, $"{StorePath}/{session.Name}/");
-                store.Write(source, streamName);
                 session.AddPartitionFromPsiStoreAsync(storeName, $"{StorePath}/{session.Name}/");
                 if (!Stores.ContainsKey(session.Name))
                     Stores.Add(session.Name, new Dictionary<string, PsiExporter>());
                 Stores[session.Name].Add(storeName, store);
+                return store;
             }
         }
     }

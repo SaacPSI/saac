@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .tab-container { display: flex; flex-direction: column; }
+        .tab-header { display: flex; }
+        .tab { padding: 10px 15px; cursor: pointer; background: #e0e0e0; border: 1px solid #ccc; border-bottom: none; }
+        .tab.active { background: #fff; border-bottom: 1px solid #fff; }
+        .tab-content { display: none; padding: 15px; border: 1px solid #ccc; }
+        .tab-content.active { display: block; }
+        .websocket-info { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .status { padding: 10px; margin: 5px 0; border-radius: 3px; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #status { font-weight: bold; }
+        #observerId { padding: 5px; margin: 5px; }
+        .annotation-button { margin: 5px; padding: 8px 12px; }
+        #logs { height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; font-family: monospace; margin-top: 20px; }
+        .checkbox-group { margin: 15px 0; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 3px; }
+        .checkbox-group input[type="checkbox"] { margin-right: 8px; }
+        .checkbox-group label { display: flex; align-items: center; cursor: pointer; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='tab-container'>
+            <div class='tab-header'>
+                <div class='tab active' onclick='switchTab(event, 0)'>Configuration</div>
+                <div class='tab' onclick='switchTab(event, 1)'>Buttons</div>
+            </div>
+            
+            <div class='tab-content active'>
+                <div class='websocket-info'>
+                    <h3>WebSocket Connection</h3>
+                    <label for='observerId'>Observer Id:</label>
+                    <input type='text' id='observerId' name='observerId' placeholder='Enter observer ID'>
+                    <div id='status' class='status disconnected'>Disconnected</div>
+                    <div class='controls'>
+                        <button onclick='connectWebSocket()'>Connect WebSocket</button>
+                        <button onclick='disconnectWebSocket()'>Disconnect WebSocket</button>
+                    </div>
+                </div>
+                
+                <div class='websocket-info'>
+                    <h3>Annotation Settings</h3>
+                    <div class='checkbox-group'>
+                        <label for='enableStringAnnotations'>
+                            <input type='checkbox' id='enableStringAnnotations' name='enableStringAnnotations' onchange='updateAnnotationButtons()'>
+                            Enable String Annotations
+                        </label>
+                    </div>
+                </div>
+                
+                <div class='websocket-info'>
+                    <h3>Logs</h3>
+                    <div id='logs'></div>
+                </div>
+            </div>
+            
+            <div class='tab-content'>
+                <div class='websocket-info'>
+                    <h3>Annotation</h3>
+                    <div id='annotation-buttons'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let isConnected = false;
+        let observerId = '';
+        let annotationConfig = null;
+
+        function switchTab(event, tabIndex) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, index) => {
+                if (index === tabIndex) {
+                    tab.classList.add('active');
+                    contents[index].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[index].classList.remove('active');
+                }
+            });
+        }
+
+        function connectWebSocket() {
+            observerId = document.getElementById('observerId').value;
+            
+            if (!observerId) {
+                logMessage('Please enter an Observer Id');
+                return;
+            }
+
+            try {
+                // Connect to the WebSocket endpoint with observer ID
+                websocket = new WebSocket('ws://' + window.location.host + '/ws/annotation?name=' + encodeURIComponent(observerId));
+                
+                websocket.onopen = function(event) {
+                    isConnected = true;
+                    document.getElementById('status').textContent = 'Connected';
+                    document.getElementById('status').className = 'status connected';
+                    logMessage('WebSocket connected with observer ID: ' + observerId);
+					requestJsonFile("/topics", function(value){ annotationConfig = value; updateAnnotationButtons();});
+                };
+
+                websocket.onclose = function(event) {
+                    isConnected = false;
+                    document.getElementById('status').textContent = 'Disconnected';
+                    document.getElementById('status').className = 'status disconnected';
+                    logMessage('WebSocket disconnected');
+                };
+
+                websocket.onerror = function(error) {
+                    logMessage('WebSocket error: ' + error.message);
+                };
+
+                websocket.onmessage = function(event) {
+                    if (event.data instanceof ArrayBuffer) {
+                        handleBinaryMessage(event.data);
+                    } else {
+                        logMessage('Message received: ' + event.data);
+                    }
+                };
+            } catch (error) {
+                logMessage('Error connecting to WebSocket: ' + error.message);
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (websocket && isConnected) {
+                websocket.close();
+            }
+        }
+		
+		function requestJsonFile(url, callback) {
+			const xhr = new XMLHttpRequest();
+			xhr.open('GET', url, true);
+			
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4) {
+					if (xhr.status === 200) {
+						try {
+							const jsonData = JSON.parse(xhr.responseText);
+							callback(jsonData);
+						} catch (error) {
+							logMessage('Failed to parse JSON: ' + error.message);
+						}
+					} else {
+						logMessage('Failed to load JSON file. Status: ' + xhr.status);
+					}
+				}
+			};
+			
+			xhr.onerror = function() {
+				logMessage('Network error occurred while requesting JSON file');
+			};
+		
+			xhr.send();
+		}
+
+        function updateAnnotationButtons() {
+            const buttonsContainer = document.getElementById('annotation-buttons');
+            buttonsContainer.innerHTML = '';
+
+            if (!annotationConfig || !annotationConfig.AttributeSchemas) {
+                buttonsContainer.innerHTML = '<p>No annotations available.</p>';
+                return;
+            }
+
+            const enableStringAnnotations = document.getElementById('enableStringAnnotations').checked;
+
+            annotationConfig.AttributeSchemas.forEach(attributeSchema => {
+                const valueSchema = attributeSchema.ValueSchema;
+                
+                if (!valueSchema || !valueSchema.$type) {
+                    return;
+                }
+
+                const schemaType = valueSchema.$type;
+                
+                if (enableStringAnnotations && schemaType.includes('StringAnnotationValueSchema')) {
+                    createStringAnnotationElement(buttonsContainer, attributeSchema);
+                } else if (schemaType.includes('EnumerableAnnotationValueSchema')) {
+                    createEnumerableAnnotationElement(buttonsContainer, attributeSchema);
+                }
+            });
+        }
+
+        function createStringAnnotationElement(container, attributeSchema) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'annotation-group';
+            groupDiv.style.cssText = 'margin: 15px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;';
+            
+            const label = document.createElement('label');
+            label.textContent = attributeSchema.Name;
+            label.style.cssText = 'display: block; margin-bottom: 10px; font-weight: bold;';
+            
+            const description = document.createElement('small');
+            description.textContent = attributeSchema.Description;
+            description.style.cssText = 'display: block; margin-bottom: 10px; color: #666;';
+            
+            const inputWrapper = document.createElement('div');
+            inputWrapper.style.cssText = 'display: flex; gap: 10px;';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = attributeSchema.ValueSchema.DefaultValue || 'Enter text';
+            input.style.cssText = 'flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 3px;';
+            
+            const button = document.createElement('button');
+            button.textContent = 'Send';
+            button.className = 'annotation-button';
+            button.style.cssText = 'padding: 8px 15px;';
+            
+            button.addEventListener('click', () => {
+                const value = input.value;
+                if (value && websocket && isConnected) {
+                    sendAnnotationMessage(attributeSchema.Name, value);
+                    logMessage('Sent annotation: ' + attributeSchema.Name + ' = ' + value);
+                    input.value = '';
+                }
+            });
+            
+            inputWrapper.appendChild(input);
+            inputWrapper.appendChild(button);
+            
+            groupDiv.appendChild(label);
+            groupDiv.appendChild(description);
+            groupDiv.appendChild(inputWrapper);
+            
+            container.appendChild(groupDiv);
+        }
+
+        function createEnumerableAnnotationElement(container, attributeSchema) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'annotation-group';
+            groupDiv.style.cssText = 'margin: 15px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;';
+            
+            const label = document.createElement('label');
+            label.textContent = attributeSchema.Name;
+            label.style.cssText = 'display: block; margin-bottom: 10px; font-weight: bold;';
+            
+            const description = document.createElement('small');
+            description.textContent = attributeSchema.Description;
+            description.style.cssText = 'display: block; margin-bottom: 10px; color: #666;';
+            
+            const buttonsWrapper = document.createElement('div');
+            buttonsWrapper.style.cssText = 'display: flex; flex-wrap: wrap; gap: 10px;';
+            
+            const possibleValues = attributeSchema.ValueSchema.PossibleValues || [];
+            
+            possibleValues.forEach(valueOption => {
+                const button = document.createElement('button');
+                button.textContent = valueOption.Value;
+                button.className = 'annotation-button';
+                
+                // Apply colors if available
+                if (valueOption.FillColor) {
+                    button.style.backgroundColor = valueOption.FillColor;
+                }
+                if (valueOption.TextColor) {
+                    button.style.color = valueOption.TextColor;
+                }
+                
+                button.style.cssText += 'padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer;';
+                
+                // Add mousedown event for button press
+                button.addEventListener('mousedown', () => {
+                    if (websocket && isConnected) {
+                        sendAnnotationMessage(attributeSchema.Name, valueOption.Value + '?start');
+                        logMessage('Sent annotation: ' + attributeSchema.Name + ' = ' + valueOption.Value + '?start');
+                    }
+                });
+                
+                // Add mouseup event for button release
+                button.addEventListener('mouseup', () => {
+                    if (websocket && isConnected) {
+                        sendAnnotationMessage(attributeSchema.Name, valueOption.Value + '?end');
+                        logMessage('Sent annotation: ' + attributeSchema.Name + ' = ' + valueOption.Value + '?end');
+                    }
+                });
+                
+                buttonsWrapper.appendChild(button);
+            });
+            
+            groupDiv.appendChild(label);
+            groupDiv.appendChild(description);
+            groupDiv.appendChild(buttonsWrapper);
+            
+            container.appendChild(groupDiv);
+        }
+
+        function sendAnnotationMessage(annotationName, value) {
+            if (websocket && isConnected) {
+                const message = annotationName + '=' + value;
+                sendBinaryMessage(message);
+            }
+        }
+
+		function dateToBinary(date) 
+		{
+			const TICKS_PER_MILLISECOND = 10000n;
+			const DOTNET_EPOCH_MS = -62135596800000n;
+
+			const msSinceUnixEpoch = BigInt(date);
+			const msSinceDotNetEpoch = msSinceUnixEpoch - DOTNET_EPOCH_MS;
+			const ticks = msSinceDotNetEpoch * TICKS_PER_MILLISECOND;
+
+            // Utc => 1n;
+            // Local => 2n;
+			return ticks | 1n << 62n);
+		}
+		
+		function write7BitEncodedInt(view, offset, value) {
+			let i = 0;
+			let v = value;
+
+			while (v >= 0x80) {
+				view.setUint8(offset + i, (v & 0x7F) | 0x80);
+				v >>= 7;
+				i++;
+			}
+			view.setUint8(offset + i, v);
+			return i + 1;
+		}
+
+		function sendBinaryMessage(message) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(message);
+			
+			// Create buffer with size timestamp (8 bytes) + string size + data
+			const buffer = new ArrayBuffer(8 + 5 + data.length);
+			const view = new DataView(buffer);
+			
+			// Timestamp (8 bytes) as int64
+			const ticks = dateToBinary(Date.now()); // Convert to .NET ticks
+			view.setBigUint64(0, ticks, true);
+			
+			// String length (7-bit encoded)
+			const lengthBytes = write7BitEncodedInt(view, 8, data.length);
+
+			// String bytes
+			new Uint8Array(buffer, 8 + lengthBytes)
+				.set(data);
+
+			// Final buffer (slice exact size)
+			const finalBuffer = buffer.slice(0, 8 + lengthBytes + data.length);
+			
+			if (websocket && isConnected) {
+				websocket.send(buffer);
+			}
+		}
+
+        function logMessage(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += '[' + timestamp + '] ' + message + '<br>';
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // Initialize the page
+        window.onload = function() {
+            logMessage('Page loaded');
+        };
+    </script>
+</body>
+</html>

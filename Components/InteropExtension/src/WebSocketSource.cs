@@ -5,8 +5,10 @@ namespace Microsoft.Psi.Interop.Transport
 {
     using System;
     using System.Diagnostics;
+    using System.IO;
     using System.Net.WebSockets;
     using System.Runtime.InteropServices;
+    using System.Text;
     using System.Threading;
     using Microsoft.Psi.Components;
     using Microsoft.Psi.Interop.Serialization;
@@ -23,6 +25,7 @@ namespace Microsoft.Psi.Interop.Transport
         private System.Threading.CancellationTokenSource token;
         private Thread receiveThread;
         private int bufferSize;
+        private bool useSourceOriginatingTime = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketSource{T}"/> class.
@@ -30,15 +33,24 @@ namespace Microsoft.Psi.Interop.Transport
         /// <param name="pipeline">The pipeline to add the component to.</param>
         /// <param name="websocket">The websocket to recieve data from.</param>
         /// <param name="deserializer">The deserializer to use to serialize messages.</param>
+        /// <param name="useSourceOriginatingTime">If the component use the incoming time or not.</param>
         /// <param name="name">An optional name for the component.</param>
-        public WebSocketSource(Pipeline pipeline, WebSocket websocket, IFormatDeserializer deserializer, int bufferSize = 0, string name = nameof(WebSocketSource<T>))
+        public WebSocketSource(Pipeline pipeline, WebSocket websocket, IFormatDeserializer deserializer, bool useSourceOriginatingTime = true, int bufferSize = 0, string name = nameof(WebSocketSource<T>))
         {
             this.Out = pipeline.CreateEmitter<T>(this, nameof(this.Out));
             this.name = name;
             this.deserializer = deserializer;
             this.websocket = websocket;
             this.token = new System.Threading.CancellationTokenSource();
-            this.bufferSize = bufferSize > 0 ? bufferSize : (Marshal.SizeOf(typeof(T)) + Marshal.SizeOf(typeof(DateTime)))*2;
+            this.useSourceOriginatingTime = useSourceOriginatingTime;
+            if (typeof(T) == typeof(string))
+            {
+                this.bufferSize = 1024;
+            }
+            else
+            {
+                this.bufferSize = bufferSize > 0 ? bufferSize : (Marshal.SizeOf(typeof(T)) + Marshal.SizeOf(typeof(DateTime))) * 2;
+            }
         }
 
         /// <inheritdoc/>
@@ -81,22 +93,24 @@ namespace Microsoft.Psi.Interop.Transport
             while (!this.token.IsCancellationRequested)
             {
                 byte[] bytes = new byte[this.bufferSize];
-                ArraySegment<byte> buffer = new ArraySegment<byte>(bytes);
-                var result = await this.websocket.ReceiveAsync(buffer, this.token.Token);
-                if (result.EndOfMessage)
+                ArraySegment<byte> buffer = new ArraySegment<byte>(bytes); 
+                try
                 {
-                    try
+                    var result = await this.websocket.ReceiveAsync(buffer, this.token.Token);
+                    if (result.EndOfMessage)
                     {
                         var data = this.deserializer.DeserializeMessage(buffer.Array, 0, result.Count);
-                        this.Out.Post(data.Message, data.OriginatingTime);
+                        this.Out.Post(data.Message, this.useSourceOriginatingTime ? data.OriginatingTime : this.Out.Pipeline.GetCurrentTime());
                     }
-                    catch (Exception ex)
+                    if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        Trace.WriteLine($"WebsocketSource {name} Exception: {ex.Message}");
+                        return;
                     }
                 }
-                if (result.MessageType == WebSocketMessageType.Close)
-                    return;
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"WebsocketSource {name} Exception: {ex.Message}");
+                }
             }
         }
     }

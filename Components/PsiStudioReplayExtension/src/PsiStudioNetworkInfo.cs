@@ -36,7 +36,7 @@ namespace Microsoft.Psi.PsiStudio
             /// <summary>
             /// PsiStudio is stoping in playback no more data incoming.
             /// </summary>
-            Stopping,,
+            Stopping,
 
             /// <summary>
             /// PlaySpeed iof the playback.

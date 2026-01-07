@@ -445,8 +445,26 @@ namespace TestingConsole
         static void Main(string[] args)
         {
             //testOllama();
-            //Pipeline pw = Pipeline.Create();
+            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            configuration.AutomaticPipelineRun = true;
+            configuration.Debug = false;
+            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.RendezVousHost = "localhost";
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            configuration.CommandPort = 0;
 
+            // Instantiate the class that manage the RendezVous system and the pipeline execution?
+             RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
+            rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
+            List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
+            SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.schema.json", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
+
+            rdvPipeline.Start();
+            annot.Start((e) => { });
+           
+            
             //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
             //websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
             //{
@@ -504,15 +522,15 @@ namespace TestingConsole
             ////ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
             ////replayPipeline.LoadDatasetAndConnectors();
 
-            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
-            configuration.Debug = false;
-            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "localhost";
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
-            configuration.CommandPort = 0;
+            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            //configuration.AutomaticPipelineRun = true;
+            //configuration.Debug = false;
+            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            //configuration.DatasetName = "RendezVousPipeline.pds";
+            //configuration.RendezVousHost = "localhost";
+            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            //configuration.CommandPort = 0;
 
             // Topics to receive from Unity
             // do a all-in management of streams
@@ -528,16 +546,16 @@ namespace TestingConsole
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
             // RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Client", "localhost");
-            TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo> wrt = new TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo>(rdvPipeline.Pipeline, 18888, Microsoft.Psi.PsiStudio.PsiFormatPsiStudioNetworkInfo.GetFormat());
+            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Client", "localhost");
+            //TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo> wrt = new TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo>(rdvPipeline.Pipeline, 18888, Microsoft.Psi.PsiStudio.PsiFormatPsiStudioNetworkInfo.GetFormat());
 
 
             // Register an action when receive the incoming connection from Unity
             //rdvPipeline.AddNewProcessEvent(OnNewProcess);
 
             // Start the rendezVous and the pipeline
-            rdvPipeline.Start();
-            rdvPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process("PsiStudioCommand", [wrt.ToRendezvousEndpoint("localhost","Command")]));
+            //rdvPipeline.Start();
+            //rdvPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process("PsiStudioCommand", [wrt.ToRendezvousEndpoint("localhost","Command")]));
 
             //Console.WriteLine("Press any key to send RUN command to Unity.");
             //Console.ReadLine();
@@ -545,14 +563,14 @@ namespace TestingConsole
             ////replayPipeline.RunPipelineAndSubpipelines();
 
             //Console.WriteLine("Press any key to send STOP command to Unity.");
-            int count = 0;
-            while (true)
-            {
-                Console.ReadLine();
+            //int count = 0;
+            //while (true)
+            //{
+            //    Console.ReadLine();
 
-                wrt.Receive(new Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo(count++ % 2 > 0 ? Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing: Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, TimeInterval.Infinite, "test"), new Envelope());
-            }
-            
+            //    wrt.Receive(new Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo(count++ % 2 > 0 ? Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing: Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, TimeInterval.Infinite, "test"), new Envelope());
+            //}
+
             //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             // Waiting for an out key to Stop

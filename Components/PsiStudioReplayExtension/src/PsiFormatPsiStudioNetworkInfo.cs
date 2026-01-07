@@ -10,7 +10,7 @@ namespace Microsoft.Psi.PsiStudio
     /// <summary>
     /// Class to (de)serialize message of type <see cref="PsiStudioNetworkInfo"/>.for <see cref="NetworkStreamsManager"/>.
     /// </summary>
-    internal class PsiFormatPsiStudioNetworkInfo
+    public class PsiFormatPsiStudioNetworkInfo
     {
         /// <summary>
         /// Static method to generate (de)serialize the <see cref="PsiStudioNetworkInfo"/> class.

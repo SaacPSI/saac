@@ -1,0 +1,40 @@
+{
+	"Name": "Utterance",
+	"AttributeSchemas": [
+		{
+			"Name": "Transcript",
+			"Description": "The utterance transcript",
+			"ValueSchema": {
+				"$type": "Microsoft.Psi.Data.Annotations.StringAnnotationValueSchema, Microsoft.Psi.Data",
+				"FillColor": "Cyan",
+				"TextColor": "Blue",
+				"DefaultValue": "Hello World"
+			}
+		},
+		{
+			"Name": "Valence",
+			"Description": "The valence of the utterance",
+			"ValueSchema": {
+				"$type": "Microsoft.Psi.Data.Annotations.EnumerableAnnotationValueSchema`1[[System.String, mscorlib]], Microsoft.Psi.Data",
+				"DefaultValue": "Neutral",
+				"PossibleValues": [
+					{
+						"Value": "Negative",
+						"FillColor": "Blue",
+						"TextColor": "White"
+					},
+					{
+						"Value": "Neutral",
+						"FillColor": "DarkGray",
+						"TextColor": "White"
+					},
+					{
+						"Value": "Positive",
+						"FillColor": "Red",
+						"TextColor": "White"
+					}
+				]
+			}
+		}
+	]
+}
