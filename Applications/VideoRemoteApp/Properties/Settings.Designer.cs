@@ -12,7 +12,7 @@ namespace VideoRemoteApp.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.12.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.14.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -62,24 +62,168 @@ namespace VideoRemoteApp.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("VideoRemoteApp")]
-        public string ApplicationName {
+        public string applicationName {
             get {
-                return ((string)(this["ApplicationName"]));
+                return ((string)(this["applicationName"]));
             }
             set {
-                this["ApplicationName"] = value;
+                this["applicationName"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10.144.210.100")]
-        public string IpToUse {
+        public string ipToUse {
             get {
-                return ((string)(this["IpToUse"]));
+                return ((string)(this["ipToUse"]));
             }
             set {
-                this["IpToUse"] = value;
+                this["ipToUse"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isServer {
+            get {
+                return ((bool)(this["isServer"]));
+            }
+            set {
+                this["isServer"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isStreaming {
+            get {
+                return ((bool)(this["isStreaming"]));
+            }
+            set {
+                this["isStreaming"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public uint captureInterval {
+            get {
+                return ((uint)(this["captureInterval"]));
+            }
+            set {
+                this["captureInterval"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int encodingLevel {
+            get {
+                return ((int)(this["encodingLevel"]));
+            }
+            set {
+                this["encodingLevel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int cropX {
+            get {
+                return ((int)(this["cropX"]));
+            }
+            set {
+                this["cropX"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int cropY {
+            get {
+                return ((int)(this["cropY"]));
+            }
+            set {
+                this["cropY"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int cropWidth {
+            get {
+                return ((int)(this["cropWidth"]));
+            }
+            set {
+                this["cropWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int cropHeight {
+            get {
+                return ((int)(this["cropHeight"]));
+            }
+            set {
+                this["cropHeight"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isLocalRecording {
+            get {
+                return ((bool)(this["isLocalRecording"]));
+            }
+            set {
+                this["isLocalRecording"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string localSessionName {
+            get {
+                return ((string)(this["localSessionName"]));
+            }
+            set {
+                this["localSessionName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string datasetPath {
+            get {
+                return ((string)(this["datasetPath"]));
+            }
+            set {
+                this["datasetPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string datasetName {
+            get {
+                return ((string)(this["datasetName"]));
+            }
+            set {
+                this["datasetName"] = value;
             }
         }
     }

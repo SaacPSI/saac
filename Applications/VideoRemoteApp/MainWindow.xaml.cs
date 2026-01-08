@@ -1,103 +1,118 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.Psi;
+using SAAC.PipelineServices;
+using SAAC.GlobalHelpers;
+using System.Windows.Controls;
+using SAAC;
 using Microsoft.Psi.Media;
 using Microsoft.Psi.Imaging;
-using SAAC.RendezVousPipelineServices;
+using System.Diagnostics;
 using Microsoft.Psi.Remoting;
-using SharpDX;
-
+using Microsoft.Psi.Interop.Rendezvous;
+using Microsoft.Psi.Data;
+using System.IO;
+using Microsoft.Win32;
 
 namespace VideoRemoteApp
 {
     /// <summary>
-    /// Logique d'interaction pour MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
+        private List<string> notTriggerProperties;
 
         private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             {
+                if (propertyName != null)
+                {
+                    bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
+                    BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                }
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
         #endregion
 
-        private string state = "Hello";
+        private RendezVousPipelineConfiguration pipelineConfiguration;
+
+        // General Tab
+        private string state = "Not Initialised";
         public string State
         {
             get => state;
             set => SetProperty(ref state, value);
         }
-        public void DelegateMethodStatus(string status)
+
+        private bool isRemoteServer = true;
+        public bool IsRemoteServer
         {
-            State = status;
+            get => isRemoteServer;
+            set => SetProperty(ref isRemoteServer, value);
         }
 
-        private RendezVousPipelineConfiguration PipelineConfiguration = new RendezVousPipelineConfiguration();
+        private bool isStreaming = true;
+        public bool IsStreaming
+        {
+            get => isStreaming;
+            set => SetProperty(ref isStreaming, value);
+        }
 
-        private string rendezVousServerIp = "10.144.210.100";
+        private bool isLocalRecording = true;
+        public bool IsLocalRecording
+        {
+            get => isLocalRecording;
+            set => SetProperty(ref isLocalRecording, value);
+        }
+
+        // Video Tab
+        private VideoRemoteAppConfiguration videoRemoteAppConfiguration;
+
+        public VideoRemoteAppConfiguration VideoRemoteAppConfigurationUI
+        {
+            get => videoRemoteAppConfiguration;
+            set => SetProperty(ref videoRemoteAppConfiguration, value);
+        }
+
+        // Network Tab
+        public List<string> IPsList { get; }
+
+        private string rendezVousServerIp = "localhost";
         public string RendezVousServerIp
         {
             get => rendezVousServerIp;
             set => SetProperty(ref rendezVousServerIp, value);
         }
-        public void DelegateMethodRendezVousServerIP(string ip)
-        {
-            RendezVousServerIp = ip;
-        }
-        public int ServerPort
-        {
-            get => PipelineConfigurationUI.RendezVousPort;
-            set => SetProperty(ref PipelineConfigurationUI.RendezVousPort, value);
-        }
-        /*private uint rendezVousServerPort = 13331;
-        public uint RendezVousServerPort
-        {
-            get => rendezVousServerPort;
-            set => SetProperty(ref rendezVousServerPort, value);
-        }
-        public void DelegateMethodRendezVousServerPort(uint ip)
-        {
-            RendezVousServerPort = ip;
-        }*/
 
         public RendezVousPipelineConfiguration PipelineConfigurationUI
         {
-            get => PipelineConfiguration;
-            set => SetProperty(ref PipelineConfiguration, value);
+            get => pipelineConfiguration;
+            set => SetProperty(ref pipelineConfiguration, value);
         }
 
-        private string applicationName = "VideoRemoteApp";
-        public string ApplicationName
+        private string rendezVousApplicationName;
+        public string RendezVousApplicationNameUI
         {
-            get => applicationName;
-            set => SetProperty(ref applicationName, value);
+            get => rendezVousApplicationName;
+            set => SetProperty(ref rendezVousApplicationName, value);
         }
-        public void DelegateMethodApplicationName(string name)
+
+        private string ipSelected;
+        public string IpSelectedUI
         {
-            ApplicationName = name;
+            get => ipSelected;
+            set => SetProperty(ref ipSelected, value);
         }
 
         private string commandSource = "Server";
@@ -106,87 +121,305 @@ namespace VideoRemoteApp
             get => commandSource;
             set => SetProperty(ref commandSource, value);
         }
-        public void DelegateMethodCS(string commandSource)
+
+        // LocalRecording Tab
+        private string localSessionName = "";
+        public string LocalSessionName
         {
-            CommandSource = commandSource;
+            get => localSessionName;
+            set => SetProperty(ref localSessionName, value);
         }
 
+        public string LocalDatasetPath
+        {
+            get => PipelineConfigurationUI.DatasetPath;
+            set => SetProperty(ref PipelineConfigurationUI.DatasetPath, value);
+        }
+
+        public string LocalDatasetName
+        {
+            get => PipelineConfigurationUI.DatasetName;
+            set => SetProperty(ref PipelineConfigurationUI.DatasetName, value);
+        }
+
+        // Log Tab
         private string log = "";
         public string Log
         {
             get => log;
             set => SetProperty(ref log, value);
         }
-        public void DelegateMethodLog(string log)
+
+        // Variables
+        private enum SetupState
         {
-            Log = log;
+            NotInitialised,
+            PipelineInitialised,
+            VideoInitialised
         }
 
+        private SetupState setupState;
+        private DatasetPipeline? datasetPipeline;
+        private LogStatus internalLog;
 
-        public List<string> IPsList { get; }
-        /*public string IPSelected
+        private int captureInterval;
+        public int CaptureInterval
         {
-            get => PipelineConfiguration.RendezVousHost;
-            set => SetProperty(ref PipelineConfiguration.RendezVousHost, value);
+            get => captureInterval;
+            set => SetProperty(ref captureInterval, value);
         }
-        public void DelegateMethodColorResolution(string val)
-        {
-            PipelineConfiguration.RendezVousHost = val;
-        }*/
 
-        private RendezVousPipeline? Pipeline;
-        private VideoRemoteConnectorConfiguration Configuration = new VideoRemoteConnectorConfiguration();
-        private VideoRemoteConnector videoConnector; // to modify/remove
+        private int cropX;
+        public int CropX
+        {
+            get => cropX;
+            set => SetProperty(ref cropX, value);
+        }
+
+        private int cropY;
+        public int CropY
+        {
+            get => cropY;
+            set => SetProperty(ref cropY, value);
+        }
+
+        private int cropWidth;
+        public int CropWidth
+        {
+            get => cropWidth;
+            set => SetProperty(ref cropWidth, value);
+        }
+
+        private int cropHeight;
+        public int CropHeight
+        {
+            get => cropHeight;
+            set => SetProperty(ref cropHeight, value);
+        }
 
         public MainWindow()
         {
-            DataContext = this;
-            PipelineConfiguration.ClockPort = PipelineConfiguration.CommandPort = 0;
-            //PipelineConfiguration.AutomaticPipelineRun = true;
-            IPsList = new List<string>() { "localhost" };
-            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+            internalLog = (log) =>
             {
-                IPsList.Add(ip.ToString());
-            }
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    Log += $"{log}\n";
+                }));
+            };
 
-            Pipeline = null;
-            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
-            PipelineConfiguration.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            ServerPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            ApplicationName = Properties.Settings.Default.ApplicationName;
+            notTriggerProperties = new List<string> { "Log", "State" };
+            DataContext = this;
+            pipelineConfiguration = new RendezVousPipelineConfiguration();
+            pipelineConfiguration.ClockPort = pipelineConfiguration.CommandPort = 0;
+            pipelineConfiguration.AutomaticPipelineRun = true;
+            pipelineConfiguration.RecordIncomingProcess = false;
+
+            videoRemoteAppConfiguration = new VideoRemoteAppConfiguration();
+
+            IPsList = new List<string> { "localhost" };
+            IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
+
+            setupState = SetupState.NotInitialised;
+            datasetPipeline = null;
+
+            LoadConfigurations();
             InitializeComponent();
             UpdateLayout();
-            IPs.SelectionChanged += IPs_SelectionChanged;
+
+            SetupVideoTab();
+            SetupNetworkTab();
+            SetupLocalRecordingTab();
+            RefreshUIFromConfiguration();
         }
-        private void IPs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+
+        private void SetupVideoTab()
         {
-            Configuration.RendezVousAddress = PipelineConfiguration.RendezVousHost = (string)IPs.SelectedValue;
+            // Validate Capture Interval as integer
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoCaptureIntervalTextBox, int.TryParse);
+
+            // Validate Encoding Level as integer
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoEncodingLevelTextBox, int.TryParse);
+
+            // Validate Cropping Area coordinates as integers
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoCropXTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoCropYTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoCropWidthTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(VideoCropHeightTextBox, int.TryParse);
+            
+            // Initialize TextBox values from configuration
+            VideoCaptureIntervalTextBox.Text = videoRemoteAppConfiguration.Interval.TotalMilliseconds.ToString();
+            VideoCropXTextBox.Text = videoRemoteAppConfiguration.CroppingArea.X.ToString();
+            VideoCropYTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Y.ToString();
+            VideoCropWidthTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Width.ToString();
+            VideoCropHeightTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Height.ToString();
         }
+
+        private void SetupNetworkTab()
+        {
+            // Validate Server IP address
+            UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
+            
+            // Validate Server Port as integer
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
+            
+            UpdateNetworkTab();
+        }
+
+        private void SetupLocalRecordingTab()
+        {
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(LocalRecordingDatasetDirectoryTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<string>(LocalRecordingDatasetNameTextBox, UiGenerator.PathTryParse);
+            LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataset file already exist, make sure to use a different session name.", ".pds", LocalRecordingDatasetDirectoryTextBox);
+        }
+
+        private void UpdateNetworkTab()
+        {
+            BtnStartNet.IsEnabled = isRemoteServer;
+            foreach (UIElement networkUIElement in NetworkGrid.Children)
+                if (!(networkUIElement is CheckBox))
+                    networkUIElement.IsEnabled = isRemoteServer;
+            isStreaming = isRemoteServer ? isStreaming : false;
+            GeneralNetworkStreamingCheckBox.IsEnabled = NetworkStreamingCheckBox.IsEnabled = isRemoteServer;
+        }
+
+        private void UpdateLocalRecordingTab()
+        {
+            foreach (UIElement networkUIElement in LocalRecordingGrid.Children)
+                if (!(networkUIElement is CheckBox))
+                    networkUIElement.IsEnabled = isLocalRecording;
+        }
+
         private void RefreshUIFromConfiguration()
         {
-            PipelineConfigurationUI.RendezVousPort = (int)Properties.Settings.Default.rendezVousServerPort;
-            ServerPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp; 
-            PipelineConfiguration.RendezVousHost = Properties.Settings.Default.IpToUse;
-            ApplicationName = Properties.Settings.Default.ApplicationName;
+            // Video Tab
+            CaptureInterval = (int)videoRemoteAppConfiguration.Interval.TotalMilliseconds;
+            VideoCaptureIntervalTextBox.Text = CaptureInterval.ToString();
+            CropX = videoRemoteAppConfiguration.CroppingArea.X;
+            CropY = videoRemoteAppConfiguration.CroppingArea.Y;
+            CropWidth = videoRemoteAppConfiguration.CroppingArea.Width;
+            CropHeight = videoRemoteAppConfiguration.CroppingArea.Height;
+            VideoCropXTextBox.Text = CropX.ToString();
+            VideoCropYTextBox.Text = CropY.ToString();
+            VideoCropWidthTextBox.Text = CropWidth.ToString();
+            VideoCropHeightTextBox.Text = CropHeight.ToString();
+
+            // Network Tab
+            IsRemoteServer = Properties.Settings.Default.isServer;
+            IsStreaming = Properties.Settings.Default.isStreaming;
+            var ipResult = IPsList.Where((ip) => { return ip == Properties.Settings.Default.ipToUse; });
+            RendezVousHostComboBox.SelectedIndex = ipResult.Count() == 0 ? 0 : IPsList.IndexOf(ipResult.First());
+            PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.ipToUse;
+            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
+            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+            RendezVousApplicationNameUI = Properties.Settings.Default.applicationName;
+
+            // Local Recording Tab
+            IsLocalRecording = Properties.Settings.Default.isLocalRecording;
+            LocalSessionName = Properties.Settings.Default.localSessionName;
+            LocalDatasetPath = Properties.Settings.Default.datasetPath;
+            LocalDatasetName = Properties.Settings.Default.datasetName;
+
+            LoadConfigurations();
             Properties.Settings.Default.Save();
             UpdateLayout();
         }
+
+        private void LoadConfigurations()
+        {           
+            // Load video configurations
+            videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(CaptureInterval > 0 ? CaptureInterval : Properties.Settings.Default.captureInterval);
+            videoRemoteAppConfiguration.EncodingVideoLevel = Properties.Settings.Default.encodingLevel;
+            
+            if (CropX > 0 || CropY > 0 || CropWidth > 0 || CropHeight > 0)
+                videoRemoteAppConfiguration.CroppingArea = new System.Drawing.Rectangle(CropX, CropY, CropWidth, CropHeight);
+        }
+
         private void RefreshConfigurationFromUI()
         {
-            //Properties.Settings.Default.remotePort = (uint)PipelineConfigurationUI.RendezVousPort;
-            Properties.Settings.Default.rendezVousServerPort = (uint)ServerPort;
+            // Update capture interval from TextBox
+            if (int.TryParse(VideoCaptureIntervalTextBox.Text, out int interval))
+            {
+                videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(interval);
+            }
+
+            // Update cropping area from TextBoxes
+            if (int.TryParse(VideoCropXTextBox.Text, out int x) &&
+                int.TryParse(VideoCropYTextBox.Text, out int y) &&
+                int.TryParse(VideoCropWidthTextBox.Text, out int width) &&
+                int.TryParse(VideoCropHeightTextBox.Text, out int height))
+            {
+                videoRemoteAppConfiguration.CroppingArea = new System.Drawing.Rectangle(x, y, width, height);
+            }
+
+            // Network Tab
+            Properties.Settings.Default.isServer = IsRemoteServer;
+            Properties.Settings.Default.isStreaming = IsStreaming;
+            Properties.Settings.Default.ipToUse = PipelineConfigurationUI.RendezVousHost;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
-            Properties.Settings.Default.ApplicationName = ApplicationName;
-            Properties.Settings.Default.IpToUse = PipelineConfiguration.RendezVousHost;
+            Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.applicationName = RendezVousApplicationNameUI;
+
+            // Video Tab
+            Properties.Settings.Default.captureInterval = (uint)videoRemoteAppConfiguration.Interval.TotalMilliseconds;
+            Properties.Settings.Default.encodingLevel = videoRemoteAppConfiguration.EncodingVideoLevel;
+
+            Properties.Settings.Default.cropX = CropX;
+            Properties.Settings.Default.cropY = CropY;
+            Properties.Settings.Default.cropWidth = CropWidth;
+            Properties.Settings.Default.cropHeight = CropHeight;
+
+            // Local Recording Tab
+            Properties.Settings.Default.isLocalRecording = IsLocalRecording;
+            Properties.Settings.Default.localSessionName = LocalSessionName;
+            Properties.Settings.Default.datasetPath = LocalDatasetPath;
+            Properties.Settings.Default.datasetName = LocalDatasetName;
+
             Properties.Settings.Default.Save();
         }
+
+        private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
+        {
+            if (CommandSource != source)
+                return;
+
+            var args = message.Data.Item2.Split([';']);
+
+            datasetPipeline?.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
+            switch (message.Data.Item1)
+            {
+                case RendezVousPipeline.Command.Initialize:
+                    UpdateConfigurationFromArgs(args);
+                    break;
+                case RendezVousPipeline.Command.Run:
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        SetupVideo();
+                    }));
+                    break;
+                case RendezVousPipeline.Command.Stop:
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        datasetPipeline?.Stop();
+                    }));
+                    break;
+                case RendezVousPipeline.Command.Close:
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        Stop();
+                        Close();
+                    }));
+                    break;
+                case RendezVousPipeline.Command.Status:
+                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, source, datasetPipeline == null ? "Not Initialised" : datasetPipeline.Pipeline.StartTime.ToString());
+                    break;
+            }
+        }
+
         private bool UpdateConfigurationFromArgs(string[] args)
         {
             try
             {
-                
+                // Placeholder for future argument parsing
             }
             catch (Exception ex)
             {
@@ -201,140 +434,243 @@ namespace VideoRemoteApp
             return true;
         }
 
-        private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private void SetupPipeline()
         {
-            if (CommandSource != source)
-                return;
-            var args = message.Data.Item2.Split([';']);
-
-            if (args[0] != Configuration.RendezVousApplicationName)
+            if (setupState >= SetupState.PipelineInitialised)
                 return;
 
-            switch (message.Data.Item1)
+            if (!isRemoteServer && !isLocalRecording)
             {
-                case RendezVousPipeline.Command.Initialize:
-                    UpdateConfigurationFromArgs(args);
-                    break;
-                case RendezVousPipeline.Command.Run:
-                    SetupVideo();
-                    break;
-                case RendezVousPipeline.Command.Stop:
-                    StopVideo();
-                    break;
-                case RendezVousPipeline.Command.Close:
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                    {
-                        StopPipeline();
-                        Close();
-                    }));
-                    break;
-                case RendezVousPipeline.Command.Restart:
-                    if (UpdateConfigurationFromArgs(args))
-                    {
-                        Application.Current.Dispatcher.Invoke(new Action(() =>
-                        {
-                            OnRestart();
-                        }));
-                    }
-                    break;
-                case RendezVousPipeline.Command.Status:
-                    Pipeline?.CommandEmitter.Post((RendezVousPipeline.Command.Status, videoConnector == null ? "Not Initialised" : videoConnector.StartTime.ToString()), Pipeline.Pipeline.GetCurrentTime());
-                    break;
+                MessageBox.Show("You cannot start the application without Network or Local Recording.", "Configuration error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                return;
             }
+
+            pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            pipelineConfiguration.AutomaticPipelineRun = false;
+            pipelineConfiguration.CommandDelegate = CommandRecieved;
+            pipelineConfiguration.Debug = false;
+            pipelineConfiguration.RecordIncomingProcess = false;
+            pipelineConfiguration.ClockPort = 0;
+            pipelineConfiguration.DatasetPath = LocalDatasetPath;
+            pipelineConfiguration.DatasetName = LocalDatasetName;
+
+            if (isRemoteServer)
+            {
+                datasetPipeline = new RendezVousPipeline(pipelineConfiguration, rendezVousApplicationName, RendezVousServerIp, internalLog);
+            }
+            else
+            {
+                datasetPipeline = new DatasetPipeline(pipelineConfiguration);
+            }
+
+            setupState = SetupState.PipelineInitialised;
         }
 
-        private void SetupRendezVous()
-        {
-            //disable ui
-            RendezVousGrid.IsEnabled = false;
-            PipelineConfiguration.Diagnostics = (bool)Diagnostics.IsChecked ? RendezVousPipeline.DiagnosticsMode.Export : RendezVousPipeline.DiagnosticsMode.Store;
-            PipelineConfiguration.CommandDelegate = CommandRecieved;
-            Pipeline = new RendezVousPipeline(PipelineConfiguration, ApplicationName, RendezVousServerIp);
-            State = "Waiting for server";
-            Pipeline.Start();
-            State = "Ready to start Video";
-        }
         private void SetupVideo()
         {
-            if (Pipeline == null)
-                SetupRendezVous();
-            //disable ui
-            DataFormular.IsEnabled = false;
-            Configuration.AppName = "SpacePipeline_Main";
-            videoConnector = new VideoRemoteConnector(Pipeline.CreateSubpipeline("Video"), Configuration);
-            Pipeline.AddProcess(videoConnector.GenerateProcess());
-            Pipeline.RunPipeline();
-            //videoConnector.RunAsync();
-            State = "Running";
-        }   
-        private void StopPipeline()
-        {
-            // Stop correctly the everything.
-            State = "Stopping";
-            if (Pipeline != null)
+            if (setupState >= SetupState.VideoInitialised)
+                return;
+
+            if (datasetPipeline is null)
+                SetupPipeline();
+
+
+            WindowCaptureConfiguration cfg = new WindowCaptureConfiguration() { Interval = videoRemoteAppConfiguration.Interval};
+            WindowCapture capture = new WindowCapture(datasetPipeline.Pipeline, cfg);
+            IProducer<Shared<Microsoft.Psi.Imaging.EncodedImage>> videoSource;
+            if (videoRemoteAppConfiguration.CroppingArea.IsEmpty)
+                videoSource = capture.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage);
+            else
             {
-                Pipeline.Stop();
+                SAAC.Helpers.ImageCropper cropRect = new SAAC.Helpers.ImageCropper(datasetPipeline.Pipeline, videoRemoteAppConfiguration.CroppingArea);
+                capture.Out.PipeTo(cropRect.In);
+                videoSource = cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage);
+            }
+
+            if (isRemoteServer)
+            {
+                RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, pipelineConfiguration.RendezVousPort, TransportKind.Tcp);
+                imageExporter.Exporter.Write(videoSource, "VideoStreaming");
+                (datasetPipeline as RendezVousPipeline)?.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost)]));
+            }
+            else
+            {
+                datasetPipeline.CreateStore(datasetPipeline.Pipeline, datasetPipeline.CreateOrGetSession(LocalSessionName), "VideoStreaming", "VideoStreaming", videoSource);
+            }
+
+            AddLog(State = "Video initialised");
+            setupState = SetupState.VideoInitialised;
+        }
+
+        private void Stop()
+        {
+            AddLog(State = "Stopping");
+            datasetPipeline?.Stop();
+            datasetPipeline?.Dispose();
+            Application.Current.Shutdown();
+        }
+
+        private void StartNetwork()
+        {
+            SetupPipeline();
+            if (setupState == SetupState.PipelineInitialised)
+            {
+                BtnStartNet.IsEnabled = false;
+                AddLog(State = "Waiting for server");
+                (datasetPipeline as RendezVousPipeline)?.Start();
             }
         }
-        private void StopVideo()
+
+        private void Start()
         {
-            State = "Stopping Video";
-            if (videoConnector != null && videoConnector.Image != null && Pipeline != null)
-            {
-                if (!Pipeline.RemoveProcess(ApplicationName))
-                    Console.WriteLine("error remove rendezvous");
-                try
-                {
-                    videoConnector.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                }
-            }
-        }
-        protected void OnRestart()
-        {
-            StopVideo();
-            RefreshUIFromConfiguration();
+            SetupPipeline();
             SetupVideo();
+            if (setupState == SetupState.VideoInitialised)
+            {
+                BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
+                var remotePipeline = datasetPipeline as RendezVousPipeline;
+                if (remotePipeline != null)
+                {
+                    remotePipeline.Start();
+                }
+                else
+                {
+                    datasetPipeline?.RunPipelineAndSubpipelines();
+                }
+                AddLog(State = "Started");
+            }
+        }
+
+        private void AddLog(string logMessage)
+        {
+            Log += $"{logMessage}\n";
+        }
+
+        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            TextBox? log = sender as TextBox;
+            if (log == null)
+                return;
+            log.CaretIndex = log.Text.Length;
+            log.ScrollToEnd();
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            StopPipeline();
+            Stop();
             RefreshConfigurationFromUI();
             base.OnClosing(e);
-        }
-        private void BtnQuitClick(object sender, RoutedEventArgs e)
-        {
-            StopPipeline();
-            Close();
         }
 
         private void BtnStartRendezVous(object sender, RoutedEventArgs e)
         {
             State = "Initializing RendezVous";
             RefreshConfigurationFromUI();
-            SetupRendezVous();
+            StartNetwork();
+            e.Handled = true;
         }
+
         private void BtnStartAll(object sender, RoutedEventArgs e)
         {
             State = "Initializing Video";
             RefreshConfigurationFromUI();
-            SetupVideo();
+            Start();
+            e.Handled = true;
         }
 
-        private void BtnStopClick(object sender, RoutedEventArgs e)
+        private void BtnQuitClick(object sender, RoutedEventArgs e)
         {
-            StopVideo();
-            DataFormular.IsEnabled = true;
-            RendezVousGrid.IsEnabled = true;
+            Close();
+            e.Handled = true;
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private void BtnLoadConfiguration(object sender, RoutedEventArgs e)
         {
+            RefreshUIFromConfiguration();
+            AddLog(State = "Configuration Loaded");
+            e.Handled = true;
+        }
 
+        private void BtnSaveConfiguration(object sender, RoutedEventArgs e)
+        {
+            RefreshConfigurationFromUI();
+            AddLog(State = "Configuration Saved");
+            e.Handled = true;
+        }
+
+        private void CkbActivateNetwork(object sender, RoutedEventArgs e)
+        {
+            UpdateNetworkTab();
+            e.Handled = true;
+        }
+
+        private void CkbActivateStreaming(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void CkbActivateLocalRecording(object sender, RoutedEventArgs e)
+        {
+            UpdateLocalRecordingTab();
+            e.Handled = true;
+        }
+
+        private void LocalRecordingDatasetDirectoryButtonClick(object sender, RoutedEventArgs e)
+        {
+            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LocalDatasetPath = openFileDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void LocalRecordingDatasetNameButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Dataset (*.pds)|*.pds";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LocalDatasetPath = openFileDialog.FileName.Substring(0, openFileDialog.FileName.IndexOf(openFileDialog.SafeFileName));
+                LocalDatasetName = openFileDialog.SafeFileName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+        }
+
+        private void BtnSelectCroppingArea(object sender, RoutedEventArgs e)
+        {
+            CropSelectionWindow cropWindow = new CropSelectionWindow();
+            if (cropWindow.ShowDialog() == true)
+            {
+                CropX = cropWindow.SelectedRectangle.X;
+                CropY = cropWindow.SelectedRectangle.Y;
+                CropWidth = cropWindow.SelectedRectangle.Width;
+                CropHeight = cropWindow.SelectedRectangle.Height;
+
+                VideoCropXTextBox.Text = CropX.ToString();
+                VideoCropYTextBox.Text = CropY.ToString();
+                VideoCropWidthTextBox.Text = CropWidth.ToString();
+                VideoCropHeightTextBox.Text = CropHeight.ToString();
+
+                AddLog($"Cropping area set: X={CropX}, Y={CropY}, Width={CropWidth}, Height={CropHeight}");
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+            e.Handled = true;
+        }
+
+        private void VideoCaptureIntervalTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void VideoEncodingLevelTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void VideoCropCoordinateTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
         }
     }
 }

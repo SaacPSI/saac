@@ -5,87 +5,189 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VideoRemoteApp"
         mc:Ignorable="d"
-        Title="VideoRemoteApp" Height="352" Width="286" WindowStartupLocation="CenterScreen">
-    <UserControl Loaded="UserControl_Loaded" Height="352" VerticalAlignment="Top">
-        <Grid Margin="0,0,0,60">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="16*"/>
-                <ColumnDefinition Width="127*"/>
-                <ColumnDefinition Width="143*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto" MinHeight="207.98"/>
-                <RowDefinition Height="auto" MinHeight="266.914"/>
-            </Grid.RowDefinitions>
-            <Label Grid.Row="0" Grid.Column="0" Content="State :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="0,0,0,191" Grid.RowSpan="2"/>
-            <Label Grid.Row="0" Grid.Column="2" Content="{Binding Path=State}" FontWeight="Bold" Margin="0,0,0,191" Grid.RowSpan="2"/>
-            <Grid Name="DataFormular" Grid.ColumnSpan="3" Grid.Row="1" Grid.Column="0" Margin="0,14,0,0" Grid.RowSpan="2" Height="292" VerticalAlignment="Top">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>
-
-                <CheckBox Grid.Row="0" Grid.Column="0" Name="Diagnostics" Content="Diagnostics" FontWeight="Bold"/>
-                <GroupBox Name="RendezVousGrid" Header="RendezVous Configuration" FontWeight="Bold" Grid.ColumnSpan="2" Height="160" VerticalAlignment="Center" Grid.Row="4" >
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
-
-                        <Label Grid.Row="0" Grid.Column="0" Content="psi server IP :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=RendezVousServerIp}"/>
-
-                        <Label Grid.Row="1" Grid.Column="0" Content="psi server Port :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ServerPort}"/>
-
-                        <Label Grid.Row="2" Grid.Column="0" Content="IP to use :" FontWeight="Bold"/>
-                        <ComboBox Grid.Row="2" Grid.Column="1" Name="IPs" ItemsSource="{Binding Path=IPsList}" SelectedItem="{Binding Path=PipelineConfigurationUI.RendezVousHost}"/>
-
-                        <Label Grid.Row="3" Grid.Column="0" Content="Application UID :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=ApplicationName}"/>
-
-                        <Label Grid.Row="4" Grid.Column="0" Content="Command Source :" FontWeight="Bold"/>
-                        <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path=CommandSource}"/>
-                    </Grid>
-                </GroupBox>
-            </Grid>
-            <GroupBox Header="Video Streaming Configuration" FontWeight="Bold" Grid.ColumnSpan="3" Grid.Row="1" Height="93" VerticalAlignment="Top" Margin="0,191,0,0" Grid.RowSpan="2" >
-                <Grid Height="98" RenderTransformOrigin="0.498,0.121" HorizontalAlignment="Left" Width="265">
+        Title="VideoRemoteApp" Height="600" Width="500">
+    <UserControl>
+        <TabControl Name="Tab">
+            <TabItem Header="General">
+                <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="19*"/>
-                        <ColumnDefinition Width="10*"/>
-                        <ColumnDefinition Width="9*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="63.92"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
-                    <Button Content="Start Network" Grid.Column="0" Click="BtnStartRendezVous" Margin="24,4,22,40"/>
-                    <Button Content="Start Video" Click="BtnStartAll" Margin="24,4,24,40" Grid.Column="1" Grid.ColumnSpan="2"/>
-                    <Button Content="Stop" Grid.Column="0" Click="BtnStopClick" Margin="24,39,22,5"/>
-                    <Button Content="Quit" Grid.Column="1" Click="BtnQuitClick" Margin="24,39,24,5" Grid.ColumnSpan="2"/>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Application State :" FontWeight="Bold" Margin="0,5,0,0"/>
+                    <Label Grid.Row="0" Grid.Column="1" Content="{Binding Path=State}" FontWeight="Bold" Margin="0,5,0,0"/>
+                    <GroupBox Header="General Configuration" Name="GeneralConfigurationGroupBox" FontWeight="Bold" Grid.Row="1" Grid.ColumnSpan="2"  Margin="0,15,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Network :" FontWeight="Bold"/>
+                            <CheckBox Grid.Row="0" Grid.Column="1" Name="GeneralNetworkActivationCheckbox" IsChecked="{Binding IsRemoteServer}" Click="CkbActivateNetwork" Margin="0,10,0,0"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Streaming :" FontWeight="Bold"/>
+                            <CheckBox Grid.Row="1" Grid.Column="1" Name="GeneralNetworkStreamingCheckBox" IsChecked="{Binding IsStreaming}" Click="CkbActivateStreaming" Margin="0,10,0,0"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Local Recording :" FontWeight="Bold"/>
+                            <CheckBox Grid.Row="3" Grid.Column="1" Name="GeneralLocalRecordingCheckbox" IsChecked="{Binding IsLocalRecording}" Click="CkbActivateLocalRecording" Margin="0,10,0,10"/>
+                            <Button Content="Load Configuration" Grid.Row="4" Grid.ColumnSpan="2" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="0,5,0,5"/>
+                            <Button Content="Save Configuration" Grid.ColumnSpan="2" Grid.Row="5" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="0,5,0,5"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="3" Grid.ColumnSpan="2"  Margin="0,20,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Button Content="Start" Grid.Row="0" Name="BtnStart" Click="BtnStartAll" Margin="0,5,0,5"/>
+                            <Button Content="Start Network Only" Name="BtnStartNet" Grid.Row="1" Click="BtnStartRendezVous" Margin="0,5,0,5"/>
+                            <Button Content="Quit" Grid.Row="2" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
+                        </Grid>
+                    </GroupBox>
                 </Grid>
-            </GroupBox>
-        </Grid>
+            </TabItem>
+            <TabItem Header="Video">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Capture Interval (ms) :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Name="VideoCaptureIntervalTextBox" Margin="0,5,0,0" TextChanged="VideoCaptureIntervalTextBox_TextChanged"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Encoding Level (0-100) :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding VideoRemoteAppConfigurationUI.EncodingVideoLevel}" Name="VideoEncodingLevelTextBox" Margin="0,5,0,0" TextChanged="VideoEncodingLevelTextBox_TextChanged"/>
+                    <Label Grid.Row="3" Grid.Column="0" Content="Cropping Area :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="3" Grid.Column="1" Header="Rectangle (X, Y, Width, Height)" Margin="0,5,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Content="X :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropXTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Y :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropYTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Width :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropWidthTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Height :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropHeightTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Button Grid.Row="4" Grid.Column="1" Content="Select Zone" Name="BtnSelectCropArea" Click="BtnSelectCroppingArea" Padding="5"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Network" Name="NetworkHeader">
+                <Grid Background="#FFE5E5E5" Name="NetworkGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox Grid.Row="0" Grid.Column="0" Content="Activate" Name="NetworkActivationCheckbox" IsChecked="{Binding IsRemoteServer}" Click="CkbActivateNetwork" Margin="0,10,0,0"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Psi Server configuration" FontWeight="Bold" FontSize="14" Margin="0,20,0,0"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Server IP :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding RendezVousServerIp}" Name="RendezVousServerIpTextBox"/>
+                    <Label Grid.Row="3" Grid.Column="0" Content="Server Port :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Text="{Binding PipelineConfigurationUI.RendezVousPort}" Name="RendezVousPortTextBox"/>
+
+                    <Label Grid.Row="4" Grid.Column="0" Content="Application configuration" FontWeight="Bold" FontSize="14" Margin="0,20,0,0"/>
+                    <CheckBox Grid.Row="4" Grid.Column="1" Content="Activate Streaming" Name="NetworkStreamingCheckBox" IsChecked="{Binding IsStreaming}" Click="CkbActivateStreaming" Margin="0,30,0,0"/>
+                    <Label Grid.Row="5" Grid.Column="0" Content="IP To Use :" FontWeight="Bold"/>
+                    <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding IPsList}" SelectedItem="{Binding IpSelectedUI}" Name="RendezVousHostComboBox"/>
+                    <Label Grid.Row="6" Grid.Column="0" Content="Application Name :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="6" Grid.Column="1" TextWrapping="Wrap" Text="{Binding RendezVousApplicationNameUI}" Name="ApplicationNameTextBox"/>
+
+                    <Label Grid.Row="7" Grid.Column="0" Content="Other" FontWeight="Bold" FontSize="14"  Margin="0,20,0,0"/>
+                    <Label Grid.Row="8" Grid.Column="0" Content="Command Application Name :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="8" Grid.Column="1" TextWrapping="Wrap" Text="{Binding CommandSource}" Name="CommandSourceTextBox"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Local Recording">
+                <Grid Background="#FFE5E5E5" Name="LocalRecordingGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox Grid.Row="0" Content="Activate" Name="LocalRecordingCheckbox" IsChecked="{Binding IsLocalRecording}" Click="CkbActivateLocalRecording" Margin="0,10,0,10"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Session Name :" FontWeight="Bold"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Text="{Binding LocalSessionName}" Name="LocalRecordingSessionNameTextBox"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Dataset Directory :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="2" Grid.Column="1" >
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetPath}" Name="LocalRecordingDatasetDirectoryTextBox"/>
+                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetDirectoryButton" Click="LocalRecordingDatasetDirectoryButtonClick"/>
+                        </Grid>
+                    </GroupBox>
+                    <Label Grid.Row="3" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="3" Grid.Column="1" >
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"  TextWrapping="Wrap" Text="{Binding LocalDatasetName}" Name="LocalRecordingDatasetNameTextBox"/>
+                            <Button Grid.Column="1" Content="Browse" Name="LocalRecordingDatasetNameButton" Click="LocalRecordingDatasetNameButtonClick"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Log">
+                <ScrollViewer>
+                    <TextBox x:Name="Logs"  TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path=Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </UserControl>
 </Window>

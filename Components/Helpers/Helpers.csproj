@@ -14,6 +14,7 @@
 	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
 	  <PackageId>SAAC-$(AssemblyName)</PackageId>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
