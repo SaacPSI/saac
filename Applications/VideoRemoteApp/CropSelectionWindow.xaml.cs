@@ -21,7 +21,8 @@ namespace VideoRemoteApp
             SelectionCanvas.MouseMove += Canvas_MouseMove;
             SelectionCanvas.MouseLeftButtonUp += Canvas_MouseLeftButtonUp;
             SelectionCanvas.KeyDown += Canvas_KeyDown;
-            
+            this.KeyDown += Canvas_KeyDown;
+
             Loaded += (s, e) => SelectionCanvas.Focus();
 
             SelectedRectangle = System.Drawing.Rectangle.Empty;

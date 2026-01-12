@@ -73,13 +73,28 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Row="1" Grid.Column="0" Content="Capture Interval (ms) :" FontWeight="Bold"/>
                     <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Name="VideoCaptureIntervalTextBox" Margin="0,5,0,0" TextChanged="VideoCaptureIntervalTextBox_TextChanged"/>
                     <Label Grid.Row="2" Grid.Column="0" Content="Encoding Level (0-100) :" FontWeight="Bold"/>
                     <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Text="{Binding VideoRemoteAppConfigurationUI.EncodingVideoLevel}" Name="VideoEncodingLevelTextBox" Margin="0,5,0,0" TextChanged="VideoEncodingLevelTextBox_TextChanged"/>
-                    <Label Grid.Row="3" Grid.Column="0" Content="Cropping Area :" FontWeight="Bold"/>
-                    <GroupBox Grid.Row="3" Grid.Column="1" Header="Rectangle (X, Y, Width, Height)" Margin="0,5,0,0">
+                    <Label Grid.Row="3" Grid.Column="0" Content="Cropping Areas :" FontWeight="Bold"/>
+                    <GroupBox Grid.Row="3" Grid.Column="1" Header="Manage Cropping Areas" Margin="0,5,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="80"/>
+                            </Grid.ColumnDefinitions>
+                            <ListBox Grid.Column="0" Name="CroppingAreaListBox" Height="100" SelectionChanged="CroppingAreaListBox_SelectionChanged"/>
+                            <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                <Button Content="Add" Name="BtnAddCropArea" Click="BtnAddCroppingArea" Margin="0,0,0,5"/>
+                                <Button Content="Delete" Name="BtnDeleteCropArea" Click="BtnDeleteCroppingArea" Margin="0,0,0,5"/>
+                                <Button Content="Select Zone" Name="BtnSelectCropArea" Click="BtnSelectCroppingArea" Margin="0,0,0,5"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Grid.Row="4" Grid.ColumnSpan="2" Header="Edit Selected Cropping Area" Margin="0,5,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -92,15 +107,16 @@
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Grid.Column="0" Content="X :" FontWeight="Bold" FontSize="12"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropXTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
-                            <Label Grid.Row="1" Grid.Column="0" Content="Y :" FontWeight="Bold" FontSize="12"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropYTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
-                            <Label Grid.Row="2" Grid.Column="0" Content="Width :" FontWeight="Bold" FontSize="12"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropWidthTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
-                            <Label Grid.Row="3" Grid.Column="0" Content="Height :" FontWeight="Bold" FontSize="12"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropHeightTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
-                            <Button Grid.Row="4" Grid.Column="1" Content="Select Zone" Name="BtnSelectCropArea" Click="BtnSelectCroppingArea" Padding="5"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Name :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropNameTextBox" Margin="0,2,0,0" TextChanged="VideoCropNameTextBox_TextChanged"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="X :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropXTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Y :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropYTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Width :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropWidthTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
+                            <Label Grid.Row="4" Grid.Column="0" Content="Height :" FontWeight="Bold" FontSize="12"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Name="VideoCropHeightTextBox" Margin="0,2,0,0" TextChanged="VideoCropCoordinateTextBox_TextChanged"/>
                         </Grid>
                     </GroupBox>
                 </Grid>

@@ -197,6 +197,13 @@ namespace VideoRemoteApp
             set => SetProperty(ref cropHeight, value);
         }
 
+        private string selectedCroppingAreaName;
+        public string SelectedCroppingAreaName
+        {
+            get => selectedCroppingAreaName;
+            set => SetProperty(ref selectedCroppingAreaName, value);
+        }
+
         public MainWindow()
         {
             internalLog = (log) =>
@@ -248,10 +255,9 @@ namespace VideoRemoteApp
             
             // Initialize TextBox values from configuration
             VideoCaptureIntervalTextBox.Text = videoRemoteAppConfiguration.Interval.TotalMilliseconds.ToString();
-            VideoCropXTextBox.Text = videoRemoteAppConfiguration.CroppingArea.X.ToString();
-            VideoCropYTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Y.ToString();
-            VideoCropWidthTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Width.ToString();
-            VideoCropHeightTextBox.Text = videoRemoteAppConfiguration.CroppingArea.Height.ToString();
+            
+            // Load cropping areas into ListBox
+            RefreshCroppingAreasList();
         }
 
         private void SetupNetworkTab()
@@ -294,14 +300,8 @@ namespace VideoRemoteApp
             // Video Tab
             CaptureInterval = (int)videoRemoteAppConfiguration.Interval.TotalMilliseconds;
             VideoCaptureIntervalTextBox.Text = CaptureInterval.ToString();
-            CropX = videoRemoteAppConfiguration.CroppingArea.X;
-            CropY = videoRemoteAppConfiguration.CroppingArea.Y;
-            CropWidth = videoRemoteAppConfiguration.CroppingArea.Width;
-            CropHeight = videoRemoteAppConfiguration.CroppingArea.Height;
-            VideoCropXTextBox.Text = CropX.ToString();
-            VideoCropYTextBox.Text = CropY.ToString();
-            VideoCropWidthTextBox.Text = CropWidth.ToString();
-            VideoCropHeightTextBox.Text = CropHeight.ToString();
+            
+            RefreshCroppingAreasList();
 
             // Network Tab
             IsRemoteServer = Properties.Settings.Default.isServer;
@@ -329,9 +329,6 @@ namespace VideoRemoteApp
             // Load video configurations
             videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(CaptureInterval > 0 ? CaptureInterval : Properties.Settings.Default.captureInterval);
             videoRemoteAppConfiguration.EncodingVideoLevel = Properties.Settings.Default.encodingLevel;
-            
-            if (CropX > 0 || CropY > 0 || CropWidth > 0 || CropHeight > 0)
-                videoRemoteAppConfiguration.CroppingArea = new System.Drawing.Rectangle(CropX, CropY, CropWidth, CropHeight);
         }
 
         private void RefreshConfigurationFromUI()
@@ -342,13 +339,15 @@ namespace VideoRemoteApp
                 videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(interval);
             }
 
-            // Update cropping area from TextBoxes
-            if (int.TryParse(VideoCropXTextBox.Text, out int x) &&
+            // Save the current selected cropping area if valid
+            if (SelectedCroppingAreaName != null &&
+                int.TryParse(VideoCropXTextBox.Text, out int x) &&
                 int.TryParse(VideoCropYTextBox.Text, out int y) &&
                 int.TryParse(VideoCropWidthTextBox.Text, out int width) &&
                 int.TryParse(VideoCropHeightTextBox.Text, out int height))
             {
-                videoRemoteAppConfiguration.CroppingArea = new System.Drawing.Rectangle(x, y, width, height);
+                videoRemoteAppConfiguration.CroppingAreas[SelectedCroppingAreaName] = 
+                    new System.Drawing.Rectangle(x, y, width, height);
             }
 
             // Network Tab
@@ -474,32 +473,46 @@ namespace VideoRemoteApp
             if (datasetPipeline is null)
                 SetupPipeline();
 
-
             WindowCaptureConfiguration cfg = new WindowCaptureConfiguration() { Interval = videoRemoteAppConfiguration.Interval};
             WindowCapture capture = new WindowCapture(datasetPipeline.Pipeline, cfg);
             IProducer<Shared<Microsoft.Psi.Imaging.EncodedImage>> videoSource;
-            if (videoRemoteAppConfiguration.CroppingArea.IsEmpty)
-                videoSource = capture.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage);
-            else
-            {
-                SAAC.Helpers.ImageCropper cropRect = new SAAC.Helpers.ImageCropper(datasetPipeline.Pipeline, videoRemoteAppConfiguration.CroppingArea);
-                capture.Out.PipeTo(cropRect.In);
-                videoSource = cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage);
-            }
 
-            if (isRemoteServer)
+            if (videoRemoteAppConfiguration.CroppingAreas.Count == 0)
             {
-                RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, pipelineConfiguration.RendezVousPort, TransportKind.Tcp);
-                imageExporter.Exporter.Write(videoSource, "VideoStreaming");
-                (datasetPipeline as RendezVousPipeline)?.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost)]));
+                ProcessProducer(capture.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), "VideoStreaming");
             }
-            else
+            else 
             {
-                datasetPipeline.CreateStore(datasetPipeline.Pipeline, datasetPipeline.CreateOrGetSession(LocalSessionName), "VideoStreaming", "VideoStreaming", videoSource);
+                foreach (KeyValuePair<string, System.Drawing.Rectangle> cropArea in videoRemoteAppConfiguration.CroppingAreas)
+                {
+                    if (cropArea.Value.IsEmpty)
+                        continue;
+                    SAAC.Helpers.ImageCropper cropRect = new SAAC.Helpers.ImageCropper(datasetPipeline.Pipeline, cropArea.Value);
+                    capture.Out.PipeTo(cropRect.In);
+                    ProcessProducer(cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), cropArea.Key);
+                }
             }
 
             AddLog(State = "Video initialised");
             setupState = SetupState.VideoInitialised;
+        }
+
+        private void ProcessProducer(IProducer<Shared<EncodedImage>> producer, string streamName)
+        {
+            if (datasetPipeline is null)
+            {
+                return;
+            }
+            if (isRemoteServer)
+            {
+                RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, pipelineConfiguration.RendezVousPort, TransportKind.Tcp);
+                imageExporter.Exporter.Write(producer, streamName);
+                (datasetPipeline as RendezVousPipeline)?.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost)]));
+            }
+            else
+            {
+                datasetPipeline.CreateStore(datasetPipeline.Pipeline, datasetPipeline.CreateOrGetSession(LocalSessionName), streamName, "VideoStreaming", producer);
+            }
         }
 
         private void Stop()
@@ -637,27 +650,6 @@ namespace VideoRemoteApp
             }
         }
 
-        private void BtnSelectCroppingArea(object sender, RoutedEventArgs e)
-        {
-            CropSelectionWindow cropWindow = new CropSelectionWindow();
-            if (cropWindow.ShowDialog() == true)
-            {
-                CropX = cropWindow.SelectedRectangle.X;
-                CropY = cropWindow.SelectedRectangle.Y;
-                CropWidth = cropWindow.SelectedRectangle.Width;
-                CropHeight = cropWindow.SelectedRectangle.Height;
-
-                VideoCropXTextBox.Text = CropX.ToString();
-                VideoCropYTextBox.Text = CropY.ToString();
-                VideoCropWidthTextBox.Text = CropWidth.ToString();
-                VideoCropHeightTextBox.Text = CropHeight.ToString();
-
-                AddLog($"Cropping area set: X={CropX}, Y={CropY}, Width={CropWidth}, Height={CropHeight}");
-                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
-            }
-            e.Handled = true;
-        }
-
         private void VideoCaptureIntervalTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
@@ -671,6 +663,133 @@ namespace VideoRemoteApp
         private void VideoCropCoordinateTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            
+            // Update the cropping area in real-time if all fields are valid
+            if (SelectedCroppingAreaName != null &&
+                int.TryParse(VideoCropXTextBox.Text, out int x) &&
+                int.TryParse(VideoCropYTextBox.Text, out int y) &&
+                int.TryParse(VideoCropWidthTextBox.Text, out int width) &&
+                int.TryParse(VideoCropHeightTextBox.Text, out int height))
+            {
+                videoRemoteAppConfiguration.CroppingAreas[SelectedCroppingAreaName] = 
+                    new System.Drawing.Rectangle(x, y, width, height);
+            }
+        }
+
+        private void RefreshCroppingAreasList()
+        {
+            CroppingAreaListBox.Items.Clear();
+            foreach (var areaName in videoRemoteAppConfiguration.CroppingAreas.Keys)
+            {
+                CroppingAreaListBox.Items.Add(areaName);
+            }
+            
+            // Clear edit fields if no areas
+            if (CroppingAreaListBox.Items.Count == 0)
+            {
+                ClearCroppingAreaEditFields();
+            }
+        }
+
+        private void ClearCroppingAreaEditFields()
+        {
+            VideoCropNameTextBox.Text = "";
+            VideoCropXTextBox.Text = "0";
+            VideoCropYTextBox.Text = "0";
+            VideoCropWidthTextBox.Text = "0";
+            VideoCropHeightTextBox.Text = "0";
+            SelectedCroppingAreaName = null;
+        }
+
+        private void CroppingAreaListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (CroppingAreaListBox.SelectedItem is string selectedName)
+            {
+                SelectedCroppingAreaName = selectedName;
+                if (videoRemoteAppConfiguration.CroppingAreas.TryGetValue(selectedName, out var rect))
+                {
+                    VideoCropNameTextBox.Text = selectedName;
+                    VideoCropXTextBox.Text = rect.X.ToString();
+                    VideoCropYTextBox.Text = rect.Y.ToString();
+                    VideoCropWidthTextBox.Text = rect.Width.ToString();
+                    VideoCropHeightTextBox.Text = rect.Height.ToString();
+                }
+            }
+        }
+
+        private void VideoCropNameTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (SelectedCroppingAreaName != null && !string.IsNullOrWhiteSpace(VideoCropNameTextBox.Text))
+            {
+                string newName = VideoCropNameTextBox.Text;
+                if (newName != SelectedCroppingAreaName)
+                {
+                    // Rename the cropping area
+                    if (videoRemoteAppConfiguration.CroppingAreas.TryGetValue(SelectedCroppingAreaName, out var rect))
+                    {
+                        videoRemoteAppConfiguration.CroppingAreas.Remove(SelectedCroppingAreaName);
+                        videoRemoteAppConfiguration.CroppingAreas[newName] = rect;
+                        SelectedCroppingAreaName = newName;
+                        RefreshCroppingAreasList();
+                        CroppingAreaListBox.SelectedItem = newName;
+                    }
+                }
+            }
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+        }
+
+        private void BtnAddCroppingArea(object sender, RoutedEventArgs e)
+        {
+            // Create a new cropping area with a default name
+            int count = videoRemoteAppConfiguration.CroppingAreas.Count + 1;
+            string newName = $"CropArea_{count}";
+            while (videoRemoteAppConfiguration.CroppingAreas.ContainsKey(newName))
+            {
+                count++;
+                newName = $"CropArea_{count}";
+            }
+            
+            videoRemoteAppConfiguration.CroppingAreas[newName] = new System.Drawing.Rectangle(0, 0, 100, 100);
+            RefreshCroppingAreasList();
+            CroppingAreaListBox.SelectedItem = newName;
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            AddLog($"Cropping area added: {newName}");
+        }
+
+        private void BtnDeleteCroppingArea(object sender, RoutedEventArgs e)
+        {
+            if (CroppingAreaListBox.SelectedItem is string selectedName)
+            {
+                videoRemoteAppConfiguration.CroppingAreas.Remove(selectedName);
+                RefreshCroppingAreasList();
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                AddLog($"Cropping area deleted: {selectedName}");
+            }
+        }
+
+        private void BtnSelectCroppingArea(object sender, RoutedEventArgs e)
+        {
+            if (SelectedCroppingAreaName == null)
+            {
+                MessageBox.Show("Please select or create a cropping area first.", "No Area Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            CropSelectionWindow cropWindow = new CropSelectionWindow();
+            if (cropWindow.ShowDialog() == true)
+            {
+                var selectedRect = cropWindow.SelectedRectangle;
+                videoRemoteAppConfiguration.CroppingAreas[SelectedCroppingAreaName] = selectedRect;
+                
+                VideoCropXTextBox.Text = selectedRect.X.ToString();
+                VideoCropYTextBox.Text = selectedRect.Y.ToString();
+                VideoCropWidthTextBox.Text = selectedRect.Width.ToString();
+                VideoCropHeightTextBox.Text = selectedRect.Height.ToString();
+
+                AddLog($"Cropping area '{SelectedCroppingAreaName}' set: X={selectedRect.X}, Y={selectedRect.Y}, Width={selectedRect.Width}, Height={selectedRect.Height}");
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+            e.Handled = true;
         }
     }
 }
