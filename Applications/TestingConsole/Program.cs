@@ -459,7 +459,7 @@ namespace TestingConsole
              RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
             rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
             List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
-            SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.schema.json", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
+            SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
 
             rdvPipeline.Start();
             annot.Start((e) => { });

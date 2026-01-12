@@ -36,6 +36,24 @@
             
             <div class='tab-content active'>
                 <div class='websocket-info'>
+                    <h3>Annotation Settings</h3>
+                    <div class='checkbox-group'>
+                        <label for='schemaSelector'>
+                            Select Schema:
+                        </label>
+                        <select id='schemaSelector' name='schemaSelector' onchange='updateAnnotationButtons()' style='margin: 10px 0; padding: 8px; min-width: 200px;'>
+                            <option value=''>-- Select a schema --</option>
+                        </select>
+                    </div>
+                    <div class='checkbox-group'>
+                        <label for='enableStringAnnotations'>
+                            <input type='checkbox' id='enableStringAnnotations' name='enableStringAnnotations' onchange='updateAnnotationButtons()'>
+                            Enable String Annotations
+                        </label>
+                    </div>
+                </div>
+                
+                <div class='websocket-info'>
                     <h3>WebSocket Connection</h3>
                     <label for='observerId'>Observer Id:</label>
                     <input type='text' id='observerId' name='observerId' placeholder='Enter observer ID'>
@@ -43,16 +61,6 @@
                     <div class='controls'>
                         <button onclick='connectWebSocket()'>Connect WebSocket</button>
                         <button onclick='disconnectWebSocket()'>Disconnect WebSocket</button>
-                    </div>
-                </div>
-                
-                <div class='websocket-info'>
-                    <h3>Annotation Settings</h3>
-                    <div class='checkbox-group'>
-                        <label for='enableStringAnnotations'>
-                            <input type='checkbox' id='enableStringAnnotations' name='enableStringAnnotations' onchange='updateAnnotationButtons()'>
-                            Enable String Annotations
-                        </label>
                     </div>
                 </div>
                 
@@ -76,6 +84,7 @@
         let isConnected = false;
         let observerId = '';
         let annotationConfig = null;
+        let selectedSchema = null;
 
         function switchTab(event, tabIndex) {
             const tabs = document.querySelectorAll('.tab');
@@ -109,7 +118,6 @@
                     document.getElementById('status').textContent = 'Connected';
                     document.getElementById('status').className = 'status connected';
                     logMessage('WebSocket connected with observer ID: ' + observerId);
-					requestJsonFile("/topics", function(value){ annotationConfig = value; updateAnnotationButtons();});
                 };
 
                 websocket.onclose = function(event) {
@@ -167,18 +175,56 @@
 			xhr.send();
 		}
 
+        function populateSchemaSelector() {
+            const selector = document.getElementById('schemaSelector');
+            
+            if (!annotationConfig || !annotationConfig.Names) {
+                logMessage('No schemas available');
+                return;
+            }
+
+            // Clear existing options
+            selector.innerHTML = '<option value="">-- Select a schema --</option>';
+
+            // Add each schema as an option
+            annotationConfig.Names.forEach(schemaName => {
+                const option = document.createElement('option');
+                option.value = schemaName;
+                option.textContent = schemaName;
+                selector.appendChild(option);
+            });
+
+            logMessage('Schema selector populated with ' + annotationConfig.Names.length + ' schemas');
+        }
+
         function updateAnnotationButtons() {
             const buttonsContainer = document.getElementById('annotation-buttons');
             buttonsContainer.innerHTML = '';
 
-            if (!annotationConfig || !annotationConfig.AttributeSchemas) {
-                buttonsContainer.innerHTML = '<p>No annotations available.</p>';
+            const schemaSelector = document.getElementById('schemaSelector');
+            const selectedSchemaName = schemaSelector.value;
+
+            if (!selectedSchemaName) {
+                buttonsContainer.innerHTML = '<p>Please select a schema from the dropdown.</p>';
+                return;
+            }
+
+            // Load the selected schema
+            requestJsonFile("/schema?" + encodeURIComponent(selectedSchemaName), function(schemaData) {
+                selectedSchema = schemaData;
+                renderAnnotationButtons(buttonsContainer, schemaData);
+            });
+        }
+
+        function renderAnnotationButtons(container, schemaData) {
+            if (!schemaData || !schemaData.AttributeSchemas) {
+                container.innerHTML = '<p>No annotations available in this schema.</p>';
                 return;
             }
 
             const enableStringAnnotations = document.getElementById('enableStringAnnotations').checked;
 
-            annotationConfig.AttributeSchemas.forEach(attributeSchema => {
+            schemaData.AttributeSchemas.forEach(attributeSchema => {
                 const valueSchema = attributeSchema.ValueSchema;
                 
                 if (!valueSchema || !valueSchema.$type) {
@@ -188,11 +234,18 @@
                 const schemaType = valueSchema.$type;
                 
                 if (enableStringAnnotations && schemaType.includes('StringAnnotationValueSchema')) {
-                    createStringAnnotationElement(buttonsContainer, attributeSchema);
+                    createStringAnnotationElement(container, attributeSchema);
                 } else if (schemaType.includes('EnumerableAnnotationValueSchema')) {
-                    createEnumerableAnnotationElement(buttonsContainer, attributeSchema);
+                    createEnumerableAnnotationElement(container, attributeSchema);
                 }
             });
+
+            hideSchemaSelector();
+        }
+
+        function hideSchemaSelector() {
+            const schemaSelectorGroup = document.getElementById('schemaSelector').parentElement;
+            schemaSelectorGroup.style.display = 'none';
         }
 
         function createStringAnnotationElement(container, attributeSchema) {
@@ -317,7 +370,7 @@
 
             // Utc => 1n;
             // Local => 2n;
-			return ticks | 1n << 62n);
+			return (ticks | 1n << 62n);
 		}
 		
 		function write7BitEncodedInt(view, offset, value) {
@@ -370,7 +423,16 @@
         // Initialize the page
         window.onload = function() {
             logMessage('Page loaded');
+            loadSchemas();
         };
+
+        function loadSchemas() {
+            requestJsonFile("/topics", function(value) {
+                annotationConfig = value;
+                populateSchemaSelector();
+                logMessage('Schemas loaded successfully');
+            });
+        }
     </script>
 </body>
 </html>

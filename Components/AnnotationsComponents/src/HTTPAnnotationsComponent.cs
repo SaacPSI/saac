@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace SAAC.AnnotationsComponents
 {
@@ -15,8 +16,9 @@ namespace SAAC.AnnotationsComponents
     public class HTTPAnnotationsComponent : WebSocketsManager
     {
         private string htmlContent;
-        private string annotationConfiguration;
-        private Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema;
+        private string annotationsConfiguration;
+        private Dictionary<string, Microsoft.Psi.Data.Annotations.AnnotationSchema> annotationSchemas;
+        private Dictionary<string, string> annotationSchemasJson;
         private PipelineServices.RendezVousPipeline rdvPipeline;
 
         /// <summary>
@@ -24,20 +26,20 @@ namespace SAAC.AnnotationsComponents
         /// </summary>
         /// <param name="rdvPipeline">The rendezvous pipeline to connect to.</param>
         /// <param name="prefixAddress">The address to listen to.</param>
-        /// <param name="annotationConfigurationFile">The path of the annonation schema used.</param>
+        /// <param name="annotationsFolder">The path of the annonation folder.</param>
         /// <param name="htmlFile">The path of the html file.</param>
         /// <param name="restrictToSecure">Boolean to force the use of ssl websocket.</param>
-        public HTTPAnnotationsComponent(PipelineServices.RendezVousPipeline rdvPipeline, List<string> prefixAddress, string annotationConfigurationFile = @".\AnnotationFiles\annotation.json", string htmlFile = @".\AnnotationFiles\annotation.html", bool restrictToSecure = false)
+        public HTTPAnnotationsComponent(PipelineServices.RendezVousPipeline rdvPipeline, List<string> prefixAddress, string annotationsFolder = @".\AnnotationFiles\", string htmlFile = @".\AnnotationFiles\annotation.html", bool restrictToSecure = false)
             : base(true, prefixAddress, restrictToSecure)
         {
             if (!File.Exists(htmlFile))
                 throw new FileNotFoundException($"Annotation html file not found: {htmlFile}");
             this.htmlContent = File.ReadAllText(htmlFile);
 
-            if (!File.Exists(annotationConfigurationFile) || !Microsoft.Psi.Data.Annotations.AnnotationSchema.TryLoadFrom(annotationConfigurationFile, out this.annotationSchema))
-                throw new FileNotFoundException($"Annotation configuration file not found: {annotationConfigurationFile}");
-     
-            this.annotationConfiguration = File.ReadAllText(annotationConfigurationFile);
+            this.annotationSchemas = new Dictionary<string, Microsoft.Psi.Data.Annotations.AnnotationSchema>();
+            this.annotationSchemasJson = new Dictionary<string, string>();
+            this.annotationsConfiguration = "";
+            this.LoadAnnotationSchemas(annotationsFolder);
             base.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
             this.rdvPipeline = rdvPipeline;
         }
@@ -95,17 +97,33 @@ namespace SAAC.AnnotationsComponents
                     response.ContentLength64 = buffer.Length;
                     response.ContentType = "text/html; charset=utf-8";
                     response.StatusCode = 200;
-
                     await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
                 else if(urlPath.Contains("/topics"))
                 {
                     // Example: Serve a simple JSON response for topics
-                    byte[] buffer = Encoding.UTF8.GetBytes(this.annotationConfiguration);
+                    byte[] buffer = Encoding.UTF8.GetBytes(this.annotationsConfiguration);
                     response.ContentLength64 = buffer.Length;
                     response.ContentType = "application/json; charset=utf-8";
                     response.StatusCode = 200;
                     await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else if (urlPath.Contains("/schema"))
+                {
+                    if (this.annotationSchemasJson.ContainsKey(request.Url.Query.TrimStart('?')))
+                    {
+                        string json = this.annotationSchemasJson[request.Url.Query.TrimStart('?')];
+                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                        response.ContentLength64 = buffer.Length;
+                        response.ContentType = "application/json; charset=utf-8";
+                        response.StatusCode = 200;
+                        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    }
+                    else
+                    {
+                        response.StatusCode = 404;
+                        response.Close();
+                    }
                 }
                 else
                 {
@@ -126,22 +144,39 @@ namespace SAAC.AnnotationsComponents
             }
         }
 
-        private void AnnotationConnection(object sender, (string, string) connectionInfo)
+        private void AnnotationConnection(object sender, (string, string, Uri) connectionInfo)
         {
-           if (connectionInfo.Item2 == "annotation")
+           if (connectionInfo.Item2 == "annotation" &&  this.annotationSchemas.ContainsKey(connectionInfo.Item3.Query.TrimStart('?')))
            {
+                Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema = this.annotationSchemas[connectionInfo.Item3.Query.TrimStart('?')];
                 string name = $"{connectionInfo.Item1}-Annotation";
                 Pipeline pipeline = rdvPipeline.GetOrCreateSubpipeline(name);
                 WebSocketSource<string>? source = this.ConnectWebsocketSource<string>(pipeline, PsiFormats.PsiFormatString.GetFormat(), connectionInfo.Item1, connectionInfo.Item2, false);
                 if (source is null || rdvPipeline.CurrentSession is null)
+                { 
                     return;
+                }
                 Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, rdvPipeline.CurrentSession, rdvPipeline.GetStoreName("Annotation", name, rdvPipeline.CurrentSession).Item2);
-                AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, this.annotationSchema, $"{name}Processor");
-                annotationProcessor.Write(this.annotationSchema, "Annotation", store);
+                AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
+                annotationProcessor.Write(annotationSchema, "Annotation", store);
                 source.Out.PipeTo(annotationProcessor.In);
                 pipeline.RunAsync();
                 Trace.WriteLine($"New annotation WebSocket connection established for host {connectionInfo.Item1}");
             }
+        }
+
+        private void LoadAnnotationSchemas(string annotationConfigurationFolder)
+        {
+            // For each files inside the folder, load the AnnotationSchema and store it in the dictionary
+            foreach (string annotationConfigurationFile in Directory.GetFiles(annotationConfigurationFolder, "*.schema.json"))
+            {
+                if (Microsoft.Psi.Data.Annotations.AnnotationSchema.TryLoadFrom(annotationConfigurationFile, out Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema))
+                {
+                    this.annotationSchemas.Add(annotationSchema.Name, annotationSchema);
+                    this.annotationSchemasJson.Add(annotationSchema.Name, File.ReadAllText(annotationConfigurationFile));
+                }
+            }
+            this.annotationsConfiguration = JsonConvert.SerializeObject(new { Names = this.annotationSchemas.Keys });
         }
     }
 }
