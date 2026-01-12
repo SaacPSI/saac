@@ -1,27 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-	  <TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <Platforms>x64</Platforms>
-	  <UseWPF>true</UseWPF>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <LangVersion>Preview</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\BodiesRemoteServices</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
-
+  <ItemGroup>
+    <Compile Remove="src\Formats\Unity\PsiImporterListOfSimplifiedBody.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Formats\Unity\PsiImporterListOfSimplifiedBody.cs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bodies\Bodies.csproj" />
     <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
-
- 
-
-
- </Project>
-
+</Project>

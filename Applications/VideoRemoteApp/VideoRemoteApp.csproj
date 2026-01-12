@@ -1,34 +1,30 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-	  <TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>Preview</LangVersion>
-	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Preview</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
-	  <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\VideoRemoteApp</BaseIntermediateOutputPath>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.19.100.1-beta-SAAC" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.Psi">
       <HintPath>..\..\..\psi\Sources\Runtime\Microsoft.Psi\bin\Release\netstandard2.0\Microsoft.Psi.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -41,14 +37,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -56,5 +50,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>

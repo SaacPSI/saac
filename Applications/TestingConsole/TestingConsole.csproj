@@ -1,33 +1,29 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>Preview</LangVersion>
-	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Preview</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\</BaseIntermediateOutputPath>
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\TestingConsole</BaseIntermediateOutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Components\AnnotationsComponents\AnnotationsComponents.csproj" />
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
     <ProjectReference Include="..\..\Components\PsiStudioReplayExtension\PsiStudioReplayExtension.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="lsl_csharp">
       <HintPath>..\..\Components\LabStreamLayer\dep\lsl_csharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
-
-
 </Project>

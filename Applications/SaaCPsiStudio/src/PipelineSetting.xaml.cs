@@ -44,59 +44,25 @@ namespace SaaCPsiStudio
             Status = status;
         }
 
-        // RendezVousHost
-        public string RendezVousHost
-        {
-            get => configuration.RendezVousHost;
-            set => SetProperty(ref configuration.RendezVousHost, value);
-        }
-        public void DelegateMethodSynchServerIP(string ip)
-        {
-            configuration.RendezVousHost = ip;
-        }
+        // RendezVousPipelineConfiguration UI Bindings
 
-        // RendezVousPort
-        public int RendezVousPort
+        public RendezVousPipelineConfiguration Configuration
         {
-            get => configuration.RendezVousPort;
-            set => SetProperty(ref configuration.RendezVousPort, value);
+            get => configuration;
+            set => SetProperty(ref configuration, value);
         }
-        public void DelegateMethodSynchServerPort(int port)
-        {
-            configuration.RendezVousPort = port;
-        }
-
-        // ClockPort
-        public int ClockPort
-        {
-            get => configuration.ClockPort;
-            set => SetProperty(ref configuration.ClockPort, value);
-        }
-        public void DelegateMethodClockPort(int port)
-        {
-            configuration.ClockPort = port;
-        }
-
+      
         // DatasetPath
         public string DatasetPath
         {
             get => configuration.DatasetPath;
             set => SetProperty(ref configuration.DatasetPath, value);
         }
-        public void DelegateMethodDatasetPath(string path)
-        {
-            configuration.DatasetPath = path;
-        }
-
         // DatasetName
         public string DatasetName
         {
             get => configuration.DatasetName;
             set => SetProperty(ref configuration.DatasetName, value);
-        }
-        public void DelegateMethodDatasetName(string path)
-        {
-            configuration.DatasetName = path;
         }
 
         // SessionName
@@ -104,10 +70,6 @@ namespace SaaCPsiStudio
         {
             get => configuration.SessionName;
             set => SetProperty(ref configuration.SessionName, value);
-        }
-        public void DelegateMethodSessionName(string path)
-        {
-            configuration.SessionName = path;
         }
 
         private RendezVousPipeline? server;

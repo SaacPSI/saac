@@ -1,20 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>.net48</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
-	<LangVersion>latest</LangVersion>
+    <LangVersion>latest</LangVersion>
+    <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\SaaCPsiStudio</BaseIntermediateOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.19.100.1-beta" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
-
 </Project>

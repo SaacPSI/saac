@@ -1,29 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
- <PropertyGroup>	 
- <TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <Platforms>x64</Platforms>
-	  <UseWPF>true</UseWPF>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <LangVersion>Preview</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\PsiStudioReplayExtension</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
-
- <ItemGroup>
-   <Compile Remove="src\Unity\PsiStudioReplayCommand.cs" />
- </ItemGroup>
-
- <ItemGroup>
-   <None Include="src\Unity\PsiStudioReplayCommand.cs" />
- </ItemGroup>
-
- <ItemGroup>
-   <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
- </ItemGroup>
-
-
+  <ItemGroup>
+    <Compile Remove="src\Unity\PsiStudioReplayCommand.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Unity\PsiStudioReplayCommand.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
+  </ItemGroup>
 </Project>
