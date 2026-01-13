@@ -82,6 +82,9 @@ namespace SAAC.PipelineServices
         public void Dispose()
         {
             Dataset?.Save();
+            var copy = processNames.DeepClone();
+            foreach (var prcName in copy)
+                RemoveProcess(prcName);
             rendezVous.Dispose();
             commandPipeline.Dispose();
             base.Dispose();
