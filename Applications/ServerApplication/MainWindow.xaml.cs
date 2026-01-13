@@ -21,6 +21,8 @@ using Microsoft.Psi;
 using System.Windows.Media.Animation;
 using System.Threading;
 using System.Xml.Linq;
+using static ServerApplication.MainWindow;
+using System.Net.NetworkInformation;
 
 namespace ServerApplication
 {
@@ -34,6 +36,39 @@ namespace ServerApplication
         private Pipeline pipeline;
         public List<RendezVousPipeline.StoreMode> storeModeList { get;  }
         // UI
+        private Timer statusTimer;
+        private bool statusCheckRunning;
+
+        public enum ConnectedAppStatus
+        {
+            Waiting,
+            Running,
+            Error
+        }
+        public class ConnectedApp
+        {
+            public string Name { get; set; } = "";
+            public ConnectedAppStatus Status { get; set; } = ConnectedAppStatus.Waiting;
+            public DateTime LastStatusReceivedTime { get; set; } = DateTime.UtcNow;
+            public Ellipse StatusDot { get; set; } = null;
+        }
+        public class DeviceRow
+        {
+            public int RowIndex { get; set; }
+
+            public RowDefinition RowDefinition { get; set; } = null;
+
+            public Ellipse Dot { get; set; } = null;
+            public TextBlock Text { get; set; } = null;
+            public Button BtnStart { get; set; } = null;
+            public Button BtnStop { get; set; } = null;
+        }
+
+        private List<Tuple<string, bool>> connectedProcesses = new List<Tuple<string, bool>>();
+        private Dictionary<string, ConnectedApp> connectedApps = new Dictionary<string, ConnectedApp>();
+        private readonly Dictionary<string, DeviceRow> _rowsByDeviceName = new Dictionary<string, DeviceRow>();
+
+
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -102,10 +137,13 @@ namespace ServerApplication
         {
             internalLog = (log) =>
             {
-                Application.Current.Dispatcher.Invoke(new Action(() =>
+                if (Application.Current != null)
                 {
-                    Log += $"{log}\n";
-                }));
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        Log += $"{log}\n";
+                    }));
+                }
             };
             // Change the value with a config file
             storeModeList = new List<RendezVousPipeline.StoreMode>(Enum.GetValues(typeof(RendezVousPipeline.StoreMode)).Cast<RendezVousPipeline.StoreMode>());
@@ -202,7 +240,7 @@ namespace ServerApplication
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
             configuration.Debug = false;
-            configuration.RecordIncomingProcess = false;
+            configuration.RecordIncomingProcess = true;
             configuration.DatasetPath = LocalDatasetPath;
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
@@ -219,17 +257,97 @@ namespace ServerApplication
         {
             if (e.Item1 == "EndSession") return;
 
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            string name = GetName(e.Item1);
+            if (!connectedApps.ContainsKey(name))
             {
-                SpawnEllipseTextButtonsRow(e.Item1);
-            }));
-
+                connectedApps[name] = new ConnectedApp
+                {
+                    Name = name,
+                };
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    SpawnEllipseTextButtonsRow(e.Item1);
+                }));
+            }
+            else
+            {
+                connectedApps.Remove(name);
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    RemoveDeviceRow(name);
+                }));
+            }
+            
+            //if (connectedApps.Count >= 1 && !statusCheckRunning) StartStatusMonitoring();
         }
+
+        private string GetName(object argument)
+        {
+            string suffix = "-Command";
+            string stringArgument = (string)argument;
+            string name = stringArgument.EndsWith(suffix)
+                ? stringArgument.Substring(0, stringArgument.Length - suffix.Length)
+                : stringArgument;
+
+            return name;
+        }
+        public void RemoveDeviceRow(string name)
+        {
+            if (!_rowsByDeviceName.TryGetValue(name, out var row))
+                return;
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                int removedRowIndex = row.RowIndex;
+
+                // 1) Retirer les contrôles du Grid
+                ConnectedDevicesGrid.Children.Remove(row.Dot);
+                ConnectedDevicesGrid.Children.Remove(row.Text);
+                ConnectedDevicesGrid.Children.Remove(row.BtnStart);
+                ConnectedDevicesGrid.Children.Remove(row.BtnStop);
+
+                // 2) Retirer la RowDefinition
+                ConnectedDevicesGrid.RowDefinitions.Remove(row.RowDefinition);
+
+                // 3) Retirer du dictionnaire
+                _rowsByDeviceName.Remove(name);
+
+                // 4) Remonter les éléments qui étaient en dessous
+                foreach (UIElement child in ConnectedDevicesGrid.Children)
+                {
+                    int r = Grid.GetRow(child);
+                    if (r > removedRowIndex)
+                        Grid.SetRow(child, r - 1);
+                }
+
+                // 5) Mettre à jour les RowIndex stockés
+                foreach (var kvp in _rowsByDeviceName)
+                {
+                    var deviceName = kvp.Key;
+                    var dr = kvp.Value;
+
+                    if (dr.RowIndex > removedRowIndex)
+                    {
+                        _rowsByDeviceName[deviceName] = new DeviceRow
+                        {
+                            RowIndex = dr.RowIndex - 1,
+                            RowDefinition = dr.RowDefinition, // attention: les RowDefs ont “glissé” mais l’objet reste valide
+                            Dot = dr.Dot,
+                            Text = dr.Text,
+                            BtnStart = dr.BtnStart,
+                            BtnStop = dr.BtnStop
+                        };
+                    }
+                }
+            });
+        }
+
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
             server?.Dataset?.Save();
             server?.Stop();
             server?.TriggerNewProcessEvent("EndSession");
+            StopStatusMonitoring();
         }
 
         private void BtnQuitClick(object sender, RoutedEventArgs e)
@@ -289,19 +407,79 @@ namespace ServerApplication
         // Called by a button click
         private void BtnAddItem_Click(object sender, RoutedEventArgs e)
         {
+            server.TriggerNewProcessEvent("WhisperStreaming-Command");
             //SpawnEllipseTextButtonsRow();
         }
+        public void StartStatusMonitoring()
+        {
+            statusTimer = new Timer(callback: StatusTimerCallback, state: null, dueTime: TimeSpan.Zero, period: TimeSpan.FromSeconds(1));
+        }
+
+        private void StatusTimerCallback(object? state)
+        {
+            // 🔒 Anti-réentrance
+            if (statusCheckRunning)
+                return;
+            statusCheckRunning = true;
+
+            try
+            {
+                foreach (var app in connectedApps.Values)
+                {
+                    // Demande de statut
+                    server.SendCommand(
+                        RendezVousPipeline.Command.Status,
+                        app.Name,
+                        "");
+
+                    // Timeout (ex: 3s)
+                    if (DateTime.UtcNow - app.LastStatusReceivedTime > TimeSpan.FromSeconds(3))
+                    {
+                        app.Status = ConnectedAppStatus.Error;
+                        UpdateDotColor(app);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // log
+            }
+            finally
+            {
+                statusCheckRunning = false;
+            }
+        }
+
+        private void UpdateDotColor(ConnectedApp app)
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                app.StatusDot.Fill = app.Status switch
+                {
+                    ConnectedAppStatus.Running => Brushes.Green,
+                    ConnectedAppStatus.Waiting => Brushes.Orange,
+                    ConnectedAppStatus.Error => Brushes.Red
+                };
+            }));
+        }
+
+        public void StopStatusMonitoring()
+        {
+            statusTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            statusTimer?.Dispose();
+        }
+
 
         private void SpawnEllipseTextButtonsRow(object argument)
         {
-            string suffix = "-Command";
-            string stringArgument = (string)argument;
-            string name = stringArgument.EndsWith(suffix)
-                ? stringArgument.Substring(0, stringArgument.Length - suffix.Length)
-                : stringArgument;
-            
+            string name = GetName(argument);
+
+            if (_rowsByDeviceName.ContainsKey(name))
+                return;
+
             UiGenerator.AddRowsDefinitionToGrid(ConnectedDevicesGrid, GridLength.Auto, 1);
-            int position = ConnectedDevicesGrid.RowDefinitions.Count - 1;
+            int rowIndex = ConnectedDevicesGrid.RowDefinitions.Count - 1;
+            var rowDef = ConnectedDevicesGrid.RowDefinitions[rowIndex];
             
             // Ellipse (left)
             var dot = UiGenerator.GenerateEllipse(size: 14, fill: Brushes.Orange, stroke: Brushes.Orange, strokeThickness: 1, name: $"Dot_{_rowIndex}");
@@ -325,13 +503,27 @@ namespace ServerApplication
             // Button 2 (right) - remove this row
             var btnRemove = UiGenerator.GenerateButton("Stop", (s, e) =>
             {
-                server.SendCommand(RendezVousPipeline.Command.Stop, name, "");
+                server.SendCommand(RendezVousPipeline.Command.Close, name, "");
             }, name: $"BtnRemove_{_rowIndex}");
             btnRemove.Margin = new Thickness(0, 0, 15, 0);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, dot, 0, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, tb, 1, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, btnOk, 2, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, btnRemove, 3, ConnectedDevicesGrid.RowDefinitions.Count - 1);
+
+            connectedApps[name].StatusDot = dot;
+            connectedApps[name].Status = ConnectedAppStatus.Waiting;
+            connectedApps[name].LastStatusReceivedTime = DateTime.UtcNow;
+
+            _rowsByDeviceName[name] = new DeviceRow
+            {
+                RowIndex = rowIndex,
+                RowDefinition = rowDef,
+                Dot = dot,
+                Text = tb,
+                BtnStart = btnOk,
+                BtnStop = btnRemove
+            };
         }
 
         private void UpdateVisualisationProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)

@@ -344,6 +344,7 @@ namespace SAAC.PipelineServices
                             p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             subCommandPipeline.Start((d) => {});
+                            
                             TriggerNewProcessEvent(process.Name);
                             Log($"Subpipeline {process.Name} started."); 
                             return;
@@ -433,10 +434,11 @@ namespace SAAC.PipelineServices
 
         private void RendezvousProcessRemoved(object sender, Rendezvous.Process e)
         {
-            if (subpipelines.ContainsKey(e.Name) )
+            if (subpipelines.ContainsKey(e.Name))
             {
                 subpipelines[e.Name].Dispose();
                 Connectors.Remove(e.Name);
+                TriggerNewProcessEvent(e.Name);
             }
             RemovedEntry?.Invoke(this, e.Name);
         }

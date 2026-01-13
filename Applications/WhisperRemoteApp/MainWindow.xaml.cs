@@ -32,15 +32,22 @@ namespace WhisperRemoteApp
 
         private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
+
             if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             {
-                if (propertyName != null)
+                if(Application.Current != null)
                 {
-                    bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
-                    BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        if (propertyName != null)
+                        {
+                            bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
+                            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                        }
+                    }));
+                    field = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
                 }
-                field = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
         #endregion
@@ -134,7 +141,7 @@ namespace WhisperRemoteApp
             set => SetProperty(ref remoteConfiguration, value);
         }
 
-        private string commandSource = "Server";
+        private string commandSource = "Server-Command";
         public string CommandSource
         {
             get => commandSource;
@@ -217,10 +224,10 @@ namespace WhisperRemoteApp
         {
             internalLog = (log) =>
             {
-                Application.Current.Dispatcher.Invoke(new Action(() =>
-                {
-                    Log += $"{log}\n";
-                }));
+                //Application.Current.Dispatcher.Invoke(new Action(() =>
+                //{
+                Log += $"{log}\n";
+                //}));
             };
             audioSoucesSetup = new List<User>();
             notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
@@ -481,15 +488,21 @@ namespace WhisperRemoteApp
                     }));
                     break;
                 case RendezVousPipeline.Command.Status:
-                    rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, source, rendezVousPipeline == null ? "Not Initialised": rendezVousPipeline.Pipeline.StartTime.ToString());
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, source, rendezVousPipeline == null ? "Not Initialised" : rendezVousPipeline.Pipeline.StartTime.ToString());
+                    }));
                     break;
             }
         }
 
         private void SetupTranscription()
         {
-            if (TranscriptionFilenameTextBox.Text.Length > 5)
-                transcriptionManager = new WhipserTranscriptionToWordManager();
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                if (TranscriptionFilenameTextBox.Text.Length > 5)
+                    transcriptionManager = new WhipserTranscriptionToWordManager();
+            }));
         }
 
         private void SetupPipeline()
@@ -528,7 +541,10 @@ namespace WhisperRemoteApp
             switch (selectedAudioSource)
             {
                 case AudioSource.Microphones:
-                    GetMicrophonesConfiguration();
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        GetMicrophonesConfiguration();
+                    }));
                     break;
                 case AudioSource.WaveFiles:
                     GetWaveFilesConfiguration();
@@ -713,9 +729,12 @@ namespace WhisperRemoteApp
             SetupWhisper();
             if (setupState == SetupState.WhisperInitialised)
             {
-                BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
-                Run();
-                AddLog(State = "Started");
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
+                    Run();
+                    AddLog(State = "Started");
+                }));
             }
         }
 
@@ -741,7 +760,10 @@ namespace WhisperRemoteApp
             switch(selectedAudioSource)
             {
                 case AudioSource.Microphones:
-                    GetMicrophonesConfiguration();
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        GetMicrophonesConfiguration();
+                    }));
                     break;
                 case AudioSource.WaveFiles:
                     MessageBox.Show("Processing from wavefile(s) completed. \nYou can Quit the application.", "Processing completed", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
@@ -822,7 +844,10 @@ namespace WhisperRemoteApp
 
         private void BtnRefreshMicrophones(object sender, RoutedEventArgs e)
         {
-            GetMicrophonesConfiguration();
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                GetMicrophonesConfiguration();
+            }));
             MicrophonesGrid.RowDefinitions.RemoveRange(2, MicrophonesGrid.RowDefinitions.Count - 3);
             foreach(UIElement element in MicrophonesGrid.Children)
             {
