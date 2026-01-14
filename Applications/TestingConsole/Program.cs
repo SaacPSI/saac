@@ -25,6 +25,8 @@ using System.Windows;
 using SAAC.GlobalHelpers;
 using SAAC.Helpers;
 using MathNet.Spatial.Euclidean;
+using Microsoft.Psi.Interop.Transport;
+using Microsoft.Psi.Interop.Rendezvous;
 //using PLUME;
 //using SAAC.Ollama;
 //using SAAC.LabStreamLayer;
@@ -443,8 +445,26 @@ namespace TestingConsole
         static void Main(string[] args)
         {
             //testOllama();
-            //Pipeline pw = Pipeline.Create();
+            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            configuration.AutomaticPipelineRun = true;
+            configuration.Debug = false;
+            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            configuration.DatasetName = "RendezVousPipeline.pds";
+            configuration.RendezVousHost = "localhost";
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            configuration.CommandPort = 0;
 
+            // Instantiate the class that manage the RendezVous system and the pipeline execution?
+             RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
+            rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
+            List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
+            SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
+
+            rdvPipeline.Start();
+            annot.Start((e) => { });
+           
+            
             //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
             //websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
             //{
@@ -502,36 +522,40 @@ namespace TestingConsole
             ////ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
             ////replayPipeline.LoadDatasetAndConnectors();
 
-            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
-            configuration.Debug = false;
-            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "localhost";
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
-            configuration.CommandPort = 0;
+            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            //configuration.AutomaticPipelineRun = true;
+            //configuration.Debug = false;
+            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            //configuration.DatasetName = "RendezVousPipeline.pds";
+            //configuration.RendezVousHost = "localhost";
+            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            //configuration.CommandPort = 0;
 
             // Topics to receive from Unity
             // do a all-in management of streams
 
-            configuration.AddTopicFormatAndTransformer("Left", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Right", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            configuration.AddTopicFormatAndTransformer("Hand-Left", typeof(Hand), new PsiFormatHand());
-            configuration.AddTopicFormatAndTransformer("Hand-Right", typeof(Hand), new PsiFormatHand());
-            configuration.AddTopicFormatAndTransformer("EyeTracking", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector(), typeof(TupleOfVectorToRay));
-            configuration.AddTopicFormatAndTransformer("GazeEvent", typeof(GazeEvent), new PsiFormatGazeEvent());
-            configuration.AddTopicFormatAndTransformer("GrabEvent", typeof(GrabEvent), new PsiFormatGrabEvent());
+            //configuration.AddTopicFormatAndTransformer("Left", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            //configuration.AddTopicFormatAndTransformer("Right", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            //configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            //configuration.AddTopicFormatAndTransformer("Hand-Left", typeof(Hand), new PsiFormatHand());
+            //configuration.AddTopicFormatAndTransformer("Hand-Right", typeof(Hand), new PsiFormatHand());
+            //configuration.AddTopicFormatAndTransformer("EyeTracking", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector(), typeof(TupleOfVectorToRay));
+            //configuration.AddTopicFormatAndTransformer("GazeEvent", typeof(GazeEvent), new PsiFormatGazeEvent());
+            //configuration.AddTopicFormatAndTransformer("GrabEvent", typeof(GrabEvent), new PsiFormatGrabEvent());
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
+            // RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
+            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Client", "localhost");
+            //TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo> wrt = new TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo>(rdvPipeline.Pipeline, 18888, Microsoft.Psi.PsiStudio.PsiFormatPsiStudioNetworkInfo.GetFormat());
+
 
             // Register an action when receive the incoming connection from Unity
             //rdvPipeline.AddNewProcessEvent(OnNewProcess);
 
             // Start the rendezVous and the pipeline
-            rdvPipeline.Start();
+            //rdvPipeline.Start();
+            //rdvPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process("PsiStudioCommand", [wrt.ToRendezvousEndpoint("localhost","Command")]));
 
             //Console.WriteLine("Press any key to send RUN command to Unity.");
             //Console.ReadLine();
@@ -539,13 +563,14 @@ namespace TestingConsole
             ////replayPipeline.RunPipelineAndSubpipelines();
 
             //Console.WriteLine("Press any key to send STOP command to Unity.");
-            Console.ReadLine();
-            Pipeline p = Pipeline.Create();
-            IProducer<Ray3D> et = rdvPipeline.Connectors["Unity"]["EyeTracking"].CreateBridge<Ray3D>(p);
-            IProducer<CoordinateSystem> head = rdvPipeline.Connectors["Unity"]["Head"].CreateBridge<CoordinateSystem>(p);
-        
-            et.Out.Pair(head).Do((tuple, en) => { calcDist(tuple); });
-            p.RunAsync();
+            //int count = 0;
+            //while (true)
+            //{
+            //    Console.ReadLine();
+
+            //    wrt.Receive(new Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo(count++ % 2 > 0 ? Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing: Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, TimeInterval.Infinite, "test"), new Envelope());
+            //}
+
             //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             // Waiting for an out key to Stop
@@ -555,12 +580,6 @@ namespace TestingConsole
             //replayPipeline.Stop();
         }
 
-        static void calcDist((Ray3D, CoordinateSystem) values)
-        {
-            Vector3D diff = values.Item2.OffsetToBase - values.Item1.ThroughPoint.ToVector3D();
-            Console.WriteLine($"diff: {diff.X}\t{diff.Y}\t{diff.Z}\t");
-            //Console.WriteLine($"euler: {values.Item1.Direction.X}\t{values.Item1.Direction.Y}\t{values.Item1.Direction.Z}\t");
-        }
 
     }
 }

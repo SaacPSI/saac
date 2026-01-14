@@ -1,23 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
- <PropertyGroup>	 
-		<TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <Platforms>x64</Platforms>
-	  <UseWPF>true</UseWPF>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <LangVersion>Preview</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\NuitrackRemoteServices</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
- <ItemGroup>
-   <ProjectReference Include="..\NuitrackRemoteConnector\NuitrackRemoteConnector.csproj" />
-   <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
- </ItemGroup>
- <ItemGroup>
-   <Reference Include="nuitrack.net">
-     <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
-   </Reference>
- </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NuitrackRemoteConnector\NuitrackRemoteConnector.csproj" />
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="nuitrack.net">
+      <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

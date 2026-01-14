@@ -1,27 +1,29 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>latest</LangVersion>
-	  <LangVersion>Preview</LangVersion>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <Platforms>x64</Platforms>
-	  <UseWPF>true</UseWPF>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
-	  <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <LangVersion>Preview</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\OpenFace</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
-	<ItemGroup>
-	  <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.2.24128.5" />
-	  <PackageReference Include="Microsoft.Psi.Imaging" Version="0.19.100.1-beta" />
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	  <PackageReference Include="System.Runtime" Version="4.3.1" />
-	</ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\..\Interop\OpenFaceInterop\OpenFaceInterop.vcxproj" />
-	</ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-preview.2.24128.5" />
+    <PackageReference Include="Microsoft.Psi.Imaging" Version="0.19.100.1-beta" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Interop\OpenFaceInterop\OpenFaceInterop.vcxproj" />
+  </ItemGroup>
 </Project>

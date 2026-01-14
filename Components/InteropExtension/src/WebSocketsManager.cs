@@ -18,9 +18,9 @@ namespace Microsoft.Psi.Interop.Transport
     {
         private bool isServer;
         private bool isRestrictedToSecure;
-        private HttpListener httpListener;
-        private Thread listeningThread;
-        private CancellationTokenSource token;
+        protected HttpListener httpListener;
+        protected Thread listeningThread;
+        protected CancellationTokenSource token;
         private Dictionary<string, Dictionary<string, WebSocket>> websocketByClients { get; }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.Psi.Interop.Transport
         /// </summary>
         /// <param name="restrictToSecure">Boolean to force the use of ssl websocket.</param>
         /// <param name="prefixAddress">The address to listen to.</param>
-        public WebSocketsManager(bool isServer, bool restrictToSecure = false, string prefixAddress = "http://localhost:8080/ws/")
+        public WebSocketsManager(bool isServer, List<string> prefixAddress, bool restrictToSecure = false)
         {
             this.isServer = isServer;
             this.isRestrictedToSecure = restrictToSecure;
@@ -37,13 +37,15 @@ namespace Microsoft.Psi.Interop.Transport
             this.OnNewWebSocketConnectedHandler = null;
 
             if (isServer)
+            {
                 InitialiseHTTPListener(prefixAddress);
+            }
         }
 
         /// <summary>
         /// Gets or sets the handler of WebSockets connection event.
         /// </summary>
-        public EventHandler<(string, string)>? OnNewWebSocketConnectedHandler { get; set; }
+        public EventHandler<(string, string, Uri)>? OnNewWebSocketConnectedHandler { get; set; }
 
         /// <summary>
         /// Create WebSocketSource, to retrieve message from an existing the Websocket.
@@ -55,12 +57,16 @@ namespace Microsoft.Psi.Interop.Transport
         /// <param name="topic">The topic of the websocket.</param>
         /// <param name="name">The name of the component.</param>
         /// <returns>The created WebSocketSource if the Websocket exist.</returns>
-        public WebSocketSource<T>? CreateWebsocketSource<T>(Pipeline pipeline, Serialization.IFormatDeserializer deserializer, string remoteName, string topic, string name = nameof(WebSocketSource<T>), int port = 8080)
+        public WebSocketSource<T>? CreateWebsocketSource<T>(Pipeline pipeline, Serialization.IFormatDeserializer deserializer, string remoteName, string topic, bool useSourceTime = true, string name = nameof(WebSocketSource<T>), int port = 8080)
         {
             if (!GetWebsocket(remoteName, topic, out WebSocket websocket))
+            {
                 if (!CreateWebsocket(remoteName, port, topic, out websocket))
+                {
                     return null;
-            return new WebSocketSource<T>(pipeline, websocket, deserializer, 0, name);
+                }
+            }
+            return new WebSocketSource<T>(pipeline, websocket, deserializer, useSourceTime, 0, name);
         }
 
         /// <summary>
@@ -77,8 +83,12 @@ namespace Microsoft.Psi.Interop.Transport
         public WebSocketWriter<T>? CreateWebsocketWriter<T>(Pipeline pipeline, Serialization.IFormatSerializer serializer, string remoteName, string topic, string name = nameof(WebSocketSource<T>), int port = 8080)
         {
             if (!GetWebsocket(remoteName, topic, out WebSocket websocket))
+            {
                 if (!CreateWebsocket(remoteName, port, topic, out websocket))
+                {
                     return null;
+                }
+            }
             return new WebSocketWriter<T>(pipeline, websocket, serializer, name);
         }
 
@@ -91,13 +101,14 @@ namespace Microsoft.Psi.Interop.Transport
         /// <param name="remoteName">The hostname of client.</param>
         /// <param name="topic">The topic of the websocket.</param>
         /// <param name="name">The name of the component.</param>
-        /// <param name="port">The port for the websocket.</param>
         /// <returns>The created WebSocketSource if the Websocket exist.</returns>
-        public WebSocketSource<T>? ConnectWebsocketSource<T>(Pipeline pipeline, Serialization.IFormatDeserializer deserializer, string remoteName, string topic, string name = nameof(WebSocketSource<T>))
+        public WebSocketSource<T>? ConnectWebsocketSource<T>(Pipeline pipeline, Serialization.IFormatDeserializer deserializer, string remoteName, string topic, bool useSourceTime, string name = nameof(WebSocketSource<T>))
         {
             if (!GetWebsocket(remoteName, topic, out WebSocket websocket))
+            {
                 return null;
-            return new WebSocketSource<T>(pipeline, websocket, deserializer, 0, name);
+            }
+            return new WebSocketSource<T>(pipeline, websocket, deserializer, useSourceTime, 0, name);
         }
 
         /// <summary>
@@ -113,7 +124,9 @@ namespace Microsoft.Psi.Interop.Transport
         public WebSocketWriter<T>? ConnectWebsocketWriter<T>(Pipeline pipeline, Serialization.IFormatSerializer serializer, string remoteName, string topic, string name = nameof(WebSocketSource<T>))
         {
             if (!GetWebsocket(remoteName, topic, out WebSocket websocket))
+            {
                 return null;
+            }
             return new WebSocketWriter<T>(pipeline, websocket, serializer, name);
         }
 
@@ -127,19 +140,25 @@ namespace Microsoft.Psi.Interop.Transport
                 this.listeningThread.Join();
             }
             foreach (var client in this.websocketByClients)
+            {
                 foreach (var ws in client.Value)
+                {
                     if (ws.Value.State == WebSocketState.Open)
+                    {
                         ws.Value.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server shutting down", CancellationToken.None);
+                    }
+                }
+            }
             this.websocketByClients.Clear();
         }
 
         /// <inheritdoc/>
-        public void Start(Action<DateTime> notifyCompletionTime)
+        public virtual void Start(Action<DateTime> notifyCompletionTime)
         {
             if (isServer)
             {
                 this.httpListener.Start();
-                this.listeningThread = new Thread(AcceptWebsocketClients);
+                this.listeningThread = new Thread(this.ProcessContexts);
                 this.listeningThread.Start();
             }
             notifyCompletionTime(DateTime.MaxValue);
@@ -156,9 +175,13 @@ namespace Microsoft.Psi.Interop.Transport
         {
             webSocket = default;
             if (!this.websocketByClients.ContainsKey(remoteName))
+            {
                 return false;
+            }
             if (!this.websocketByClients[remoteName].ContainsKey(topic))
+            {
                 return false;
+            }
             webSocket = this.websocketByClients[remoteName][topic];
             return true;
         }
@@ -175,8 +198,10 @@ namespace Microsoft.Psi.Interop.Transport
                     websocket.Options.ClientCertificates = new System.Security.Cryptography.X509Certificates.X509CertificateCollection();
                     websocket.ConnectAsync(new Uri($"wss://{remoteName}:{port}/ws/{topic}"), cts.Token);
                 }
-                else 
+                else
+                {
                     websocket.ConnectAsync(new Uri($"ws://{remoteName}:{port}/ws/{topic}"), cts.Token);
+                }
                 RegisterWebSocket(remoteName, topic, websocket);
                 webSocket = websocket;
                 return true;
@@ -189,18 +214,14 @@ namespace Microsoft.Psi.Interop.Transport
             return false;
         }
 
-        protected virtual async void AcceptWebsocketClients()
+        protected virtual async void ProcessContexts()
         {
             while (!this.token.IsCancellationRequested)
             {
                 var result = await this.httpListener.GetContextAsync();
-                if (result.Request.IsWebSocketRequest && (!isRestrictedToSecure || result.Request.IsSecureConnection))
+                if (result != null)
                 {
-                    var wsContext = await result.AcceptWebSocketAsync(subProtocol: null);
-                    WebSocket webSocket = wsContext.WebSocket;
-                    string topic = result.Request.Url.AbsolutePath.Substring(4); //removing "/ws/"
-                    if (RegisterWebSocket(result.Request.Url.Host, topic, webSocket))
-                        OnNewWebSocketConnectedHandler?.Invoke(this, (result.Request.Url.Host, topic));
+                    AcceptWebsocketClients(result);
                 }
             }
         }
@@ -210,18 +231,48 @@ namespace Microsoft.Psi.Interop.Transport
             lock (this.websocketByClients)
             {
                 if (!this.websocketByClients.ContainsKey(remoteName))
+                {
                     this.websocketByClients[remoteName] = new Dictionary<string, WebSocket>();
+                }
                 if (this.websocketByClients[remoteName].ContainsKey(topic))
+                {
                     return false;
+                }
                 this.websocketByClients[remoteName][topic] = webSocket;
                 return true;
             }
         }
 
-        private void InitialiseHTTPListener(string address)
+        protected void InitialiseHTTPListener(List<string> address)
         {
             this.httpListener = new HttpListener();
-            this.httpListener.Prefixes.Add(address);
+            foreach (var addr in address)
+            {
+                this.httpListener.Prefixes.Add(addr);
+            }
+        }
+
+        protected virtual async void AcceptWebsocketClients(HttpListenerContext context)
+        {
+            if (context.Request.IsWebSocketRequest && (!isRestrictedToSecure || context.Request.IsSecureConnection))
+            {
+                var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
+                WebSocket webSocket = wsContext.WebSocket;
+                string topic = context.Request.Url.AbsolutePath.Substring(4); //removing "/ws/"
+                if (this.RegisterWebSocket(this.GetNameForHost(context.Request.Url), topic, webSocket))
+                {
+                    this.OnNewWebSocketConnectedHandler?.Invoke(this, (this.GetNameForHost(context.Request.Url), topic, context.Request.Url));
+                }
+            }
+        }
+
+        private string GetNameForHost(Uri hostUri)
+        {
+            if (hostUri.Query.Contains("?name="))
+            {
+                return hostUri.Query.TrimStart('?');
+            }
+            return hostUri.Host;
         }
     }
 }

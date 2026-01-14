@@ -11,11 +11,47 @@
     <Setting Name="remotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11550</Value>
     </Setting>
-    <Setting Name="ApplicationName" Type="System.String" Scope="User">
+    <Setting Name="applicationName" Type="System.String" Scope="User">
       <Value Profile="(Default)">VideoRemoteApp</Value>
     </Setting>
-    <Setting Name="IpToUse" Type="System.String" Scope="User">
+    <Setting Name="ipToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">10.144.210.100</Value>
+    </Setting>
+    <Setting Name="isServer" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="isStreaming" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="captureInterval" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="encodingLevel" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="cropX" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="cropY" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="cropWidth" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="cropHeight" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="isLocalRecording" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="localSessionName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="datasetPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="datasetName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

@@ -222,6 +222,7 @@ namespace CameraRemoteApp
             IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
             datasetPipeline = null;
 
+            LoadConfigurations();
             InitializeComponent();
             UpdateLayout();
 
@@ -291,17 +292,25 @@ namespace CameraRemoteApp
             IsLocalRecording = Properties.Settings.Default.isLocalRecording;
             LocalSessionName = Properties.Settings.Default.localSessionName;
 
+
+            LoadConfigurations();
+            Properties.Settings.Default.Save();
+            UpdateLayout();
+        }
+
+        private void LoadConfigurations()
+        {
             KinectAzureRemoteStreamsConfigurationUI.StartingPort = KinectRemoteStreamsConfigurationUI.StartingPort = NuitrackRemoteStreamsConfigurationUI.StartingPort = (int)Properties.Settings.Default.remotePort;
             KinectAzureRemoteStreamsConfigurationUI.OutputAudio = KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
             KinectAzureRemoteStreamsConfigurationUI.OutputBodies = KinectRemoteStreamsConfigurationUI.OutputBodies = NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
-            KinectAzureRemoteStreamsConfigurationUI.OutputColor = KinectRemoteStreamsConfigurationUI.OutputColor = NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.skeleton;
+            KinectAzureRemoteStreamsConfigurationUI.OutputColor = KinectRemoteStreamsConfigurationUI.OutputColor = NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
             KinectAzureRemoteStreamsConfigurationUI.OutputDepth = KinectRemoteStreamsConfigurationUI.OutputDepth = NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
             KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
             KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
             KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS;
             KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
 
-            KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
             KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
             KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
             KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
@@ -310,9 +319,6 @@ namespace CameraRemoteApp
             NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
             NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
             NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
-
-            Properties.Settings.Default.Save();
-            UpdateLayout();
         }
 
         private void RefreshConfigurationFromUI()
@@ -362,6 +368,7 @@ namespace CameraRemoteApp
                     Properties.Settings.Default.audio = KinectAzureRemoteStreamsConfigurationUI.OutputAudio;
                     Properties.Settings.Default.skeleton = KinectAzureRemoteStreamsConfigurationUI.OutputBodies;
                     Properties.Settings.Default.rgb = KinectAzureRemoteStreamsConfigurationUI.OutputColor;
+                    Properties.Settings.Default.infrared = KinectAzureRemoteStreamsConfigurationUI.OutputInfrared;
                     Properties.Settings.Default.depth = KinectAzureRemoteStreamsConfigurationUI.OutputDepth;
                     Properties.Settings.Default.depthCalibration = KinectAzureRemoteStreamsConfigurationUI.OutputCalibration;
                     Properties.Settings.Default.IMU = KinectAzureRemoteStreamsConfigurationUI.OutputImu;
@@ -531,7 +538,8 @@ namespace CameraRemoteApp
                 {
                     string streamName = "Audio";
                     Microsoft.Psi.Audio.AudioCaptureConfiguration configuration = new Microsoft.Psi.Audio.AudioCaptureConfiguration();
-                    configuration.DeviceName = VideoSourceComboBox.SelectedValue as string;
+                    int index = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ToList().FindIndex(value => { return value.Contains("Azure"); });
+                    configuration.DeviceName = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ElementAt(index);
                     Microsoft.Psi.Audio.AudioCapture audioCapture = new Microsoft.Psi.Audio.AudioCapture(datasetPipeline.Pipeline, configuration);
                     datasetPipeline.CreateConnectorAndStore("Audio", "Audio", session, datasetPipeline.Pipeline, audioCapture.GetType(), audioCapture.Out, isLocalRecording);
                 }

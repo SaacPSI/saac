@@ -40,13 +40,13 @@
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" Content="RendezVous Host :" FontWeight="Bold"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=RendezVousHost}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=Configuration.RendezVousHost}"/>
 
                 <Label Grid.Row="1" Grid.Column="0" Content="RendezVous Port :" FontWeight="Bold"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=RendezVousPort}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=Configuration.RendezVousPort}"/>
 
                 <Label Grid.Row="2" Grid.Column="0" Content="Clock Port :" FontWeight="Bold"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=ClockPort}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=Configuration.ClockPort}"/>
 
                 <Label Grid.Row="3" Grid.Column="0" Content="Dataset Path :" FontWeight="Bold"/>
                 <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path=DatasetPath}"/>

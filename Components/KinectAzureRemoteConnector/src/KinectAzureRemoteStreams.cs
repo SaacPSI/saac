@@ -23,7 +23,6 @@ namespace SAAC.RemoteConnectors
         {
             int portCount = Configuration.StartingPort + 1;
 
-
             if (Configuration.OutputBodies == true)
                 Configuration.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
             Sensor = new AzureKinectSensor(ParentPipeline, Configuration);
@@ -33,6 +32,8 @@ namespace SAAC.RemoteConnectors
             {
                 AudioCaptureConfiguration configuration = new AudioCaptureConfiguration();
                 AudioCapture audioCapture = new AudioCapture(ParentPipeline, configuration);
+                int index = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ToList().FindIndex(value => { return value.Contains("Azure"); });
+                configuration.DeviceName = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ElementAt(index);
                 RemoteExporter soundExporter = new RemoteExporter(ParentPipeline, portCount++, Configuration.ConnectionType);
                 soundExporter.Exporter.Write(audioCapture.Out, $"{Configuration.RendezVousApplicationName}_Audio");
                 exporters.Add(soundExporter.ToRendezvousEndpoint(Configuration.IpToUse));

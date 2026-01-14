@@ -1,31 +1,29 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup>
-	  <TargetFramework>net48</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>latest</LangVersion>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <Platforms>x64</Platforms>
-	  <UseWPF>true</UseWPF>
-	  <BaseOutputPath>$(SolutionDir)build\bin\</BaseOutputPath>
-	  <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
-	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
-	  <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
-	  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	  <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <PackageId>SAAC-$(AssemblyName)</PackageId>
-	  <version>1.0.0-pre</version>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\PipelineServices</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
+    <version>1.0.0-pre</version>
   </PropertyGroup>
-  
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Spatial.Euclidean" Version="0.19.100.1-beta" />
   </ItemGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>
-
 </Project>

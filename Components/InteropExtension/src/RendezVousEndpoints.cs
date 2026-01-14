@@ -76,7 +76,7 @@ namespace Microsoft.Psi.Interop.Rendezvous
         /// <param name="deserializer">The deserializer to use to deserialize messages.</param>
         /// <returns><see cref="RemoteClockImporter"/>.</returns>
         public static WebSocketSource<T>? ToRemoteWebSocketSource<T>(this WebsocketSourceEndpoint endpoint, WebSocketsManager manager, Pipeline pipeline, Serialization.IFormatDeserializer deserializer)
-            => manager.ConnectWebsocketSource<T>(pipeline, deserializer, endpoint.Host, endpoint.Stream.StreamName);
+            => manager.ConnectWebsocketSource<T>(pipeline, deserializer, endpoint.Host, endpoint.Stream.StreamName, true);
 
     }
 }

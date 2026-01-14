@@ -12,13 +12,13 @@ Four folders:
 - Dependencies containing third part librairies for interop wrappers.
 
 ## Installation
-* Clone the \psi repo (fork)[https://github.com/SaacPSI/psi] and build the PsiStudio branch.
+* Clone the \psi repo [fork](https://github.com/SaacPSI/psi) and build the PsiStudio branch.
 * Psi nuget package will be output in builds/PsiPakages, add the folder in your nuget repository configuration.
 
 ## Documents
-*[\psi in Unity](PsiInUnity.md)
-*[Remote Exporter Modification](RemoteExporterModification.md)
-*[PsiSutio modifications](PsiStudioModifications.md)
+* [\psi in Unity](PsiInUnity.md)
+* [Remote Exporter Modification](RemoteExporterModification.md)
+* [PsiSutio modifications](PsiStudioModifications.md)
 
 ## Roadmap
 Developping generic applications

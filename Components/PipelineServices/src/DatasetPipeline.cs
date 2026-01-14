@@ -23,6 +23,8 @@ namespace SAAC.PipelineServices
 
         protected bool OwningPipeline;
 
+        public Session? CurrentSession { get; private set; } = null;
+
         public DatasetPipeline(Pipeline parent, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
             : base("", connectors, name)
         {
@@ -128,7 +130,7 @@ namespace SAAC.PipelineServices
                                 if (session.Name.Replace(sessionName, "").CompareTo(sessionTmp.Name.Replace(sessionName, "")) < 0)
                                     continue;
                             }
-                            sessionTmp = session;
+                            this.CurrentSession = sessionTmp = session;
                         }
                     }
                     return sessionTmp;
@@ -138,7 +140,7 @@ namespace SAAC.PipelineServices
                     foreach (var session in Dataset.Sessions)
                     {
                         if (session != null && session.Name == sessionName)
-                            return session;
+                            return this.CurrentSession = session;
                     }
                 }
             }
@@ -152,7 +154,7 @@ namespace SAAC.PipelineServices
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name == sessionName)
                     return session;
-            return Dataset.AddEmptySession(sessionName);
+            return this.CurrentSession = Dataset.AddEmptySession(sessionName);
         }
 
         public Session? CreateIterativeSession(string sessionName)
@@ -163,15 +165,15 @@ namespace SAAC.PipelineServices
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name.Contains(sessionName))
                     iterator++;
-            return Dataset.AddEmptySession($"{sessionName}.{iterator:D3}");
+            return this.CurrentSession = Dataset.AddEmptySession($"{sessionName}.{iterator:D3}");
         }
 
-        public Session? CreateOrGetSessionFromMode(string sessionName)
+        public Session? CreateOrGetSessionFromMode(string sessionName = "")
         {
             switch (Configuration.SessionMode)
             {
                 case SessionNamingMode.Unique:
-                    return CreateOrGetSession(Configuration.SessionName);
+                    return this.CurrentSession is null ? CreateIterativeSession(Configuration.SessionName) : this.CurrentSession;
                 case SessionNamingMode.Overwrite:
                     return CreateOrGetSession(Configuration.SessionName + sessionName);
                 case SessionNamingMode.Increment:
