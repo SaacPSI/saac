@@ -271,11 +271,13 @@ namespace CameraRemoteApp
             if (isRemoteServer)
                 UpdateStreamingPortRangeStartTextBox();
         }
+
         private void UpdateStreamingPortRangeStartTextBox()
         {
             GeneralNetworkStreamingCheckBox.IsChecked = NetworkStreamingCheckBox.IsChecked = isStreaming;
             StreamingPortRangeStartTextBox.IsEnabled = isStreaming & isRemoteServer;
         }
+
         private void UpdateLocalRecordingTab()
         {
             foreach (UIElement networkUIElement in LocalRecordingGrid.Children)
@@ -309,6 +311,8 @@ namespace CameraRemoteApp
 
         private void LoadConfigurations()
         {
+            CommandSource = Properties.Settings.Default.commandSource;
+
             // Load CommandPort
             PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
@@ -339,6 +343,7 @@ namespace CameraRemoteApp
             // General Tab
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.commandSource = CommandSource;
             Properties.Settings.Default.commandPort = CommandPort;
             Properties.Settings.Default.DatasetPath = PipelineConfigurationUI.DatasetPath;
             Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
@@ -406,6 +411,7 @@ namespace CameraRemoteApp
             Properties.Settings.Default.localSessionName = LocalSessionName;
             Properties.Settings.Default.nuitrackKey = NuitrackRemoteStreamsConfigurationUI.ActivationKey;
             Properties.Settings.Default.nuitrackDevice = NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber;
+
 
             Properties.Settings.Default.Save();
         }

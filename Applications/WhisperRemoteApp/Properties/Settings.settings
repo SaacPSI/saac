@@ -20,7 +20,7 @@
     <Setting Name="IpToUse" Type="System.String" Scope="User">
       <Value Profile="(Default)">localhost</Value>
     </Setting>
-    <Setting Name="CommandApplication" Type="System.String" Scope="User">
+    <Setting Name="CommandSource" Type="System.String" Scope="User">
       <Value Profile="(Default)">Server</Value>
     </Setting>
     <Setting Name="IsServer" Type="System.Boolean" Scope="User">

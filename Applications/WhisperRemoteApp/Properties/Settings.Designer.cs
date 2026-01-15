@@ -98,12 +98,12 @@ namespace WhisperRemoteApp.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Server")]
-        public string CommandApplication {
+        public string CommandSource {
             get {
-                return ((string)(this["CommandApplication"]));
+                return ((string)(this["CommandSource"]));
             }
             set {
-                this["CommandApplication"] = value;
+                this["CommandSource"] = value;
             }
         }
         

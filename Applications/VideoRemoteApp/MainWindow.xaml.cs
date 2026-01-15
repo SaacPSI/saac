@@ -321,6 +321,7 @@ namespace VideoRemoteApp
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.ipToUse;
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+            CommandSource = Properties.Settings.Default.commandSource;
             CommandPort = Properties.Settings.Default.commandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
             RendezVousApplicationNameUI = Properties.Settings.Default.applicationName;
@@ -338,10 +339,6 @@ namespace VideoRemoteApp
 
         private void LoadConfigurations()
         {           
-            // Load CommandPort
-            CommandPort = Properties.Settings.Default.commandPort;
-            PipelineConfigurationUI.CommandPort = CommandPort;
-
             // Load video configurations
             videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(CaptureInterval > 0 ? CaptureInterval : Properties.Settings.Default.captureInterval);
             videoRemoteAppConfiguration.EncodingVideoLevel = Properties.Settings.Default.encodingLevel;
@@ -373,6 +370,7 @@ namespace VideoRemoteApp
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
             Properties.Settings.Default.commandPort = CommandPort;
+            Properties.Settings.Default.commandSource = CommandSource;
             Properties.Settings.Default.applicationName = RendezVousApplicationNameUI;
 
             // Video Tab

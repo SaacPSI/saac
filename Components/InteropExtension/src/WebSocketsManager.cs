@@ -10,6 +10,7 @@ namespace Microsoft.Psi.Interop.Transport
     using System.Net.WebSockets;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Web;
 
     /// <summary>
     /// Component that handle the connection of websockets.
@@ -268,9 +269,15 @@ namespace Microsoft.Psi.Interop.Transport
 
         private string GetNameForHost(Uri hostUri)
         {
-            if (hostUri.Query.Contains("?name="))
+            if (!string.IsNullOrEmpty(hostUri.Query))
             {
-                return hostUri.Query.TrimStart('?');
+                // Parse query string parameters
+                var queryParams = System.Web.HttpUtility.ParseQueryString(hostUri.Query);
+                var nameParam = queryParams["name"];
+                if (!string.IsNullOrEmpty(nameParam))
+                {
+                    return nameParam;
+                }
             }
             return hostUri.Host;
         }

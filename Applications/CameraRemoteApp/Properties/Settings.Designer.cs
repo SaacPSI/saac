@@ -394,5 +394,17 @@ namespace CameraRemoteApp.Properties {
                 this["nuitrackKey"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string commandSource {
+            get {
+                return ((string)(this["commandSource"]));
+            }
+            set {
+                this["commandSource"] = value;
+            }
+        }
     }
 }

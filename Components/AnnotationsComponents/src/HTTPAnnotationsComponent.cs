@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Web;
 using Newtonsoft.Json;
 
 namespace SAAC.AnnotationsComponents
@@ -148,22 +149,37 @@ namespace SAAC.AnnotationsComponents
 
         private void AnnotationConnection(object sender, (string, string, Uri) connectionInfo)
         {
-           if (connectionInfo.Item2 == "annotation" &&  this.annotationSchemas.ContainsKey(connectionInfo.Item3.Query.TrimStart('?')))
-           {
-                Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema = this.annotationSchemas[connectionInfo.Item3.Query.TrimStart('?')];
-                string name = $"{connectionInfo.Item1}-Annotation";
-                Pipeline pipeline = rdvPipeline.GetOrCreateSubpipeline(name);
-                WebSocketSource<string>? source = this.ConnectWebsocketSource<string>(pipeline, PsiFormats.PsiFormatString.GetFormat(), connectionInfo.Item1, connectionInfo.Item2, false);
-                if (source is null || rdvPipeline.CurrentSession is null)
-                { 
-                    return;
+            if (connectionInfo.Item2 == "annotation")
+            {
+                // Parse query string to get schema parameter
+                string schemaName = null;
+                if (!string.IsNullOrEmpty(connectionInfo.Item3.Query))
+                {
+                    var queryParams = HttpUtility.ParseQueryString(connectionInfo.Item3.Query);
+                    schemaName = queryParams["schema"];
                 }
-                Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, rdvPipeline.CurrentSession, rdvPipeline.GetStoreName("Annotation", name, rdvPipeline.CurrentSession).Item2);
-                AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
-                annotationProcessor.Write(annotationSchema, "Annotation", store);
-                source.Out.PipeTo(annotationProcessor.In);
-                pipeline.RunAsync();
-                Trace.WriteLine($"New annotation WebSocket connection established for host {connectionInfo.Item1}");
+
+                if (!string.IsNullOrEmpty(schemaName) && this.annotationSchemas.ContainsKey(schemaName))
+                {
+                    Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema = this.annotationSchemas[schemaName];
+                    string name = $"{connectionInfo.Item1}-Annotation";
+                    Pipeline pipeline = rdvPipeline.GetOrCreateSubpipeline(name);
+                    WebSocketSource<string>? source = this.ConnectWebsocketSource<string>(pipeline, PsiFormats.PsiFormatString.GetFormat(), connectionInfo.Item1, connectionInfo.Item2, false);
+                    if (source is null || rdvPipeline.CurrentSession is null)
+                    { 
+                        return;
+                    }
+                    Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, rdvPipeline.CurrentSession, rdvPipeline.GetStoreName("Annotation", name, rdvPipeline.CurrentSession).Item2);
+                    AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
+                    annotationProcessor.Write(annotationSchema, "Annotation", store);
+                    source.Out.PipeTo(annotationProcessor.In);
+                    pipeline.RunAsync();
+                    Trace.WriteLine($"New annotation WebSocket connection established for host {connectionInfo.Item1} with schema {schemaName}");
+                }
+                else
+                {
+                    Trace.WriteLine($"Invalid or missing schema parameter in annotation WebSocket connection: {schemaName}");
+                }
             }
         }
 

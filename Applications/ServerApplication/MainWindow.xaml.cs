@@ -374,7 +374,7 @@ namespace ServerApplication
                 }));
             }
             
-            //if (connectedApps.Count >= 1 && !statusCheckRunning) StartStatusMonitoring();
+            if (connectedApps.Count >= 1 && !statusCheckRunning) StartStatusMonitoring();
         }
 
         private string GetName(object argument)
@@ -470,9 +470,6 @@ namespace ServerApplication
 
         private void CommandReceived(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
-            if (CommandSource != source)
-                return;
-
             var args = message.Data.Item2.Split(';');
 
             if (args[0] != "Server")

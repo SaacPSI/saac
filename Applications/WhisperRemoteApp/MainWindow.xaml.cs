@@ -141,7 +141,7 @@ namespace WhisperRemoteApp
             set => SetProperty(ref remoteConfiguration, value);
         }
 
-        private string commandSource = "Server-Command";
+        private string commandSource = "Server";
         public string CommandSource
         {
             get => commandSource;
@@ -383,6 +383,7 @@ namespace WhisperRemoteApp
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.IpToUse;
             RendezVousServerIp = Properties.Settings.Default.RendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.RendezVousServerPort);
+            CommandSource = Properties.Settings.Default.CommandSource;
             CommandPort = Properties.Settings.Default.CommandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
             WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
@@ -442,6 +443,7 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.IpToUse = pipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.RendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.RendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.CommandSource = CommandSource;
             Properties.Settings.Default.CommandPort = CommandPort;
             Properties.Settings.Default.ApplicationName = WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName;
 
