@@ -42,7 +42,9 @@ namespace SAAC.AnnotationsComponents
             this.LoadAnnotationSchemas(annotationsFolder);
             base.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
             this.rdvPipeline = rdvPipeline;
+            this.rdvPipeline.Pipeline.PipelineRun += (s, e) => this.Start( (e) => { });
         }
+
 
         /// <summary>
         /// Overrides the ProcessContexts method to handle HTTP requests for HTML pages.

@@ -141,6 +141,13 @@ namespace WhisperRemoteApp
             set => SetProperty(ref commandSource, value);
         }
 
+        private int commandPort;
+        public int CommandPort
+        {
+            get => commandPort;
+            set => SetProperty(ref commandPort, value);
+        }
+
         //Whipser Tab
 
         public SystemVoiceActivityDetectorConfiguration VadConfigurationUI
@@ -275,6 +282,7 @@ namespace WhisperRemoteApp
         {
             UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(CommandPortTextBox, int.TryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(StreamingPortRangeStartTextBox, int.TryParse);
             UpdateNetworkTab();
         }
@@ -368,6 +376,8 @@ namespace WhisperRemoteApp
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.IpToUse;
             RendezVousServerIp = Properties.Settings.Default.RendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.RendezVousServerPort);
+            CommandPort = Properties.Settings.Default.CommandPort;
+            PipelineConfigurationUI.CommandPort = CommandPort;
             WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
 
             // Audio Tab
@@ -425,6 +435,7 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.IpToUse = pipelineConfiguration.RendezVousHost;
             Properties.Settings.Default.RendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.RendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.CommandPort = CommandPort;
             Properties.Settings.Default.ApplicationName = WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName;
 
             // Audio Tab
@@ -461,7 +472,7 @@ namespace WhisperRemoteApp
 
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
-            if (CommandSource != source)
+            if ($"{CommandSource}-Command" != source)
                 return; 
             
             var args = message.Data.Item2.Split([';']);
@@ -503,12 +514,13 @@ namespace WhisperRemoteApp
                 pipelineConfiguration.CommandDelegate = CommandRecieved;
                 pipelineConfiguration.Debug = false;
                 pipelineConfiguration.RecordIncomingProcess = false;
-                pipelineConfiguration.CommandPort = pipelineConfiguration.ClockPort = 0;
+                pipelineConfiguration.CommandPort = CommandPort;
+                pipelineConfiguration.ClockPort = 0;
                 pipelineConfiguration.DatasetPath = localDatasetPath;
                 pipelineConfiguration.DatasetName = localDatasetName;
 
                 rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
-                rendezVousPipeline.Log("Waiting for server");
+
                 pipeline = rendezVousPipeline.Pipeline;
 
                 if (!isStreaming)
@@ -698,7 +710,7 @@ namespace WhisperRemoteApp
             if (setupState == SetupState.PipelineInitialised)
             {
                 BtnStartNet.IsEnabled = false;
-                pipeline?.RunAsync();
+                rendezVousPipeline?.Start();
                 AddLog(State = "Waiting for server");
             }
         }

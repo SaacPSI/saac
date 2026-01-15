@@ -417,10 +417,10 @@ namespace TestingConsole
         //}
 
 
-        //static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
-        //{
-        //    Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
-        //}
+        static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        {
+            Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
+        }
 
         public class Reporter : System.IProgress<double>
         {
@@ -450,19 +450,19 @@ namespace TestingConsole
             configuration.Debug = false;
             configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "localhost";
+            configuration.RendezVousHost = "10.144.37.90";
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.StoreMode = DatasetPipeline.StoreMode.Process;
-            configuration.CommandPort = 0;
+            configuration.CommandDelegate = Program.CommandDel;
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
-             RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
-            rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
-            List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
-            SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
+            RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
+            //rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
+            //List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
+            //SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
 
             rdvPipeline.Start();
-            annot.Start((e) => { });
+            //annot.Start((e) => { });
            
             
             //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
@@ -574,6 +574,13 @@ namespace TestingConsole
             //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             // Waiting for an out key to Stop
+           
+          //  while (true)
+            {
+                Console.WriteLine("Press any key to send status.");
+                Console.ReadLine();
+                rdvPipeline.SendCommand(RendezVousPipeline.Command.Status, "WhisperStreaming", "");
+            }
             Console.WriteLine("Press any key to stop the application.");
             Console.ReadLine();
             rdvPipeline.Dispose();

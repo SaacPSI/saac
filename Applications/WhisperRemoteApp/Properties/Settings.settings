@@ -8,6 +8,9 @@
     <Setting Name="RendezVousServerPort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">13331</Value>
     </Setting>
+    <Setting Name="CommandPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
     <Setting Name="RemotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11570</Value>
     </Setting>

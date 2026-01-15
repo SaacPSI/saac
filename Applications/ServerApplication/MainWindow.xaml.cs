@@ -77,6 +77,28 @@ namespace ServerApplication
             set => SetProperty(ref configuration.SessionName, value);
         }
 
+        // Annotation Tab
+        private bool isAnnotationEnabled = false;
+        public bool IsAnnotationEnabled
+        {
+            get => isAnnotationEnabled;
+            set => SetProperty(ref isAnnotationEnabled, value);
+        }
+
+        private string annotationSchemaDirectory = "";
+        public string AnnotationSchemaDirectory
+        {
+            get => annotationSchemaDirectory;
+            set => SetProperty(ref annotationSchemaDirectory, value);
+        }
+
+        private string annotationWebPage = "";
+        public string AnnotationWebPage
+        {
+            get => annotationWebPage;
+            set => SetProperty(ref annotationWebPage, value);
+        }
+
         // Log Tab
         private string log = "Not Initialised\n";
         public string Log
@@ -96,6 +118,7 @@ namespace ServerApplication
         };
         private SetupState setupState;
         private LogStatus internalLog;
+        private SAAC.AnnotationsComponents.HTTPAnnotationsComponent? annotationsComponent;
 
         public MainWindow()
         {
@@ -126,8 +149,15 @@ namespace ServerApplication
             InitializeComponent();
             DataContext = this;
             UpdateLayout();
+            SetupAnnotationTab();
             RefreshUIFromConfiguration();
             UpdateLayout();
+        }
+
+        private void SetupAnnotationTab()
+        {
+            // Initialize annotation tab state
+            UpdateAnnotationTab();
         }
 
         private void LoadConfig()
@@ -140,12 +170,24 @@ namespace ServerApplication
             LocalDatasetName = Properties.Settings.Default.DatasetName;
             Configuration.Debug = Properties.Settings.Default.Debug;
             Configuration.AutomaticPipelineRun = Properties.Settings.Default.AutomaticPipelineRun;
+            
+            // Annotation Tab
+            IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
+            AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
+            AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
         }
         private void RefreshUIFromConfiguration()
         {
             //Configuration Tab
             LoadConfig();
             StoreModeComboBox.SelectedIndex = Properties.Settings.Default.StoreMode;
+            
+            // Annotation Tab
+            IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
+            AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
+            AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
+            UpdateAnnotationTab();
+            
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
         }
 
@@ -160,6 +202,13 @@ namespace ServerApplication
             Properties.Settings.Default.Debug = Configuration.Debug;
             Properties.Settings.Default.AutomaticPipelineRun = Configuration.AutomaticPipelineRun;
             Properties.Settings.Default.StoreMode = (int) StoreModeComboBox.SelectedIndex;
+            
+            // Annotation Tab
+            Properties.Settings.Default.IsAnnotationEnabled = IsAnnotationEnabled;
+            Properties.Settings.Default.AnnotationSchemasPath = AnnotationSchemaDirectory;
+            Properties.Settings.Default.AnnotationHtmlPage = AnnotationWebPage;
+            
+            Properties.Settings.Default.Save();
 
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
         }
@@ -208,13 +257,76 @@ namespace ServerApplication
             server = new RendezVousPipeline(configuration, "Server", null, internalLog);
             pipeline = server.Pipeline;
             AddLog("Server initialisation started");
+            
+            // Setup annotations if enabled
+            SetupAnnotations();
+            
             server.Start();
             AddLog("Server started");
             setupState = SetupState.PipelineInitialised;
         }
 
+        private void SetupAnnotations()
+        {
+            if (!IsAnnotationEnabled)
+            {
+                AddLog("Annotations disabled");
+                return;
+            }
+
+            if (server == null)
+            {
+                AddLog("Cannot setup annotations: server not initialized");
+                return;
+            } 
+
+            if (!System.IO.Directory.Exists(AnnotationSchemaDirectory))
+            {
+                AddLog($"Warning: Annotation schema directory does not exist: {AnnotationSchemaDirectory}");
+            }
+
+            if (!System.IO.File.Exists(AnnotationWebPage))
+            {
+                AddLog($"Warning: Annotation web page does not exist: {AnnotationWebPage}");
+            }
+
+            try
+            {
+                // Create list of addresses for WebSocket and HTTP
+                List<string> addresses = new List<string>() 
+                { 
+                    $"http://{Configuration.RendezVousHost}:8080/ws/", 
+                    $"http://{Configuration.RendezVousHost}:8080/" 
+                };
+
+                // Instantiate the HTTPAnnotationsComponent
+                annotationsComponent = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(server, addresses, AnnotationSchemaDirectory, AnnotationWebPage);
+
+                AddLog("Annotations component initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Failed to setup annotations: {ex.Message}");
+            }
+        }
+
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
+            // Stop annotations component
+            if (annotationsComponent != null)
+            {
+                try
+                {
+                    // Assuming the component has a Stop or Dispose method
+                    AddLog("Stopping annotations component");
+                    annotationsComponent = null;
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"Error stopping annotations: {ex.Message}");
+                }
+            }
+
             server?.Dataset?.Save();
             server?.Stop();
             server?.TriggerNewProcessEvent("EndSession");
@@ -360,6 +472,48 @@ namespace ServerApplication
         private void AddLog(string logMessage)
         {
             Log += $"{logMessage}\n";
+        }
+
+        private void UpdateAnnotationTab()
+        {
+            foreach (UIElement annotationUIElement in AnnotationGrid.Children)
+            {
+                if (annotationUIElement is GroupBox groupBox)
+                {
+                    groupBox.IsEnabled = isAnnotationEnabled;
+                }
+            }
+        }
+
+        private void CkbActivateAnnotation(object sender, RoutedEventArgs e)
+        {
+            UpdateAnnotationTab();
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            e.Handled = true;
+        }
+
+        private void BtnBrowseSchemaDirectoryClick(object sender, RoutedEventArgs e)
+        {
+            UiGenerator.FolderPicker openFolderDialog = new UiGenerator.FolderPicker();
+            if (openFolderDialog.ShowDialog() == true)
+            {
+                AnnotationSchemaDirectory = openFolderDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+            e.Handled = true;
+        }
+
+        private void BtnBrowseWebPageClick(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "HTML files (*.html;*.htm)|*.html;*.htm|All files (*.*)|*.*";
+            openFileDialog.DefaultExt = ".html";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                AnnotationWebPage = openFileDialog.FileName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+            e.Handled = true;
         }
     }
 }

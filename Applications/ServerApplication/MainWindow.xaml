@@ -123,6 +123,43 @@
 
                 </Grid>
             </TabItem>
+            <TabItem Header="Annotation" x:Name="AnnotationTab">
+                <Grid Background="#FFE5E5E5" Name="AnnotationGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="AnnotationEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsAnnotationEnabled}" Checked="CkbActivateAnnotation" Unchecked="CkbActivateAnnotation"/>
+                    
+                    <GroupBox Header="Annotation Settings" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,5,5,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Annotation Schema Directory:" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="AnnotationSchemaDirectoryTextBox" TextWrapping="Wrap" Text="{Binding AnnotationSchemaDirectory}" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <Button Grid.Row="0" Grid.Column="2" Content="Browse" Name="BtnBrowseSchemaDirectory" Click="BtnBrowseSchemaDirectoryClick" Margin="5,10,5,5" Width="75"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Annotation Web Page (HTML):" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Name="AnnotationWebPageTextBox" TextWrapping="Wrap" Text="{Binding AnnotationWebPage}" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <Button Grid.Row="1" Grid.Column="2" Content="Browse" Name="BtnBrowseWebPage" Click="BtnBrowseWebPageClick" Margin="5,10,5,5" Width="75"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
             
         </TabControl>
     </UserControl>

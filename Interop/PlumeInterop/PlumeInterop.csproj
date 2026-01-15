@@ -6,6 +6,7 @@
     <BaseIntermediateOutputPath>$(SolutionDir)build\obj\PlumeInterop</BaseIntermediateOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>   
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.31.1" />

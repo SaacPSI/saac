@@ -13,6 +13,7 @@
     <BaseIntermediateOutputPath>$(SolutionDir)build\obj\KinectAzureRemoteConsole</BaseIntermediateOutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>   
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Components\KinectAzureRemoteConnector\KinectAzureRemoteConnector.csproj" />

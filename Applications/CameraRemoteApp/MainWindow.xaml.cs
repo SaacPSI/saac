@@ -118,6 +118,13 @@ namespace CameraRemoteApp
             set => SetProperty(ref commandSource, value);
         }
 
+        private int commandPort;
+        public int CommandPort
+        {
+            get => commandPort;
+            set => SetProperty(ref commandPort, value);
+        }
+
         // VideoSources Tab
 
         public KinectRemoteStreamsComponentConfiguration KinectRemoteStreamsConfigurationUI
@@ -241,6 +248,7 @@ namespace CameraRemoteApp
         {
             UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(CommandPortTextBox, int.TryParse);
             UiGenerator.SetTextBoxPreviewTextChecker<int>(StreamingPortRangeStartTextBox, int.TryParse);
             UpdateNetworkTab();
         }
@@ -279,6 +287,7 @@ namespace CameraRemoteApp
         {
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+            PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
             LocalRecordingDatasetDirectoryTextBox.Text = PipelineConfigurationUI.DatasetPath = Properties.Settings.Default.DatasetPath;
             LocalRecordingDatasetNameTextBox.Text = PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
             RendezVousApplicationNameUI = Properties.Settings.Default.ApplicationName;
@@ -300,6 +309,10 @@ namespace CameraRemoteApp
 
         private void LoadConfigurations()
         {
+            // Load CommandPort
+            PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
+            PipelineConfigurationUI.CommandPort = CommandPort;
+
             KinectAzureRemoteStreamsConfigurationUI.StartingPort = KinectRemoteStreamsConfigurationUI.StartingPort = NuitrackRemoteStreamsConfigurationUI.StartingPort = (int)Properties.Settings.Default.remotePort;
             KinectAzureRemoteStreamsConfigurationUI.OutputAudio = KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
             KinectAzureRemoteStreamsConfigurationUI.OutputBodies = KinectRemoteStreamsConfigurationUI.OutputBodies = NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
@@ -326,6 +339,7 @@ namespace CameraRemoteApp
             // General Tab
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.commandPort = CommandPort;
             Properties.Settings.Default.DatasetPath = PipelineConfigurationUI.DatasetPath;
             Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
             Properties.Settings.Default.ApplicationName = RendezVousApplicationNameUI;
@@ -432,7 +446,7 @@ namespace CameraRemoteApp
                 return;
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != KinectAzureRemoteStreamsConfigurationUI.RendezVousApplicationName)
+            if (args[0] != KinectAzureRemoteStreamsConfigurationUI.RendezVousApplicationName || args[0] == "*")
                 return;
 
             datasetPipeline.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
@@ -483,10 +497,10 @@ namespace CameraRemoteApp
             pipelineConfiguration.Debug = false;
             pipelineConfiguration.RecordIncomingProcess = false;
             pipelineConfiguration.ClockPort = 0;
+            pipelineConfiguration.CommandPort = CommandPort;
             if (isRemoteServer)
             {
                 var rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, rendezVousApplicationName, RendezVousServerIp, internalLog);
-                rendezVousPipeline.Log("Waiting for server");
                 datasetPipeline = rendezVousPipeline;
             }
             else

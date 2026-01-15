@@ -122,6 +122,13 @@ namespace VideoRemoteApp
             set => SetProperty(ref commandSource, value);
         }
 
+        private int commandPort;
+        public int CommandPort
+        {
+            get => commandPort;
+            set => SetProperty(ref commandPort, value);
+        }
+
         // LocalRecording Tab
         private string localSessionName = "";
         public string LocalSessionName
@@ -268,6 +275,9 @@ namespace VideoRemoteApp
             // Validate Server Port as integer
             UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
             
+            // Validate Command Port as integer
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(CommandPortTextBox, int.TryParse);
+            
             UpdateNetworkTab();
         }
 
@@ -311,6 +321,8 @@ namespace VideoRemoteApp
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.ipToUse;
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+            CommandPort = Properties.Settings.Default.commandPort;
+            PipelineConfigurationUI.CommandPort = CommandPort;
             RendezVousApplicationNameUI = Properties.Settings.Default.applicationName;
 
             // Local Recording Tab
@@ -326,6 +338,10 @@ namespace VideoRemoteApp
 
         private void LoadConfigurations()
         {           
+            // Load CommandPort
+            CommandPort = Properties.Settings.Default.commandPort;
+            PipelineConfigurationUI.CommandPort = CommandPort;
+
             // Load video configurations
             videoRemoteAppConfiguration.Interval = TimeSpan.FromMilliseconds(CaptureInterval > 0 ? CaptureInterval : Properties.Settings.Default.captureInterval);
             videoRemoteAppConfiguration.EncodingVideoLevel = Properties.Settings.Default.encodingLevel;
@@ -356,6 +372,7 @@ namespace VideoRemoteApp
             Properties.Settings.Default.ipToUse = PipelineConfigurationUI.RendezVousHost;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.commandPort = CommandPort;
             Properties.Settings.Default.applicationName = RendezVousApplicationNameUI;
 
             // Video Tab
@@ -378,10 +395,13 @@ namespace VideoRemoteApp
 
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
-            if (CommandSource != source)
+            if ($"{CommandSource}-Command" != source)
                 return;
 
             var args = message.Data.Item2.Split([';']);
+
+            if (args[0] != RendezVousApplicationNameUI || args[0] == "*")
+                return;
 
             datasetPipeline?.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
             switch (message.Data.Item1)
@@ -450,6 +470,7 @@ namespace VideoRemoteApp
             pipelineConfiguration.Debug = false;
             pipelineConfiguration.RecordIncomingProcess = false;
             pipelineConfiguration.ClockPort = 0;
+            pipelineConfiguration.CommandPort = CommandPort;
             pipelineConfiguration.DatasetPath = LocalDatasetPath;
             pipelineConfiguration.DatasetName = LocalDatasetName;
 
@@ -511,7 +532,7 @@ namespace VideoRemoteApp
             }
             else
             {
-                datasetPipeline.CreateStore(datasetPipeline.Pipeline, datasetPipeline.CreateOrGetSession(LocalSessionName), streamName, "VideoStreaming", producer);
+                datasetPipeline.CreateStore(datasetPipeline.Pipeline, datasetPipeline.CreateOrGetSession(LocalSessionName), streamName, rendezVousApplicationName, producer);
             }
         }
 
