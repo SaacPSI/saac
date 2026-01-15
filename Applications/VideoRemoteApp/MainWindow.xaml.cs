@@ -549,7 +549,7 @@ namespace VideoRemoteApp
             {
                 BtnStartNet.IsEnabled = false;
                 AddLog(State = "Waiting for server");
-                (datasetPipeline as RendezVousPipeline)?.Start();
+                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); })); }); 
             }
         }
 
