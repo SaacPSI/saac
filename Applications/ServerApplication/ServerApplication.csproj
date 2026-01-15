@@ -38,6 +38,21 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="ServerApplication\ARCHITECTURE.md" />
+    <None Include="ServerApplication\Examples\config_example.json" />
+    <None Include="ServerApplication\Examples\config_schema.json" />
+    <None Include="ServerApplication\FILE_INVENTORY.md" />
+    <None Include="ServerApplication\GET_STARTED_5MIN.md" />
+    <None Include="ServerApplication\Helpers\CONFIGURATION_LOADER_README.md" />
+    <None Include="ServerApplication\IMPLEMENTATION_CHECKLIST.md" />
+    <None Include="ServerApplication\IMPLEMENTATION_SUMMARY.md" />
+    <None Include="ServerApplication\IMPROVEMENTS_TYPE_RESOLUTION.md" />
+    <None Include="ServerApplication\INDEX.md" />
+    <None Include="ServerApplication\QUICKSTART.md" />
+    <None Include="ServerApplication\README_FINAL.md" />
+    <None Include="ServerApplication\TABLE_OF_CONTENTS.md" />
+    <None Include="ServerApplication\UI_INTEGRATION_GUIDE.md" />
+    <None Include="ServerApplication\UPDATE_TYPES_SUPPORT.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

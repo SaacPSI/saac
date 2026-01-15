@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +25,7 @@ using System.Threading;
 using System.Xml.Linq;
 using static ServerApplication.MainWindow;
 using System.Net.NetworkInformation;
+using ServerApplication.Helpers;
 
 namespace ServerApplication
 {
@@ -43,6 +46,7 @@ namespace ServerApplication
         {
             Waiting,
             Running,
+            Stop,
             Error
         }
         public class ConnectedApp
@@ -67,6 +71,8 @@ namespace ServerApplication
         private List<Tuple<string, bool>> connectedProcesses = new List<Tuple<string, bool>>();
         private Dictionary<string, ConnectedApp> connectedApps = new Dictionary<string, ConnectedApp>();
         private readonly Dictionary<string, DeviceRow> _rowsByDeviceName = new Dictionary<string, DeviceRow>();
+        
+        private Assembly customAssembly = null;
 
 
         #region INotifyPropertyChanged
@@ -285,16 +291,17 @@ namespace ServerApplication
             if (setupState >= SetupState.PipelineInitialised)
                 return;
 
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Store;
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
             configuration.Debug = false;
             configuration.RecordIncomingProcess = true;
+            //configuration.CommandPort = 11610;
             configuration.DatasetPath = LocalDatasetPath;
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
             server = new RendezVousPipeline(configuration, "Server", null, internalLog);
-            server.AddNewProcessEvent(SpawnProcessRow);
+            //server.AddNewProcessEvent(SpawnProcessRow);
             pipeline = server.Pipeline;
             AddLog("Server initialisation started");
             
@@ -304,6 +311,8 @@ namespace ServerApplication
             server.Start();
             AddLog("Server started");
             setupState = SetupState.PipelineInitialised;
+
+
         }
         private void SetupAnnotations()
         {
@@ -353,7 +362,7 @@ namespace ServerApplication
         {
             if (e.Item1 == "EndSession") return;
 
-            string name = GetName(e.Item1);
+            /*string name = GetName(e.Item1);
             if (!connectedApps.ContainsKey(name))
             {
                 connectedApps[name] = new ConnectedApp
@@ -367,20 +376,21 @@ namespace ServerApplication
             }
             else
             {
+                if (connectedApps[name].Status == ConnectedAppStatus.Error)
                 connectedApps.Remove(name);
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     RemoveDeviceRow(name);
                 }));
-            }
+            }*/
             
             if (connectedApps.Count >= 1 && !statusCheckRunning) StartStatusMonitoring();
         }
 
-        private string GetName(object argument)
+        private string GetName(string argument)
         {
             string suffix = "-Command";
-            string stringArgument = (string)argument;
+            string stringArgument = argument;
             string name = stringArgument.EndsWith(suffix)
                 ? stringArgument.Substring(0, stringArgument.Length - suffix.Length)
                 : stringArgument;
@@ -463,6 +473,7 @@ namespace ServerApplication
 
         private void BtnQuitClick(object sender, RoutedEventArgs e)
         {
+            
             Close();
             e.Handled = true;
         }
@@ -474,42 +485,50 @@ namespace ServerApplication
 
             if (args[0] != "Server")
                 return;
+            string name = GetName(source);
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Run:
-                    Start();
+                case RendezVousPipeline.Command.Initialize:
+                    if (!connectedApps.ContainsKey(name))
+                    {
+                        connectedApps[name] = new ConnectedApp
+                        {
+                            Name = name,
+                        };
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            SpawnEllipseTextButtonsRow(name);
+                        }));
+                    }
                     break;
-                case RendezVousPipeline.Command.Close:
+                case RendezVousPipeline.Command.Run:
+                    //Start();
+                    connectedApps[name].Status = ConnectedAppStatus.Running;
+                    UpdateDotColor(connectedApps[name]);
+                    break;
+                case RendezVousPipeline.Command.Stop:
+                    //Start();
+                    connectedApps[name].Status = ConnectedAppStatus.Stop;
+                    UpdateDotColor(connectedApps[name]);
+                    connectedApps.Remove(name);
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        RemoveDeviceRow(name);
+                    }));
+                    break;
+                /*case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         Close();
                     }));
                     break;
                 case RendezVousPipeline.Command.Status:
-                    server?.SendCommand(RendezVousPipeline.Command.Status, source, server == null ? "Not Initialised" : server.Pipeline.StartTime.ToString());
-                    break;
+                    //server?.SendCommand(RendezVousPipeline.Command.Status, source, server == null ? "Not Initialised" : server.Pipeline.StartTime.ToString());
+                    break;*/
             }
         }
-        private void Start()
-        {
-            //SetupPipeline();
-            
-            /*if (setupState == SetupState.WhisperInitialised)
-            {
-                Run();
-                AddLog(State = "Started");
-            }*/
-        }
-        private void Run()
-        {
-            if (server is null)
-            {
-                pipeline?.RunAsync();
-            }
-            else
-                server.Start();
-        }
+
         private int _rowIndex = 0;
 
         // Called by a button click
@@ -518,11 +537,37 @@ namespace ServerApplication
             server.TriggerNewProcessEvent("WhisperStreaming-Command");
             //SpawnEllipseTextButtonsRow();
         }
+
+
+        /// <summary>
+        /// Bouton pour charger une DLL contenant les classes de données
+        /// À connecter dans le XAML si désiré
+        /// </summary>
+        private void BtnLoadAssembly_Click(object sender, RoutedEventArgs e)
+        {
+            LoadAssemblyFromFile();
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Bouton pour charger la configuration JSON
+        /// À connecter dans le XAML si désiré
+        /// </summary>
+        private void BtnTopicClick(object sender, RoutedEventArgs e)
+        {
+            LoadConfigurationFromJsonFile();
+            e.Handled = true;
+        }
+
         public void StartStatusMonitoring()
         {
             statusTimer = new Timer(callback: StatusTimerCallback, state: null, dueTime: TimeSpan.Zero, period: TimeSpan.FromSeconds(1));
         }
-
+        public void StopStatusMonitoring()
+        {
+            statusTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            statusTimer?.Dispose();
+        }
         private void StatusTimerCallback(object? state)
         {
             // 🔒 Anti-réentrance
@@ -566,19 +611,16 @@ namespace ServerApplication
                 {
                     ConnectedAppStatus.Running => Brushes.Green,
                     ConnectedAppStatus.Waiting => Brushes.Orange,
+                    ConnectedAppStatus.Stop => Brushes.Orange,
                     ConnectedAppStatus.Error => Brushes.Red
                 };
             }));
         }
 
-        public void StopStatusMonitoring()
-        {
-            statusTimer?.Change(Timeout.Infinite, Timeout.Infinite);
-            statusTimer?.Dispose();
-        }
 
 
-        private void SpawnEllipseTextButtonsRow(object argument)
+
+        private void SpawnEllipseTextButtonsRow(string argument)
         {
             string name = GetName(argument);
 
@@ -634,28 +676,6 @@ namespace ServerApplication
             };
         }
 
-        private void UpdateVisualisationProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
-        {
-            Thread otherThread = new Thread(ChangeEllipseColorThreadMethod);
-            otherThread.Start(e.Item1); ;
-        }
-
-        private void ChangeEllipseColorThreadMethod(object arguments)
-        {
-            string stringArgument = (string)arguments;
-            bool isConnected = connectedProcess[stringArgument];
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                Ellipse ellipse = FindName(stringArgument) as Ellipse;
-                if (ellipse != null)
-                {
-                    if (isConnected) ellipse.Fill = Brushes.Green;
-                    else if (!isConnected) ellipse.Fill = Brushes.DarkRed;
-                }
-            });
-        }
-        private Dictionary<string, bool> connectedProcess = new Dictionary<string, bool>();
         
         private void BtnBrowseNameClick(object sender, RoutedEventArgs e)
         {
@@ -722,5 +742,68 @@ namespace ServerApplication
             }
             e.Handled = true;
         }
+
+        /// <summary>
+        /// Ouvre un dialogue pour charger une DLL contenant des classes de données
+        /// </summary>
+        public void LoadAssemblyFromFile()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Dynamic Link Library (*.dll)|*.dll|All files (*.*)|*.*",
+                Title = "Charger une DLL contenant les classes de données"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    customAssembly = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName).FirstOrDefault()?.Assembly;
+                    AddLog($"✓ DLL chargée : {openFileDialog.FileName}");
+
+                    // Optionnel : exporter un template JSON
+                    string templatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(openFileDialog.FileName), "config_template.json");
+                    List<Type> types = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName);
+                    ConfigurationLoader.ExportConfigurationTemplate(templatePath, types);
+                    AddLog($"✓ Template JSON généré : {templatePath}");
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"✗ Erreur lors du chargement de la DLL : {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ouvre un dialogue pour charger une configuration JSON
+        /// </summary>
+        public void LoadConfigurationFromJsonFile()
+        {
+            /*if (customAssembly == null)
+            {
+                AddLog("⚠ Veuillez d'abord charger une DLL avec les classes de données");
+                return;
+            }*/
+
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                Title = "Charger une configuration JSON"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    ConfigurationLoader.LoadConfigurationFromJson(openFileDialog.FileName, configuration, customAssembly);
+                    AddLog($"✓ Configuration JSON chargée : {openFileDialog.FileName}");
+                    AddLog($"  Topics configurés : {string.Join(", ", configuration.TopicsTypes.Keys)}");
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"✗ Erreur lors du chargement du JSON : {ex.Message}");
+                }
+            }
+        } 
     }
 }

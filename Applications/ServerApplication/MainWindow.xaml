@@ -11,14 +11,15 @@
             <TabItem Header="Overview">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="336*"/>
+                        <ColumnDefinition Width="169*"/>
+                        <ColumnDefinition Width="505*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2">
+                    <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2" Grid.ColumnSpan="2">
                         <Grid Name="ConnectedDevicesGrid">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -36,12 +37,12 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
-              
+
                             </Grid.RowDefinitions>
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,49">
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="2"  Margin="6,5,5,30">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -57,7 +58,7 @@
                             <Button Content="Add Item" Grid.Row="4" Click="BtnAddItem_Click" />
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="1" Margin="5,5,5,5">
+                    <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="2" Margin="6,5,5,5">
                         <TextBox x:Name="Logs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="158" ForceCursor="True" Margin="10,0,6,0"/>
                     </GroupBox>
                 </Grid>
@@ -74,14 +75,16 @@
                         <RowDefinition Height="211*"/>
                         <RowDefinition Height="72*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" Margin="5,5,4,5" Grid.ColumnSpan="2" >
-                        <Grid>
+                    <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" Margin="5,5,4,46" Grid.ColumnSpan="2" Grid.RowSpan="2" >
+                        <Grid Height="311">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="117*"/>
-                                <ColumnDefinition Width="192*"/>
-                                <ColumnDefinition Width="155*"/>
+                                <ColumnDefinition Width="139*"/>
+                                <ColumnDefinition Width="183*"/>
+                                <ColumnDefinition Width="162*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
@@ -102,20 +105,28 @@
                             <Label Grid.Row="2" Grid.Column="0" Content="Clock Port :" FontWeight="Bold" Margin="2,3,8,3"/>
                             <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Configuration.ClockPort}" Margin="0,5,6,3"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="Dataset Store Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="1,31,172,31" Grid.RowSpan="3"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Dataset Store Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="1,3,172,3"/>
                             <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding storeModeList}" SelectionChanged="StoreModeSelected" Name="StoreModeComboBox" Grid.ColumnSpan="2" Margin="0,5,6,3"/>
 
                             <Label Grid.Row="4" Grid.Column="0" Content="Dataset Path :" FontWeight="Bold" Margin="1,2,17,1"/>
-                            <TextBox Grid.Row="4" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{Binding Path = LocalDatasetPath}" Name="DatasetPathTextBox" Margin="130,5,64,3"/>
-                            <Button Grid.Row="4" Grid.Column="2" Content="Browse" Click="BtnBrowseNameClick" Margin="102,4,6,3"/>
+                            <TextBox Grid.Row="4" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = LocalDatasetPath}" Name="DatasetPathTextBox" Margin="0,5,64,3" Grid.Column="1"/>
+                            <Button Grid.Row="4" Grid.Column="2" Content="Browse" Click="BtnBrowseNameClick" Margin="102,4,2,3"/>
 
-                            <Label Grid.Row="5" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold" Margin="1,2,17,7"/>
-                            <TextBox Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path= LocalDatasetName}" Grid.ColumnSpan="2" Margin="0,5,6,2"/>
+                            <Label Grid.Row="5" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Text="{Binding Path= LocalDatasetName}" Grid.ColumnSpan="2" Margin="0,5,6,1"/>
 
                             <Label Grid.Row="6" Grid.Column="0" Content="Session Name :" FontWeight="Bold" Margin="1,4,4,3"/>
                             <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = LocalSessionName}" Margin="0,5,6,2"/>
-                            <Button Content="Load Configuration" Grid.Row="7" Grid.ColumnSpan="3" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,5,5"/>
-                            <Button Content="Save Configuration" Grid.ColumnSpan="3" Grid.Row="8" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,5,5"/>
+                            <Button Content="Load Configuration" Grid.Row="7" Grid.ColumnSpan="3" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,6,5"/>
+                            <Button Content="Save Configuration" Grid.ColumnSpan="3" Grid.Row="8" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,6,5"/>
+
+                            <Label Grid.Row="9" Grid.Column="0" Content="Assembly File Path :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="9" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = AssemblyFilePath}" Name="AssemblyFileTextBox" Margin="0,5,64,3" Grid.Column="1"/>
+                            <Button Grid.Row="9" Grid.Column="2" Content="Browse" Click="BtnLoadAssembly_Click" Margin="102,4,2,3"/>
+
+                            <Label Grid.Row="10" Grid.Column="0" Content="Topic File Path :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="10" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = TopicFilePath}" Name="TopicFileTextBox" Margin="0,5,64,3" Grid.Column="1"/>
+                            <Button Grid.Row="10" Grid.Column="2" Content="Browse" Click="BtnTopicClick" Margin="102,4,2,3"/>
                         </Grid>
                     </GroupBox>
 

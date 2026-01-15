@@ -1,0 +1,135 @@
+# Intégration UI - Boutons de Chargement
+
+## Options d'Intégration
+
+Il existe plusieurs endroits où ajouter les boutons de chargement de DLL et JSON :
+
+### Option 1 : Dans l'onglet "Configuration" (RECOMMANDÉ)
+
+Ajoutez deux nouveaux boutons dans la section Configuration du XAML :
+
+```xaml
+<!-- Ajouter après les boutons "Load Configuration" et "Save Configuration" -->
+<Label Grid.Row="8" Grid.Column="0" Content="Data Classes DLL :" FontWeight="Bold" Margin="1,2,17,1"/>
+<TextBox Grid.Row="8" Grid.ColumnSpan="2" TextWrapping="Wrap" Name="AssemblyPathTextBox" Margin="130,5,64,3" IsReadOnly="True"/>
+<Button Grid.Row="8" Grid.Column="2" Content="Load DLL" Click="BtnLoadAssembly_Click" Margin="102,4,6,3"/>
+
+<Label Grid.Row="9" Grid.Column="0" Content="Topics Configuration :" FontWeight="Bold" Margin="1,2,17,1"/>
+<TextBox Grid.Row="9" Grid.ColumnSpan="2" TextWrapping="Wrap" Name="ConfigPathTextBox" Margin="130,5,64,3" IsReadOnly="True"/>
+<Button Grid.Row="9" Grid.Column="2" Content="Load JSON" Click="BtnLoadTopicsJson_Click" Margin="102,4,6,3"/>
+```
+
+Puis ajouter dans le code-behind :
+
+```csharp
+private void BtnLoadAssembly_Click(object sender, RoutedEventArgs e)
+{
+    LoadAssemblyFromFile();
+}
+
+private void BtnLoadTopicsJson_Click(object sender, RoutedEventArgs e)
+{
+    LoadConfigurationFromJsonFile();
+}
+```
+
+### Option 2 : Dans l'onglet "Overview" (Actions rapides)
+
+Ajouter dans le GroupBox "Actions" :
+
+```xaml
+<GroupBox Header="Data Configuration" Name="DataConfigGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Margin="5,5,4,5">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Button Content="Load Data Classes DLL" Grid.Row="0" Click="BtnLoadAssembly_Click" Margin="5,5,5,5"/>
+        <Button Content="Load Topics Configuration" Grid.Row="1" Click="BtnLoadTopicsJson_Click" Margin="5,5,5,5"/>
+    </Grid>
+</GroupBox>
+```
+
+### Option 3 : Menu ou Context Menu
+
+Ajouter un menu déroulant :
+
+```xaml
+<Menu>
+    <MenuItem Header="File">
+        <MenuItem Header="Load Data Classes" Click="BtnLoadAssembly_Click"/>
+        <MenuItem Header="Load Configuration" Click="BtnLoadTopicsJson_Click"/>
+    </MenuItem>
+</Menu>
+```
+
+## Recommended Flow
+
+Le flux recommandé est :
+
+```
+1. User clicks "Load Data Classes DLL"
+   ?
+   ConfigurationLoader.LoadAssemblyTypes()
+   ?
+   Assembly is stored in customAssembly
+   ?
+   Template JSON is generated
+   ?
+   Log: "? DLL chargée... ? Template JSON généré..."
+
+2. User modifies the generated template.json
+
+3. User clicks "Load Topics Configuration"
+   ?
+   ConfigurationLoader.LoadConfigurationFromJson()
+   ?
+   config.TopicsTypes and config.Transformers are populated
+   ?
+   Log: "? Configuration JSON chargée... Topics configurés: sensor, audio, video..."
+
+4. User clicks "Start Session"
+   ?
+   Pipeline uses the loaded configuration
+   ?
+   Data streams are properly typed and transformed
+```
+
+## Remarques Importantes
+
+1. **Ordre obligatoire** : DLL ? JSON
+2. **Messages clairs** : L'application empêche le chargement du JSON sans DLL
+3. **Auto-génération** : Le template JSON est généré automatiquement
+4. **Logs détaillés** : Tous les messages de succès/erreur sont affichés
+
+## Intégration Minimale (sans modification XAML)
+
+Si vous ne voulez pas modifier l'UI, vous pouvez appeler directement :
+
+```csharp
+public MainWindow()
+{
+    // ... existing code ...
+    
+    // Auto-load DLL and config at startup (optional)
+    // LoadAssemblyFromFile();
+    // LoadConfigurationFromJsonFile();
+}
+```
+
+Ou depuis n'importe quel event handler :
+
+```csharp
+private void BtnStartClick(object sender, RoutedEventArgs e)
+{
+    // Ensure configuration is loaded
+    if (customAssembly == null)
+    {
+        AddLog("? Veuillez charger d'abord une DLL");
+        return;
+    }
+    
+    SetupPipeline();
+}
+```
+

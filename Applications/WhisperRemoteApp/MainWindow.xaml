@@ -81,10 +81,12 @@
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
                             <Button Content="Start" Grid.Row="0" Name="BtnStart" Click="BtnStartAll" Margin="0,5,0,5"/>
                             <Button Content="Start Network Only" Name="BtnStartNet" Grid.Row="1" Click="BtnStartRendezVous" Margin="0,5,0,5"/>
                             <Button Content="Quit" Grid.Row="2" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
+                            <Button Content="Initialize" Grid.Row="3" Name="BtnAdd" Click="BtnInitializeClick" Margin="0,5,0,5"/>
                         </Grid>
                     </GroupBox>
                 </Grid>

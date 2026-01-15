@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topics Configuration Schema",
+  "description": "Schéma JSON pour la configuration des topics dans SAAC",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["topic", "type", "class"],
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "Identifiant unique du flux de données",
+        "minLength": 1,
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "type": {
+        "type": "string",
+        "description": "Nom du type (informatif)",
+        "minLength": 1
+      },
+      "class": {
+        "type": "string",
+        "description": "Nom qualifié complet du type (format: 'Namespace.ClassName, AssemblyName')",
+        "minLength": 1,
+        "pattern": "^[\\w.]+, [\\w.]+$"
+      },
+      "transformer": {
+        "type": ["string", "null"],
+        "description": "Classe transformer personnalisée (optionnel, format: 'Namespace.ClassName, AssemblyName')",
+        "pattern": "^[\\w.]+, [\\w.]+$"
+      }
+    },
+    "additionalProperties": false
+  },
+  "minItems": 0,
+  "examples": [
+    [
+      {
+        "topic": "sensor_temperature",
+        "type": "SensorData",
+        "class": "MyDataClasses.SensorData, MyDataClasses",
+        "transformer": "MyDataClasses.SensorDataTransformer, MyDataClasses"
+      },
+      {
+        "topic": "audio_stream",
+        "type": "AudioFrame",
+        "class": "MyDataClasses.AudioFrame, MyDataClasses",
+        "transformer": null
+      }
+    ]
+  ]
+}

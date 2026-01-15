@@ -545,6 +545,7 @@ namespace WhisperRemoteApp
             else
                 pipeline = Pipeline.Create("WhisperPipeline");
             setupState = SetupState.PipelineInitialised;
+            
         }
 
         private void SetupAudioSources()
@@ -720,6 +721,7 @@ namespace WhisperRemoteApp
             audioManager?.Stop();
             whisperAudioProcessing?.Stop();
             pipeline?.Dispose();
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Stop, commandSource, "");
             Application.Current.Shutdown();
         }
 
@@ -732,6 +734,7 @@ namespace WhisperRemoteApp
                 rendezVousPipeline?.Start();
                 AddLog(State = "Waiting for server");
             }
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Initialize, commandSource, "");
         }
 
         private void Start()
@@ -749,6 +752,7 @@ namespace WhisperRemoteApp
                     AddLog(State = "Started");
                 }));
             }
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Run, commandSource, "");
         }
 
         private void Run()
@@ -815,6 +819,13 @@ namespace WhisperRemoteApp
             Close();
             e.Handled = true;
         }
+        private void BtnInitializeClick(object sender, RoutedEventArgs e)
+        {
+            //string nameSource = GetName(commandSource);
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Initialize, commandSource, "");
+            e.Handled = true;
+        }
+        
 
         private void BtnLoadConfiguration(object sender, RoutedEventArgs e)
         {

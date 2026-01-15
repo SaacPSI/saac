@@ -1,0 +1,20 @@
+[
+  {
+    "topic": "1_Head",
+    "type": "Tuple<Vector3, Vector3>",
+    "class": "PsiFormatTupleOfVector",
+    "transformer": null
+  },
+  {
+    "topic": "1-LeftWrist",
+    "type": "Tuple<Vector3, Vector3>",
+    "class": "PsiFormatTupleOfVector",
+    "transformer": null
+  },
+  {
+    "topic": "TaskEvent",
+    "type": "string",
+    "class": "PsiFormatString",
+    "transformer": null
+  }
+]
