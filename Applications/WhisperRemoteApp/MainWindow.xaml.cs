@@ -537,7 +537,6 @@ namespace WhisperRemoteApp
                 rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
 
                 pipeline = rendezVousPipeline.Pipeline;
-                rendezVousPipeline.Start();
 
                 if (!isStreaming)
                     rendezVousPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(remoteConfiguration.RendezVousApplicationName));
@@ -729,7 +728,7 @@ namespace WhisperRemoteApp
             if (setupState == SetupState.PipelineInitialised)
             {
                 BtnStartNet.IsEnabled = false;
-                rendezVousPipeline?.Start();
+                rendezVousPipeline?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected for server"); })); });
                 AddLog(State = "Waiting for server");
             }
         }
