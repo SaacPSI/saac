@@ -720,6 +720,7 @@ namespace WhisperRemoteApp
             audioManager?.Stop();
             whisperAudioProcessing?.Stop();
             pipeline?.Dispose();
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Stop, commandSource, "");
             Application.Current.Shutdown();
         }
 
@@ -732,6 +733,7 @@ namespace WhisperRemoteApp
                 rendezVousPipeline?.Start();
                 AddLog(State = "Waiting for server");
             }
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Initialize, commandSource, "");
         }
 
         private void Start()
@@ -749,6 +751,7 @@ namespace WhisperRemoteApp
                     AddLog(State = "Started");
                 }));
             }
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Run, commandSource, "");
         }
 
         private void Run()

@@ -348,7 +348,7 @@ namespace SAAC.PipelineServices
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             subCommandPipeline.Start((d) => {});
                             
-                            TriggerNewProcessEvent(process.Name);
+                            //TriggerNewProcessEvent(process.Name);
                             Log($"Subpipeline {process.Name} started."); 
                             return;
                         }
@@ -431,7 +431,7 @@ namespace SAAC.PipelineServices
                 processSubPipeline.Start((d) => { });
                 Log($"SubPipeline {process.Name} started.");
             }
-            TriggerNewProcessEvent(process.Name);
+            //TriggerNewProcessEvent(process.Name);
             //Dataset?.Save();
         }
 
@@ -441,7 +441,7 @@ namespace SAAC.PipelineServices
             {
                 subpipelines[e.Name].Dispose();
                 Connectors.Remove(e.Name);
-                TriggerNewProcessEvent(e.Name);
+                //TriggerNewProcessEvent(e.Name);
             }
             RemovedEntry?.Invoke(this, e.Name);
         }
