@@ -1,10 +1,17 @@
-﻿using SAAC.PipelineServices;
+﻿using Microsoft.Psi;
+using Newtonsoft.Json;
+using SAAC;
+using SAAC.PipelineServices;
+using SAAC.PipelineServices;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,17 +19,16 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using SAAC.PipelineServices;
-using SAAC;
-using Microsoft.Psi;
-using System.Windows.Media.Animation;
-using System.Threading;
 using System.Xml.Linq;
+using System.Numerics;
 using static ServerApplication.MainWindow;
-using System.Net.NetworkInformation;
+using Newtonsoft.Json;
+using ServerApplication.Helpers;
+using System.Reflection;
 
 namespace ServerApplication
 {
@@ -687,6 +693,7 @@ namespace ServerApplication
 
         #region Browser
 
+        
         public void LoadAssemblyFromFile()
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
@@ -699,19 +706,40 @@ namespace ServerApplication
             {
                 try
                 {
-                    /*customAssembly = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName).FirstOrDefault()?.Assembly;
+                    Assembly customAssembly = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName).FirstOrDefault()?.Assembly;
                     AddLog($"✓ DLL chargée : {openFileDialog.FileName}");
 
                     // Optionnel : exporter un template JSON
-                    string templatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(openFileDialog.FileName), "config_template.json");
-                    List<Type> types = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName);
-                    ConfigurationLoader.ExportConfigurationTemplate(templatePath, types);
-                    AddLog($"✓ Template JSON généré : {templatePath}");*/
+                    //string templatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(openFileDialog.FileName), "config_template.json");
+                    //List<Type> types = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName);
+                    //ConfigurationLoader.ExportConfigurationTemplate(templatePath, types);
+                    //AddLog($"✓ Template JSON généré : {templatePath}");
+                    
+                    // Optionnel : lister les types dans la DLL
+                    //ListTypesFromAssembly("TestDll");
                 }
                 catch (Exception ex)
                 {
-                    //AddLog($"✗ Erreur lors du chargement de la DLL : {ex.Message}");
+                    AddLog($"✗ Erreur lors du chargement de la DLL : {ex.Message}");
                 }
+            }
+        }
+        public void ListTypesFromAssembly(string assemblyName)
+        {
+            var asm = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == assemblyName);
+
+            if (asm == null)
+            {
+                AddLog($"❌ Assembly '{assemblyName}' non chargé");
+                return;
+            }
+
+            AddLog($"📦 Types dans {assemblyName}:");
+
+            foreach (var type in asm.GetTypes())
+            {
+                AddLog($" - {type.FullName}");
             }
         }
 
@@ -727,11 +755,11 @@ namespace ServerApplication
             {
                 try
                 {
-
+                    LoadJSONAndSpecifyTopic(openFileDialog.FileName);
                 }
                 catch (Exception ex)
                 {
-
+                    AddLog("Erreur dans le chargement du fichier");
                 }
             }
         }
@@ -762,6 +790,84 @@ namespace ServerApplication
             }
         }
 
+        #region Load JSON Config
+        public sealed class TopicFormatDefinition
+        {
+            public string Topic { get; set; } = "";
+            public string Type { get; set; } = "";
+            public string ClassFormat { get; set; } = "";
+        }
 
+        public List<TopicFormatDefinition> LoadJSONAndSpecifyTopic(string jsonFilePath) // remplace par le vrai type si possible
+        {
+            if (!File.Exists(jsonFilePath))
+                throw new FileNotFoundException(jsonFilePath);
+
+            var json = File.ReadAllText(jsonFilePath);
+
+            var items = JsonConvert.DeserializeObject<List<TopicFormatDefinition>>(json)?? new List<TopicFormatDefinition>();
+
+            foreach (var item in items)
+            {
+                var messageType = ResolveType(item.Type);
+                AddLog($"Topic {item.Topic} type is {messageType.ToString()}");
+
+                var formatType = ResolvePsiFormatType(item.ClassFormat);
+                var formatInstance = (IPsiFormat)CreateInstance(formatType);
+                AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
+                configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
+            }
+            
+
+            return items;
+        }
+
+        private static Type ResolveType(string typeName)
+        {
+            var type = Type.GetType(typeName);
+            if (type != null)
+                return type;
+
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = asm.GetType(typeName);
+                if (type != null)
+                    return type;
+            }
+
+            throw new TypeLoadException($"Type introuvable : {typeName}");
+        }
+
+        private static Type ResolvePsiFormatType(string formatClassName)
+        {
+            if (string.IsNullOrWhiteSpace(formatClassName))
+                throw new ArgumentException("Le nom de la classe de format ne peut pas être vide", nameof(formatClassName));
+
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = asm.GetType(formatClassName);
+                if (type != null && typeof(IPsiFormat).IsAssignableFrom(type))
+                    return type;
+
+                // Chercher par nom simple si le nom complet n'est pas trouvé
+                type = asm.GetTypes().FirstOrDefault(t =>
+                    t.Name == formatClassName &&
+                    typeof(IPsiFormat).IsAssignableFrom(t));
+
+                if (type != null)
+                    return type;
+            }
+
+            throw new TypeLoadException($"Type de format PsiFormat introuvable : {formatClassName}");
+        }
+
+        private object CreateInstance(Type type)
+        {
+            if (type.GetConstructor(Type.EmptyTypes) == null)
+                AddLog($"Le type {type.Name} n'a pas de constructeur sans paramètre.");
+
+            return Activator.CreateInstance(type);
+        }
+        #endregion
     }
 }
