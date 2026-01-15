@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="RendezVousHost" Type="System.String" Scope="User">
-      <Value Profile="(Default)">10.144.210.101</Value>
+      <Value Profile="(Default)">10.144.38.74</Value>
     </Setting>
     <Setting Name="RendezVousPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">13331</Value>

@@ -41,10 +41,11 @@ namespace SAAC
         {
             TextBlock textBlock = new TextBlock();
 
+            textBlock.TextTrimming = TextTrimming.None;     // pas de "..."
+            textBlock.HorizontalAlignment = HorizontalAlignment.Left;
             textBlock.Text = text;
-            textBlock.Width = width;
             textBlock.VerticalAlignment = VerticalAlignment.Center;
-            textBlock.TextWrapping = TextWrapping.Wrap;
+            textBlock.TextWrapping = TextWrapping.NoWrap;
             textBlock.Name = name;
             return textBlock;
         }
@@ -54,6 +55,7 @@ namespace SAAC
             Button button = new Button();
             button.Content = content;
             button.Name = name;
+            button.Width = 75;
             button.Click += onClickHandler;
             return button;
         }

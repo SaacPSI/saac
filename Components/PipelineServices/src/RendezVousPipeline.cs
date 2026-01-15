@@ -346,7 +346,9 @@ namespace SAAC.PipelineServices
                             var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, subCommandPipeline, PsiFormats.PsiFormatCommand.GetFormat(), null, true, stream.StreamName);
                             p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
-                            subCommandPipeline.Start((d) => {}); 
+                            subCommandPipeline.Start((d) => {});
+                            
+                            TriggerNewProcessEvent(process.Name);
                             Log($"Subpipeline {process.Name} started."); 
                             return;
                         }
@@ -435,10 +437,11 @@ namespace SAAC.PipelineServices
 
         private void RendezvousProcessRemoved(object sender, Rendezvous.Process e)
         {
-            if (subpipelines.ContainsKey(e.Name) )
+            if (subpipelines.ContainsKey(e.Name))
             {
                 subpipelines[e.Name].Dispose();
                 Connectors.Remove(e.Name);
+                TriggerNewProcessEvent(e.Name);
             }
             RemovedEntry?.Invoke(this, e.Name);
         }
@@ -448,7 +451,7 @@ namespace SAAC.PipelineServices
             var storeName = GetStoreName(streamName, processName, session);
             var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
             if (Configuration.Debug)
-                tcpSource.Do((d, e) => { Log($"Recieve {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
+                tcpSource.Do((d, e) => { Log($"Receive {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             if (transformerType != null)
             {
                 dynamic transformer = Activator.CreateInstance(transformerType, [p, $"{processName}-{streamName}_transformer"]);
