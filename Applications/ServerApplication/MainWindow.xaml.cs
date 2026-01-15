@@ -38,11 +38,13 @@ namespace ServerApplication
         // UI
         private Timer statusTimer;
         private bool statusCheckRunning;
+        private int _rowIndex = 0;
 
         public enum ConnectedAppStatus
         {
             Waiting,
             Running,
+            Stop,
             Error
         }
         public class ConnectedApp
@@ -285,16 +287,17 @@ namespace ServerApplication
             if (setupState >= SetupState.PipelineInitialised)
                 return;
 
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Store;
+            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
             configuration.Debug = false;
             configuration.RecordIncomingProcess = true;
+            configuration.CommandPort = 11610;
             configuration.DatasetPath = LocalDatasetPath;
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
             server = new RendezVousPipeline(configuration, "Server", null, internalLog);
-            server.AddNewProcessEvent(SpawnProcessRow);
+            //server.AddNewProcessEvent(SpawnProcessRow);
             pipeline = server.Pipeline;
             AddLog("Server initialisation started");
             
@@ -349,7 +352,7 @@ namespace ServerApplication
             }
         }
 
-        private void SpawnProcessRow(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        /*private void SpawnProcessRow(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
         {
             if (e.Item1 == "EndSession") return;
 
@@ -375,7 +378,7 @@ namespace ServerApplication
             }
             
             if (connectedApps.Count >= 1 && !statusCheckRunning) StartStatusMonitoring();
-        }
+        }*/
 
         private string GetName(object argument)
         {
@@ -387,56 +390,7 @@ namespace ServerApplication
 
             return name;
         }
-        public void RemoveDeviceRow(string name)
-        {
-            if (!_rowsByDeviceName.TryGetValue(name, out var row))
-                return;
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                int removedRowIndex = row.RowIndex;
-
-                // 1) Retirer les contrôles du Grid
-                ConnectedDevicesGrid.Children.Remove(row.Dot);
-                ConnectedDevicesGrid.Children.Remove(row.Text);
-                ConnectedDevicesGrid.Children.Remove(row.BtnStart);
-                ConnectedDevicesGrid.Children.Remove(row.BtnStop);
-
-                // 2) Retirer la RowDefinition
-                ConnectedDevicesGrid.RowDefinitions.Remove(row.RowDefinition);
-
-                // 3) Retirer du dictionnaire
-                _rowsByDeviceName.Remove(name);
-
-                // 4) Remonter les éléments qui étaient en dessous
-                foreach (UIElement child in ConnectedDevicesGrid.Children)
-                {
-                    int r = Grid.GetRow(child);
-                    if (r > removedRowIndex)
-                        Grid.SetRow(child, r - 1);
-                }
-
-                // 5) Mettre à jour les RowIndex stockés
-                foreach (var kvp in _rowsByDeviceName)
-                {
-                    var deviceName = kvp.Key;
-                    var dr = kvp.Value;
-
-                    if (dr.RowIndex > removedRowIndex)
-                    {
-                        _rowsByDeviceName[deviceName] = new DeviceRow
-                        {
-                            RowIndex = dr.RowIndex - 1,
-                            RowDefinition = dr.RowDefinition, // attention: les RowDefs ont “glissé” mais l’objet reste valide
-                            Dot = dr.Dot,
-                            Text = dr.Text,
-                            BtnStart = dr.BtnStart,
-                            BtnStop = dr.BtnStop
-                        };
-                    }
-                }
-            });
-        }
+       
 
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
@@ -454,10 +408,10 @@ namespace ServerApplication
                     AddLog($"Error stopping annotations: {ex.Message}");
                 }
             }
-
-            server?.Dataset?.Save();
-            server?.Stop();
-            server?.TriggerNewProcessEvent("EndSession");
+            
+            server?.Dispose();
+            server?.Dataset?.Save(); 
+            //server?.TriggerNewProcessEvent("EndSession");
             StopStatusMonitoring();
         }
 
@@ -474,50 +428,41 @@ namespace ServerApplication
 
             if (args[0] != "Server")
                 return;
+            string name = GetName(source);
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Run:
-                    Start();
-                    break;
-                case RendezVousPipeline.Command.Close:
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                case RendezVousPipeline.Command.Initialize:
+                    if (!connectedApps.ContainsKey(name))
                     {
-                        Close();
+                        connectedApps[name] = new ConnectedApp
+                        {
+                            Name = name,
+                        };
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            SpawnEllipseTextButtonsRow(name);
+                        }));
+                    }
+                    break;
+                case RendezVousPipeline.Command.Run:
+                    connectedApps[name].Status = ConnectedAppStatus.Running;
+                    UpdateDotColor(connectedApps[name]);
+                    break;
+                case RendezVousPipeline.Command.Stop:
+                    connectedApps[name].Status = ConnectedAppStatus.Stop;
+                    UpdateDotColor(connectedApps[name]);
+                    connectedApps.Remove(name);
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        RemoveDeviceRow(name);
                     }));
                     break;
-                case RendezVousPipeline.Command.Status:
-                    server?.SendCommand(RendezVousPipeline.Command.Status, source, server == null ? "Not Initialised" : server.Pipeline.StartTime.ToString());
-                    break;
             }
         }
-        private void Start()
-        {
-            //SetupPipeline();
-            
-            /*if (setupState == SetupState.WhisperInitialised)
-            {
-                Run();
-                AddLog(State = "Started");
-            }*/
-        }
-        private void Run()
-        {
-            if (server is null)
-            {
-                pipeline?.RunAsync();
-            }
-            else
-                server.Start();
-        }
-        private int _rowIndex = 0;
 
-        // Called by a button click
-        private void BtnAddItem_Click(object sender, RoutedEventArgs e)
-        {
-            server.TriggerNewProcessEvent("WhisperStreaming-Command");
-            //SpawnEllipseTextButtonsRow();
-        }
+
+        #region Status Monitoring Connected Applications
         public void StartStatusMonitoring()
         {
             statusTimer = new Timer(callback: StatusTimerCallback, state: null, dueTime: TimeSpan.Zero, period: TimeSpan.FromSeconds(1));
@@ -558,25 +503,14 @@ namespace ServerApplication
             }
         }
 
-        private void UpdateDotColor(ConnectedApp app)
-        {
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                app.StatusDot.Fill = app.Status switch
-                {
-                    ConnectedAppStatus.Running => Brushes.Green,
-                    ConnectedAppStatus.Waiting => Brushes.Orange,
-                    ConnectedAppStatus.Error => Brushes.Red
-                };
-            }));
-        }
-
         public void StopStatusMonitoring()
         {
             statusTimer?.Change(Timeout.Infinite, Timeout.Infinite);
             statusTimer?.Dispose();
         }
+        #endregion
 
+        #region UI Connected Application Managers
 
         private void SpawnEllipseTextButtonsRow(object argument)
         {
@@ -634,29 +568,71 @@ namespace ServerApplication
             };
         }
 
-        private void UpdateVisualisationProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        public void RemoveDeviceRow(string name)
         {
-            Thread otherThread = new Thread(ChangeEllipseColorThreadMethod);
-            otherThread.Start(e.Item1); ;
-        }
-
-        private void ChangeEllipseColorThreadMethod(object arguments)
-        {
-            string stringArgument = (string)arguments;
-            bool isConnected = connectedProcess[stringArgument];
+            if (!_rowsByDeviceName.TryGetValue(name, out var row))
+                return;
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Ellipse ellipse = FindName(stringArgument) as Ellipse;
-                if (ellipse != null)
+                int removedRowIndex = row.RowIndex;
+
+                // 1) Retirer les contrôles du Grid
+                ConnectedDevicesGrid.Children.Remove(row.Dot);
+                ConnectedDevicesGrid.Children.Remove(row.Text);
+                ConnectedDevicesGrid.Children.Remove(row.BtnStart);
+                ConnectedDevicesGrid.Children.Remove(row.BtnStop);
+
+                // 2) Retirer la RowDefinition
+                ConnectedDevicesGrid.RowDefinitions.Remove(row.RowDefinition);
+
+                // 3) Retirer du dictionnaire
+                _rowsByDeviceName.Remove(name);
+
+                // 4) Remonter les éléments qui étaient en dessous
+                foreach (UIElement child in ConnectedDevicesGrid.Children)
                 {
-                    if (isConnected) ellipse.Fill = Brushes.Green;
-                    else if (!isConnected) ellipse.Fill = Brushes.DarkRed;
+                    int r = Grid.GetRow(child);
+                    if (r > removedRowIndex)
+                        Grid.SetRow(child, r - 1);
+                }
+
+                // 5) Mettre à jour les RowIndex stockés
+                foreach (var kvp in _rowsByDeviceName)
+                {
+                    var deviceName = kvp.Key;
+                    var dr = kvp.Value;
+
+                    if (dr.RowIndex > removedRowIndex)
+                    {
+                        _rowsByDeviceName[deviceName] = new DeviceRow
+                        {
+                            RowIndex = dr.RowIndex - 1,
+                            RowDefinition = dr.RowDefinition, // attention: les RowDefs ont “glissé” mais l’objet reste valide
+                            Dot = dr.Dot,
+                            Text = dr.Text,
+                            BtnStart = dr.BtnStart,
+                            BtnStop = dr.BtnStop
+                        };
+                    }
                 }
             });
         }
-        private Dictionary<string, bool> connectedProcess = new Dictionary<string, bool>();
-        
+        private void UpdateDotColor(ConnectedApp app)
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                app.StatusDot.Fill = app.Status switch
+                {
+                    ConnectedAppStatus.Running => Brushes.Green,
+                    ConnectedAppStatus.Waiting => Brushes.Orange,
+                    ConnectedAppStatus.Error => Brushes.Red
+                };
+            }));
+        }
+        #endregion
+
+        #region Buttons
         private void BtnBrowseNameClick(object sender, RoutedEventArgs e)
         {
             UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
@@ -667,31 +643,6 @@ namespace ServerApplication
                 BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
             }
         }
-        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-        {
-            TextBox? log = sender as TextBox;
-            if (log == null)
-                return;
-            log.CaretIndex = log.Text.Length;
-            log.ScrollToEnd();
-        }
-
-        private void AddLog(string logMessage)
-        {
-            Log += $"{logMessage}\n";
-        }
-
-        private void UpdateAnnotationTab()
-        {
-            foreach (UIElement annotationUIElement in AnnotationGrid.Children)
-            {
-                if (annotationUIElement is GroupBox groupBox)
-                {
-                    groupBox.IsEnabled = isAnnotationEnabled;
-                }
-            }
-        }
-
         private void CkbActivateAnnotation(object sender, RoutedEventArgs e)
         {
             UpdateAnnotationTab();
@@ -722,5 +673,95 @@ namespace ServerApplication
             }
             e.Handled = true;
         }
+        private void BtnLoadAssembly_Click(object sender, RoutedEventArgs e)
+        {
+            LoadAssemblyFromFile();
+            e.Handled = true;
+        }
+        private void BtnTopicClick(object sender, RoutedEventArgs e)
+        {
+            LoadConfigurationFromJsonFile();
+            e.Handled = true;
+        }
+        #endregion
+
+        #region Browser
+
+        public void LoadAssemblyFromFile()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Dynamic Link Library (*.dll)|*.dll|All files (*.*)|*.*",
+                Title = "Charger une DLL contenant les classes de données"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    /*customAssembly = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName).FirstOrDefault()?.Assembly;
+                    AddLog($"✓ DLL chargée : {openFileDialog.FileName}");
+
+                    // Optionnel : exporter un template JSON
+                    string templatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(openFileDialog.FileName), "config_template.json");
+                    List<Type> types = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName);
+                    ConfigurationLoader.ExportConfigurationTemplate(templatePath, types);
+                    AddLog($"✓ Template JSON généré : {templatePath}");*/
+                }
+                catch (Exception ex)
+                {
+                    //AddLog($"✗ Erreur lors du chargement de la DLL : {ex.Message}");
+                }
+            }
+        }
+
+        public void LoadConfigurationFromJsonFile()
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                Title = "Charger une configuration JSON"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
+        #endregion
+
+        private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            TextBox? log = sender as TextBox;
+            if (log == null)
+                return;
+            log.CaretIndex = log.Text.Length;
+            log.ScrollToEnd();
+        }
+
+        private void AddLog(string logMessage)
+        {
+            Log += $"{logMessage}\n";
+        }
+
+        private void UpdateAnnotationTab()
+        {
+            foreach (UIElement annotationUIElement in AnnotationGrid.Children)
+            {
+                if (annotationUIElement is GroupBox groupBox)
+                {
+                    groupBox.IsEnabled = isAnnotationEnabled;
+                }
+            }
+        }
+
+
     }
 }

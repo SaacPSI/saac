@@ -36,12 +36,12 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
-              
+
                             </Grid.RowDefinitions>
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,49">
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,21">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -54,7 +54,6 @@
                             <Button Content="Start Session" Grid.Row="1" Name="BtnStart" Click="BtnStartClick" Margin="0,5,0,5"/>
                             <Button Content="Stop Session" Grid.Row="2" Name="BtnStop" Click="BtnStopClick" Margin="0,5,0,5"/>
                             <Button Content="Quit" Grid.Row="3" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
-                            <Button Content="Add Item" Grid.Row="4" Click="BtnAddItem_Click" />
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="1" Margin="5,5,5,5">
@@ -74,14 +73,16 @@
                         <RowDefinition Height="211*"/>
                         <RowDefinition Height="72*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" Margin="5,5,4,5" Grid.ColumnSpan="2" >
+                    <GroupBox Header="Configuration" FontWeight="Bold" Grid.Column="0" Margin="5,5,4,38" Grid.ColumnSpan="2" Grid.RowSpan="2" >
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="117*"/>
-                                <ColumnDefinition Width="192*"/>
-                                <ColumnDefinition Width="155*"/>
+                                <ColumnDefinition Width="72*"/>
+                                <ColumnDefinition Width="89*"/>
+                                <ColumnDefinition Width="81*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
@@ -102,11 +103,11 @@
                             <Label Grid.Row="2" Grid.Column="0" Content="Clock Port :" FontWeight="Bold" Margin="2,3,8,3"/>
                             <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Configuration.ClockPort}" Margin="0,5,6,3"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="Dataset Store Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="1,31,172,31" Grid.RowSpan="3"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Dataset Store Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="0,7,173,31" Grid.RowSpan="2"/>
                             <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding storeModeList}" SelectionChanged="StoreModeSelected" Name="StoreModeComboBox" Grid.ColumnSpan="2" Margin="0,5,6,3"/>
 
                             <Label Grid.Row="4" Grid.Column="0" Content="Dataset Path :" FontWeight="Bold" Margin="1,2,17,1"/>
-                            <TextBox Grid.Row="4" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{Binding Path = LocalDatasetPath}" Name="DatasetPathTextBox" Margin="130,5,64,3"/>
+                            <TextBox Grid.Row="4" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = LocalDatasetPath}" Name="DatasetPathTextBox" Margin="4,5,64,3" Grid.Column="1"/>
                             <Button Grid.Row="4" Grid.Column="2" Content="Browse" Click="BtnBrowseNameClick" Margin="102,4,6,3"/>
 
                             <Label Grid.Row="5" Grid.Column="0" Content="Dataset Name :" FontWeight="Bold" Margin="1,2,17,7"/>
@@ -114,8 +115,16 @@
 
                             <Label Grid.Row="6" Grid.Column="0" Content="Session Name :" FontWeight="Bold" Margin="1,4,4,3"/>
                             <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = LocalSessionName}" Margin="0,5,6,2"/>
-                            <Button Content="Load Configuration" Grid.Row="7" Grid.ColumnSpan="3" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,5,5"/>
-                            <Button Content="Save Configuration" Grid.ColumnSpan="3" Grid.Row="8" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,5,5"/>
+                            <Button Content="Load Configuration" Grid.Row="7" Grid.ColumnSpan="3" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,6,5"/>
+                            <Button Content="Save Configuration" Grid.ColumnSpan="3" Grid.Row="8" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,6,5"/>
+
+                            <Label Grid.Row="9" Grid.Column="0" Content="Assembly File Path :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="9" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = AssemblyFilePath}" Name="AssemblyFileTextBox" Margin="0,5,64,3" Grid.Column="1"/>
+                            <Button Grid.Row="9" Grid.Column="2" Content="Browse" Click="BtnLoadAssembly_Click" Margin="102,4,2,3"/>
+
+                            <Label Grid.Row="10" Grid.Column="0" Content="Topic File Path :" FontWeight="Bold" Margin="1,2,17,1"/>
+                            <TextBox Grid.Row="10" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = TopicFilePath}" Name="TopicFileTextBox" Margin="0,5,64,3" Grid.Column="1"/>
+                            <Button Grid.Row="10" Grid.Column="2" Content="Browse" Click="BtnTopicClick" Margin="102,4,2,3"/>
                         </Grid>
                     </GroupBox>
 
@@ -132,9 +141,9 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="AnnotationEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsAnnotationEnabled}" Checked="CkbActivateAnnotation" Unchecked="CkbActivateAnnotation"/>
-                    
+
                     <GroupBox Header="Annotation Settings" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,5,5,5">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -159,7 +168,7 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
-            
+
         </TabControl>
     </UserControl>
 </Window>
