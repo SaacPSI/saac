@@ -713,8 +713,8 @@ namespace CameraRemoteApp
             if (setupState == SetupState.PipelineInitialised)
             {
                 BtnStartNet.IsEnabled = false;
-                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected for server"); }));}); 
                 AddLog(State = "Waiting for server");
+                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); }));}); 
             }
         }
 

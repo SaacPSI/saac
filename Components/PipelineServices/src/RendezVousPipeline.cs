@@ -210,7 +210,10 @@ namespace SAAC.PipelineServices
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?
-                typeof(Exporter).GetMethod("Write").MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096]);
+                var writeMethod = typeof(Exporter).GetMethods()
+                   .Where(m => m.Name == "Write" && m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 1)
+                   .FirstOrDefault();
+                writeMethod?.MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
             }
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
         }

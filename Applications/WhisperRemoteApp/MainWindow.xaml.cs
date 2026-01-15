@@ -493,6 +493,7 @@ namespace WhisperRemoteApp
             {
                 case RendezVousPipeline.Command.Run:
                     Start();
+                    Run();
                     break;
                 case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
@@ -525,7 +526,7 @@ namespace WhisperRemoteApp
             if (isRemoteServer)
             { 
                 pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-                pipelineConfiguration.AutomaticPipelineRun = true;
+                pipelineConfiguration.AutomaticPipelineRun = false;
                 pipelineConfiguration.CommandDelegate = CommandRecieved;
                 pipelineConfiguration.Debug = false;
                 pipelineConfiguration.RecordIncomingProcess = false;
@@ -595,6 +596,41 @@ namespace WhisperRemoteApp
                         break;
                 }
                 AddLog(State = "Audio initialised");
+                if (isWhisper is false)
+                {
+                    if (isStreaming && rendezVousPipeline is not null)
+                    {
+                        Dictionary<string, ConnectorInfo> audioStreams = new Dictionary<string, ConnectorInfo>();
+                        foreach (var userAudio in audioManager.GetDictonaryIdAudioStream())
+                        {
+                            rendezVousPipeline.CreateConnectorAndStore("Audio", $"Audio_User_{userAudio.Key}", rendezVousPipeline.CreateOrGetSessionFromMode(PipelineConfigurationUI.SessionName), pipeline, typeof(AudioBuffer), userAudio.Value, IsLocalRecording);
+                            audioStreams.Add($"Audio_User_{userAudio.Key}", rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"]);
+                        }
+                        Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);
+                        rendezVousPipeline.GenerateRemoteEnpoint(pipeline, pipelineConfiguration.RendezVousPort, audioStreams, ref process);
+                        rendezVousPipeline.AddProcess(process);
+                    }
+                    else if (IsLocalRecording)
+                    {
+                        Session session;
+                        if (!GetLocalSession(out localDataset, out session))
+                        {
+                            AddLog(State = "Whisper initialised Failed");
+                            AddLog("Unable to create session.");
+                            return;
+                        }
+
+                        foreach (var userAudio in audioManager.GetDictonaryIdAudioStream())
+                        {
+                            PsiExporter store = PsiStore.Create(pipeline, $"Audio_User_{userAudio.Key}", $"{PipelineConfigurationUI.DatasetPath}/{session.Name}/");
+                            session.AddPartitionFromPsiStoreAsync($"Audio_User_{userAudio.Key}", $"{PipelineConfigurationUI.DatasetPath}/{session.Name}/");
+                            store.Write(userAudio.Value, "Audio");
+                        }
+
+                        localDataset.Save();
+                    }
+                }
+                    
                 setupState = SetupState.AudioInitialised;
             }
             else
@@ -729,8 +765,8 @@ namespace WhisperRemoteApp
             if (setupState == SetupState.PipelineInitialised)
             {
                 BtnStartNet.IsEnabled = false;
-                rendezVousPipeline?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected for server"); })); });
                 AddLog(State = "Waiting for server");
+                rendezVousPipeline?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); })); });
             }
             rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Initialize, commandSource, "");
         }
@@ -741,7 +777,7 @@ namespace WhisperRemoteApp
             SetupPipeline();
             SetupAudioSources();
             SetupWhisper();
-            if (setupState == SetupState.WhisperInitialised)
+            if ((setupState == SetupState.WhisperInitialised && isWhisper) || setupState == SetupState.AudioInitialised)
             {
                 Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
@@ -755,19 +791,20 @@ namespace WhisperRemoteApp
 
         private void Run()
         {
+            if (!(setupState == SetupState.WhisperInitialised && isWhisper) && setupState != SetupState.AudioInitialised)
+                return;
             if (rendezVousPipeline is null)
             { 
                 if (selectedAudioSource != AudioSource.Microphones)
                 {
                     pipeline?.RunAsync(ReplayDescriptor.ReplayAllRealTime);
                     pipeline.PipelineCompleted += MainWindow_PipelineCompleted;
-
                 }
                 else
                     pipeline?.RunAsync();
             }
             else
-                rendezVousPipeline.Start();
+                rendezVousPipeline.RunPipelineAndSubpipelines();
         }
 
         private void MainWindow_PipelineCompleted(object sender, PipelineCompletedEventArgs e)
