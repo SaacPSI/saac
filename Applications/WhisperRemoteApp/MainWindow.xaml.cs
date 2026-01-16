@@ -606,7 +606,7 @@ namespace WhisperRemoteApp
                             rendezVousPipeline.CreateConnectorAndStore("Audio", $"Audio_User_{userAudio.Key}", rendezVousPipeline.CreateOrGetSessionFromMode(PipelineConfigurationUI.SessionName), pipeline, typeof(AudioBuffer), userAudio.Value, IsLocalRecording);
                             audioStreams.Add($"Audio_User_{userAudio.Key}", rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"]);
                         }
-                        Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);
+                        Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName, "2.0");
                         rendezVousPipeline.GenerateRemoteEnpoint(pipeline, pipelineConfiguration.RendezVousPort, audioStreams, ref process);
                         rendezVousPipeline.AddProcess(process);
                     }
@@ -755,7 +755,7 @@ namespace WhisperRemoteApp
             audioManager?.Stop();
             whisperAudioProcessing?.Stop();
             pipeline?.Dispose();
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Stop, commandSource, "");
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
             Application.Current.Shutdown();
         }
 
@@ -766,9 +766,10 @@ namespace WhisperRemoteApp
             {
                 BtnStartNet.IsEnabled = false;
                 AddLog(State = "Waiting for server");
-                rendezVousPipeline?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); })); });
+                rendezVousPipeline?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server");
+                    rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting");
+                })); });
             }
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Initialize, commandSource, "");
         }
 
         private void Start()
@@ -786,7 +787,6 @@ namespace WhisperRemoteApp
                     AddLog(State = "Started");
                 }));
             }
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Run, commandSource, "");
         }
 
         private void Run()
@@ -805,6 +805,7 @@ namespace WhisperRemoteApp
             }
             else
                 rendezVousPipeline.RunPipelineAndSubpipelines();
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
         }
 
         private void MainWindow_PipelineCompleted(object sender, PipelineCompletedEventArgs e)

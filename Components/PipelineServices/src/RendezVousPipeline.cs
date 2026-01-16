@@ -13,7 +13,7 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace SAAC.PipelineServices
 {
-    public class RendezVousPipeline : DatasetPipeline, ISourceComponent
+    public class RendezVousPipeline : DatasetPipeline/*, ISourceComponent*/
     {
         public const string ClockSynchProcessName = "ClockSynch";
         public const string DiagnosticsProcessName = "Diagnostics";
@@ -31,6 +31,7 @@ namespace SAAC.PipelineServices
         protected dynamic rendezVous;
         protected Pipeline commandPipeline;
         protected List<Rendezvous.Process> rendezvousProcessesToAddWhenActive;
+        private List<Pipeline> subCommandPipelines = new List<Pipeline>();
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
@@ -85,9 +86,11 @@ namespace SAAC.PipelineServices
             var copy = processNames.DeepClone();
             foreach (var prcName in copy)
                 RemoveProcess(prcName);
-            rendezVous.Dispose();
+            foreach (var subCommandPipeline in subCommandPipelines)
+                subCommandPipeline.Dispose();
             commandPipeline.Dispose();
             base.Dispose();
+            rendezVous.Dispose();
             Stores = null;
         }
 
@@ -218,7 +221,7 @@ namespace SAAC.PipelineServices
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
         }
 
-        public bool GeneraterRmoteProcessFromConnectors(string storeName, int startingPort)
+        public bool GeneraterRemoteProcessFromConnectors(string storeName, int startingPort)
         {
             if (Connectors.ContainsKey(storeName))
                 return GenerateRemoteProcessFromConnectors(storeName, Connectors[storeName], startingPort);
@@ -350,7 +353,7 @@ namespace SAAC.PipelineServices
                             p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             subCommandPipeline.Start((d) => {});
-                            
+                            subCommandPipelines.Add(subCommandPipeline);
                             //TriggerNewProcessEvent(process.Name);
                             Log($"Subpipeline {process.Name} started."); 
                             return;

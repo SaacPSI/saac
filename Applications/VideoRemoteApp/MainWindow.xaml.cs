@@ -410,7 +410,7 @@ namespace VideoRemoteApp
                 case RendezVousPipeline.Command.Run:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        SetupVideo();
+                        Start();
                     }));
                     break;
                 case RendezVousPipeline.Command.Stop:
@@ -461,14 +461,13 @@ namespace VideoRemoteApp
                 MessageBox.Show("You cannot start the application without Network or Local Recording.", "Configuration error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
                 return;
             }
-
             pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             pipelineConfiguration.AutomaticPipelineRun = false;
             pipelineConfiguration.CommandDelegate = CommandRecieved;
             pipelineConfiguration.Debug = false;
             pipelineConfiguration.RecordIncomingProcess = false;
-            pipelineConfiguration.ClockPort = 0;
             pipelineConfiguration.CommandPort = CommandPort;
+            pipelineConfiguration.ClockPort = 0;
             pipelineConfiguration.DatasetPath = LocalDatasetPath;
             pipelineConfiguration.DatasetName = LocalDatasetName;
 
@@ -540,6 +539,7 @@ namespace VideoRemoteApp
             datasetPipeline?.Stop();
             datasetPipeline?.Dispose();
             Application.Current.Shutdown();
+            (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
         }
 
         private void StartNetwork()
@@ -549,7 +549,9 @@ namespace VideoRemoteApp
             {
                 BtnStartNet.IsEnabled = false;
                 AddLog(State = "Waiting for server");
-                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); })); }); 
+                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server");
+                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting");
+                })); }); 
             }
         }
 
@@ -564,6 +566,7 @@ namespace VideoRemoteApp
                 if (remotePipeline != null)
                 {
                     remotePipeline.Start();
+                    remotePipeline.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
                 }
                 else
                 {

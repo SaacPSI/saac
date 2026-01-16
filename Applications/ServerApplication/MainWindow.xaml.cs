@@ -169,7 +169,7 @@ namespace ServerApplication
         };
         private SetupState setupState;
         private LogStatus internalLog;
-        private SAAC.AnnotationsComponents.HTTPAnnotationsComponent? annotationsComponent;
+        private Microsoft.Psi.Interop.Transport.WebSocketsManager? websocketManager;
 
         public MainWindow()
         {
@@ -315,54 +315,64 @@ namespace ServerApplication
             AddLog("Server initialisation started");
             
             // Setup annotations if enabled
-            SetupAnnotations();
+            SetupWebSocketsAndAnnotations();
             
             server.Start();
             AddLog("Server started");
             setupState = SetupState.PipelineInitialised;
         }
-        private void SetupAnnotations()
+        private void SetupWebSocketsAndAnnotations()
         {
+            // Create list of addresses for WebSocket
+            List<string> addresses = new List<string>() { $"http://{Configuration.RendezVousHost}:8080/ws/"};
+
             if (!IsAnnotationEnabled)
             {
-                AddLog("Annotations disabled");
-                return;
-            }
-
-            if (server == null)
-            {
-                AddLog("Cannot setup annotations: server not initialized");
-                return;
-            }
-
-            if (!System.IO.Directory.Exists(AnnotationSchemaDirectory))
-            {
-                AddLog($"Warning: Annotation schema directory does not exist: {AnnotationSchemaDirectory}");
-            }
-
-            if (!System.IO.File.Exists(AnnotationWebPage))
-            {
-                AddLog($"Warning: Annotation web page does not exist: {AnnotationWebPage}");
-            }
-
-            try
-            {
-                // Create list of addresses for WebSocket and HTTP
-                List<string> addresses = new List<string>()
+                // Instantiate the HTTPAnnotationsComponent
+                websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, addresses, false);
+                pipeline.PipelineRun += (s, e) =>
                 {
-                    $"http://{Configuration.RendezVousHost}:8080/ws/",
-                    $"http://{Configuration.RendezVousHost}:8080/"
+                    websocketManager?.Start((dt) => { });
                 };
+                pipeline.ComponentCompleted += (s, e) =>
+                {
+                    websocketManager?.Dispose();
+                };
+            }
+            else 
+            {
+                if (!System.IO.Directory.Exists(AnnotationSchemaDirectory))
+                {
+                    AddLog($"Warning: Annotation schema directory does not exist: {AnnotationSchemaDirectory}");
+                    return;
+                }
+
+                if (!System.IO.File.Exists(AnnotationWebPage))
+                {
+                    AddLog($"Warning: Annotation web page does not exist: {AnnotationWebPage}");
+                    return;
+                }
+
+                // Add HTTP
+                addresses.Add($"http://{Configuration.RendezVousHost}:8080/");
 
                 // Instantiate the HTTPAnnotationsComponent
-                annotationsComponent = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(server, addresses, AnnotationSchemaDirectory, AnnotationWebPage);
-
+                websocketManager = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(server, addresses, AnnotationSchemaDirectory, AnnotationWebPage);
                 AddLog("Annotations component initialized successfully");
             }
-            catch (Exception ex)
+            websocketManager.OnNewWebSocketConnectedHandler += OnWebsocketConnection;
+        }
+
+        private void OnWebsocketConnection(object sender, (string, string, Uri) e)
+        {
+            if (e.Item2 == "annotation" || !configuration.TopicsTypes.ContainsKey(e.Item2))
             {
-                AddLog($"Failed to setup annotations: {ex.Message}");
+                return;
             }
+            Pipeline pipeline = server.GetOrCreateSubpipeline($"{e.Item1}-{e.Item2}");
+            var source = websocketManager.ConnectWebsocketSource<string>(pipeline, configuration.TypesSerializers[configuration.TopicsTypes[e.Item2]].GetFormat(), e.Item1, e.Item2, false);
+            server.CreateConnectorAndStore(e.Item2, e.Item1, server.CurrentSession, pipeline, typeof(string), source);
+            pipeline.RunAsync();
         }
 
         /*private void SpawnProcessRow(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
@@ -407,34 +417,39 @@ namespace ServerApplication
 
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
+            Stop();
+        }
+
+        private void BtnQuitClick(object sender, RoutedEventArgs e)
+        {
+            Stop();
+            Close();
+            e.Handled = true;
+        }
+
+        private void Stop()
+        {
             // Stop annotations component
-            if (annotationsComponent != null)
+            if (websocketManager != null)
             {
                 try
                 {
                     // Assuming the component has a Stop or Dispose method
                     AddLog("Stopping annotations component");
-                    annotationsComponent = null;
+                    websocketManager = null;
                 }
                 catch (Exception ex)
                 {
                     AddLog($"Error stopping annotations: {ex.Message}");
                 }
             }
-            
+
+            server?.Dataset?.Save();
             server?.Dispose();
-            server?.Dataset?.Save(); 
-            //server?.TriggerNewProcessEvent("EndSession");
             StopStatusMonitoring();
         }
 
-        private void BtnQuitClick(object sender, RoutedEventArgs e)
-        {
-            Close();
-            e.Handled = true;
-        }
         //Method loop status connected devices
-
         private void CommandReceived(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
             var args = message.Data.Item2.Split(';');
@@ -445,7 +460,51 @@ namespace ServerApplication
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Initialize:
+                //case RendezVousPipeline.Command.Initialize:
+                //    if (!connectedApps.ContainsKey(name))
+                //    {
+                //        connectedApps[name] = new ConnectedApp
+                //        {
+                //            Name = name,
+                //        };
+                //        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                //        {
+                //            SpawnEllipseTextButtonsRow(name);
+                //        }));
+                //    }
+                //    break;
+                //case RendezVousPipeline.Command.Run:
+                //    connectedApps[name].Status = ConnectedAppStatus.Running;
+                //    UpdateDotColor(connectedApps[name]);
+                //    break;
+                //case RendezVousPipeline.Command.Stop:
+                //    connectedApps[name].Status = ConnectedAppStatus.Stop;
+                //    UpdateDotColor(connectedApps[name]);
+                //    connectedApps.Remove(name);
+                //    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                //    {
+                //        RemoveDeviceRow(name);
+                //    }));
+                //    break;
+                case RendezVousPipeline.Command.Status:
+                    CheckStatus(name, args, message.OriginatingTime);
+                    break;
+            }
+        }
+
+        private void CheckStatus(string name, string[] args, DateTime time)
+        {
+            if (args.Length < 2)
+                return;
+            switch(args[1])
+            {                 
+                case "Running":
+                    if (connectedApps.ContainsKey(name))
+                    {
+                        connectedApps[name].Status = ConnectedAppStatus.Running;
+                    }
+                    break;
+                case "Waiting":
                     if (!connectedApps.ContainsKey(name))
                     {
                         connectedApps[name] = new ConnectedApp
@@ -457,21 +516,29 @@ namespace ServerApplication
                             SpawnEllipseTextButtonsRow(name);
                         }));
                     }
+                    connectedApps[name].Status = ConnectedAppStatus.Waiting;
                     break;
-                case RendezVousPipeline.Command.Run:
-                    connectedApps[name].Status = ConnectedAppStatus.Running;
-                    UpdateDotColor(connectedApps[name]);
-                    break;
-                case RendezVousPipeline.Command.Stop:
-                    connectedApps[name].Status = ConnectedAppStatus.Stop;
-                    UpdateDotColor(connectedApps[name]);
-                    connectedApps.Remove(name);
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                case "Stopped":
+                    if (connectedApps.ContainsKey(name))
                     {
-                        RemoveDeviceRow(name);
-                    }));
+                        connectedApps.Remove(name);
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            RemoveDeviceRow(name);
+                        }));
+                    }
+                    break;
+                case "Error":
+                    if (connectedApps.ContainsKey(name))
+                    {
+                        connectedApps[name].Status = ConnectedAppStatus.Error;
+                    }
                     break;
             }
+            if (!connectedApps.ContainsKey(name))
+                return;
+            connectedApps[name].LastStatusReceivedTime = time;
+            UpdateDotColor(connectedApps[name]);
         }
 
 

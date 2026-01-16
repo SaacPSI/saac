@@ -44,6 +44,7 @@ namespace SAAC.AnnotationsComponents
             base.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
             this.rdvPipeline = rdvPipeline;
             this.rdvPipeline.Pipeline.PipelineRun += (s, e) => this.Start( (e) => { });
+            this.rdvPipeline.Pipeline.PipelineCompleted += (s, e) => this.Stop(e.CompletedOriginatingTime, () => { });
         }
 
 
@@ -53,12 +54,13 @@ namespace SAAC.AnnotationsComponents
         protected override async void ProcessContexts()
         {
             while (!this.token.IsCancellationRequested)
-            {
+            { 
+                try
+                    {
                 var result = await this.httpListener.GetContextAsync();
                 if (result != null)
                 {
-                    try
-                    {
+                   
                         // Check if this is a WebSocket upgrade request
                         if (result.Request.IsWebSocketRequest)
                         {
@@ -71,10 +73,10 @@ namespace SAAC.AnnotationsComponents
                             HandleHTMLRequest(result);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
                 }
             }
         }
