@@ -24,7 +24,7 @@
       <Value Profile="(Default)">RawData</Value>
     </Setting>
     <Setting Name="Debug" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="StoreMode" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>

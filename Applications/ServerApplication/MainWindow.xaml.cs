@@ -121,6 +121,13 @@ namespace ServerApplication
             set => SetProperty(ref configuration.SessionName, value);
         }
 
+        private bool isDebug = false;
+        public bool IsDebug
+        {
+            get => isDebug;
+            set => SetProperty(ref isDebug, value);
+        }
+
         // Annotation Tab
         private bool isAnnotationEnabled = false;
         public bool IsAnnotationEnabled
@@ -215,7 +222,7 @@ namespace ServerApplication
             LocalDatasetPath = Properties.Settings.Default.DatasetPath;
             LocalSessionName = Properties.Settings.Default.SessionName;
             LocalDatasetName = Properties.Settings.Default.DatasetName;
-            Configuration.Debug = Properties.Settings.Default.Debug;
+            isDebug = Configuration.Debug = Properties.Settings.Default.Debug;
             Configuration.AutomaticPipelineRun = Properties.Settings.Default.AutomaticPipelineRun;
             
             // Annotation Tab
@@ -246,7 +253,7 @@ namespace ServerApplication
             Properties.Settings.Default.DatasetPath = LocalDatasetPath;
             Properties.Settings.Default.SessionName = LocalSessionName;
             Properties.Settings.Default.DatasetName = LocalDatasetName;
-            Properties.Settings.Default.Debug = Configuration.Debug;
+            Properties.Settings.Default.Debug = Configuration.Debug = isDebug;
             Properties.Settings.Default.AutomaticPipelineRun = Configuration.AutomaticPipelineRun;
             Properties.Settings.Default.StoreMode = (int) StoreModeComboBox.SelectedIndex;
             
@@ -296,7 +303,7 @@ namespace ServerApplication
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
-            configuration.Debug = false;
+            configuration.Debug = true;
             configuration.RecordIncomingProcess = true;
             configuration.CommandPort = 11610;
             configuration.DatasetPath = LocalDatasetPath;
@@ -573,7 +580,12 @@ namespace ServerApplication
                 BtnStop = btnRemove
             };
         }
-
+        private void CkbDebug(object sender, RoutedEventArgs e)
+        {
+            if (DebugCheckbox.IsChecked == true) configuration.Debug = true;
+            else configuration.Debug = false;
+            e.Handled = true;
+        }
         public void RemoveDeviceRow(string name)
         {
             if (!_rowsByDeviceName.TryGetValue(name, out var row))
@@ -796,6 +808,7 @@ namespace ServerApplication
             public string Topic { get; set; } = "";
             public string Type { get; set; } = "";
             public string ClassFormat { get; set; } = "";
+            public string StreamToStore { get; set; } = "";
         }
 
         public List<TopicFormatDefinition> LoadJSONAndSpecifyTopic(string jsonFilePath) // remplace par le vrai type si possible
@@ -816,8 +829,8 @@ namespace ServerApplication
                 var formatInstance = (IPsiFormat)CreateInstance(formatType);
                 AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
                 configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
+                configuration.StreamToStore.Add(item.Topic, item.StreamToStore);
             }
-            
 
             return items;
         }
