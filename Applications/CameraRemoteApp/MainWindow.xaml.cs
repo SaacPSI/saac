@@ -91,7 +91,7 @@ namespace CameraRemoteApp
         }
 
         private int exportPort;
-        public int ExportPortUI
+        public int ExportPort
         {
             get => exportPort;
             set => SetProperty(ref exportPort, value);
@@ -229,9 +229,9 @@ namespace CameraRemoteApp
             IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
             datasetPipeline = null;
 
-            LoadConfigurations();
             InitializeComponent();
             UpdateLayout();
+            LoadConfigurations();
 
             SetupNetworkTab();
             SetupLocalRecordingTab();
@@ -294,6 +294,7 @@ namespace CameraRemoteApp
             LocalRecordingDatasetNameTextBox.Text = PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
             RendezVousApplicationNameUI = Properties.Settings.Default.ApplicationName;
             IpSelectedUI = Properties.Settings.Default.IpToUse;
+            ExportPort = (int)Properties.Settings.Default.remotePort;
             EncodingLevel = Properties.Settings.Default.encodingLevel;
             SensorTypeComboBox.SelectedIndex = Properties.Settings.Default.sensorType;
             VideoSourceComboBox.SelectedIndex = VideoSourceList.IndexOf(Properties.Settings.Default.videoSource);
@@ -349,6 +350,7 @@ namespace CameraRemoteApp
             Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
             Properties.Settings.Default.ApplicationName = RendezVousApplicationNameUI;
             Properties.Settings.Default.IpToUse = IpSelectedUI;
+            Properties.Settings.Default.remotePort = (uint)ExportPort;
             Properties.Settings.Default.encodingLevel = EncodingLevel;
             Properties.Settings.Default.sensorType = SensorTypeComboBox.SelectedIndex;
             Properties.Settings.Default.videoSource = VideoSourceComboBox.SelectedValue as string ?? "";
@@ -497,20 +499,26 @@ namespace CameraRemoteApp
                 MessageBox.Show("You cannot start the application without Network or Local Recording.", "Configuration error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
                 return;
             }
+
             pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            pipelineConfiguration.AutomaticPipelineRun = true;
+            pipelineConfiguration.AutomaticPipelineRun = false;
             pipelineConfiguration.CommandDelegate = CommandRecieved;
             pipelineConfiguration.Debug = false;
             pipelineConfiguration.RecordIncomingProcess = false;
             pipelineConfiguration.ClockPort = 0;
             pipelineConfiguration.CommandPort = CommandPort;
+            pipelineConfiguration.DatasetPath = LocalDatasetPath;
+            pipelineConfiguration.DatasetName = LocalDatasetName;
+            pipelineConfiguration.RendezVousHost = IpSelectedUI;
+
             if (isRemoteServer)
             {
-                var rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, rendezVousApplicationName, RendezVousServerIp, internalLog);
-                datasetPipeline = rendezVousPipeline;
+                datasetPipeline = new RendezVousPipeline(pipelineConfiguration, rendezVousApplicationName, RendezVousServerIp, internalLog);
             }
             else
+            {
                 datasetPipeline = new DatasetPipeline(pipelineConfiguration, rendezVousApplicationName, internalLog);
+            }
             setupState = SetupState.PipelineInitialised;
         }
 

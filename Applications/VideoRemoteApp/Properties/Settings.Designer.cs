@@ -250,5 +250,17 @@ namespace VideoRemoteApp.Properties {
                 this["commandSource"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("15556")]
+        public int streamingPortRangeStart {
+            get {
+                return ((int)(this["streamingPortRangeStart"]));
+            }
+            set {
+                this["streamingPortRangeStart"] = value;
+            }
+        }
     }
 }

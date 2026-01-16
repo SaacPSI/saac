@@ -59,5 +59,8 @@
     <Setting Name="commandSource" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="streamingPortRangeStart" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">15556</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

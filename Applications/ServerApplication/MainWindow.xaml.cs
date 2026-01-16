@@ -183,7 +183,7 @@ namespace ServerApplication
             server = null;
             configuration = new RendezVousPipelineConfiguration();
             
-            //configuration.Debug = false;
+            configuration.Debug = true;
             //configuration.AutomaticPipelineRun = true;
             //configuration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
             //configuration.SessionName = "RawData"; // Session name

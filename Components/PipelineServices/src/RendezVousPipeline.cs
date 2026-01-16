@@ -392,6 +392,8 @@ namespace SAAC.PipelineServices
 
         protected void ProcessAddedData(Rendezvous.Process process)
         {
+            if(process.Endpoints.Count() == 0)
+                return;
             int elementAdded = 0;
             Subpipeline processSubPipeline = GetOrCreateSubpipeline(process.Name);
             Session? session = CreateOrGetSessionFromMode(process.Name);

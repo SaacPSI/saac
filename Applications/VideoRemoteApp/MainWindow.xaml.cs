@@ -129,6 +129,13 @@ namespace VideoRemoteApp
             set => SetProperty(ref commandPort, value);
         }
 
+        private int exportPort;
+        public int ExportPort
+        {
+            get => exportPort;
+            set => SetProperty(ref exportPort, value);
+        }
+
         // LocalRecording Tab
         private string localSessionName = "";
         public string LocalSessionName
@@ -236,9 +243,9 @@ namespace VideoRemoteApp
             setupState = SetupState.NotInitialised;
             datasetPipeline = null;
 
-            LoadConfigurations();
             InitializeComponent();
             UpdateLayout();
+            LoadConfigurations();
 
             SetupVideoTab();
             SetupNetworkTab();
@@ -277,6 +284,9 @@ namespace VideoRemoteApp
             
             // Validate Command Port as integer
             UiGenerator.SetTextBoxPreviewTextChecker<int>(CommandPortTextBox, int.TryParse);
+            
+            // Validate Export Port as integer
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(StreamingPortRangeStartTextBox, int.TryParse);
             
             UpdateNetworkTab();
         }
@@ -325,6 +335,7 @@ namespace VideoRemoteApp
             CommandPort = Properties.Settings.Default.commandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
             RendezVousApplicationNameUI = Properties.Settings.Default.applicationName;
+            ExportPort = Properties.Settings.Default.streamingPortRangeStart;
 
             // Local Recording Tab
             IsLocalRecording = Properties.Settings.Default.isLocalRecording;
@@ -366,12 +377,13 @@ namespace VideoRemoteApp
             // Network Tab
             Properties.Settings.Default.isServer = IsRemoteServer;
             Properties.Settings.Default.isStreaming = IsStreaming;
-            Properties.Settings.Default.ipToUse = PipelineConfigurationUI.RendezVousHost;
+            Properties.Settings.Default.ipToUse = IpSelectedUI;
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
             Properties.Settings.Default.commandPort = CommandPort;
             Properties.Settings.Default.commandSource = CommandSource;
             Properties.Settings.Default.applicationName = RendezVousApplicationNameUI;
+            Properties.Settings.Default.streamingPortRangeStart = ExportPort;
 
             // Video Tab
             Properties.Settings.Default.captureInterval = (uint)videoRemoteAppConfiguration.Interval.TotalMilliseconds;
@@ -470,6 +482,7 @@ namespace VideoRemoteApp
             pipelineConfiguration.ClockPort = 0;
             pipelineConfiguration.DatasetPath = LocalDatasetPath;
             pipelineConfiguration.DatasetName = LocalDatasetName;
+            pipelineConfiguration.RendezVousHost = IpSelectedUI;
 
             if (isRemoteServer)
             {
@@ -497,7 +510,7 @@ namespace VideoRemoteApp
 
             if (videoRemoteAppConfiguration.CroppingAreas.Count == 0)
             {
-                ProcessProducer(capture.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), "VideoStreaming");
+                ProcessProducer(capture.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), "VideoStreaming", ExportPort);
             }
             else 
             {
@@ -507,7 +520,7 @@ namespace VideoRemoteApp
                         continue;
                     SAAC.Helpers.ImageCropper cropRect = new SAAC.Helpers.ImageCropper(datasetPipeline.Pipeline, cropArea.Value);
                     capture.Out.PipeTo(cropRect.In);
-                    ProcessProducer(cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), cropArea.Key);
+                    ProcessProducer(cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), cropArea.Key, ExportPort++);
                 }
             }
 
@@ -515,7 +528,7 @@ namespace VideoRemoteApp
             setupState = SetupState.VideoInitialised;
         }
 
-        private void ProcessProducer(IProducer<Shared<EncodedImage>> producer, string streamName)
+        private void ProcessProducer(IProducer<Shared<EncodedImage>> producer, string streamName, int exportPort)
         {
             if (datasetPipeline is null)
             {
@@ -523,7 +536,7 @@ namespace VideoRemoteApp
             }
             if (isRemoteServer)
             {
-                RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, pipelineConfiguration.RendezVousPort, TransportKind.Tcp);
+                RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, exportPort, TransportKind.Tcp);
                 imageExporter.Exporter.Write(producer, streamName);
                 (datasetPipeline as RendezVousPipeline)?.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost)]));
             }
@@ -549,9 +562,7 @@ namespace VideoRemoteApp
             {
                 BtnStartNet.IsEnabled = false;
                 AddLog(State = "Waiting for server");
-                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server");
-                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting");
-                })); }); 
+                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting"); })); });
             }
         }
 

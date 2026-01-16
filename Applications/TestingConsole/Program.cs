@@ -32,6 +32,17 @@ using Microsoft.Psi.Interop.Rendezvous;
 //using SAAC.LabStreamLayer;
 //using static LSL.liblsl;
 
+
+
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+
 namespace TestingConsole
 {
     internal class Program
@@ -416,6 +427,160 @@ namespace TestingConsole
         //    pipeline.Stop();
         //}
 
+   
+            // Copyright (c) Microsoft Corporation. All rights reserved.
+            // Licensed under the MIT license.
+
+
+        internal class testrdv
+        {
+            /// <summary>
+            /// Default TCP port on which to listen for clients.
+            /// </summary>
+            public const int DefaultPort = 13331;
+
+            /// <summary>
+            /// Protocol version.
+            /// </summary>
+            internal const short ProtocolVersion = 2;
+
+            private readonly int port;
+            private readonly ConcurrentDictionary<Guid, BinaryWriter> writers = new();
+
+            private TcpListener listener;
+            private bool active = false;
+            private string serverAddress;
+
+            public testrdv(int port = DefaultPort)
+            {
+                this.port = port;
+            }
+
+            /// <summary>
+            /// Gets a value indicating whether the server is active.
+            /// </summary>
+            public bool IsActive => this.active;
+
+            /// <summary>
+            /// Gets the server address (on which the most recent client connection was received).
+            /// </summary>
+            public string ServerAddress => this.serverAddress;
+
+            /// <summary>
+            /// Start rendezvous client (blocking until connection is established).
+            /// </summary>
+            public void Start()
+            {
+                if (this.active)
+                {
+                    throw new Exception($"{nameof(RendezvousServer)} already started.");
+                }
+
+             
+                this.listener = new TcpListener(IPAddress.Any, this.port);
+                this.active = true;
+                new Thread(new ThreadStart(this.ListenForClients)) { IsBackground = true }.Start();
+            }
+
+            /// <summary>
+            /// Stop rendezvous client.
+            /// </summary>
+            public void Stop()
+            {
+                this.active = false;
+
+                foreach (var writer in this.writers.Values)
+                {
+                    writer.Dispose();
+                }
+
+                this.listener?.Stop();
+                this.listener = null;
+            }
+
+            /// <inheritdoc/>
+            public void Dispose()
+            {
+                this.Stop();
+            }
+
+            private void ListenForClients()
+            {
+                this.listener.Start();
+                do
+                {
+                    try
+                    {
+                        var client = this.listener.AcceptTcpClient();
+                        var remoteAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
+                        var localAddress = client.Client.LocalEndPoint.ToString().Split(':')[0];
+                        var stream = client.GetStream();
+                        var reader = new BinaryReader(stream);
+                        var version = reader.ReadInt16();
+                        Console.WriteLine($"{version}");
+                        if (version != ProtocolVersion)
+                        {
+                            var ex = new IOException($"{nameof(RendezvousClient)} protocol mismatch ({version})");
+                            this.ClientError(ex);
+                            continue;
+                        }
+
+                        var writer = new BinaryWriter(stream);
+                        var guid = Guid.NewGuid();
+                        this.writers.TryAdd(guid, writer);
+
+                        writer.Write(ProtocolVersion);
+                        writer.Write(remoteAddress);
+                        writer.Flush();
+
+
+                        // set the server address to the address of the local endpoint from which the client was received
+                        this.serverAddress = localAddress;
+
+                        new Thread(new ParameterizedThreadStart(this.ReadFromClient)) { IsBackground = true }
+                            .Start(Tuple.Create(reader, guid));
+                    }
+                    catch (Exception ex)
+                    {
+                        this.ClientError(ex);
+                    }
+                }
+                while (this.active && this.listener != null);
+            }
+
+            private void ReadFromClient(object param)
+            {
+                var tuple = param as Tuple<BinaryReader, Guid>;
+                var reader = tuple.Item1;
+                var guid = tuple.Item2;
+                try
+                {
+                    do
+                    {
+                        
+                    }
+                    while (this.active && this.listener != null);
+                }
+                catch (Exception ex)
+                {
+                    this.ClientError(ex);
+                }
+
+                reader.Dispose();
+                if (this.writers.TryRemove(guid, out var writer))
+                {
+                    writer.Dispose();
+                }
+            }
+
+            private void NotifyClients(Rendezvous.Process process, Action<Rendezvous.Process, BinaryWriter> action)
+            {
+            }
+
+            private void ClientError(Exception ex)
+            {
+            }
+        }
 
         static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
@@ -444,27 +609,40 @@ namespace TestingConsole
         //}
         static void Main(string[] args)
         {
+            //testrdv test = new testrdv(13331);
+            //test.Start();
+            //Thread.Sleep(100);
             //testOllama();
+
+
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = true;
             configuration.Debug = false;
             configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
             configuration.DatasetName = "RendezVousPipeline.pds";
-            configuration.RendezVousHost = "10.144.37.90";
+            //configuration.RendezVousHost = "10.144.37.90";
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.StoreMode = DatasetPipeline.StoreMode.Process;
             configuration.CommandDelegate = Program.CommandDel;
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
+            RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server", "localhost");
             //rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
             //List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
             //SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
 
             rdvPipeline.Start();
-            //annot.Start((e) => { });
-           
-            
+
+            int i = 0;
+            while (true)
+            {
+                Console.WriteLine("Press");
+                Console.ReadLine();
+                rdvPipeline.AddProcess(new Rendezvous.Process($"test{i++}"));
+            }
+            // annot.Start((e) => { });
+
+
             //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
             //websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
             //{
@@ -574,16 +752,17 @@ namespace TestingConsole
             //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             // Waiting for an out key to Stop
-           
-          //  while (true)
-            {
-                Console.WriteLine("Press any key to send status.");
-                Console.ReadLine();
-                rdvPipeline.SendCommand(RendezVousPipeline.Command.Status, "WhisperStreaming", "");
-            }
-            Console.WriteLine("Press any key to stop the application.");
-            Console.ReadLine();
-            rdvPipeline.Dispose();
+
+
+            //while (true)
+            //{
+            //    Console.WriteLine("Press any key to send status.");
+            //    Console.ReadLine();
+            //    rdvPipeline.SendCommand(RendezVousPipeline.Command.Status, "WhisperStreaming", "");
+            //}
+            //Console.WriteLine("Press any key to stop the application.");
+            //Console.ReadLine();
+            //rdvPipeline.Dispose();
             //replayPipeline.Stop();
         }
 
