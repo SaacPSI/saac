@@ -134,7 +134,7 @@ namespace SAAC.AudioRecording
         {
             if (splitter.ContainsKey(user.Microphone))
             {
-                if (splitter[user.Microphone].Audios.Count() >= user.Channel)
+                if (splitter[user.Microphone].Audios.Count() <= user.Channel)
                     throw new Exception("Incorrect channel number.");
                 server.CreateConnectorAndStore("Audio", $"Audio_User_{user.Id}", server.CreateOrGetSessionFromMode(sessionName), pipeline, typeof(AudioBuffer), splitter[user.Microphone].Audios[user.Channel], LocalStore);
                 UserAudioStreamDictionnary.Add(user, splitter[user.Microphone].Audios[user.Channel]);

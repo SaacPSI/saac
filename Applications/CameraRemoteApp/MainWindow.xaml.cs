@@ -705,6 +705,7 @@ namespace CameraRemoteApp
             AddLog(State = "Stopping");
             datasetPipeline?.Dispose();
             Application.Current.Shutdown();
+            (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopping");
         }
 
         private void StartNetwork()
@@ -714,7 +715,7 @@ namespace CameraRemoteApp
             {
                 BtnStartNet.IsEnabled = false;
                 AddLog(State = "Waiting for server");
-                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); }));}); 
+                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting"); }));}); 
             }
         }
 
@@ -726,6 +727,7 @@ namespace CameraRemoteApp
             {
                 BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
                 datasetPipeline.RunPipelineAndSubpipelines();
+                (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
                 AddLog(State = "Started");
             }
         }

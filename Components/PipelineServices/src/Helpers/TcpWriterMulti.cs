@@ -104,14 +104,14 @@ namespace SAAC.PipelineServices
 
         private void Stop()
         {
+            this.listener.Stop();
+            this.listener.Server.Close();
             acceptingThread?.Abort();
             // Dispose active client if any
             if (this.clients.Count != 0)
                 foreach (var client in this.clients)
                     client.Dispose();
             this.clients.Clear();
-            this.listener.Stop();
-            this.listener.Server.Close();
         }
 
         private void Listen()
