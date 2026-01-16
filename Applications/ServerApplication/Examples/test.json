@@ -2,96 +2,114 @@
 	{
 		"topic": "1-Head",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Heads"
 	},
 	{
 		"topic": "2-Head",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Heads"
 	},
 	{
 		"topic": "3-Head",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Heads"
 	},
 
 	{
 		"topic": "1-LeftWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "LeftHands"
 	},
 	{
 		"topic": "2-LeftWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "LeftHands"
 	},
 	{
 		"topic": "3-LeftWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "LeftHands"
 	},
 
 	{
 		"topic": "1-RightWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "RightHands"
 	},
 	{
 		"topic": "2-RightWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "RightHands"
 	},
 	{
 		"topic": "3-RightWrist",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "RightHands"
 	},
 
 	{
 		"topic": "Generator1Pos",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Referentials"
 	},
 	{
 		"topic": "Generator2Pos",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Referentials"
 	},
 	{
 		"topic": "CentraleTable",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Referentials"
 	},
 	{
 		"topic": "ValidationArea",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Referentials"
 	},
 	{
 		"topic": "IterationArea",
 		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
-		"classFormat": "PsiFormatTupleOfVector"
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "Referentials"
 	},
 
 	{
 		"topic": "TaskEvent",
 		"type": "System.String",
-		"classFormat": "PsiFormatString"
+		"classFormat": "PsiFormatString",
+		"streamToStore": "Task"
 	},
 
 	{
 		"topic": "Area",
 		"type": "System.String",
-		"classFormat": "PsiFormatString"
+		"classFormat": "PsiFormatString",
+		"streamToStore": "Task"
 	},
 	{
 		"topic": "Generator2",
 		"type": "TestDll.GeneratorInteraction",
-		"classFormat": "PsiFormatGeneratorInteraction"
+		"classFormat": "PsiFormatGeneratorInteraction",
+		"streamToStore": "Individual Task Logs"
 	},
 	{
 		"topic": "PieceState",
 		"type": "TestDll.PieceStatus",
-		"classFormat": "PsiFormatPiecesState"
+		"classFormat": "PsiFormatPiecesState",
+		"streamToStore": "Task"
 	}
 ]
