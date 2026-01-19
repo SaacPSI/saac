@@ -166,5 +166,17 @@ namespace ServerApplication.Properties {
                 this["AnnotationHtmlPage"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("8080")]
+        public uint AnnotationPort {
+            get {
+                return ((uint)(this["AnnotationPort"]));
+            }
+            set {
+                this["AnnotationPort"] = value;
+            }
+        }
     }
 }

@@ -287,23 +287,27 @@ namespace CameraRemoteApp
 
         private void RefreshUIFromConfiguration()
         {
+            // Network Tab
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
             PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
-            LocalRecordingDatasetDirectoryTextBox.Text = PipelineConfigurationUI.DatasetPath = Properties.Settings.Default.DatasetPath;
-            LocalRecordingDatasetNameTextBox.Text = PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
             RendezVousApplicationNameUI = Properties.Settings.Default.ApplicationName;
             IpSelectedUI = Properties.Settings.Default.IpToUse;
             ExportPort = (int)Properties.Settings.Default.remotePort;
-            EncodingLevel = Properties.Settings.Default.encodingLevel;
-            SensorTypeComboBox.SelectedIndex = Properties.Settings.Default.sensorType;
-            VideoSourceComboBox.SelectedIndex = VideoSourceList.IndexOf(Properties.Settings.Default.videoSource);
 
             IsRemoteServer = Properties.Settings.Default.isServer;
             IsStreaming = Properties.Settings.Default.isStreaming;
             IsLocalRecording = Properties.Settings.Default.isLocalRecording;
+
+            // Local Recording Tab
+            LocalRecordingDatasetDirectoryTextBox.Text = PipelineConfigurationUI.DatasetPath = Properties.Settings.Default.DatasetPath;
+            LocalRecordingDatasetNameTextBox.Text = PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
             LocalSessionName = Properties.Settings.Default.localSessionName;
 
+            // VideoSources Tab
+            EncodingLevel = Properties.Settings.Default.encodingLevel;
+            SensorTypeComboBox.SelectedIndex = Properties.Settings.Default.sensorType;
+            VideoSourceComboBox.SelectedIndex = VideoSourceList.IndexOf(Properties.Settings.Default.videoSource);
 
             LoadConfigurations();
             Properties.Settings.Default.Save();
@@ -312,27 +316,43 @@ namespace CameraRemoteApp
 
         private void LoadConfigurations()
         {
+            // Load Command settings
             CommandSource = Properties.Settings.Default.commandSource;
-
-            // Load CommandPort
-            PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
+            CommandPort = Properties.Settings.Default.commandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
 
-            KinectAzureRemoteStreamsConfigurationUI.StartingPort = KinectRemoteStreamsConfigurationUI.StartingPort = NuitrackRemoteStreamsConfigurationUI.StartingPort = (int)Properties.Settings.Default.remotePort;
-            KinectAzureRemoteStreamsConfigurationUI.OutputAudio = KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
-            KinectAzureRemoteStreamsConfigurationUI.OutputBodies = KinectRemoteStreamsConfigurationUI.OutputBodies = NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
-            KinectAzureRemoteStreamsConfigurationUI.OutputColor = KinectRemoteStreamsConfigurationUI.OutputColor = NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            KinectAzureRemoteStreamsConfigurationUI.OutputDepth = KinectRemoteStreamsConfigurationUI.OutputDepth = NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
-            KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
+            // Load common sensor configurations
+            int startingPort = (int)Properties.Settings.Default.remotePort;
+            KinectAzureRemoteStreamsConfigurationUI.StartingPort = startingPort;
+            KinectRemoteStreamsConfigurationUI.StartingPort = startingPort;
+            NuitrackRemoteStreamsConfigurationUI.StartingPort = startingPort;
+
+            // Load Azure Kinect configuration
+            KinectAzureRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            KinectAzureRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            KinectAzureRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            KinectAzureRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
             KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
             KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS;
             KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
 
+            // Load Kinect configuration
+            KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            KinectRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            KinectRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            KinectRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
             KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
             KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
             KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
 
+            // Load Nuitrack configuration
+            NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
+            NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
             NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
             NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
             NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
@@ -341,37 +361,36 @@ namespace CameraRemoteApp
 
         private void RefreshConfigurationFromUI()
         {
-            // General Tab
+            // Network Tab
             Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
             Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
             Properties.Settings.Default.commandSource = CommandSource;
             Properties.Settings.Default.commandPort = CommandPort;
-            Properties.Settings.Default.DatasetPath = PipelineConfigurationUI.DatasetPath;
-            Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
             Properties.Settings.Default.ApplicationName = RendezVousApplicationNameUI;
             Properties.Settings.Default.IpToUse = IpSelectedUI;
-            Properties.Settings.Default.remotePort = (uint)ExportPort;
+
+            Properties.Settings.Default.isServer = IsRemoteServer;
+            Properties.Settings.Default.isStreaming = IsStreaming;
+            Properties.Settings.Default.isLocalRecording = IsLocalRecording;
+
+            // Local Recording Tab
+            Properties.Settings.Default.DatasetPath = PipelineConfigurationUI.DatasetPath;
+            Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
+            Properties.Settings.Default.localSessionName = LocalSessionName;
+
+            // VideoSources Tab - Common settings
             Properties.Settings.Default.encodingLevel = EncodingLevel;
             Properties.Settings.Default.sensorType = SensorTypeComboBox.SelectedIndex;
             Properties.Settings.Default.videoSource = VideoSourceComboBox.SelectedValue as string ?? "";
 
-            // Network Tab - Common settings for all sensors
-            Properties.Settings.Default.remotePort = (uint)KinectAzureRemoteStreamsConfigurationUI.StartingPort;
-            Properties.Settings.Default.audio = KinectAzureRemoteStreamsConfigurationUI.OutputAudio;
-            Properties.Settings.Default.skeleton = KinectAzureRemoteStreamsConfigurationUI.OutputBodies;
-            Properties.Settings.Default.rgb = KinectAzureRemoteStreamsConfigurationUI.OutputColor;
-            Properties.Settings.Default.depth = KinectAzureRemoteStreamsConfigurationUI.OutputDepth;
-            Properties.Settings.Default.depthCalibration = KinectAzureRemoteStreamsConfigurationUI.OutputCalibration;
-            Properties.Settings.Default.IMU = KinectAzureRemoteStreamsConfigurationUI.OutputImu;
-
-            // Sensor-specific settings based on selected sensor type
+            // Save sensor-specific settings based on selected sensor type
             switch ((ESensorType)SensorTypeComboBox.SelectedIndex)
             {
-                case ESensorType.Camera :// Camera
-                        // No specific settings for camera
+                case ESensorType.Camera:
+                    // No specific settings for camera
                     break;
 
-                case ESensorType.Kinect : // Kinect
+                case ESensorType.Kinect:
                     Properties.Settings.Default.remotePort = (uint)KinectRemoteStreamsConfigurationUI.StartingPort;
                     Properties.Settings.Default.audio = KinectRemoteStreamsConfigurationUI.OutputAudio;
                     Properties.Settings.Default.skeleton = KinectRemoteStreamsConfigurationUI.OutputBodies;
@@ -384,7 +403,7 @@ namespace CameraRemoteApp
                     Properties.Settings.Default.rgbd = KinectRemoteStreamsConfigurationUI.OutputRGBD;
                     break;
 
-                case ESensorType.AzureKinect : // Azure Kinect
+                case ESensorType.AzureKinect:
                     Properties.Settings.Default.remotePort = (uint)KinectAzureRemoteStreamsConfigurationUI.StartingPort;
                     Properties.Settings.Default.audio = KinectAzureRemoteStreamsConfigurationUI.OutputAudio;
                     Properties.Settings.Default.skeleton = KinectAzureRemoteStreamsConfigurationUI.OutputBodies;
@@ -397,23 +416,17 @@ namespace CameraRemoteApp
                     Properties.Settings.Default.videoResolution = ResolutionsList.IndexOf(KinectAzureRemoteStreamsConfigurationUI.ColorResolution);
                     break;
 
-                case ESensorType.Nuitrack : // Nuitrack
+                case ESensorType.Nuitrack:
                     Properties.Settings.Default.remotePort = (uint)NuitrackRemoteStreamsConfigurationUI.StartingPort;
                     Properties.Settings.Default.skeleton = NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking;
                     Properties.Settings.Default.rgb = NuitrackRemoteStreamsConfigurationUI.OutputColor;
                     Properties.Settings.Default.depth = NuitrackRemoteStreamsConfigurationUI.OutputDepth;
                     Properties.Settings.Default.hands = NuitrackRemoteStreamsConfigurationUI.OutputHandTracking;
                     Properties.Settings.Default.gestures = NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer;
+                    Properties.Settings.Default.nuitrackKey = NuitrackRemoteStreamsConfigurationUI.ActivationKey;
+                    Properties.Settings.Default.nuitrackDevice = NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber;
                     break;
             }
-
-            Properties.Settings.Default.isServer = IsRemoteServer;
-            Properties.Settings.Default.isStreaming = IsStreaming;
-            Properties.Settings.Default.isLocalRecording = IsLocalRecording;
-            Properties.Settings.Default.localSessionName = LocalSessionName;
-            Properties.Settings.Default.nuitrackKey = NuitrackRemoteStreamsConfigurationUI.ActivationKey;
-            Properties.Settings.Default.nuitrackDevice = NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber;
-
 
             Properties.Settings.Default.Save();
         }

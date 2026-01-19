@@ -38,5 +38,8 @@
     <Setting Name="AnnotationHtmlPage" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="AnnotationPort" Type="System.UInt32" Scope="User">
+      <Value Profile="(Default)">8080</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

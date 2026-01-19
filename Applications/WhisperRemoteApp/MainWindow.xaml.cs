@@ -1,9 +1,11 @@
 ﻿
+
 using Microsoft.Psi;
 using Microsoft.Psi.Audio;
 using Microsoft.Psi.Data;
 using Microsoft.Psi.Speech;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using SAAC;
 using SAAC.AudioRecording;
 using SAAC.PipelineServices;
@@ -39,10 +41,9 @@ namespace WhisperRemoteApp
                 {
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        if (propertyName != null)
+                        if (propertyName != null && !notTriggerProperties.Contains(propertyName))
                         {
-                            bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
-                            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
                         }
                     }));
                     field = value;
@@ -364,6 +365,13 @@ namespace WhisperRemoteApp
                     UiGenerator.AddRowsDefinitionToGrid(channelsGrid, GridLength.Auto, 1);
                     UiGenerator.SetElementInGrid(channelsGrid, UiGenerator.GenerateLabel($"Channel {channel}"), 0, channelsGrid.RowDefinitions.Count - 1);
                     TextBox input = UiGenerator.GeneratorTextBox($"i{micId}_{channel}", 50.0);
+                    
+                    // Add TextChanged handler to enable configuration buttons
+                    input.TextChanged += (sender, e) =>
+                    {
+                        BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                    };
+                    
                     UiGenerator.SetElementInGrid(channelsGrid, input, 1, channelsGrid.RowDefinitions.Count - 1);
                     User? oldConfig = audioSoucesSetup.SingleOrDefault((user) => { return user.Microphone == mics.Item1 && user.Channel == channel; });
                     if (oldConfig is null || oldConfig is default(User))
@@ -375,7 +383,7 @@ namespace WhisperRemoteApp
 
         private void RefreshUIFromConfiguration()
         {
-            // Newtork Tab
+            // Network Tab
             IsRemoteServer = Properties.Settings.Default.IsServer;
             IsStreaming = Properties.Settings.Default.IsStreaming;
             var ipResult = IPsList.Where((ip) => { return ip == Properties.Settings.Default.IpToUse; });
@@ -387,11 +395,17 @@ namespace WhisperRemoteApp
             CommandPort = Properties.Settings.Default.CommandPort;
             PipelineConfigurationUI.CommandPort = CommandPort;
             WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName = Properties.Settings.Default.ApplicationName;
+            WhisperRemoteStreamsConfigurationUI.ExportPort = (int)Properties.Settings.Default.RemotePort;
 
             // Audio Tab
             AudioSourceComboBox.SelectedIndex = Properties.Settings.Default.AudioSourceType;
+            selectedAudioSource = (AudioSource)Properties.Settings.Default.AudioSourceType;
+            
+            // Load audio sources configuration from JSON
+            LoadAudioSourcesFromJson();
 
-            //Whisper Tab
+
+            // Whisper Tab
             IsWhisper = Properties.Settings.Default.IsWhisper;
             VadConfigurationUI.BufferLengthInMs = Properties.Settings.Default.VadBufferLength;
             VadConfigurationUI.VoiceActivityStartOffsetMs = Properties.Settings.Default.VadStartOffset;
@@ -406,6 +420,7 @@ namespace WhisperRemoteApp
             WhisperModelComboBox.SelectedIndex = Properties.Settings.Default.WhisperModelType;
             WhisperQuantizationComboBox.SelectedIndex = Properties.Settings.Default.WhisperQuantizationType;
             WhisperModelDirectoryTextBox.Text = Properties.Settings.Default.WhisperModelDirectory;
+            WhisperConfigurationUI.ModelDirectory = Properties.Settings.Default.WhisperModelDirectory;
             if(Properties.Settings.Default.WhisperSpecificModelPath.Length > 0)
                 WhisperConfigurationUI.SpecificModelPath = WhisperModelSpecficPathTextBox.Text = Properties.Settings.Default.WhisperSpecificModelPath;
            
@@ -414,19 +429,22 @@ namespace WhisperRemoteApp
             else
                 WhisperModelGeneric.IsChecked = true;
 
-            //LocalRecording Tab
+            // Local Recording Tab
             IsLocalRecording = Properties.Settings.Default.IsLocalRecording;
             LocalSessionName = Properties.Settings.Default.LocalSessionName;
             switch (Properties.Settings.Default.LocalStoringMode)
             {
                 case 1:
                     LocalStoringModeAudio.IsChecked = true;
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.AudioOnly;
                     break;
                 case 2:
                     LocalStoringModeVADSTT.IsChecked = true;
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.VAD_STT;
                     break;
                 case 3:
                     LocalStoringModeAll.IsChecked = true;
+                    localStoringMode = WhisperAudioProcessing.LocalStorageMode.All;
                     break;
             }
             LocalDatasetPath = Properties.Settings.Default.LocalDatasetPath;
@@ -437,7 +455,7 @@ namespace WhisperRemoteApp
 
         private void RefreshConfigurationFromUI()
         {
-            // Newtork Tab
+            // Network Tab
             Properties.Settings.Default.IsServer = IsRemoteServer;
             Properties.Settings.Default.IsStreaming = IsStreaming;
             Properties.Settings.Default.IpToUse = pipelineConfiguration.RendezVousHost;
@@ -446,9 +464,15 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.CommandSource = CommandSource;
             Properties.Settings.Default.CommandPort = CommandPort;
             Properties.Settings.Default.ApplicationName = WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName;
+            Properties.Settings.Default.RemotePort = (uint)WhisperRemoteStreamsConfigurationUI.ExportPort;
 
             // Audio Tab
             Properties.Settings.Default.AudioSourceType = AudioSourceComboBox.SelectedIndex;
+            Properties.Settings.Default.AudioSourceDatasetPath = AudioSourceDatasetPath;
+            Properties.Settings.Default.AudioSourceSessionName = AudioSourceSessionName;
+            
+            // Save audio sources configuration to JSON
+            SaveAudioSourcesToJson();
 
             // Whisper Tab
             Properties.Settings.Default.IsWhisper = IsWhisper;
@@ -466,7 +490,7 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.WhisperQuantizationType = WhisperQuantizationComboBox.SelectedIndex;
             Properties.Settings.Default.WhisperModelDirectory = WhisperConfigurationUI.ModelDirectory;
             Properties.Settings.Default.WhisperSpecificModelPath = WhisperModelSpecficPathTextBox.Text;
-            Properties.Settings.Default.WhipserModelType = (bool)WhisperModelGeneric.IsChecked;
+            Properties.Settings.Default.WhipserModelType = (bool)WhisperModelSpecific.IsChecked;
 
             // Local Recording Tab
             Properties.Settings.Default.IsLocalRecording = IsLocalRecording;
@@ -474,8 +498,8 @@ namespace WhisperRemoteApp
             Properties.Settings.Default.LocalStoringMode = (bool)LocalStoringModeAudio.IsChecked ? 1 : ((bool)LocalStoringModeVADSTT.IsChecked ? 2 : 3);
             Properties.Settings.Default.LocalDatasetPath = LocalDatasetPath;
             Properties.Settings.Default.LocalDatasetName = LocalDatasetName;
+            
             Properties.Settings.Default.Save();
-
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
         }
 
@@ -926,9 +950,21 @@ namespace WhisperRemoteApp
             UiGenerator.AddRowsDefinitionToGrid(WaveFilesGrid, GridLength.Auto, 1);
             int position = WaveFilesGrid.RowDefinitions.Count - 1;
             TextBox waveFileTextBox = UiGenerator.GeneratePathTextBox(300.0, $"WaveFile_{position}");
+            
+            // Add TextChanged handler to enable configuration buttons
+            waveFileTextBox.TextChanged += (sender, e) =>
+            {
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            };
+            
             UiGenerator.SetElementInGrid(WaveFilesGrid, waveFileTextBox, 0, WaveFilesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(WaveFilesGrid, UiGenerator.GenerateBrowseFilenameButton("Browse", waveFileTextBox, "Wave (*.wav)|*.wav"), 1, WaveFilesGrid.RowDefinitions.Count - 1);
-            UiGenerator.SetElementInGrid(WaveFilesGrid, UiGenerator.GenerateButton("Remove", (sender, e) => { UiGenerator.RemoveRowInGrid(WaveFilesGrid, position); e.Handled = true; }), 2, WaveFilesGrid.RowDefinitions.Count - 1);
+            UiGenerator.SetElementInGrid(WaveFilesGrid, UiGenerator.GenerateButton("Remove", (sender, e) => 
+            { 
+                UiGenerator.RemoveRowInGrid(WaveFilesGrid, position); 
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                e.Handled = true; 
+            }), 2, WaveFilesGrid.RowDefinitions.Count - 1);
         }
 
         private void AudioSourceDatasetButtonClick(object sender, RoutedEventArgs e)
@@ -963,7 +999,19 @@ namespace WhisperRemoteApp
         private void GenerateAudioSourceDatasetRowStream(string streamName)
         {
             UiGenerator.AddRowsDefinitionToGrid(AudioSourceDatasetStreamsGrid, GridLength.Auto, 1);
-            UiGenerator.SetElementInGrid(AudioSourceDatasetStreamsGrid, UiGenerator.GenerateCheckBox(streamName, false, null, streamName), 0, AudioSourceDatasetStreamsGrid.RowDefinitions.Count - 1);
+            CheckBox checkBox = UiGenerator.GenerateCheckBox(streamName, false, null, streamName);
+            
+            // Add Checked/Unchecked handlers to enable configuration buttons
+            checkBox.Checked += (sender, e) =>
+            {
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            };
+            checkBox.Unchecked += (sender, e) =>
+            {
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            };
+            
+            UiGenerator.SetElementInGrid(AudioSourceDatasetStreamsGrid, checkBox, 0, AudioSourceDatasetStreamsGrid.RowDefinitions.Count - 1);
         }
 
         private void CkbActivateNetwork(object sender, RoutedEventArgs e)
@@ -1181,6 +1229,120 @@ namespace WhisperRemoteApp
                         audioSoucesSetup.Add(new User(checkBox.Name, checkBox.Name, 1));
                 }
             }
+        }
+
+        private void LoadAudioSourcesFromJson()
+        {
+            try
+            {
+                // Load dataset path and session name from Settings
+                AudioSourceDatasetPath = Properties.Settings.Default.AudioSourceDatasetPath;
+                AudioSourceSessionName = Properties.Settings.Default.AudioSourceSessionName;
+                AudioSourceDatasetTextBox.Text = AudioSourceDatasetPath;
+                AudioSourceSessionNameTextBox.Text = AudioSourceSessionName;
+
+                // Load microphone configurations
+                string audioSourcesJson = Properties.Settings.Default.AudioSourcesJson;
+                if (!string.IsNullOrEmpty(audioSourcesJson))
+                {
+                    var loadedSources = JsonConvert.DeserializeObject<List<AudioSourceConfig>>(audioSourcesJson);
+                    if (loadedSources != null)
+                    {
+                        audioSoucesSetup.Clear();
+                        foreach (var source in loadedSources)
+                        {
+                            audioSoucesSetup.Add(new User(source.Id, source.Microphone, source.Channel));
+                        }
+                    }
+                }
+
+                // Load wave files
+                string waveFilesJson = Properties.Settings.Default.WaveFilesJson;
+                if (!string.IsNullOrEmpty(waveFilesJson))
+                {
+                    var loadedWaveFiles = JsonConvert.DeserializeObject<List<string>>(waveFilesJson);
+                    if (loadedWaveFiles != null && selectedAudioSource == AudioSource.WaveFiles)
+                    {
+                        // Clear existing wave file rows (except the first empty one)
+                        WaveFilesGrid.RowDefinitions.Clear();
+                        WaveFilesGrid.Children.Clear();
+                        
+                        foreach (var waveFile in loadedWaveFiles)
+                        {
+                            AddWavFile();
+                            // Set the text of the last added TextBox
+                            var lastTextBox = WaveFilesGrid.Children.OfType<TextBox>().LastOrDefault();
+                            if (lastTextBox != null)
+                            {
+                                lastTextBox.Text = waveFile;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Error loading audio sources from JSON: {ex.Message}");
+            }
+        }
+
+        private void SaveAudioSourcesToJson()
+        {
+            try
+            {
+                // Save dataset path and session name
+                AudioSourceDatasetPath = AudioSourceDatasetTextBox.Text;
+                AudioSourceSessionName = AudioSourceSessionNameTextBox.Text;
+                Properties.Settings.Default.AudioSourceDatasetPath = AudioSourceDatasetPath;
+                Properties.Settings.Default.AudioSourceSessionName = AudioSourceSessionName;
+
+                // Save microphone configurations
+                switch (selectedAudioSource)
+                {
+                    case AudioSource.Microphones:
+                        GetMicrophonesConfiguration();
+                        break;
+                    case AudioSource.WaveFiles:
+                        GetWaveFilesConfiguration();
+                        break;
+                    case AudioSource.Dataset:
+                        GetAudioSourceStreamConfiguration();
+                        break;
+                }
+
+                var audioSourceConfigs = audioSoucesSetup.Select(u => new AudioSourceConfig
+                {
+                    Id = u.Id,
+                    Microphone = u.Microphone,
+                    Channel = u.Channel
+                }).ToList();
+                Properties.Settings.Default.AudioSourcesJson = JsonConvert.SerializeObject(audioSourceConfigs);
+
+                // Save wave files
+                var waveFiles = new List<string>();
+                foreach (UIElement element in WaveFilesGrid.Children)
+                {
+                    if (element is TextBox textBox && !string.IsNullOrEmpty(textBox.Text))
+                    {
+                        waveFiles.Add(textBox.Text);
+                    }
+                }
+                Properties.Settings.Default.WaveFilesJson = JsonConvert.SerializeObject(waveFiles);
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Error saving audio sources to JSON: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Helper class for JSON serialization of audio source configuration
+        /// </summary>
+        private class AudioSourceConfig
+        {
+            public string Id { get; set; }
+            public string Microphone { get; set; }
+            public int Channel { get; set; }
         }
     }
 }

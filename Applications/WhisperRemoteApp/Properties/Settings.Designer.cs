@@ -349,6 +349,54 @@ namespace WhisperRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioSourceDatasetPath {
+            get {
+                return ((string)(this["AudioSourceDatasetPath"]));
+            }
+            set {
+                this["AudioSourceDatasetPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioSourceSessionName {
+            get {
+                return ((string)(this["AudioSourceSessionName"]));
+            }
+            set {
+                this["AudioSourceSessionName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioSourcesJson {
+            get {
+                return ((string)(this["AudioSourcesJson"]));
+            }
+            set {
+                this["AudioSourcesJson"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WaveFilesJson {
+            get {
+                return ((string)(this["WaveFilesJson"]));
+            }
+            set {
+                this["WaveFilesJson"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool WhipserModelType {
             get {

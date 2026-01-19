@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using SAAC;
 using SAAC.PipelineServices;
-using SAAC.PipelineServices;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,18 +14,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
 using System.Numerics;
-using static ServerApplication.MainWindow;
-using Newtonsoft.Json;
 using ServerApplication.Helpers;
 using System.Reflection;
 
@@ -150,6 +141,13 @@ namespace ServerApplication
             set => SetProperty(ref annotationWebPage, value);
         }
 
+        private uint annotationPort = 8080;
+        public uint AnnotationPort
+        {
+            get => annotationPort;
+            set => SetProperty(ref annotationPort, value);
+        }
+
         // Log Tab
         private string log = "Not Initialised\n";
         public string Log
@@ -211,6 +209,7 @@ namespace ServerApplication
         private void SetupAnnotationTab()
         {
             // Initialize annotation tab state
+            UiGenerator.SetTextBoxPreviewTextChecker<uint>(AnnotationPortTextBox, uint.TryParse);
             UpdateAnnotationTab();
         }
 
@@ -229,6 +228,7 @@ namespace ServerApplication
             IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
             AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
+            AnnotationPort = Properties.Settings.Default.AnnotationPort;
         }
         private void RefreshUIFromConfiguration()
         {
@@ -240,6 +240,7 @@ namespace ServerApplication
             IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
             AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
+            AnnotationPort = Properties.Settings.Default.AnnotationPort;
             UpdateAnnotationTab();
             
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
@@ -261,6 +262,7 @@ namespace ServerApplication
             Properties.Settings.Default.IsAnnotationEnabled = IsAnnotationEnabled;
             Properties.Settings.Default.AnnotationSchemasPath = AnnotationSchemaDirectory;
             Properties.Settings.Default.AnnotationHtmlPage = AnnotationWebPage;
+            Properties.Settings.Default.AnnotationPort = AnnotationPort;
             
             Properties.Settings.Default.Save();
 
@@ -324,7 +326,7 @@ namespace ServerApplication
         private void SetupWebSocketsAndAnnotations()
         {
             // Create list of addresses for WebSocket
-            List<string> addresses = new List<string>() { $"http://{Configuration.RendezVousHost}:8080/ws/"};
+            List<string> addresses = new List<string>() { $"http://{Configuration.RendezVousHost}:{AnnotationPort}/ws/"};
 
             if (!IsAnnotationEnabled)
             {
@@ -354,7 +356,7 @@ namespace ServerApplication
                 }
 
                 // Add HTTP
-                addresses.Add($"http://{Configuration.RendezVousHost}:8080/");
+                addresses.Add($"http://{Configuration.RendezVousHost}:{AnnotationPort}/");
 
                 // Instantiate the HTTPAnnotationsComponent
                 websocketManager = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(server, addresses, AnnotationSchemaDirectory, AnnotationWebPage);
@@ -767,6 +769,11 @@ namespace ServerApplication
         {
             LoadConfigurationFromJsonFile();
             e.Handled = true;
+        }
+        
+        private void AnnotationPortTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
         }
         #endregion
 

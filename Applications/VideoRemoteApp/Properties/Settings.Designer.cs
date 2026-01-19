@@ -145,49 +145,13 @@ namespace VideoRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int cropX {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string croppingAreasJson {
             get {
-                return ((int)(this["cropX"]));
+                return ((string)(this["croppingAreasJson"]));
             }
             set {
-                this["cropX"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int cropY {
-            get {
-                return ((int)(this["cropY"]));
-            }
-            set {
-                this["cropY"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int cropWidth {
-            get {
-                return ((int)(this["cropWidth"]));
-            }
-            set {
-                this["cropWidth"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int cropHeight {
-            get {
-                return ((int)(this["cropHeight"]));
-            }
-            set {
-                this["cropHeight"] = value;
+                this["croppingAreasJson"] = value;
             }
         }
         
