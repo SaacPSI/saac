@@ -322,7 +322,7 @@ namespace VideoRemoteApp
             IsStreaming = Properties.Settings.Default.isStreaming;
             var ipResult = IPsList.Where((ip) => { return ip == Properties.Settings.Default.ipToUse; });
             RendezVousHostComboBox.SelectedIndex = ipResult.Count() == 0 ? 0 : IPsList.IndexOf(ipResult.First());
-            IpSelectedUI = Properties.Settings.Default.ipToUse;
+            IpSelectedUI = ipResult.First();
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.ipToUse;
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
@@ -560,7 +560,7 @@ namespace VideoRemoteApp
             WindowCaptureConfiguration cfg = new WindowCaptureConfiguration() { Interval = videoRemoteAppConfiguration.Interval};
             WindowCapture capture = new WindowCapture(datasetPipeline.Pipeline, cfg);
             IProducer<Shared<Microsoft.Psi.Imaging.EncodedImage>> videoSource;
-
+            Rendezvous.Process proc = new Rendezvous.Process(rendezVousApplicationName);
             foreach (KeyValuePair<string, System.Drawing.Rectangle> cropArea in videoRemoteAppConfiguration.CroppingAreas)
             {
                 if (cropArea.Value.IsEmpty || cropArea.Value.Width <= 0 || cropArea.Value.Height <= 0)
@@ -570,15 +570,16 @@ namespace VideoRemoteApp
                 }
                 SAAC.Helpers.ImageCropper cropRect = new SAAC.Helpers.ImageCropper(datasetPipeline.Pipeline, cropArea.Value);
                 capture.Out.PipeTo(cropRect.In);
-                ProcessProducer(cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), cropArea.Key, ExportPort++);
+                ProcessProducer(cropRect.Out.EncodeJpeg(videoRemoteAppConfiguration.EncodingVideoLevel, DeliveryPolicy.LatestMessage), cropArea.Key, ExportPort++, ref proc);
                 AddLog($"Cropping area '{cropArea.Key}' configured: X={cropArea.Value.X}, Y={cropArea.Value.Y}, Width={cropArea.Value.Width}, Height={cropArea.Value.Height}");
             }
 
+            (datasetPipeline as RendezVousPipeline)?.AddProcess(proc);
             AddLog(State = "Video initialised");
             setupState = SetupState.VideoInitialised;
         }
 
-        private void ProcessProducer(IProducer<Shared<EncodedImage>> producer, string streamName, int exportPort)
+        private void ProcessProducer(IProducer<Shared<EncodedImage>> producer, string streamName, int exportPort, ref Rendezvous.Process proc)
         {
             if (datasetPipeline is null)
             {
@@ -588,7 +589,7 @@ namespace VideoRemoteApp
             {
                 RemoteExporter imageExporter = new RemoteExporter(datasetPipeline.Pipeline, exportPort, TransportKind.Tcp);
                 imageExporter.Exporter.Write(producer, streamName);
-                (datasetPipeline as RendezVousPipeline)?.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost)]));
+                proc.AddEndpoint(imageExporter.ToRendezvousEndpoint(pipelineConfiguration.RendezVousHost));
             }
             else
             {

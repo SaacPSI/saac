@@ -467,7 +467,7 @@ namespace CameraRemoteApp
                 return;
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != KinectAzureRemoteStreamsConfigurationUI.RendezVousApplicationName || args[0] == "*")
+            if (args[0] != RendezVousApplicationNameUI || args[0] == "*")
                 return;
 
             datasetPipeline.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
@@ -483,12 +483,13 @@ namespace CameraRemoteApp
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         SetupSensor();
+                        Start();
                     }));
                     break;
                 case RendezVousPipeline.Command.Stop:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        datasetPipeline.Stop();
+                        Stop();
                     }));
                     break;
                 case RendezVousPipeline.Command.Close:
@@ -668,7 +669,7 @@ namespace CameraRemoteApp
             if (isRemoteServer)
             {
                 RendezVousPipeline rdv = datasetPipeline as RendezVousPipeline;
-                nuitrackConfiguration.RendezVousApplicationName = rendezVousApplicationName;
+                nuitrackConfiguration.RendezVousApplicationName = RendezVousApplicationNameUI;
                 nuitrackConfiguration.IpToUse = ipSelected;
                 nuitrackConfiguration.StartingPort = exportPort;
                 var nuitrackStreams = new SAAC.RemoteConnectors.NuitrackRemoteStreamsComponent(rdv, nuitrackConfiguration, isLocalRecording);
@@ -703,6 +704,9 @@ namespace CameraRemoteApp
         private void SetupCamera()
         {
             MediaCaptureConfiguration configuration = new MediaCaptureConfiguration();
+            //configuration.Framerate = 25;
+            //configuration.Height = 240;
+            //configuration.Width = 320;
             configuration.DeviceId = VideoSourceComboBox.SelectedValue as string;
             MediaCapture camera = new MediaCapture(datasetPipeline.Pipeline, configuration);
             var compressed = camera.Out.EncodeJpeg(encodingLevel);
