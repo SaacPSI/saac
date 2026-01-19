@@ -134,10 +134,10 @@ namespace SAAC.AudioRecording
         {
             if (splitter.ContainsKey(user.Microphone))
             {
-                if (splitter[user.Microphone].Audios.Count() <= user.Channel)
+                if (splitter[user.Microphone].Audios.Count() < user.Channel)
                     throw new Exception("Incorrect channel number.");
-                server.CreateConnectorAndStore("Audio", $"Audio_User_{user.Id}", server.CreateOrGetSessionFromMode(sessionName), pipeline, typeof(AudioBuffer), splitter[user.Microphone].Audios[user.Channel], LocalStore);
-                UserAudioStreamDictionnary.Add(user, splitter[user.Microphone].Audios[user.Channel]);
+                server.CreateConnectorAndStore("Audio", $"Audio_User_{user.Id}", server.CreateOrGetSessionFromMode(sessionName), pipeline, typeof(AudioBuffer), splitter[user.Microphone].Audios[user.Channel-1], LocalStore);
+                UserAudioStreamDictionnary.Add(user, splitter[user.Microphone].Audios[user.Channel-1]);
             }
             else if (mics.ContainsKey(user.Microphone))
             { 
@@ -153,11 +153,11 @@ namespace SAAC.AudioRecording
         {
             if (splitter.ContainsKey(user.Microphone))
             {
-                if (splitter[user.Microphone].Audios.Count() >= user.Channel)
+                if (splitter[user.Microphone].Audios.Count() < user.Channel)
                     throw new Exception("Incorrect channel number.");
                 if (LocalStore)
                     splitter[user.Microphone].Audios[user.Channel].Write($"Audio_user{user.Id}", AudioStore);
-                UserAudioStreamDictionnary.Add(user, splitter[user.Microphone].Audios[user.Channel]);
+                UserAudioStreamDictionnary.Add(user, splitter[user.Microphone].Audios[user.Channel-1]);
             }
             else if (mics.ContainsKey(user.Microphone))
             {
