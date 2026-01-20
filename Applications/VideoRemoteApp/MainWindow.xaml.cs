@@ -321,8 +321,11 @@ namespace VideoRemoteApp
             IsRemoteServer = Properties.Settings.Default.isServer;
             IsStreaming = Properties.Settings.Default.isStreaming;
             var ipResult = IPsList.Where((ip) => { return ip == Properties.Settings.Default.ipToUse; });
-            RendezVousHostComboBox.SelectedIndex = ipResult.Count() == 0 ? 0 : IPsList.IndexOf(ipResult.First());
-            IpSelectedUI = ipResult.First();
+            if (ipResult.Count() > 0)
+            {
+                RendezVousHostComboBox.SelectedIndex = ipResult.Count() == 0 ? 0 : IPsList.IndexOf(ipResult.First());
+                IpSelectedUI = ipResult.First();
+            }
             PipelineConfigurationUI.RendezVousHost = Properties.Settings.Default.ipToUse;
             RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
             PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
