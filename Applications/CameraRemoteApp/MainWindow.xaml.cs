@@ -210,7 +210,7 @@ namespace CameraRemoteApp
             notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
             internalLog = (log) =>
             {
-                Application.Current.Dispatcher.Invoke(new Action(() =>
+                Application.Current?.Dispatcher?.Invoke(new Action(() =>
                 {
                     Log += $"{log}\n";
                 }));
@@ -728,9 +728,16 @@ namespace CameraRemoteApp
         private void Stop()
         {
             AddLog(State = "Stopping");
-            datasetPipeline?.Dispose();
-            Application.Current.Shutdown();
             (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopping");
+            if (datasetPipeline is RendezVousPipeline)
+            {
+                (datasetPipeline as RendezVousPipeline)?.Dispose();
+            }
+            else
+            {
+                datasetPipeline?.Dispose();
+            }
+            Application.Current.Shutdown();
         }
 
         private void StartNetwork()

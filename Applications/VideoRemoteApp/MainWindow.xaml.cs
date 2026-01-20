@@ -222,7 +222,7 @@ namespace VideoRemoteApp
         {
             internalLog = (log) =>
             {
-                Application.Current.Dispatcher.Invoke(new Action(() =>
+                Application.Current?.Dispatcher?.Invoke(new Action(() =>
                 {
                     Log += $"{log}\n";
                 }));
@@ -600,10 +600,16 @@ namespace VideoRemoteApp
         private void Stop()
         {
             AddLog(State = "Stopping");
-            datasetPipeline?.Stop();
-            datasetPipeline?.Dispose();
-            Application.Current.Shutdown();
             (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
+            //if (datasetPipeline is RendezVousPipeline)
+            //{
+            //    (datasetPipeline as RendezVousPipeline)?.Dispose();
+            //}
+            //else
+            //{
+                datasetPipeline?.Dispose();
+           // }
+            Application.Current.Shutdown();
         }
 
         private void StartNetwork()

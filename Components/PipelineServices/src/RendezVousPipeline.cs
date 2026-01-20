@@ -31,7 +31,7 @@ namespace SAAC.PipelineServices
         protected dynamic rendezVous;
         protected Pipeline commandPipeline;
         protected List<Rendezvous.Process> rendezvousProcessesToAddWhenActive;
-        private List<Pipeline> subCommandPipelines = new List<Pipeline>();
+        private List<TcpSource<(Command, string)>> commandTcpSources = new List<TcpSource<(Command, string)>>();
 
         private Helpers.PipeToMessage<(Command, string)> p2m;
 
@@ -86,8 +86,8 @@ namespace SAAC.PipelineServices
             var copy = processNames.DeepClone();
             foreach (var prcName in copy)
                 RemoveProcess(prcName);
-            foreach (var subCommandPipeline in subCommandPipelines)
-                subCommandPipeline.Dispose();
+            foreach (var commandSource in commandTcpSources)
+                commandSource.Dispose();
             commandPipeline.Dispose();
             base.Dispose();
             rendezVous.Dispose();
@@ -353,7 +353,7 @@ namespace SAAC.PipelineServices
                             p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                             subCommandPipeline.Start((d) => {});
-                            subCommandPipelines.Add(subCommandPipeline);
+                            commandTcpSources.Add(tcpSource);
                             //TriggerNewProcessEvent(process.Name);
                             Log($"Subpipeline {process.Name} started."); 
                             return;

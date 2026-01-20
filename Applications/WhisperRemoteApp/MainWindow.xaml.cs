@@ -536,7 +536,7 @@ namespace WhisperRemoteApp
 
         private void SetupTranscription()
         {
-            Application.Current.Dispatcher.Invoke(new Action(() =>
+            Application.Current?.Dispatcher?.Invoke(new Action(() =>
             {
                 if (TranscriptionFilenameTextBox.Text.Length > 5)
                     transcriptionManager = new WhipserTranscriptionToWordManager();
@@ -772,14 +772,21 @@ namespace WhisperRemoteApp
         private void Stop()
         {
             AddLog(State = "Stopping");
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
             localDataset?.Save();
             transcriptionManager?.WriteTranscription(Path.Combine(TranscriptionPathTextBox.Text, TranscriptionFilenameTextBox.Text));
             rendezVousPipeline?.RemoveProcess(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);
             rendezVousPipeline?.Stop();
             audioManager?.Stop();
             whisperAudioProcessing?.Stop();
-            pipeline?.Dispose();
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
+            if (rendezVousPipeline is not null)
+            {
+                rendezVousPipeline.Dispose();
+            }
+            else
+            {
+                pipeline?.Dispose();
+            }
             Application.Current.Shutdown();
         }
 
