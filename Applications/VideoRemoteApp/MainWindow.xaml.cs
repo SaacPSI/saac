@@ -634,6 +634,7 @@ namespace VideoRemoteApp
                 if (remotePipeline != null)
                 {
                     remotePipeline.Start();
+                    remotePipeline.RunPipelineAndSubpipelines();
                     remotePipeline.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
                 }
                 else

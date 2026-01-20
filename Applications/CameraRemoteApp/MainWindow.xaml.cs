@@ -704,9 +704,9 @@ namespace CameraRemoteApp
         private void SetupCamera()
         {
             MediaCaptureConfiguration configuration = new MediaCaptureConfiguration();
-            //configuration.Framerate = 25;
-            //configuration.Height = 240;
-            //configuration.Width = 320;
+            configuration.Framerate = 25;
+            configuration.Height = 2400;
+            configuration.Width = 3200;
             configuration.DeviceId = VideoSourceComboBox.SelectedValue as string;
             MediaCapture camera = new MediaCapture(datasetPipeline.Pipeline, configuration);
             var compressed = camera.Out.EncodeJpeg(encodingLevel);
