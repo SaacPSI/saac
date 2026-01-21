@@ -14,6 +14,7 @@ using Microsoft.Psi.Media;
 using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Components;
+using Microsoft.Psi.Media_Interop;
 
 namespace CameraRemoteApp
 {
@@ -31,8 +32,11 @@ namespace CameraRemoteApp
         {
             if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             {
-                bool enableConfigurationButton = !notTriggerProperties.Contains(propertyName);
-                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = enableConfigurationButton;
+                if (propertyName != null && !notTriggerProperties.Contains(propertyName))
+                {
+                    BtnLoadConfig?.IsEnabled = true;
+                    BtnSaveConfig?.IsEnabled = true;
+                }
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
@@ -158,6 +162,7 @@ namespace CameraRemoteApp
         public List<ESensorType> SensorTypeList { get; }
         public List<string> VideoSourceList { get; set; }
 
+        public List<string> CameraCaptureFormat { get; private set; }
         public List<Microsoft.Azure.Kinect.Sensor.ColorResolution> ResolutionsList { get; }
         public List<Microsoft.Azure.Kinect.Sensor.FPS> FPSList { get; }
 
@@ -204,6 +209,7 @@ namespace CameraRemoteApp
         private DatasetPipeline? datasetPipeline;
         private SetupState setupState;
         private LogStatus internalLog;
+        private List<CaptureFormat> cameraFormats;
 
         public MainWindow()
         {
@@ -224,19 +230,21 @@ namespace CameraRemoteApp
             VideoSourceList = Microsoft.Psi.Media.MediaCapture.GetAvailableCameras();
             ResolutionsList = new List<Microsoft.Azure.Kinect.Sensor.ColorResolution>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.ColorResolution)).Cast<Microsoft.Azure.Kinect.Sensor.ColorResolution>());
             FPSList = new List<Microsoft.Azure.Kinect.Sensor.FPS>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.FPS)).Cast<Microsoft.Azure.Kinect.Sensor.FPS>());
+            CameraCaptureFormat = new List<string>();
+            cameraFormats = new List<CaptureFormat>();
 
             IPsList = new List<string> {"localhost"};
             IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
             datasetPipeline = null;
 
+            LoadConfigurations();
             InitializeComponent();
             UpdateLayout();
-            LoadConfigurations();
 
             SetupNetworkTab();
             SetupLocalRecordingTab();
             SetupVideoSourceTab();
-            RefreshUIFromConfiguration();
+            RefreshUIFromConfiguration(); 
         }
 
         private void SetupVideoSourceTab()
@@ -312,6 +320,7 @@ namespace CameraRemoteApp
             LoadConfigurations();
             Properties.Settings.Default.Save();
             UpdateLayout();
+            UpdateCameraCaptureFormat(Properties.Settings.Default.cameraCaptureFormat);
         }
 
         private void LoadConfigurations()
@@ -382,6 +391,7 @@ namespace CameraRemoteApp
             Properties.Settings.Default.encodingLevel = EncodingLevel;
             Properties.Settings.Default.sensorType = SensorTypeComboBox.SelectedIndex;
             Properties.Settings.Default.videoSource = VideoSourceComboBox.SelectedValue as string ?? "";
+            Properties.Settings.Default.cameraCaptureFormat = CameraCaptureFormatComboBox.SelectedIndex >= 0 ? CameraCaptureFormatComboBox.SelectedIndex : 0;
 
             // Save sensor-specific settings based on selected sensor type
             switch ((ESensorType)SensorTypeComboBox.SelectedIndex)
@@ -467,7 +477,7 @@ namespace CameraRemoteApp
                 return;
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != RendezVousApplicationNameUI || args[0] == "*")
+            if (args[0] != RendezVousApplicationNameUI && args[0] != "*")
                 return;
 
             datasetPipeline.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
@@ -704,9 +714,10 @@ namespace CameraRemoteApp
         private void SetupCamera()
         {
             MediaCaptureConfiguration configuration = new MediaCaptureConfiguration();
-            configuration.Framerate = 25;
-            configuration.Height = 2400;
-            configuration.Width = 3200;
+            CaptureFormat formats = cameraFormats[CameraCaptureFormatComboBox.SelectedIndex];
+            configuration.Framerate = formats.nFrameRateNumerator / formats.nFrameRateDenominator;
+            configuration.Height = formats.nHeight;
+            configuration.Width = formats.nWidth;
             configuration.DeviceId = VideoSourceComboBox.SelectedValue as string;
             MediaCapture camera = new MediaCapture(datasetPipeline.Pipeline, configuration);
             var compressed = camera.Out.EncodeJpeg(encodingLevel);
@@ -802,9 +813,29 @@ namespace CameraRemoteApp
             e.Handled = true;
         }
 
+        private void UpdateCameraCaptureFormat(int index = 0)
+        {
+            CameraCaptureFormat.Clear();
+            cameraFormats = MediaCapture.GetAvailableFormats(VideoSourceComboBox.SelectedValue as string ?? Properties.Settings.Default.videoSource);
+            foreach (CaptureFormat format in cameraFormats)
+            {
+                CameraCaptureFormat.Add($"{format.nWidth}x{format.nHeight}@{format.nFrameRateNumerator}");
+            }
+            if (CameraCaptureFormat.Count > 0)
+            {
+                CameraCaptureFormatComboBox.SelectedIndex = index > CameraCaptureFormat.Count ? 0 : index;
+            }
+        }
+
+        private void VideoSourceSelected(object sender, RoutedEventArgs e)
+        {
+            UpdateCameraCaptureFormat();
+            e.Handled = true;
+        }
+
         private void SensorTypeSelected(object sender, RoutedEventArgs e)
         {
-            KinectConfiguration.Visibility = NuitrackConfiguration.Visibility = AzureKinectConfiguration.Visibility = Visibility.Collapsed;
+            CameraConfiguration.Visibility = KinectConfiguration.Visibility = NuitrackConfiguration.Visibility = AzureKinectConfiguration.Visibility = Visibility.Collapsed;
             switch (SensorTypeComboBox.SelectedIndex)
             {
                 case 3:
@@ -820,11 +851,14 @@ namespace CameraRemoteApp
                     KinectConfiguration.Visibility = Visibility.Visible;
                     break;
                 case 0:
-                    sensorType = ESensorType.Camera;
+                    sensorType = ESensorType.Camera; 
+                    UpdateCameraCaptureFormat();
+                    CameraConfiguration.Visibility = Visibility.Visible;
                     break;
             }
 
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            e.Handled = true;
         }
 
         private void AddLog(string logMessage)

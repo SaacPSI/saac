@@ -40,6 +40,10 @@
                             </Grid.RowDefinitions>
                         </Grid>
                     </GroupBox>
+                    <StackPanel Name="AllDevicesStackPanel" Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Margin="50,120,40,50" IsEnabled="False">
+                        <Button Name="StartAllDevicesButton" Click="StartAllDevices" Margin="0,0,0,0" Width="100">Start All</Button>
+                        <Button Name="StoplAllDevicesButton" Click="StopAllDevices" Margin="155,0,0,0" Width="100">Stop All</Button>
+                    </StackPanel>
 
                     <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,21">
                         <Grid>

@@ -77,7 +77,7 @@
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Row="0" Grid.Column="0" Content="Video Source :" FontWeight="Bold" FontSize="14"/>
-                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding VideoSourceList}" Name="VideoSourceComboBox"/>
+                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding VideoSourceList}" Name="VideoSourceComboBox" SelectionChanged="VideoSourceSelected"/>
                     <Label Grid.Row="1" Grid.Column="0" Content="Sensor type :" FontWeight="Bold" FontSize="14"/>
                     <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding SensorTypeList}" SelectionChanged="SensorTypeSelected" Name="SensorTypeComboBox"/>
                     <GroupBox Header="Azure Kinect Configuration" Name="AzureKinectConfiguration" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
@@ -160,6 +160,19 @@
                             <CheckBox Grid.Row="6" Grid.Column="0" Name="KinectInfrared" Content="Infrared" IsChecked="{Binding KinectRemoteStreamsConfigurationUI.OutputInfrared}"/>
                             <CheckBox Grid.Row="7" Grid.Column="0" Name="KinectLongExposureInfrared" Content="Long Exposure Infrared" IsChecked="{Binding KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared}"/>
                             <CheckBox Grid.Row="8" Grid.Column="0" Name="KinectColorToCameraMapping" Content="Color To Camera Mapping" IsChecked="{Binding KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping}"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Camera Configuration" Name="CameraConfiguration" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >
+                        <Grid >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Capture Format :"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding CameraCaptureFormat}" Name="CameraCaptureFormatComboBox"/>
                         </Grid>
                     </GroupBox>
                     <Label Grid.Row="4" Grid.Column="0" Content="Image Encoding Level"/>

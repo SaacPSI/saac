@@ -510,7 +510,7 @@ namespace WhisperRemoteApp
             
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName)
+            if (args[0] != WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName && args[0] != "*")
                 return;
 
             switch (message.Data.Item1)
@@ -772,7 +772,7 @@ namespace WhisperRemoteApp
         private void Stop()
         {
             AddLog(State = "Stopping");
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
+            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopping");
             localDataset?.Save();
             transcriptionManager?.WriteTranscription(Path.Combine(TranscriptionPathTextBox.Text, TranscriptionFilenameTextBox.Text));
             rendezVousPipeline?.RemoveProcess(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);

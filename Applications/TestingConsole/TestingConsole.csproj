@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\Components\Helpers\Helpers.csproj" />
     <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
     <ProjectReference Include="..\..\Components\PsiStudioReplayExtension\PsiStudioReplayExtension.csproj" />
+    <ProjectReference Include="..\..\Components\WhisperRemoteServices\WhisperRemoteServices.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="lsl_csharp">

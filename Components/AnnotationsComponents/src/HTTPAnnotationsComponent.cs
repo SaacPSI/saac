@@ -18,6 +18,7 @@ namespace SAAC.AnnotationsComponents
     {
         private string htmlContent;
         private string annotationsConfiguration;
+        private string sessionName;
         private Dictionary<string, Microsoft.Psi.Data.Annotations.AnnotationSchema> annotationSchemas;
         private Dictionary<string, string> annotationSchemasJson;
         private PipelineServices.RendezVousPipeline rdvPipeline;
@@ -30,7 +31,7 @@ namespace SAAC.AnnotationsComponents
         /// <param name="annotationsFolder">The path of the annonation folder.</param>
         /// <param name="htmlFile">The path of the html file.</param>
         /// <param name="restrictToSecure">Boolean to force the use of ssl websocket.</param>
-        public HTTPAnnotationsComponent(PipelineServices.RendezVousPipeline rdvPipeline, List<string> prefixAddress, string annotationsFolder = @".\AnnotationFiles\", string htmlFile = @".\AnnotationFiles\annotation.html", bool restrictToSecure = false)
+        public HTTPAnnotationsComponent(PipelineServices.RendezVousPipeline rdvPipeline, List<string> prefixAddress, string annotationsFolder = @".\AnnotationFiles\", string htmlFile = @".\AnnotationFiles\annotation.html", string sessionName = "Annotation", bool restrictToSecure = false)
             : base(true, prefixAddress, restrictToSecure)
         {
             if (!File.Exists(htmlFile))
@@ -40,6 +41,7 @@ namespace SAAC.AnnotationsComponents
             this.annotationSchemas = new Dictionary<string, Microsoft.Psi.Data.Annotations.AnnotationSchema>();
             this.annotationSchemasJson = new Dictionary<string, string>();
             this.annotationsConfiguration = "";
+            this.sessionName = sessionName;
             this.LoadAnnotationSchemas(annotationsFolder);
             base.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
             this.rdvPipeline = rdvPipeline;
@@ -167,11 +169,12 @@ namespace SAAC.AnnotationsComponents
                     string name = $"{connectionInfo.Item1}-Annotation";
                     Pipeline pipeline = rdvPipeline.GetOrCreateSubpipeline(name);
                     WebSocketSource<string>? source = this.ConnectWebsocketSource<string>(pipeline, PsiFormats.PsiFormatString.GetFormat(), connectionInfo.Item1, connectionInfo.Item2, false);
-                    if (source is null || rdvPipeline.CurrentSession is null)
+                    if (source is null)
                     { 
                         return;
                     }
-                    Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, rdvPipeline.CurrentSession, rdvPipeline.GetStoreName("Annotation", name, rdvPipeline.CurrentSession).Item2);
+                    Microsoft.Psi.Data.Session session = rdvPipeline.CreateOrGetSession(this.sessionName);
+                    Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, session, rdvPipeline.GetStoreName(this.sessionName, name, session).Item2);
                     AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
                     annotationProcessor.Write(annotationSchema, "Annotation", store);
                     source.Out.PipeTo(annotationProcessor.In);

@@ -25,7 +25,7 @@ namespace SAAC.PipelineServices
         public delegate void OnCommandReceive(string process, (Command, string) command);
 
         protected Emitter<(Command, string)> CommandEmitter { get; private set; }
-        protected List<string> processNames; 
+        protected List<string> processNames;
         protected bool isStarted;
         protected RendezvousRelay rendezvousRelay;
         protected dynamic rendezVous;
@@ -73,7 +73,7 @@ namespace SAAC.PipelineServices
             rendezVous.Stop();
             base.Stop(maxWaitingTime);
         }
-        
+
         public void Stop(DateTime finalOriginatingTime, Action notifyCompleted)
         {
             Stop();
@@ -86,9 +86,13 @@ namespace SAAC.PipelineServices
             var copy = processNames.DeepClone();
             foreach (var prcName in copy)
                 RemoveProcess(prcName);
-            foreach (var commandSource in commandTcpSources)
-                commandSource.Dispose();
-            commandPipeline.Dispose();
+            if (commandPipeline is not null)
+            {
+                CommandEmitter = null;
+                foreach (var commandSource in commandTcpSources)
+                    commandSource.Dispose();
+                commandPipeline = null;
+            }
             base.Dispose();
             rendezVous.Dispose();
             Stores = null;
@@ -98,7 +102,7 @@ namespace SAAC.PipelineServices
         {
             base.Reset(pipeline);
             processNames?.Clear();
-            foreach(Rendezvous.Process prc in rendezvousRelay.Rendezvous.Processes)
+            foreach (Rendezvous.Process prc in rendezvousRelay.Rendezvous.Processes)
                 if (!prc.Name.Contains(CommandProcessName))
                     rendezvousRelay.Rendezvous.TryRemoveProcess(prc);
         }
@@ -213,10 +217,7 @@ namespace SAAC.PipelineServices
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?
-                var writeMethod = typeof(Exporter).GetMethods()
-                   .Where(m => m.Name == "Write" && m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 1)
-                   .FirstOrDefault();
-                writeMethod?.MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
+                typeof(Exporter).GetMethod("Write").MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
             }
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
         }
@@ -264,7 +265,7 @@ namespace SAAC.PipelineServices
             }
             if (this.Configuration.ClockPort != 0)
                 AddSynchClockProcess(interval);
-            commandPipeline = Pipeline.Create(CommandProcessName,DeliveryPolicy.SynchronousOrThrottle, enableDiagnostics: false);
+            commandPipeline = Pipeline.Create(CommandProcessName, DeliveryPolicy.SynchronousOrThrottle, enableDiagnostics: false);
             if (Configuration.CommandPort != 0)
             {
                 CommandEmitter = commandPipeline.CreateEmitter<(Command, string)>(this, $"{name}-CommandEmitter");
@@ -316,7 +317,7 @@ namespace SAAC.PipelineServices
         {
             foreach (var endpoint in process.Endpoints)
             {
-                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint) 
+                if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint)
                 {
                     remotePipelineClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
                     if (this.Configuration.AutomaticPipelineRun)
@@ -352,10 +353,10 @@ namespace SAAC.PipelineServices
                             var tcpSource = Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource<(Command, string)>(source, subCommandPipeline, PsiFormats.PsiFormatCommand.GetFormat(), null, true, stream.StreamName);
                             p2m = new Helpers.PipeToMessage<(Command, string)>(subCommandPipeline, Configuration.CommandDelegate, process.Name, $"p2m-{process.Name}");
                             Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
-                            subCommandPipeline.Start((d) => {});
+                            subCommandPipeline.Start((d) => { });
                             commandTcpSources.Add(tcpSource);
                             //TriggerNewProcessEvent(process.Name);
-                            Log($"Subpipeline {process.Name} started."); 
+                            Log($"Subpipeline {process.Name} started.");
                             return;
                         }
                     }
@@ -380,7 +381,7 @@ namespace SAAC.PipelineServices
                             Connection(stream.StreamName, DiagnosticsProcessName, CreateOrGetSession(Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
                             if (isPipelineRunning)
                             {
-                                processSubPipeline.Start((d) => {});
+                                processSubPipeline.Start((d) => { });
                                 Log($"SubPipeline {process.Name} started.");
                             }
                             return;
@@ -392,7 +393,7 @@ namespace SAAC.PipelineServices
 
         protected void ProcessAddedData(Rendezvous.Process process)
         {
-            if(process.Endpoints.Count() == 0)
+            if (process.Endpoints.Count() == 0)
                 return;
             int elementAdded = 0;
             Subpipeline processSubPipeline = GetOrCreateSubpipeline(process.Name);

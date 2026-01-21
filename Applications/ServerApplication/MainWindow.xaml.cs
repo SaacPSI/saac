@@ -295,6 +295,7 @@ namespace ServerApplication
         private void BtnStartClick(object sender, RoutedEventArgs e)
         {
             SetupPipeline();
+            AllDevicesStackPanel.IsEnabled = true;
         }
 
         private void SetupPipeline()
@@ -520,7 +521,7 @@ namespace ServerApplication
                     }
                     connectedApps[name].Status = ConnectedAppStatus.Waiting;
                     break;
-                case "Stopped":
+                case "Stopping":
                     if (connectedApps.ContainsKey(name))
                     {
                         connectedApps.Remove(name);
@@ -674,7 +675,7 @@ namespace ServerApplication
                 ConnectedDevicesGrid.RowDefinitions.Remove(row.RowDefinition);
 
                 // 3) Retirer du dictionnaire
-                _rowsByDeviceName.Remove(name);
+                _rowsByDeviceName.Remove(name); 
 
                 // 4) Remonter les éléments qui étaient en dessous
                 foreach (UIElement child in ConnectedDevicesGrid.Children)
@@ -685,22 +686,11 @@ namespace ServerApplication
                 }
 
                 // 5) Mettre à jour les RowIndex stockés
-                foreach (var kvp in _rowsByDeviceName)
+                foreach (var dr in _rowsByDeviceName.Values)
                 {
-                    var deviceName = kvp.Key;
-                    var dr = kvp.Value;
-
                     if (dr.RowIndex > removedRowIndex)
                     {
-                        _rowsByDeviceName[deviceName] = new DeviceRow
-                        {
-                            RowIndex = dr.RowIndex - 1,
-                            RowDefinition = dr.RowDefinition, // attention: les RowDefs ont “glissé” mais l’objet reste valide
-                            Dot = dr.Dot,
-                            Text = dr.Text,
-                            BtnStart = dr.BtnStart,
-                            BtnStop = dr.BtnStop
-                        };
+                        dr.RowIndex--;
                     }
                 }
             });
@@ -775,11 +765,23 @@ namespace ServerApplication
         {
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
         }
+
+        private void StartAllDevices(object sender, RoutedEventArgs e)
+        {
+            server.SendCommand(RendezVousPipeline.Command.Run, "*", "");
+            e.Handled = true;
+        }
+
+        private void StopAllDevices(object sender, RoutedEventArgs e)
+        {
+            server.SendCommand(RendezVousPipeline.Command.Close, "*", "");
+            e.Handled = true;
+        }
         #endregion
 
         #region Browser
 
-        
+
         public void LoadAssemblyFromFile()
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog

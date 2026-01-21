@@ -457,7 +457,7 @@ namespace VideoRemoteApp
 
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != RendezVousApplicationNameUI || args[0] == "*")
+            if (args[0] != RendezVousApplicationNameUI && args[0] != "*")
                 return;
 
             datasetPipeline?.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
@@ -475,13 +475,12 @@ namespace VideoRemoteApp
                 case RendezVousPipeline.Command.Stop:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        datasetPipeline?.Stop();
+                        Stop();
                     }));
                     break;
                 case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        Stop();
                         Close();
                     }));
                     break;
@@ -603,15 +602,15 @@ namespace VideoRemoteApp
         private void Stop()
         {
             AddLog(State = "Stopping");
-            (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopped");
-            //if (datasetPipeline is RendezVousPipeline)
-            //{
-            //    (datasetPipeline as RendezVousPipeline)?.Dispose();
-            //}
-            //else
-            //{
+            (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopping");
+            if (datasetPipeline is RendezVousPipeline)
+            {
+                (datasetPipeline as RendezVousPipeline)?.Dispose();
+            }
+            else
+            {
                 datasetPipeline?.Dispose();
-           // }
+            }
             Application.Current.Shutdown();
         }
 
