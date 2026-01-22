@@ -159,9 +159,11 @@ namespace SAAC.PipelineServices
 
         public Session? CreateIterativeSession(string sessionName)
         {
-            if (Dataset == null)
+            if (Dataset is null)
                 return null;
             int iterator = 0;
+            if (this.CurrentSession?.Name.Contains(sessionName) is true)
+                return this.CurrentSession;
             foreach (var session in Dataset.Sessions)
                 if (session != null && session.Name.Contains(sessionName))
                     iterator++;

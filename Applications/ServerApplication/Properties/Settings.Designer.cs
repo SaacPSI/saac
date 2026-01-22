@@ -178,5 +178,17 @@ namespace ServerApplication.Properties {
                 this["AnnotationPort"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int SessionMode {
+            get {
+                return ((int)(this["SessionMode"]));
+            }
+            set {
+                this["SessionMode"] = value;
+            }
+        }
     }
 }

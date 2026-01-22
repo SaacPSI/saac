@@ -31,7 +31,8 @@ namespace ServerApplication
         public RendezVousPipelineConfiguration configuration;
         private RendezVousPipeline server;
         private Pipeline pipeline;
-        public List<RendezVousPipeline.StoreMode> storeModeList { get;  }
+        public List<RendezVousPipeline.StoreMode> StoreModeList { get;  }
+        public List<RendezVousPipeline.SessionNamingMode> SessionModeList { get; }
         // UI
         private Timer statusTimer;
         private bool statusCheckRunning;
@@ -182,7 +183,8 @@ namespace ServerApplication
                 }
             };
             // Change the value with a config file
-            storeModeList = new List<RendezVousPipeline.StoreMode>(Enum.GetValues(typeof(RendezVousPipeline.StoreMode)).Cast<RendezVousPipeline.StoreMode>());
+            StoreModeList = new List<RendezVousPipeline.StoreMode>(Enum.GetValues(typeof(RendezVousPipeline.StoreMode)).Cast<RendezVousPipeline.StoreMode>());
+            SessionModeList = new List<RendezVousPipeline.SessionNamingMode>(Enum.GetValues(typeof(RendezVousPipeline.SessionNamingMode)).Cast<RendezVousPipeline.SessionNamingMode>());
 
             setupState = SetupState.NotInitialised;
             server = null;
@@ -235,7 +237,8 @@ namespace ServerApplication
             //Configuration Tab
             LoadConfig();
             StoreModeComboBox.SelectedIndex = Properties.Settings.Default.StoreMode;
-            
+            SessionModeComboBox.SelectedIndex = Properties.Settings.Default.SessionMode;
+
             // Annotation Tab
             IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
             AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
@@ -257,7 +260,8 @@ namespace ServerApplication
             Properties.Settings.Default.Debug = Configuration.Debug = isDebug;
             Properties.Settings.Default.AutomaticPipelineRun = Configuration.AutomaticPipelineRun;
             Properties.Settings.Default.StoreMode = (int) StoreModeComboBox.SelectedIndex;
-            
+            Properties.Settings.Default.SessionMode = (int) SessionModeComboBox.SelectedIndex;
+
             // Annotation Tab
             Properties.Settings.Default.IsAnnotationEnabled = IsAnnotationEnabled;
             Properties.Settings.Default.AnnotationSchemasPath = AnnotationSchemaDirectory;
@@ -274,6 +278,13 @@ namespace ServerApplication
             e.Handled = true;
             Configuration.StoreMode = (RendezVousPipeline.StoreMode)StoreModeComboBox.SelectedIndex;
         }
+
+        private void SessionModeSelected(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            Configuration.SessionMode = (RendezVousPipeline.SessionNamingMode)SessionModeComboBox.SelectedIndex;
+        }
+
         private void BtnLoadConfiguration(object sender, RoutedEventArgs e)
         {
             RefreshUIFromConfiguration();

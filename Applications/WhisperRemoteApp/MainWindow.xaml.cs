@@ -232,10 +232,10 @@ namespace WhisperRemoteApp
         {
             internalLog = (log) =>
             {
-                //Application.Current.Dispatcher.Invoke(new Action(() =>
-                //{
-                Log += $"{log}\n";
-                //}));
+                Application.Current?.Dispatcher?.Invoke(new Action(() =>
+                {
+                    Log += $"{log}\n";
+                }));
             };
             audioSoucesSetup = new List<User>();
             notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
@@ -419,15 +419,17 @@ namespace WhisperRemoteApp
             LanguageComboBox.SelectedIndex = Properties.Settings.Default.WhisperLanguage;
             WhisperModelComboBox.SelectedIndex = Properties.Settings.Default.WhisperModelType;
             WhisperQuantizationComboBox.SelectedIndex = Properties.Settings.Default.WhisperQuantizationType;
-            WhisperModelDirectoryTextBox.Text = Properties.Settings.Default.WhisperModelDirectory;
-            WhisperConfigurationUI.ModelDirectory = Properties.Settings.Default.WhisperModelDirectory;
-            if(Properties.Settings.Default.WhisperSpecificModelPath.Length > 0)
-                WhisperConfigurationUI.SpecificModelPath = WhisperModelSpecficPathTextBox.Text = Properties.Settings.Default.WhisperSpecificModelPath;
-           
+            WhisperModelDirectoryTextBox.Text = WhisperConfigurationUI.ModelDirectory = Properties.Settings.Default.WhisperModelDirectory;
+            WhisperModelSpecficPathTextBox.Text = WhisperConfigurationUI.SpecificModelPath = Properties.Settings.Default.WhisperSpecificModelPath;
+
             if (Properties.Settings.Default.WhipserModelType)
+            {
                 WhisperModelSpecific.IsChecked = true;
+            }
             else
+            {
                 WhisperModelGeneric.IsChecked = true;
+            }
 
             // Local Recording Tab
             IsLocalRecording = Properties.Settings.Default.IsLocalRecording;
@@ -667,8 +669,21 @@ namespace WhisperRemoteApp
                 return;
             if (isWhisper && audioManager != null)
             {
-                whisperConfiguration.OnModelDownloadProgressHandler = (obj, message) =>
+                try
+                {
+                    whisperConfiguration.OnModelDownloadProgressHandler = (obj, message) =>
                     {
+                        switch (message.Item1)
+                        {
+                            case WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Failed:
+                                setupState = SetupState.AudioInitialised;
+                                rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Error");
+                                break;
+                            case WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed:
+                                rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
+                                break;
+                        }
+
                         if (isMessageBoxOpen)
                             return;
                         lock (this)
@@ -678,8 +693,7 @@ namespace WhisperRemoteApp
                             isMessageBoxOpen = false;
                         }
                     };
-                try
-                {
+              
                     if (isStreaming)
                     {
                         var remoteWhisper = new SAAC.WhisperRemoteServices.WhiperRemoteComponent(rendezVousPipeline, vadConfiguration, whisperConfiguration, remoteConfiguration, null, transcriptionManager is null ? null : transcriptionManager.GetDelegate(), internalLog);
@@ -709,6 +723,7 @@ namespace WhisperRemoteApp
                 }
                 catch (Exception ex)
                 {
+                    rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, $"Error");
                     AddLog(State = "Whisper initialised Failed");
                     AddLog($"Error setting up Whisper: {ex.Message}");
                     MessageBox.Show("Unable to setup Whisper with the current configuration. Please check the settings in 'Whisper' tab.", "Whisper setup error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
@@ -729,6 +744,7 @@ namespace WhisperRemoteApp
             }
             catch (Exception ex)
             {
+                rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, $"Error");
                 AddLog($"Error opening/creating local dataset: {ex.Message}");
                 MessageBox.Show("Unable to create or open the local dataset. Please change the Dataset fields in 'Local Recording' tab", "Dataset error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
                 dataset = null;
@@ -809,7 +825,7 @@ namespace WhisperRemoteApp
             SetupPipeline();
             SetupAudioSources();
             SetupWhisper();
-            if ((setupState == SetupState.WhisperInitialised && isWhisper) || setupState == SetupState.AudioInitialised)
+            if ((setupState == SetupState.WhisperInitialised && isWhisper) || (setupState == SetupState.AudioInitialised && !isWhisper))
             {
                 Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
@@ -822,7 +838,7 @@ namespace WhisperRemoteApp
 
         private void Run()
         {
-            if (!(setupState == SetupState.WhisperInitialised && isWhisper) && setupState != SetupState.AudioInitialised)
+            if (!((setupState == SetupState.WhisperInitialised && isWhisper) || (setupState == SetupState.AudioInitialised && !isWhisper)))
                 return;
             if (rendezVousPipeline is null)
             { 
@@ -836,7 +852,8 @@ namespace WhisperRemoteApp
             }
             else
                 rendezVousPipeline.RunPipelineAndSubpipelines();
-            rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
+            if (setupState == SetupState.AudioInitialised || )
+                rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
         }
 
         private void MainWindow_PipelineCompleted(object sender, PipelineCompletedEventArgs e)

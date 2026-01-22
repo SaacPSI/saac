@@ -23,9 +23,12 @@ namespace SAAC.PipelineServices
 
         public void CreateConnectorAndStore<T>(string streamName, string storeName, Session? session, Pipeline p, Type type, IProducer<T> stream, bool storeSteam = true)
         {
-            CreateConnector(streamName, storeName, session, type, stream);
-            if (storeSteam && session != null)
-                CreateStore(p, session, streamName, storeName, stream);
+            lock (this)
+            {
+                CreateConnector(streamName, storeName, session, type, stream);
+                if (storeSteam && session != null)
+                    CreateStore(p, session, streamName, storeName, stream);
+            }
         }
 
         public virtual void CreateStore<T>(Pipeline pipeline, Session session, string streamName, string storeName, IProducer<T> source)

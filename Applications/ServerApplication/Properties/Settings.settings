@@ -41,5 +41,8 @@
     <Setting Name="AnnotationPort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">8080</Value>
     </Setting>
+    <Setting Name="SessionMode" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

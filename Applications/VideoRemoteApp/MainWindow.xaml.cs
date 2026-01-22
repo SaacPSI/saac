@@ -554,6 +554,7 @@ namespace VideoRemoteApp
             bool hasValidCroppingArea = videoRemoteAppConfiguration.CroppingAreas.Any(area => !area.Value.IsEmpty && area.Value.Width > 0 && area.Value.Height > 0);
             if (!hasValidCroppingArea)
             {
+                (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Error");
                 MessageBox.Show("At least one valid cropping area is required. Please add a cropping area in the Video tab.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 AddLog("Error: No valid cropping area configured.");
                 return;

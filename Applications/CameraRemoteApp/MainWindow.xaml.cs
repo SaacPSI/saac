@@ -550,22 +550,31 @@ namespace CameraRemoteApp
         {
             if (setupState >= SetupState.CameraInitialised)
                 return;
-            switch(sensorType)
+            try
             {
-                case ESensorType.Camera:
-                    SetupCamera();
-                    break;
-                case ESensorType.Kinect:
-                    SetupKinect(); 
-                    break;
-                case ESensorType.AzureKinect:
-                    SetupAzureKinect(); 
-                    break;
-                case ESensorType.Nuitrack: 
-                    SetupNuitrack(); 
-                    break;
+                switch (sensorType)
+                {
+                    case ESensorType.Camera:
+                        SetupCamera();
+                        break;
+                    case ESensorType.Kinect:
+                        SetupKinect();
+                        break;
+                    case ESensorType.AzureKinect:
+                        SetupAzureKinect();
+                        break;
+                    case ESensorType.Nuitrack:
+                        SetupNuitrack();
+                        break;
+                }
+                setupState = SetupState.CameraInitialised;
             }
-            setupState = SetupState.CameraInitialised;
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during sensor setup: {ex.Message}", "Sensor Setup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                AddLog(State = "Sensor setup failed");
+                (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Error");
+            }
         }
 
         private void SetupAzureKinect()
@@ -815,6 +824,10 @@ namespace CameraRemoteApp
 
         private void UpdateCameraCaptureFormat(int index = 0)
         {
+            if ((VideoSourceComboBox.SelectedValue as string) is null && Properties.Settings.Default.videoSource?.Length == 0)
+            {
+                return;
+            }
             CameraCaptureFormat.Clear();
             cameraFormats = MediaCapture.GetAvailableFormats(VideoSourceComboBox.SelectedValue as string ?? Properties.Settings.Default.videoSource);
             foreach (CaptureFormat format in cameraFormats)

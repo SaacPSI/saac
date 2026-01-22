@@ -217,7 +217,7 @@ namespace SAAC.Whisper
                         const int bufferSize = 32 * 1024 * 1024;
                         await modelStream.CopyToAsync(fileWriter, bufferSize, cancellationToken);//TaskCanceledExpcetion will be thrown at here if canceled
                         Console.WriteLine("Downloaded Whisper model.");
-                        configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed, "Downloaded Whisper model..."));
+                        configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed, "Downloaded !"));
                     }
                     catch (OperationCanceledException ex)
                     {
@@ -234,10 +234,14 @@ namespace SAAC.Whisper
 
         private WhisperProcessor LazyInitialize() {
             Debug.Assert(modelFilename is not null);
-            if (modelFilename is null) {
+            if (modelFilename is null)
+            {
+                configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Failed, $"Whisper model file is null !"));
                 throw new InvalidOperationException();
             }
-            if (!File.Exists(modelFilename)) {
+            if (!File.Exists(modelFilename))
+            {
+                configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Failed, $"Whisper model file not exist : {modelFilename}"));
                 throw new FileNotFoundException("Whisper model file not exist.", modelFilename);
             }
             var code = GetLanguageCode(configuration.Language);
@@ -267,6 +271,7 @@ namespace SAAC.Whisper
             var result = builder.Build();
             //Logger?.LogInformation("Whisper model is loaded.");
             Console.WriteLine("Whisper model is loaded.");
+            configuration.OnModelDownloadProgressHandler?.Invoke(this, (WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed, "Loaded !"));
             return result;
         }
 
