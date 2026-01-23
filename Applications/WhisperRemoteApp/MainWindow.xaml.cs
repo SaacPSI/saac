@@ -558,8 +558,11 @@ namespace WhisperRemoteApp
                 pipelineConfiguration.RecordIncomingProcess = false;
                 pipelineConfiguration.CommandPort = CommandPort;
                 pipelineConfiguration.ClockPort = 0;
-                pipelineConfiguration.DatasetPath = localDatasetPath;
-                pipelineConfiguration.DatasetName = localDatasetName;
+                if (isLocalRecording)
+                {
+                    pipelineConfiguration.DatasetPath = LocalDatasetPath;
+                    pipelineConfiguration.DatasetName = LocalDatasetName;
+                }
 
                 rendezVousPipeline = new RendezVousPipeline(pipelineConfiguration, remoteConfiguration.RendezVousApplicationName, RendezVousServerIp, internalLog);
 
@@ -852,7 +855,7 @@ namespace WhisperRemoteApp
             }
             else
                 rendezVousPipeline.RunPipelineAndSubpipelines();
-            if (setupState == SetupState.AudioInitialised || )
+            if (setupState == SetupState.AudioInitialised)
                 rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
         }
 

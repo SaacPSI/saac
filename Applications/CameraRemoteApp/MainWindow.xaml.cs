@@ -244,7 +244,8 @@ namespace CameraRemoteApp
             SetupNetworkTab();
             SetupLocalRecordingTab();
             SetupVideoSourceTab();
-            RefreshUIFromConfiguration(); 
+            RefreshUIFromConfiguration();
+            UpdateLocalRecordingTab();
         }
 
         private void SetupVideoSourceTab()
@@ -531,8 +532,16 @@ namespace CameraRemoteApp
             pipelineConfiguration.RecordIncomingProcess = false;
             pipelineConfiguration.ClockPort = 0;
             pipelineConfiguration.CommandPort = CommandPort;
-            pipelineConfiguration.DatasetPath = LocalDatasetPath;
-            pipelineConfiguration.DatasetName = LocalDatasetName;
+            if (isLocalRecording)
+            {
+                pipelineConfiguration.DatasetPath = LocalDatasetPath;
+                pipelineConfiguration.DatasetName = LocalDatasetName;
+            }
+            else
+            {
+                pipelineConfiguration.DatasetPath = "";
+                pipelineConfiguration.DatasetName = "";
+            }
             pipelineConfiguration.RendezVousHost = IpSelectedUI;
 
             if (isRemoteServer)

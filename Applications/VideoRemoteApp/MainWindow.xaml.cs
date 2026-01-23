@@ -352,6 +352,7 @@ namespace VideoRemoteApp
             Properties.Settings.Default.Save();
             BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = false;
             UpdateLayout();
+            UpdateLocalRecordingTab();
         }
 
         private void LoadConfigurations()
@@ -526,8 +527,11 @@ namespace VideoRemoteApp
             pipelineConfiguration.RecordIncomingProcess = false;
             pipelineConfiguration.CommandPort = CommandPort;
             pipelineConfiguration.ClockPort = 0;
-            pipelineConfiguration.DatasetPath = LocalDatasetPath;
-            pipelineConfiguration.DatasetName = LocalDatasetName;
+            if (isLocalRecording)
+            {
+                pipelineConfiguration.DatasetPath = LocalDatasetPath;
+                pipelineConfiguration.DatasetName = LocalDatasetName;
+            }
             pipelineConfiguration.RendezVousHost = IpSelectedUI;
 
             if (isRemoteServer)

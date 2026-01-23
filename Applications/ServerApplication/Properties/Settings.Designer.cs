@@ -190,5 +190,17 @@ namespace ServerApplication.Properties {
                 this["SessionMode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ExternalConfigurationDirectory {
+            get {
+                return ((string)(this["ExternalConfigurationDirectory"]));
+            }
+            set {
+                this["ExternalConfigurationDirectory"] = value;
+            }
+        }
     }
 }

@@ -18,15 +18,16 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Linq;
 using System.Numerics;
-using ServerApplication.Helpers;
 using System.Reflection;
+using Microsoft.Psi.Data;
+using Microsoft.Psi.PsiStudio.PipelinePlugin;
 
 namespace ServerApplication
 {
     /// <summary>
-    /// Logique d'interaction pour MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window, Microsoft.Psi.PsiStudio.PipelinePlugin.IPsiStudioPipeline, INotifyPropertyChanged
     {
         public RendezVousPipelineConfiguration configuration;
         private RendezVousPipeline server;
@@ -118,6 +119,13 @@ namespace ServerApplication
         {
             get => isDebug;
             set => SetProperty(ref isDebug, value);
+        }
+
+        private string externalConfigurationDirectory = "";
+        public string ExternalConfigurationDirectory
+        {
+            get => externalConfigurationDirectory;
+            set => SetProperty(ref externalConfigurationDirectory, value);
         }
 
         // Annotation Tab
@@ -225,7 +233,8 @@ namespace ServerApplication
             LocalDatasetName = Properties.Settings.Default.DatasetName;
             isDebug = Configuration.Debug = Properties.Settings.Default.Debug;
             Configuration.AutomaticPipelineRun = Properties.Settings.Default.AutomaticPipelineRun;
-            
+            ExternalConfigurationDirectory = Properties.Settings.Default.ExternalConfigurationDirectory;
+
             // Annotation Tab
             IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
             AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
@@ -251,6 +260,7 @@ namespace ServerApplication
 
         private void RefreshConfigurationFromUI()
         {
+            // Configuration Tab
             Properties.Settings.Default.RendezVousHost = Configuration.RendezVousHost;
             Properties.Settings.Default.RendezVousPort = Configuration.RendezVousPort;
             Properties.Settings.Default.ClockPort = Configuration.ClockPort;
@@ -261,6 +271,7 @@ namespace ServerApplication
             Properties.Settings.Default.AutomaticPipelineRun = Configuration.AutomaticPipelineRun;
             Properties.Settings.Default.StoreMode = (int) StoreModeComboBox.SelectedIndex;
             Properties.Settings.Default.SessionMode = (int) SessionModeComboBox.SelectedIndex;
+            Properties.Settings.Default.ExternalConfigurationDirectory = ExternalConfigurationDirectory;
 
             // Annotation Tab
             Properties.Settings.Default.IsAnnotationEnabled = IsAnnotationEnabled;
@@ -314,6 +325,9 @@ namespace ServerApplication
             if (setupState >= SetupState.PipelineInitialised)
                 return;
 
+            if (ExternalConfigurationDirectory.Length > 0)
+                LoadExternalConfiguration(ExternalConfigurationDirectory);
+
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.AutomaticPipelineRun = true;
             configuration.CommandDelegate = CommandReceived;
@@ -323,7 +337,15 @@ namespace ServerApplication
             configuration.DatasetPath = LocalDatasetPath;
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
-            server = new RendezVousPipeline(configuration, "Server", null, internalLog);
+            try
+            {
+                server = new RendezVousPipeline(configuration, "Server", null, internalLog);
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Error initializing server pipeline: {ex.Message}");
+                return;
+            }
             //server.AddNewProcessEvent(SpawnProcessRow);
             pipeline = server.Pipeline;
             AddLog("Server initialisation started");
@@ -564,7 +586,7 @@ namespace ServerApplication
 
         private void StatusTimerCallback(object? state)
         {
-            // 🔒 Anti-réentrance
+            // Anti-reentrancy lock
             if (statusCheckRunning)
                 return;
             statusCheckRunning = true;
@@ -573,13 +595,13 @@ namespace ServerApplication
             {
                 foreach (var app in connectedApps.Values)
                 {
-                    // Demande de statut
+                    // Status request
                     server.SendCommand(
                         RendezVousPipeline.Command.Status,
                         app.Name,
                         "");
 
-                    // Timeout (ex: 3s)
+                    // Timeout (e.g., 3s)
                     if (DateTime.UtcNow - app.LastStatusReceivedTime > TimeSpan.FromSeconds(3))
                     {
                         app.Status = ConnectedAppStatus.Error;
@@ -676,19 +698,19 @@ namespace ServerApplication
             {
                 int removedRowIndex = row.RowIndex;
 
-                // 1) Retirer les contrôles du Grid
+                // 1) Remove controls from Grid
                 ConnectedDevicesGrid.Children.Remove(row.Dot);
                 ConnectedDevicesGrid.Children.Remove(row.Text);
                 ConnectedDevicesGrid.Children.Remove(row.BtnStart);
                 ConnectedDevicesGrid.Children.Remove(row.BtnStop);
 
-                // 2) Retirer la RowDefinition
+                // 2) Remove RowDefinition
                 ConnectedDevicesGrid.RowDefinitions.Remove(row.RowDefinition);
 
-                // 3) Retirer du dictionnaire
+                // 3) Remove from dictionary
                 _rowsByDeviceName.Remove(name); 
 
-                // 4) Remonter les éléments qui étaient en dessous
+                // 4) Move up elements that were below
                 foreach (UIElement child in ConnectedDevicesGrid.Children)
                 {
                     int r = Grid.GetRow(child);
@@ -696,7 +718,7 @@ namespace ServerApplication
                         Grid.SetRow(child, r - 1);
                 }
 
-                // 5) Mettre à jour les RowIndex stockés
+                // 5) Update stored RowIndex values
                 foreach (var dr in _rowsByDeviceName.Values)
                 {
                     if (dr.RowIndex > removedRowIndex)
@@ -761,14 +783,19 @@ namespace ServerApplication
             }
             e.Handled = true;
         }
-        private void BtnLoadAssembly_Click(object sender, RoutedEventArgs e)
+        private void BtnBrowseExternalConfiguration_Click(object sender, RoutedEventArgs e)
         {
-            LoadAssemblyFromFile();
-            e.Handled = true;
-        }
-        private void BtnTopicClick(object sender, RoutedEventArgs e)
-        {
-            LoadConfigurationFromJsonFile();
+            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker
+            {
+                Title = "External configuration directory"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                ExternalConfigurationDirectory = openFileDialog.ResultName;
+                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            }
+
             e.Handled = true;
         }
         
@@ -792,74 +819,12 @@ namespace ServerApplication
 
         #region Browser
 
-
-        public void LoadAssemblyFromFile()
+        private void LoadExternalConfiguration(string topicsFolder)
         {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            // For each files inside the folder, load the json and store it in the dictionary
+            foreach (string jsonFile in Directory.GetFiles(topicsFolder, "*.json"))
             {
-                Filter = "Dynamic Link Library (*.dll)|*.dll|All files (*.*)|*.*",
-                Title = "Charger une DLL contenant les classes de données"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    Assembly customAssembly = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName).FirstOrDefault()?.Assembly;
-                    AddLog($"✓ DLL chargée : {openFileDialog.FileName}");
-
-                    // Optionnel : exporter un template JSON
-                    //string templatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(openFileDialog.FileName), "config_template.json");
-                    //List<Type> types = ConfigurationLoader.LoadAssemblyTypes(openFileDialog.FileName);
-                    //ConfigurationLoader.ExportConfigurationTemplate(templatePath, types);
-                    //AddLog($"✓ Template JSON généré : {templatePath}");
-                    
-                    // Optionnel : lister les types dans la DLL
-                    //ListTypesFromAssembly("TestDll");
-                }
-                catch (Exception ex)
-                {
-                    AddLog($"✗ Erreur lors du chargement de la DLL : {ex.Message}");
-                }
-            }
-        }
-        public void ListTypesFromAssembly(string assemblyName)
-        {
-            var asm = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(a => a.GetName().Name == assemblyName);
-
-            if (asm == null)
-            {
-                AddLog($"❌ Assembly '{assemblyName}' non chargé");
-                return;
-            }
-
-            AddLog($"📦 Types dans {assemblyName}:");
-
-            foreach (var type in asm.GetTypes())
-            {
-                AddLog($" - {type.FullName}");
-            }
-        }
-
-        public void LoadConfigurationFromJsonFile()
-        {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                Title = "Charger une configuration JSON"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    LoadJSONAndSpecifyTopic(openFileDialog.FileName);
-                }
-                catch (Exception ex)
-                {
-                    AddLog("Erreur dans le chargement du fichier");
-                }
+                LoadTopicsAndAssembly(jsonFile, topicsFolder);
             }
         }
         #endregion
@@ -898,31 +863,63 @@ namespace ServerApplication
             public string StreamToStore { get; set; } = "";
         }
 
-        public List<TopicFormatDefinition> LoadJSONAndSpecifyTopic(string jsonFilePath) // remplace par le vrai type si possible
+        public bool LoadTopicsAndAssembly(string jsonFilePath, string folder)
         {
             if (!File.Exists(jsonFilePath))
-                throw new FileNotFoundException(jsonFilePath);
+            {
+                AddLog($"The file {jsonFilePath} does not exist");
+                return false;
+            }
 
             var json = File.ReadAllText(jsonFilePath);
 
             var items = JsonConvert.DeserializeObject<List<TopicFormatDefinition>>(json)?? new List<TopicFormatDefinition>();
+            if (items.Count == 0)
+            {                 
+                AddLog($"No topic definitions found in {jsonFilePath}");
+                return false;
+            }
+
+            // Check first if there is an assembly to load types from
+            string assemblyPath = $@"{folder}/{System.IO.Path.GetFileNameWithoutExtension(jsonFilePath)}/{System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(jsonFilePath), ".dll")}";
+            if (!File.Exists(jsonFilePath))
+            {
+                AddLog($"The file {assemblyPath} does not exist");
+                return false;
+            }
+
+            if (Assembly.LoadFrom(assemblyPath).GetExportedTypes().Length == 0)
+            {                 
+                AddLog($"No types found in assembly {assemblyPath}");
+                return false;
+            }
 
             foreach (var item in items)
             {
                 var messageType = ResolveType(item.Type);
+                if (messageType == null)
+                {
+                    AddLog($"Failed to resolve format type for topic {item.Topic}");
+                    continue;
+                }
                 AddLog($"Topic {item.Topic} type is {messageType.ToString()}");
 
-                var formatType = ResolvePsiFormatType(item.ClassFormat);
+                var formatType = ResolvePsiFormatType(item.ClassFormat, Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList());
+                if(formatType == null)
+                {
+                    AddLog($"Failed to resolve format type for topic {item.Topic}");
+                    continue;
+                }
                 var formatInstance = (IPsiFormat)CreateInstance(formatType);
                 AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
                 configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
                 configuration.StreamToStore.Add(item.Topic, item.StreamToStore);
             }
 
-            return items;
+            return true;
         }
 
-        private static Type ResolveType(string typeName)
+        private Type? ResolveType(string typeName)
         {
             var type = Type.GetType(typeName);
             if (type != null)
@@ -935,38 +932,87 @@ namespace ServerApplication
                     return type;
             }
 
-            throw new TypeLoadException($"Type introuvable : {typeName}");
+            return null;
         }
 
-        private static Type ResolvePsiFormatType(string formatClassName)
+        private Type? ResolvePsiFormatType(string formatClassName, List<Type> loadedType)
         {
             if (string.IsNullOrWhiteSpace(formatClassName))
-                throw new ArgumentException("Le nom de la classe de format ne peut pas être vide", nameof(formatClassName));
+            {
+                AddLog("The format class name cannot be empty");
+                return null;
+            }
 
+            // First check in loaded types
+            var type = loadedType.FirstOrDefault(t =>t.Name == formatClassName && typeof(IPsiFormat).IsAssignableFrom(t));
+            if (type is not null)
+            {
+                return type;
+            }
+
+            // Then in app domain assemblies
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
-                var type = asm.GetType(formatClassName);
+                type = asm.GetType(formatClassName);
                 if (type != null && typeof(IPsiFormat).IsAssignableFrom(type))
                     return type;
 
-                // Chercher par nom simple si le nom complet n'est pas trouvé
-                type = asm.GetTypes().FirstOrDefault(t =>
-                    t.Name == formatClassName &&
-                    typeof(IPsiFormat).IsAssignableFrom(t));
+                try
+                {
+                    // Search by simple name if the full name is not found
+                    type = asm.GetTypes().FirstOrDefault(t =>
+                        t.Name == formatClassName &&
+                        typeof(IPsiFormat).IsAssignableFrom(t));
+                }
+                catch
+                {
+                    continue;
+                }
 
                 if (type != null)
                     return type;
             }
 
-            throw new TypeLoadException($"Type de format PsiFormat introuvable : {formatClassName}");
+            AddLog($"PsiFormat type not found: {formatClassName}");
+            return null;
         }
 
         private object CreateInstance(Type type)
         {
             if (type.GetConstructor(Type.EmptyTypes) == null)
-                AddLog($"Le type {type.Name} n'a pas de constructeur sans paramètre.");
+                AddLog($"Type {type.Name} does not have a parameterless constructor.");
 
             return Activator.CreateInstance(type);
+        }
+
+        public Dataset GetDataset()
+        {
+            return server.Dataset;
+        }
+
+        public void RunPipeline(TimeInterval timeInterval)
+        {
+            SetupPipeline();
+        }
+
+        public void StopPipeline()
+        {
+            Stop();
+        }
+
+        public void Dispose()
+        {
+            Close();
+        }
+
+        public DateTime GetStartTime()
+        {
+            return server.Pipeline.StartTime;
+        }
+
+        public PipelineReplaybleMode GetReplaybleMode()
+        {
+            return PipelineReplaybleMode.Not;
         }
         #endregion
     }

@@ -78,7 +78,7 @@ namespace SAAC.AnnotationsComponents
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
+                    rdvPipeline.Log($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
                 }
             }
         }
@@ -141,7 +141,7 @@ namespace SAAC.AnnotationsComponents
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"HTTPAnnotationsComponent HandleHTMLRequest Exception: {ex.Message}");
+                rdvPipeline.Log($"HTTPAnnotationsComponent HandleHTMLRequest Exception: {ex.Message}");
                 response.StatusCode = 500;
                 response.Close();
             }
@@ -173,17 +173,17 @@ namespace SAAC.AnnotationsComponents
                     { 
                         return;
                     }
-                    Microsoft.Psi.Data.Session session = rdvPipeline.CreateOrGetSession(this.sessionName);
+                    Microsoft.Psi.Data.Session session = rdvPipeline.CreateOrGetSessionFromMode(this.sessionName);
                     Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, session, rdvPipeline.GetStoreName(this.sessionName, name, session).Item2);
                     AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
                     annotationProcessor.Write(annotationSchema, "Annotation", store);
                     source.Out.PipeTo(annotationProcessor.In);
                     pipeline.RunAsync();
-                    Trace.WriteLine($"New annotation WebSocket connection established for host {connectionInfo.Item1} with schema {schemaName}");
+                    rdvPipeline.Log($"New annotation WebSocket connection established for host {connectionInfo.Item1} with schema {schemaName}");
                 }
                 else
                 {
-                    Trace.WriteLine($"Invalid or missing schema parameter in annotation WebSocket connection: {schemaName}");
+                    rdvPipeline.Log($"Invalid or missing schema parameter in annotation WebSocket connection: {schemaName}");
                 }
             }
         }
