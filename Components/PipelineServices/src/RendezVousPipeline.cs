@@ -490,7 +490,7 @@ namespace SAAC.PipelineServices
                 Log($"\tStream {streamName}");
                 var storeName = GetStoreName(streamName, processName, session);
                 Type type = Type.GetType(streamInfo.TypeName);
-                typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this, [streamInfo.Name, $"{storeName.Item2}-{streamInfo.Name}", session, p, type, typeof(Importer).GetMethod("OpenStream").MakeGenericMethod(type).Invoke(importer.Importer, [streamInfo.Name, null, null]), storeSteam]);
+                typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this, [storeName.Item1, storeName.Item2, session, p, type, typeof(Importer).GetMethod("OpenStream").MakeGenericMethod(type).Invoke(importer.Importer, [streamInfo.Name, null, null]), storeSteam]);
                 return true;
             }
             return false;
