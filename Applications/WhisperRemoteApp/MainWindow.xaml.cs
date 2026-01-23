@@ -518,6 +518,7 @@ namespace WhisperRemoteApp
             switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Run:
+                    isMessageBoxOpen = true;
                     Start();
                     Run();
                     break;
