@@ -31,7 +31,11 @@ namespace SAAC.RemoteConnectors
             int portCount = Configuration.StartingPort + 1;
 
             if (Configuration.OutputBodies == true)
+            {
+                Configuration.OutputDepth = Configuration.OutputInfrared = Configuration.OutputCalibration = true;
                 Configuration.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
+            }
+
             pipeline = server.GetOrCreateSubpipeline(name);
             Sensor = new AzureKinectSensor(pipeline, Configuration);
             var session = server.CreateOrGetSessionFromMode(Configuration.RendezVousApplicationName);

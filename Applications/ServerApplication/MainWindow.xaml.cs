@@ -170,9 +170,7 @@ namespace ServerApplication
         private enum SetupState
         {
             NotInitialised,
-            PipelineInitialised,
-            AudioInitialised,
-            WhisperInitialised
+            PipelineInitialised
         };
         private SetupState setupState;
         private LogStatus internalLog;
@@ -334,6 +332,7 @@ namespace ServerApplication
             configuration.Debug = true;
             configuration.RecordIncomingProcess = true;
             configuration.CommandPort = 11610;
+            configuration.ClockPort = 11621;
             configuration.DatasetPath = LocalDatasetPath;
             configuration.DatasetName = LocalDatasetName;
             configuration.SessionName = LocalSessionName;
@@ -355,6 +354,7 @@ namespace ServerApplication
             
             server.Start();
             AddLog("Server started");
+            StartStatusMonitoring();
             setupState = SetupState.PipelineInitialised;
         }
         private void SetupWebSocketsAndAnnotations()
@@ -490,7 +490,7 @@ namespace ServerApplication
         {
             var args = message.Data.Item2.Split(';');
 
-            if (args[0] != "Server")
+            if (args[0] != "Server" && args[0] != "Server-Command")
                 return;
             string name = GetName(source);
 
@@ -532,15 +532,10 @@ namespace ServerApplication
         {
             if (args.Length < 2)
                 return;
-            switch(args[1])
-            {                 
-                case "Running":
-                    if (connectedApps.ContainsKey(name))
-                    {
-                        connectedApps[name].Status = ConnectedAppStatus.Running;
-                    }
-                    break;
+            switch (args[1])
+            {
                 case "Waiting":
+                case "Running":
                     if (!connectedApps.ContainsKey(name))
                     {
                         connectedApps[name] = new ConnectedApp
@@ -552,7 +547,22 @@ namespace ServerApplication
                             SpawnEllipseTextButtonsRow(name);
                         }));
                     }
-                    connectedApps[name].Status = ConnectedAppStatus.Waiting;
+                    break;
+            }
+
+            switch (args[1])
+            {             
+                case "Running":
+                    if (connectedApps.ContainsKey(name))
+                    {
+                        connectedApps[name].Status = ConnectedAppStatus.Running;
+                    }
+                    break;
+                case "Waiting":
+                    if (connectedApps.ContainsKey(name))
+                    {
+                        connectedApps[name].Status = ConnectedAppStatus.Waiting;
+                    }
                     break;
                 case "Stopping":
                     if (connectedApps.ContainsKey(name))
@@ -593,14 +603,11 @@ namespace ServerApplication
 
             try
             {
+                // Status request
+                server.SendCommand(RendezVousPipeline.Command.Status, "*", "");
+
                 foreach (var app in connectedApps.Values)
                 {
-                    // Status request
-                    server.SendCommand(
-                        RendezVousPipeline.Command.Status,
-                        app.Name,
-                        "");
-
                     // Timeout (e.g., 3s)
                     if (DateTime.UtcNow - app.LastStatusReceivedTime > TimeSpan.FromSeconds(3))
                     {
@@ -621,8 +628,11 @@ namespace ServerApplication
 
         public void StopStatusMonitoring()
         {
-            statusTimer?.Change(Timeout.Infinite, Timeout.Infinite);
-            statusTimer?.Dispose();
+            if (statusTimer != null)
+            {
+                statusTimer.Dispose();
+                statusTimer = null;
+            }
         }
         #endregion
 
@@ -640,7 +650,7 @@ namespace ServerApplication
             var rowDef = ConnectedDevicesGrid.RowDefinitions[rowIndex];
             
             // Ellipse (left)
-            var dot = UiGenerator.GenerateEllipse(size: 14, fill: Brushes.Orange, stroke: Brushes.Orange, strokeThickness: 1, name: $"Dot_{_rowIndex}");
+            var dot = UiGenerator.GenerateEllipse(size: 14, fill: Brushes.Orange, stroke: Brushes.Black, strokeThickness: 1, name: $"Dot_{_rowIndex}");
             dot.Margin = new Thickness(0, 0, 10, 0);
 
             // TextBox (middle)
@@ -657,12 +667,14 @@ namespace ServerApplication
                 server.SendCommand(RendezVousPipeline.Command.Run, name, "");
             }, name: $"BtnOk_{_rowIndex}");
             btnOk.Margin = new Thickness(0, 0, 15, 0);
+            btnOk.IsEnabled = true;
 
             // Button 2 (right) - remove this row
             var btnRemove = UiGenerator.GenerateButton("Stop", (s, e) =>
             {
                 server.SendCommand(RendezVousPipeline.Command.Close, name, "");
             }, name: $"BtnRemove_{_rowIndex}");
+            btnRemove.IsEnabled = false;
             btnRemove.Margin = new Thickness(0, 0, 15, 0);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, dot, 0, ConnectedDevicesGrid.RowDefinitions.Count - 1);
             UiGenerator.SetElementInGrid(ConnectedDevicesGrid, tb, 1, ConnectedDevicesGrid.RowDefinitions.Count - 1);
@@ -732,12 +744,24 @@ namespace ServerApplication
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                app.StatusDot.Fill = app.Status switch
+                switch (app.Status)
                 {
-                    ConnectedAppStatus.Running => Brushes.Green,
-                    ConnectedAppStatus.Waiting => Brushes.Orange,
-                    ConnectedAppStatus.Error => Brushes.Red
-                };
+                    case ConnectedAppStatus.Running:
+                        app.StatusDot.Fill = Brushes.Green;
+                        _rowsByDeviceName[app.Name].BtnStart.IsEnabled = false;
+                        _rowsByDeviceName[app.Name].BtnStop.IsEnabled = true;
+                        break;
+                    case ConnectedAppStatus.Waiting:
+                        app.StatusDot.Fill = Brushes.Orange;
+                        _rowsByDeviceName[app.Name].BtnStart.IsEnabled = true;
+                        _rowsByDeviceName[app.Name].BtnStop.IsEnabled = true;
+                        break;
+                    case ConnectedAppStatus.Error:
+                        app.StatusDot.Fill = Brushes.Red;
+                        _rowsByDeviceName[app.Name].BtnStart.IsEnabled = false;
+                        _rowsByDeviceName[app.Name].BtnStop.IsEnabled = false;
+                        break;
+                }
             }));
         }
         #endregion

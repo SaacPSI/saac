@@ -486,7 +486,7 @@ namespace VideoRemoteApp
                     }));
                     break;
                 case RendezVousPipeline.Command.Status:
-                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, source, datasetPipeline == null ? "Not Initialised" : datasetPipeline.Pipeline.StartTime.ToString());
+                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, CommandSource, datasetPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     break;
             }
         }

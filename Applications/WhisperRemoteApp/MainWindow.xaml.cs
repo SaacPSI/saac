@@ -531,7 +531,7 @@ namespace WhisperRemoteApp
                 case RendezVousPipeline.Command.Status:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, source, rendezVousPipeline == null ? "Not Initialised" : rendezVousPipeline.Pipeline.StartTime.ToString());
+                        rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, CommandSource, rendezVousPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     }));
                     break;
             }

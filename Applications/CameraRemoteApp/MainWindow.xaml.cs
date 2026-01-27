@@ -15,6 +15,7 @@ using Microsoft.Psi.Interop.Rendezvous;
 using Microsoft.Psi.Imaging;
 using Microsoft.Psi.Components;
 using Microsoft.Psi.Media_Interop;
+using MathNet.Numerics.Statistics;
 
 namespace CameraRemoteApp
 {
@@ -511,7 +512,7 @@ namespace CameraRemoteApp
                     }));
                     break;
                 case RendezVousPipeline.Command.Status:
-                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, datasetPipeline.Pipeline.StartTime.ToString(), "");
+                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, CommandSource, datasetPipeline.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     break;
             }
         }
@@ -601,7 +602,10 @@ namespace CameraRemoteApp
             else
             {
                 if (azureConfiguration.OutputBodies == true)
+                {
+                    azureConfiguration.OutputDepth = azureConfiguration.OutputInfrared = azureConfiguration.OutputCalibration = true;
                     azureConfiguration.BodyTrackerConfiguration = new Microsoft.Psi.AzureKinect.AzureKinectBodyTrackerConfiguration();
+                }
                 var Sensor = new Microsoft.Psi.AzureKinect.AzureKinectSensor(datasetPipeline.Pipeline, azureConfiguration);
                 Session session = datasetPipeline.CreateOrGetSession(localSessionName);
                 if (azureConfiguration.OutputAudio == true)
@@ -839,6 +843,11 @@ namespace CameraRemoteApp
             }
             CameraCaptureFormat.Clear();
             cameraFormats = MediaCapture.GetAvailableFormats(VideoSourceComboBox.SelectedValue as string ?? Properties.Settings.Default.videoSource);
+            if (cameraFormats is null)
+            {
+                return;
+            }
+
             foreach (CaptureFormat format in cameraFormats)
             {
                 CameraCaptureFormat.Add($"{format.nWidth}x{format.nHeight}@{format.nFrameRateNumerator}");
