@@ -222,7 +222,7 @@ namespace SAAC.PipelineServices
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
         }
 
-        public bool GeneraterRemoteProcessFromConnectors(string storeName, int startingPort)
+        public bool GenerateRemoteProcessFromConnectors(string storeName, int startingPort)
         {
             if (Connectors.ContainsKey(storeName))
                 return GenerateRemoteProcessFromConnectors(storeName, Connectors[storeName], startingPort);
