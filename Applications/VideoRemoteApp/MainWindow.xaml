@@ -61,7 +61,7 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
-            <TabItem Header="Video">
+            <TabItem Header="Captures">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

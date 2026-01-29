@@ -111,7 +111,6 @@ public class PsiPipelineManager : MonoBehaviour
     {
         serializers.Register<bool, BoolSerializer>();
         serializers.Register<char, CharSerializer>();
-        serializers.Register<DateTime, DateTimeSerializer>();
         serializers.Register<byte[], BytesSerializer>();
         serializers.Register<System.Numerics.Vector3, Vector3Serializer>();
         serializers.Register<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>, TupleOfVector3Serializer>();
@@ -186,13 +185,13 @@ public class PsiPipelineManager : MonoBehaviour
         {
             if (endpoint is Rendezvous.RemotePipelineClockExporterEndpoint remotePipelineClockEndpoint)
             {
-                remotePipelineClockEndpoint.ToRemotePipelineClockImporter(Pipeline);
+                remotePipelineClockEndpoint.ToRemotePipelineClockImporter(pipeline);
                 AddLog($"PsiPipelineManager : Remote clock found!");
                 return;
             }
             else if (endpoint is Rendezvous.RemoteClockExporterEndpoint remoteClockEndpoint)
             {
-                remoteClockEndpoint.ToRemoteClockImporter(Pipeline);
+                remoteClockEndpoint.ToRemoteClockImporter(pipeline);
                 AddLog($"PsiPipelineManager : Remote clock found!");
                 return;
             }
@@ -276,6 +275,9 @@ public class PsiPipelineManager : MonoBehaviour
             return;
         Command command = (Command)message.Data.Item1;
         AddLog($"PsiPipelineManager Recieve Command {command} from {processName} @{message.OriginatingTime} with argument {message.Data.Item2} \n");
+        if (command != Command.Status && StartMode == PsiManagerStartMode.Manual)
+            return;
+
         switch (command)
         {
             case Command.Reset:
@@ -296,7 +298,7 @@ public class PsiPipelineManager : MonoBehaviour
                 break;
             case Command.Status:
                 if (CommandEmitter != null)
-                    CommandEmitter.Post((Command.Status, State.ToString()), commandPipeline.GetCurrentTime());
+                    CommandEmitter.Post((Command.Status, $"{processName};{State}"), commandPipeline.GetCurrentTime());
                 break;
         }
     }
@@ -446,12 +448,12 @@ public class PsiPipelineManager : MonoBehaviour
                 StopPsi();
             };
             pipeline.RunAsync();
-            foreach (Subpipeline sub in subpipelines)
+            foreach (Subpipeline sub in subPipelines)
             {
                 if (sub.StartTime != DateTime.MinValue)
                 {
                     sub.Start((d) => { });
-                    Log($"SubPipeline {sub.Name} started.");
+                    AddLog($"SubPipeline {sub.Name} started.");
                 }
             }
             State = PsiPipelineManagerState.Running;

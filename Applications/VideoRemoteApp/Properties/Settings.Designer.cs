@@ -25,7 +25,7 @@ namespace VideoRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10.144.210.101")]
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
         public string rendezVousServerIp {
             get {
                 return ((string)(this["rendezVousServerIp"]));
@@ -85,7 +85,7 @@ namespace VideoRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10.144.210.100")]
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
         public string ipToUse {
             get {
                 return ((string)(this["ipToUse"]));

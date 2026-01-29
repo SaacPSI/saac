@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="rendezVousServerIp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">10.144.210.101</Value>
+      <Value Profile="(Default)">localhost</Value>
     </Setting>
     <Setting Name="rendezVousServerPort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">13331</Value>
@@ -18,7 +18,7 @@
       <Value Profile="(Default)">VideoRemoteApp</Value>
     </Setting>
     <Setting Name="ipToUse" Type="System.String" Scope="User">
-      <Value Profile="(Default)">10.144.210.100</Value>
+      <Value Profile="(Default)">localhost</Value>
     </Setting>
     <Setting Name="isServer" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

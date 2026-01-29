@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="RendezVousHost" Type="System.String" Scope="User">
-      <Value Profile="(Default)">10.144.38.74</Value>
+      <Value Profile="(Default)">localhost</Value>
     </Setting>
     <Setting Name="RendezVousPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">13331</Value>
@@ -12,7 +12,7 @@
       <Value Profile="(Default)">11510</Value>
     </Setting>
     <Setting Name="DatasetPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\\Users\\dapi\\Desktop\\Autres</Value>
+      <Value Profile="(Default)">./Stores/</Value>
     </Setting>
     <Setting Name="DatasetName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Dataset.pds</Value>

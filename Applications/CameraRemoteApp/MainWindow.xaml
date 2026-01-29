@@ -121,6 +121,7 @@
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
                             <Label Grid.Row="0" Grid.Column="0" Content="Device Serial Number"/>
                             <TextBox Grid.Row="1" Grid.Column="1" Name="NuitrackDeviceSerialNumber" Text="{Binding NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber}"/>
@@ -129,9 +130,9 @@
                             <CheckBox Grid.Row="2" Grid.Column="0" Name="NuitrackSkeleton" Content="Skeleton" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking}"/>
                             <CheckBox Grid.Row="3" Grid.Column="0" Name="NuitrackRGB" Content="RGB" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputColor}"/>
                             <CheckBox Grid.Row="4" Grid.Column="0" Name="NuitrackDepth" Content="Depth" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputDepth}"/>
-                            <CheckBox Grid.Row="4" Grid.Column="0" Name="NuitrackHand" Content="Hand" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputHandTracking}"/>
-                            <CheckBox Grid.Row="5" Grid.Column="0" Name="NuitrackUser" Content="User" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputUserTracking}"/>
-                            <CheckBox Grid.Row="6" Grid.Column="0" Name="NuitrackGesture" Content="Gesture" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer}"/>
+                            <CheckBox Grid.Row="5" Grid.Column="0" Name="NuitrackHand" Content="Hand" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputHandTracking}"/>
+                            <CheckBox Grid.Row="6" Grid.Column="0" Name="NuitrackUser" Content="User" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputUserTracking}"/>
+                            <CheckBox Grid.Row="7" Grid.Column="0" Name="NuitrackGesture" Content="Gesture" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer}"/>
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Kinect Configuration" Name="KinectConfiguration" FontWeight="Bold" Grid.ColumnSpan="2" Grid.Row="2" >

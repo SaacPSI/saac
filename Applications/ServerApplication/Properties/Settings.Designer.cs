@@ -25,7 +25,7 @@ namespace ServerApplication.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10.144.38.74")]
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
         public string RendezVousHost {
             get {
                 return ((string)(this["RendezVousHost"]));
@@ -61,7 +61,7 @@ namespace ServerApplication.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Users\\\\dapi\\\\Desktop\\\\Autres")]
+        [global::System.Configuration.DefaultSettingValueAttribute("./Stores/")]
         public string DatasetPath {
             get {
                 return ((string)(this["DatasetPath"]));

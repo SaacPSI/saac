@@ -315,7 +315,6 @@ namespace ServerApplication
         private void BtnStartClick(object sender, RoutedEventArgs e)
         {
             SetupPipeline();
-            AllDevicesStackPanel.IsEnabled = true;
         }
 
         private void SetupPipeline()
@@ -355,6 +354,7 @@ namespace ServerApplication
             server.Start();
             AddLog("Server started");
             StartStatusMonitoring();
+            AllDevicesStackPanel.IsEnabled = true;
             setupState = SetupState.PipelineInitialised;
         }
         private void SetupWebSocketsAndAnnotations()
@@ -558,6 +558,10 @@ namespace ServerApplication
                         connectedApps[name].Status = ConnectedAppStatus.Running;
                     }
                     break;
+                case "Connected":
+                case "Served":
+                case "Initializing":
+                case "Initialized":
                 case "Waiting":
                     if (connectedApps.ContainsKey(name))
                     {
@@ -565,6 +569,7 @@ namespace ServerApplication
                     }
                     break;
                 case "Stopping":
+                case "Stopped":
                     if (connectedApps.ContainsKey(name))
                     {
                         connectedApps.Remove(name);
@@ -574,6 +579,7 @@ namespace ServerApplication
                         }));
                     }
                     break;
+                case "Failed":
                 case "Error":
                     if (connectedApps.ContainsKey(name))
                     {

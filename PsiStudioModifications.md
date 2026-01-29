@@ -304,14 +304,14 @@ public class PsiStudioNetworkInfo
 #### 2.6 NetworkedStreamValueVisualisationObject<TData>
 **File:** `Sources\Tools\PsiStudio\Microsoft.Psi.PsiStudio\Network\NetworkedStreamValueVisualisationObject{TData}.cs`
 
-Generic visualization object for network streams:
+Generic object for network-streamed streams:
 
 **Generic Parameter:**
-- `TData`: The data type of the network stream
+- `TData`: The data type of the stream
 
 **Responsibilities:**
-- Receive network stream data
-- Update visualization based on received data
+- Receive data to network-stream 
+- Update based on PsiStudio time cursor
 - Handle type-specific rendering logic
 
 ### Integration with MainWindowViewModel
@@ -436,18 +436,6 @@ WPF view for the external viewer panel:
 - Manage process UI integration
 - Show connection status
 
-**XAML Structure:**
-```xml
-<Grid>
-    <StackPanel Orientation="Vertical">
-        <TextBlock Text="External Viewer: {Binding ExternalViewerPath}" />
-        <Border Name="ExternalViewerHost" />
-        <StatusBar>
-            <TextBlock Text="{Binding ConnectionStatus}" />
-        </StatusBar>
-    </StackPanel>
-</Grid>
-```
 
 #### 3.3 Modification of InstantVisualizationPlaceholderPanel
 **File:** `Sources\Visualization\Microsoft.Psi.Visualization.Windows\VisualizationPanels\InstantVisualizationPlaceholderPanel.cs`
@@ -593,18 +581,5 @@ All components handle concurrent operations safely:
 
 - **Pipeline Plugin**: Executes on dedicated worker thread
 - **Network Streams**: Non-blocking async operations
-- **External Viewer**: Process communication on child application
+- **External Viewer**: Basic process communication on child application
 
-### Settings Persistence
-
-All user preferences are persisted in `PsiStudioSettings`:
-
-```
-PsiStudioSettings
-├── Pipeline Plugins
-│   └── AdditionalPlugins (List<string>)
-├── Network Configuration
-│   └── LastNetworkSettings (PsiStudioNetworkSettings)
-└── External Viewers
-    └── LastExternalViewerPath (string)
-```
