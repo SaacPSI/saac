@@ -49,7 +49,7 @@ namespace WhisperRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("18888")]
         public int CommandPort {
             get {
                 return ((int)(this["CommandPort"]));

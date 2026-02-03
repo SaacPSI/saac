@@ -9,7 +9,7 @@
       <Value Profile="(Default)">13331</Value>
     </Setting>
     <Setting Name="commandPort" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">0</Value>
+      <Value Profile="(Default)">18887</Value>
     </Setting>
     <Setting Name="remotePort" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">11411</Value>
@@ -96,7 +96,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="commandSource" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">Server</Value>
     </Setting>
     <Setting Name="cameraCaptureFormat" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>

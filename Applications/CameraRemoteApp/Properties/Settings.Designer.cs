@@ -49,7 +49,7 @@ namespace CameraRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("18887")]
         public int commandPort {
             get {
                 return ((int)(this["commandPort"]));
@@ -397,7 +397,7 @@ namespace CameraRemoteApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Server")]
         public string commandSource {
             get {
                 return ((string)(this["commandSource"]));
