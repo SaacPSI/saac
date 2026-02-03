@@ -630,15 +630,19 @@ namespace WhisperRemoteApp
                 {
                     if (isStreaming && rendezVousPipeline is not null)
                     {
-                        Dictionary<string, ConnectorInfo> audioStreams = new Dictionary<string, ConnectorInfo>();
+                        int currentPort = remoteConfiguration.ExportPort;
                         foreach (var userAudio in audioManager.GetDictonaryIdAudioStream())
                         {
                             rendezVousPipeline.CreateConnectorAndStore("Audio", $"Audio_User_{userAudio.Key}", rendezVousPipeline.CreateOrGetSessionFromMode(PipelineConfigurationUI.SessionName), pipeline, typeof(AudioBuffer), userAudio.Value, IsLocalRecording);
-                            audioStreams.Add($"Audio_User_{userAudio.Key}", rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"]);
+                            Dictionary<string, ConnectorInfo> singleAudioStream = new Dictionary<string, ConnectorInfo>
+                            {
+                                { "Audio", rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"] }
+                            };
+                            Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process($"{WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName}_Audio_User_{userAudio.Key}", "Version1.0");
+                            rendezVousPipeline.GenerateRemoteEnpoint(pipeline, currentPort, singleAudioStream, ref process);
+                            rendezVousPipeline.AddProcess(process);
+                            currentPort++;
                         }
-                        Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName, "Version1.0");
-                        rendezVousPipeline.GenerateRemoteEnpoint(pipeline, remoteConfiguration.ExportPort, audioStreams, ref process);
-                        rendezVousPipeline.AddProcess(process);
                     }
                     else if (IsLocalRecording)
                     {
