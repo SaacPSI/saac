@@ -217,7 +217,8 @@ namespace SAAC.PipelineServices
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
                 // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?
-                typeof(Exporter).GetMethod("Write").MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
+                // Removing the amiguity of the Write method with the one from Exporter class which is the one we want to call, as the RemoteExporter class also have a Write method but with a different signature.
+                typeof(Exporter).GetMethods().FirstOrDefault(m => m.Name == "Write" && m.IsGenericMethodDefinition).MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
             }
             process.AddEndpoint(writer.ToRendezvousEndpoint(Configuration.RendezVousHost));
         }
