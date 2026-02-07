@@ -15,6 +15,7 @@ public abstract class IPsiImporter : MonoBehaviour
 
 public abstract class PsiImporter<T> : IPsiImporter, IDisposable
 {
+    [Tooltip("Name of the topic from which data will be imported")]
     public string TopicName = "Topic";
     protected bool IsInitialized = false;
 
