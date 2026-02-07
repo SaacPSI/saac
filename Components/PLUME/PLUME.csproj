@@ -9,7 +9,6 @@
     <Platforms>x64</Platforms>
     <UseWPF>true</UseWPF>
     <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\PLUME</BaseIntermediateOutputPath>
     <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

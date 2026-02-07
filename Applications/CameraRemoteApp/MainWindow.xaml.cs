@@ -610,7 +610,6 @@ namespace CameraRemoteApp
                 Session session = datasetPipeline.CreateOrGetSession(localSessionName);
                 if (azureConfiguration.OutputAudio == true)
                 {
-                    string streamName = "Audio";
                     Microsoft.Psi.Audio.AudioCaptureConfiguration configuration = new Microsoft.Psi.Audio.AudioCaptureConfiguration();
                     int index = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ToList().FindIndex(value => { return value.Contains("Azure"); });
                     configuration.DeviceName = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ElementAt(index);

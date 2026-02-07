@@ -1,0 +1,26 @@
+<Project>
+  <PropertyGroup>
+    <!-- Set MSBuildProjectExtensionsPath and BaseIntermediateOutputPath early to avoid MSB3539 warnings -->
+    <!-- This must be set before Microsoft.Common.props is imported -->
+    <SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)</SolutionDir>
+    
+    <!-- Detect if this is a WPF temp project (contains _wpftmp in name) -->
+    <_IsWpfTempProject>false</_IsWpfTempProject>
+    <_IsWpfTempProject Condition="$(MSBuildProjectName.Contains('_wpftmp'))">true</_IsWpfTempProject>
+    
+    <!-- Detect if this is a C++ project (.vcxproj) - these should not use centralized obj paths -->
+    <_IsCppProject>false</_IsCppProject>
+    <_IsCppProject Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">true</_IsCppProject>
+    
+    <!-- Set BaseIntermediateOutputPath based on project name - computed early -->
+    <!-- Skip for WPF temp projects (NETSDK1004) and C++ projects (C1041 PDB conflicts) -->
+    <BaseIntermediateOutputPath Condition="'$(_IsWpfTempProject)' != 'true' AND '$(_IsCppProject)' != 'true'">$(SolutionDir)build\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath Condition="'$(_IsWpfTempProject)' != 'true' AND '$(_IsCppProject)' != 'true'">$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    
+    <!-- Prevent duplicate assembly attributes (CS0579) by excluding old obj folders -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
+    
+    <!-- Prevent duplicate assembly attributes (CS0579) -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+</Project>

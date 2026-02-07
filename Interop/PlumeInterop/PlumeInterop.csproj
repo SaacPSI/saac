@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\PlumeInterop</BaseIntermediateOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>   
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.31.1" />

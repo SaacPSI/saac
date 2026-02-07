@@ -8,7 +8,6 @@
     <Platforms>x64</Platforms>
     <UseWPF>true</UseWPF>
     <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\AnnotationsComponents</BaseIntermediateOutputPath>
     <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
