@@ -1,29 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset='utf-8'>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
+<style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+        .container { max-width: 800px; margin: 0 auto; width: 100%; }
         .tab-container { display: flex; flex-direction: column; }
-        .tab-header { display: flex; }
-        .tab { padding: 10px 15px; cursor: pointer; background: #e0e0e0; border: 1px solid #ccc; border-bottom: none; }
+        .tab-header { display: flex; flex-wrap: wrap; }
+        .tab { padding: 12px 20px; cursor: pointer; background: #e0e0e0; border: 1px solid #ccc; border-bottom: none; flex: 1; text-align: center; min-width: 120px; font-size: 16px; -webkit-tap-highlight-color: transparent; }
         .tab.active { background: #fff; border-bottom: 1px solid #fff; }
         .tab-content { display: none; padding: 15px; border: 1px solid #ccc; }
         .tab-content.active { display: block; }
         .websocket-info { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .status { padding: 10px; margin: 5px 0; border-radius: 3px; }
+        .status { padding: 12px; margin: 8px 0; border-radius: 3px; font-size: 16px; }
         .connected { background: #d4edda; color: #155724; }
         .disconnected { background: #f8d7da; color: #721c24; }
-        .controls { margin: 20px 0; }
-        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .controls { margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px; }
+        button { padding: 12px 18px; margin: 5px; cursor: pointer; font-size: 16px; min-height: 44px; border-radius: 5px; border: 1px solid #ccc; background: #fff; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        button:active { background: #e0e0e0; }
         #status { font-weight: bold; }
-        #observerId { padding: 5px; margin: 5px; }
-        .annotation-button { margin: 5px; padding: 8px 12px; }
-        #logs { height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; font-family: monospace; margin-top: 20px; }
-        .checkbox-group { margin: 15px 0; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 3px; }
-        .checkbox-group input[type="checkbox"] { margin-right: 8px; }
-        .checkbox-group label { display: flex; align-items: center; cursor: pointer; font-size: 14px; }
+        #observerId { padding: 12px; margin: 5px 0; font-size: 16px; width: 100%; border: 1px solid #ccc; border-radius: 5px; }
+        .annotation-button { margin: 5px; padding: 12px 16px; min-height: 48px; font-size: 16px; }
+        #logs { height: 150px; overflow-y: auto; background: #f9f9f9; padding: 10px; font-family: monospace; margin-top: 20px; font-size: 12px; word-break: break-word; }
+        .checkbox-group { margin: 15px 0; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px; }
+        .checkbox-group input[type="checkbox"] { margin-right: 10px; width: 20px; height: 20px; }
+        .checkbox-group label { display: flex; align-items: center; cursor: pointer; font-size: 16px; }
+        .checkbox-group select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; margin-top: 10px; }
+        
+        /* Tablet styles */
+        @media screen and (max-width: 768px) {
+            body { padding: 8px; }
+            .tab { padding: 10px 15px; font-size: 15px; }
+            .tab-content { padding: 12px; }
+            .websocket-info { padding: 12px; }
+            #logs { height: 120px; }
+            .controls { justify-content: center; }
+            .controls button { flex: 1; min-width: 140px; }
+        }
+        
+        /* Mobile styles */
+        @media screen and (max-width: 480px) {
+            body { padding: 5px; }
+            .tab { padding: 10px 8px; font-size: 14px; min-width: 80px; }
+            .tab-content { padding: 10px; }
+            .websocket-info { padding: 10px; margin: 8px 0; }
+            .websocket-info h3 { font-size: 16px; margin: 0 0 10px 0; }
+            button { padding: 14px 16px; width: 100%; margin: 5px 0; }
+            .controls { flex-direction: column; }
+            .controls button { width: 100%; margin: 5px 0; }
+            #logs { height: 100px; font-size: 11px; }
+            .annotation-button { padding: 14px 12px; min-height: 52px; }
+            .checkbox-group { padding: 12px; }
+            .checkbox-group label { font-size: 15px; }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            button { min-height: 48px; }
+            .annotation-button { min-height: 52px; }
+            input[type="text"], select { min-height: 48px; }
+        }
     </style>
 </head>
 <body>
@@ -269,17 +307,17 @@
             description.style.cssText = 'display: block; margin-bottom: 10px; color: #666;';
             
             const inputWrapper = document.createElement('div');
-            inputWrapper.style.cssText = 'display: flex; gap: 10px;';
+            inputWrapper.style.cssText = 'display: flex; gap: 10px; flex-wrap: wrap;';
             
             const input = document.createElement('input');
             input.type = 'text';
             input.placeholder = attributeSchema.ValueSchema.DefaultValue || 'Enter text';
-            input.style.cssText = 'flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 3px;';
+            input.style.cssText = 'flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 5px; min-width: 150px; font-size: 16px;';
             
             const button = document.createElement('button');
             button.textContent = 'Send';
             button.className = 'annotation-button';
-            button.style.cssText = 'padding: 8px 15px;';
+            button.style.cssText = 'padding: 12px 20px; min-width: 80px;';
             
             button.addEventListener('click', () => {
                 const value = input.value;
@@ -331,7 +369,7 @@
                     button.style.color = valueOption.TextColor;
                 }
                 
-                button.style.cssText += 'padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer;';
+                button.style.cssText += 'padding: 12px 16px; border: none; border-radius: 5px; cursor: pointer; min-height: 48px; font-size: 16px; touch-action: manipulation;';
                 
                 // Add mousedown event for button press
                 button.addEventListener('mousedown', () => {
