@@ -1,15 +1,18 @@
-﻿using Microsoft.Psi.Visualization.VisualizationObjects;
-using SAAC.GlobalHelpers;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
-using HelixToolkit.Wpf;
-
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using System.Windows.Media;
+    using System.Windows.Media.Media3D;
+    using HelixToolkit.Wpf;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using SAAC.GlobalHelpers;
+    using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+
     /// <summary>
     /// Implements a visualization object for gaze events.
     /// </summary>
@@ -50,7 +53,7 @@ namespace SAAC.Visualizations
         }
 
         /// <summary>
-        /// Gets the billboard visualization object for the hand.
+        /// Gets or sets the billboard visualization object for the hand.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -58,7 +61,6 @@ namespace SAAC.Visualizations
         [DisplayName("Billboard")]
         [Description("The billboard properties.")]
         public BillboardTextVisualizationObject Billboard { get; set; }
-
 
         /// <summary>
         /// Gets or sets the color.
@@ -110,7 +112,7 @@ namespace SAAC.Visualizations
         }
 
         /// <summary>
-        /// Gets the state of the reversing XY avxes.
+        /// Gets or sets a value indicating whether reversing Y and Z axes.
         /// </summary>
         [DataMember]
         [PropertyOrder(7)]
@@ -139,6 +141,7 @@ namespace SAAC.Visualizations
             {
                 this.UpdatePointProperties();
             }
+
             if (propertyName == nameof(this.BillboardHeightCm))
             {
                 this.UpdateBillboard();
@@ -159,7 +162,9 @@ namespace SAAC.Visualizations
         private void UpdatePosition()
         {
             if (this.CurrentData != null)
-                this.sphereVisual.Transform = new TranslateTransform3D(this.CurrentData.Position.X, ReverseYZ ? this.CurrentData.Position.Z : this.CurrentData.Position.Y, ReverseYZ ? this.CurrentData.Position.Y : this.CurrentData.Position.Z);
+            {
+                this.sphereVisual.Transform = new TranslateTransform3D(this.CurrentData.Position.X, this.ReverseYZ ? this.CurrentData.Position.Z : this.CurrentData.Position.Y, this.ReverseYZ ? this.CurrentData.Position.Y : this.CurrentData.Position.Z);
+            }
         }
 
         private void UpdateBillboard()

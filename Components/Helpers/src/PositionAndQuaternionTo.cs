@@ -1,9 +1,22 @@
-﻿using Microsoft.Psi.Spatial.Euclidean;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Helpers
 {
-    static public class PositionAndQuaternionTo
+    using Microsoft.Psi.Spatial.Euclidean;
+
+    /// <summary>
+    /// Static utility class for converting position and quaternion to Matrix4x4 or CoordinateSystem.
+    /// </summary>
+    public static class PositionAndQuaternionTo
     {
+        /// <summary>
+        /// Converts a position and quaternion to a 4x4 transformation matrix.
+        /// </summary>
+        /// <param name="position">The 3D position.</param>
+        /// <param name="q">The rotation quaternion.</param>
+        /// <returns>A 4x4 transformation matrix.</returns>
         public static System.Numerics.Matrix4x4 Matrix4x4(MathNet.Spatial.Euclidean.Point3D position, MathNet.Spatial.Euclidean.Quaternion q)
         {
             // Extract quaternion components
@@ -23,7 +36,7 @@ namespace SAAC.Helpers
             double wy = w * y;
             double wz = w * z;
 
-            System.Numerics.Matrix4x4 matrix = new System.Numerics.Matrix4x4();
+            System.Numerics.Matrix4x4 matrix = default(System.Numerics.Matrix4x4);
 
             matrix.M11 = (float)(1 - 2 * (yy + zz));
             matrix.M12 = (float)(2 * (xy - wz));
@@ -48,6 +61,12 @@ namespace SAAC.Helpers
             return matrix;
         }
 
+        /// <summary>
+        /// Converts a position and quaternion to a coordinate system.
+        /// </summary>
+        /// <param name="position">The 3D position.</param>
+        /// <param name="q">The rotation quaternion.</param>
+        /// <returns>A coordinate system.</returns>
         public static MathNet.Spatial.Euclidean.CoordinateSystem CoordinateSystem(MathNet.Spatial.Euclidean.Point3D position, MathNet.Spatial.Euclidean.Quaternion q)
         {
             return Matrix4x4(position, q).ToCoordinateSystem();

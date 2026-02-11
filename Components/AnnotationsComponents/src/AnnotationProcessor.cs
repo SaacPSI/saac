@@ -1,20 +1,28 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.Data.Annotations;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.AnnotationsComponents
 {
+    using System.Diagnostics;
+    using System.Linq;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+    using Microsoft.Psi.Data.Annotations;
+
     /// <summary>
     /// Component that processes annotation messages received from WebSocket connections
     /// and converts them into TimeIntervalAnnotationSet objects.
     /// </summary>
     public class AnnotationProcessor : Generator<TimeIntervalAnnotationSet>, IConsumer<string>
     {
-        private static readonly List<(TimeIntervalAnnotationSet, DateTime)> definition = new();
+        private static readonly List<(TimeIntervalAnnotationSet, DateTime)> Definition = new ();
         private readonly AnnotationSchema annotationSchema;
         private readonly string name;
         private Dictionary<string, TimeIntervalAnnotation> currentValues;
@@ -26,7 +34,7 @@ namespace SAAC.AnnotationsComponents
         /// <param name="schema">The annotation schema that defines the structure of annotations.</param>
         /// <param name="name">The name of the annotation processor.</param>
         public AnnotationProcessor(Pipeline pipeline, AnnotationSchema schema, string name = nameof(AnnotationProcessor))
-            : base(pipeline, definition.GetEnumerator(), name: name)
+            : base(pipeline, Definition.GetEnumerator(), name: name)
         {
             this.In = pipeline.CreateReceiver<string>(this, this.ProcessAnnotation, $"{name}-In");
             this.annotationSchema = schema;
@@ -39,9 +47,7 @@ namespace SAAC.AnnotationsComponents
         /// </summary>
         public Receiver<string> In { get; }
 
-        /// <summary>
-        /// Returns the name of the annotation processor.
-        /// </summary>
+        /// <inheritdoc/>>
         public override string ToString() => this.name;
 
         private void ProcessAnnotation(string message, Envelope envelope)
@@ -67,7 +73,7 @@ namespace SAAC.AnnotationsComponents
                 {
                     // String annotation: create an instantaneous annotation
                     TimeIntervalAnnotation newAnnotation = this.annotationSchema.CreateDefaultTimeIntervalAnnotation(new TimeInterval(envelope.OriginatingTime, envelope.OriginatingTime.AddSeconds(1)), this.name);
-                    MergeAttributeValues(attributeSchema.CreateAttribute(firstSplit[1]), newAnnotation.AttributeValues);
+                    this.MergeAttributeValues(attributeSchema.CreateAttribute(firstSplit[1]), newAnnotation.AttributeValues);
                     this.Out.Post(new TimeIntervalAnnotationSet(newAnnotation), envelope.OriginatingTime);
                 }
                 else
@@ -80,11 +86,12 @@ namespace SAAC.AnnotationsComponents
                         Trace.Write($"Invalid annotation format for enumerable {firstSplit[0]}: {message}");
                         return;
                     }
+
                     if (secondSplit[1] == "start" && this.currentValues.ContainsKey(attributeSchema.Name) == false)
                     {
                         // Start of enumerable annotation: create and store annotation with indefinite end time
                         TimeIntervalAnnotation newAnnotation = this.annotationSchema.CreateDefaultTimeIntervalAnnotation(new TimeInterval(envelope.OriginatingTime, DateTime.MaxValue), this.name);
-                        MergeAttributeValues( attributeSchema.CreateAttribute(secondSplit[0]), newAnnotation.AttributeValues);
+                        this.MergeAttributeValues(attributeSchema.CreateAttribute(secondSplit[0]), newAnnotation.AttributeValues);
                         this.currentValues[attributeSchema.Name] = newAnnotation;
                     }
                     else if (secondSplit[1] == "end")

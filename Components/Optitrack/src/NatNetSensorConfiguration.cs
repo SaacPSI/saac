@@ -1,7 +1,14 @@
-﻿using NatNetML;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
+using NatNetML;
 
 namespace SAAC.NatNetComponent
 {
+    /// <summary>
+    /// Configuration settings for the NatNet Optitrack component.
+    /// </summary>
     public class NatNetCoreConfiguration
     {
         /// <summary>
@@ -20,7 +27,7 @@ namespace SAAC.NatNetComponent
         public NatNetML.ConnectionType ConnectionType { get; set; } = ConnectionType.Multicast;
 
         /// <summary>
-        /// Gets or sets debugging mode.
+        /// Gets or sets a value indicating whether gets or sets debugging mode.
         /// </summary>
         public bool Debug { get; set; } = false;
 
@@ -38,6 +45,5 @@ namespace SAAC.NatNetComponent
         /// Gets or sets a value indicating whether the forces plates stream is emitted.
         /// </summary>
         public bool OutputForcePlates { get; set; } = false;
-
     }
 }

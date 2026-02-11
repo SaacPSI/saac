@@ -22,5 +22,28 @@
     
     <!-- Prevent duplicate assembly attributes (CS0579) -->
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    
+    <!-- Code Analysis Settings (only for .NET projects) -->
+    <CodeAnalysisRuleSet Condition="'$(_IsCppProject)' != 'true'">$(SolutionDir)Build\Microsoft.Psi.ruleset</CodeAnalysisRuleSet>
+    <EnforceCodeStyleInBuild Condition="'$(_IsCppProject)' != 'true'">true</EnforceCodeStyleInBuild>
+    
+    <!-- Documentation file generation -->
+    <GenerateDocumentationFile Condition="'$(_IsCppProject)' != 'true'">true</GenerateDocumentationFile>
+    
+    <!-- Treat warnings as errors in Release builds -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release' AND '$(_IsCppProject)' != 'true'">false</TreatWarningsAsErrors>
   </PropertyGroup>
+  
+  <!-- StyleCop configuration (only for .NET projects) -->
+  <ItemGroup Condition="'$(_IsCppProject)' != 'true' AND '$(_IsWpfTempProject)' != 'true'">
+    <AdditionalFiles Include="$(SolutionDir)stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+  
+  <!-- StyleCop.Analyzers package reference (only for .NET projects) -->
+  <ItemGroup Condition="'$(_IsCppProject)' != 'true' AND '$(_IsWpfTempProject)' != 'true'">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

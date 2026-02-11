@@ -1,16 +1,23 @@
-﻿namespace SAAC.Nuitrack
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
+namespace SAAC.Nuitrack
 {
+    /// <summary>
+    /// Configuration for the Nuitrack sensor.
+    /// </summary>
     public class NuitrackSensorConfiguration
     {
         /// <summary>
         /// Gets or sets the serialNumber of the device to open.
         /// </summary>
-        public string  DeviceSerialNumber { get; set; } = "";
+        public string DeviceSerialNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the nuitrack licence key of the device to open.
         /// </summary>
-        public string ActivationKey { get; set; } = "";
+        public string ActivationKey { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the color stream is emitted.

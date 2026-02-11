@@ -1,3 +1,7 @@
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
 using Microsoft.Psi;
 
 namespace SAAC.NatNetComponent
@@ -8,7 +12,6 @@ namespace SAAC.NatNetComponent
     /// </summary>
     public class NatNetSensor : Subpipeline
     {
-
         /// <summary>
         /// Gets the sensor configuration.
         /// </summary>
@@ -21,12 +24,12 @@ namespace SAAC.NatNetComponent
         /// <summary>
         /// Gets the current image from the color camera.
         /// </summary>
-        //public Emitter<Shared<Image>> ColorImage { get; private set; }
+        // public Emitter<Shared<Image>> ColorImage { get; private set; }
 
         /// <summary>
         /// Gets the current depth image.
         /// </summary>
-      //  public Emitter<Shared<DepthImage>> DepthImage { get; private set; }
+      // public Emitter<Shared<DepthImage>> DepthImage { get; private set; }
 
         /// <summary>
         /// Gets the emitter of lists of currently tracked bodies.
@@ -34,45 +37,33 @@ namespace SAAC.NatNetComponent
         public Emitter<List<RigidBody>> OutRigidBodies { get; private set; }
 
         /// <summary>
-        /// Gets the emitter of lists of currently tracked hands.
+        /// Initializes a new instance of the <see cref="NatNetSensor"/> class.
         /// </summary>
-        //public Emitter<List<UserHands>> Hands { get; private set; }
-
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked users.
-        /// </summary>
-        //public Emitter<List<User>> Users { get; private set; }
-
-        /// <summary>
-        /// Gets the emitter of lists of currently tracked users.
-        /// </summary>
-        //public Emitter<List<UserGesturesState>> Gestures { get; private set; }
-
-        /// <summary>
-        /// Gets the current frames-per-second actually achieved.
-        /// </summary>
-        //public Emitter<double> FrameRate { get; private set; }
-        // TODO: Add more if needed and renaming properly the reciever & emitter
-
-        /* End in/out puts */
-        // Constructor
+        /// <param name="pipeline">The pipeline to add the component to.</param>
+        /// <param name="config">The configuration to use for the sensor.</param>
+        /// <param name="name">The name of the component.</param>
+        /// <param name="defaultDeliveryPolicy">The default delivery policy.</param>
+        /// <param name="bodyTrackerDeliveryPolicy">The body tracker delivery policy.</param>
         public NatNetSensor(Pipeline pipeline, NatNetCoreConfiguration? config = null, string name = nameof(NatNetSensor), DeliveryPolicy? defaultDeliveryPolicy = null, DeliveryPolicy? bodyTrackerDeliveryPolicy = null)
          : base(pipeline, name, defaultDeliveryPolicy ?? DeliveryPolicy.LatestMessage)
         {
-
             this.Configuration = config ?? new NatNetCoreConfiguration();
 
-            var NatNetCore = new NatNetCore(this, this.Configuration);
+            var natNetCore = new NatNetCore(this, this.Configuration);
 
-            //this.ColorImage = NatNetCore.ColorImage.BridgeTo(pipeline, nameof(this.ColorImage)).Out;
-            //this.DepthImage = NatNetCore.DepthImage.BridgeTo(pipeline, nameof(this.DepthImage)).Out;
-            //this.Bodies = NatNetCore.Bodies.BridgeTo(pipeline, nameof(this.Bodies)).Out;
-            this.OutRigidBodies = NatNetCore.OutRigidBodies.BridgeTo(pipeline, $"{name}-OutRigidBodies").Out;
-            //this.Users = NatNetCore.Users.BridgeTo(pipeline, nameof(this.Users)).Out;
-            //this.Gestures = NatNetCore.Gestures.BridgeTo(pipeline, nameof(this.Gestures)).Out;
-            //this.FrameRate = NatNetCore.FrameRate.BridgeTo(pipeline, nameof(this.FrameRate)).Out;
+            // this.ColorImage = NatNetCore.ColorImage.BridgeTo(pipeline, nameof(this.ColorImage)).Out;
+            // this.DepthImage = NatNetCore.DepthImage.BridgeTo(pipeline, nameof(this.DepthImage)).Out;
+            // this.Bodies = NatNetCore.Bodies.BridgeTo(pipeline, nameof(this.Bodies)).Out;
+            this.OutRigidBodies = natNetCore.OutRigidBodies.BridgeTo(pipeline, $"{name}-OutRigidBodies").Out;
+
+            // this.Users = NatNetCore.Users.BridgeTo(pipeline, nameof(this.Users)).Out;
+            // this.Gestures = NatNetCore.Gestures.BridgeTo(pipeline, nameof(this.Gestures)).Out;
+            // this.FrameRate = NatNetCore.FrameRate.BridgeTo(pipeline, nameof(this.FrameRate)).Out;
         }
 
+        /// <summary>
+        /// Gets the available NatNet connection types.
+        /// </summary>
         public static IEnumerable<string> ConnectionTypes
         {
             get
@@ -85,6 +76,7 @@ namespace SAAC.NatNetComponent
                         NatNetML.ConnectionType.Unicast.ToString()
                     };
                 }
+
                 return connectionTypes;
             }
         }

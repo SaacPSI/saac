@@ -1,11 +1,14 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.AzureKinect;
-using MathNet.Spatial.Euclidean;
-using nuitrack;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Psi;
+    using Microsoft.Psi.AzureKinect;
+    using nuitrack;
+
     /// <summary>
     /// Simple component that extract the position of a joint from bodies given.
     /// See SimpleBodiesPositionExtractionConfiguration for parameters details.
@@ -15,7 +18,7 @@ namespace SAAC.Bodies
         /// <summary>
         /// Gets the emitter of groups detected.
         /// </summary>
-        public Emitter<Dictionary<uint, Vector3D>> Out{ get; private set; }
+        public Emitter<Dictionary<uint, Vector3D>> Out { get; private set; }
 
         /// <summary>
         /// Gets the nuitrack connector of lists of currently tracked bodies.
@@ -35,13 +38,19 @@ namespace SAAC.Bodies
         private SimpleBodiesPositionExtractionConfiguration configuration;
         private string name;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleBodiesPositionExtraction"/> class.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">Optional configuration for position extraction.</param>
+        /// <param name="name">Optional name for the component.</param>
         public SimpleBodiesPositionExtraction(Pipeline parent, SimpleBodiesPositionExtractionConfiguration? configuration = null, string name = nameof(SimpleBodiesPositionExtraction))
         {
             this.configuration = configuration ?? new SimpleBodiesPositionExtractionConfiguration();
-            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(parent, Process, $"{name}-InBodiesNuitrack");
-            InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(parent, Process, $"{name}-InBodiesAzure");
-            InBodiesSimplified = parent.CreateReceiver<List<SimplifiedBody>>(parent, Process, $"{name}-InBodiesSimplified");
-            Out = parent.CreateEmitter<Dictionary<uint, Vector3D>>(this, $"{name}-Out");
+            this.InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(parent, this.Process, $"{name}-InBodiesNuitrack");
+            this.InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(parent, this.Process, $"{name}-InBodiesAzure");
+            this.InBodiesSimplified = parent.CreateReceiver<List<SimplifiedBody>>(parent, this.Process, $"{name}-InBodiesSimplified");
+            this.Out = parent.CreateEmitter<Dictionary<uint, Vector3D>>(this, $"{name}-Out");
             this.name = name;
         }
 
@@ -53,8 +62,11 @@ namespace SAAC.Bodies
             Dictionary<uint, Vector3D> skeletons = new Dictionary<uint, Vector3D>();
 
             foreach (var skeleton in bodies)
-                skeletons.Add((uint)skeleton.ID, Helpers.Helpers.NuitrackToMathNet(skeleton.GetJoint(configuration.NuitrackJointAsPosition).Real));
-            Out.Post(skeletons, envelope.OriginatingTime);
+            {
+                skeletons.Add((uint)skeleton.ID, Helpers.Helpers.NuitrackToMathNet(skeleton.GetJoint(this.configuration.NuitrackJointAsPosition).Real));
+            }
+
+            this.Out.Post(skeletons, envelope.OriginatingTime);
         }
 
         private void Process(List<AzureKinectBody> bodies, Envelope envelope)
@@ -62,8 +74,11 @@ namespace SAAC.Bodies
             Dictionary<uint, Vector3D> skeletons = new Dictionary<uint, Vector3D>();
 
             foreach (var skeleton in bodies)
-                skeletons.Add(skeleton.TrackingId, skeleton.Joints[configuration.GeneralJointAsPosition].Pose.Origin.ToVector3D());
-            Out.Post(skeletons, envelope.OriginatingTime);
+            {
+                skeletons.Add(skeleton.TrackingId, skeleton.Joints[this.configuration.GeneralJointAsPosition].Pose.Origin.ToVector3D());
+            }
+
+            this.Out.Post(skeletons, envelope.OriginatingTime);
         }
 
         private void Process(List<SimplifiedBody> bodies, Envelope envelope)
@@ -71,9 +86,14 @@ namespace SAAC.Bodies
             Dictionary<uint, Vector3D> skeletons = new Dictionary<uint, Vector3D>();
 
             foreach (var skeleton in bodies)
-                if(!skeletons.ContainsKey(skeleton.Id))
-                    skeletons.Add(skeleton.Id, skeleton.Joints[configuration.GeneralJointAsPosition].Item2);
-            Out.Post(skeletons, envelope.OriginatingTime);
+            {
+                if (!skeletons.ContainsKey(skeleton.Id))
+                {
+                    skeletons.Add(skeleton.Id, skeleton.Joints[this.configuration.GeneralJointAsPosition].Item2);
+                }
+            }
+
+            this.Out.Post(skeletons, envelope.OriginatingTime);
         }
     }
 }

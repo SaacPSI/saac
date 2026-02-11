@@ -1,16 +1,19 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Interop.Transport;
-using System;
-using System.Net;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using System.Web;
-using Newtonsoft.Json;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.AnnotationsComponents
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Net;
+    using System.Text;
+    using System.Web;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Interop.Transport;
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Component that handles WebSocket connections and serves HTML pages for annotation requests.
     /// </summary>
@@ -30,25 +33,28 @@ namespace SAAC.AnnotationsComponents
         /// <param name="prefixAddress">The address to listen to.</param>
         /// <param name="annotationsFolder">The path of the annonation folder.</param>
         /// <param name="htmlFile">The path of the html file.</param>
+        /// <param name="sessionName">The name of the session to create for annotations.</param>
         /// <param name="restrictToSecure">Boolean to force the use of ssl websocket.</param>
         public HTTPAnnotationsComponent(PipelineServices.RendezVousPipeline rdvPipeline, List<string> prefixAddress, string annotationsFolder = @".\AnnotationFiles\", string htmlFile = @".\AnnotationFiles\annotation.html", string sessionName = "Annotation", bool restrictToSecure = false)
             : base(true, prefixAddress, restrictToSecure)
         {
             if (!File.Exists(htmlFile))
+            {
                 throw new FileNotFoundException($"Annotation html file not found: {htmlFile}");
+            }
+
             this.htmlContent = File.ReadAllText(htmlFile);
 
             this.annotationSchemas = new Dictionary<string, Microsoft.Psi.Data.Annotations.AnnotationSchema>();
             this.annotationSchemasJson = new Dictionary<string, string>();
-            this.annotationsConfiguration = "";
+            this.annotationsConfiguration = string.Empty;
             this.sessionName = sessionName;
             this.LoadAnnotationSchemas(annotationsFolder);
-            base.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
+            this.OnNewWebSocketConnectedHandler += this.AnnotationConnection;
             this.rdvPipeline = rdvPipeline;
-            this.rdvPipeline.Pipeline.PipelineRun += (s, e) => this.Start( (e) => { });
+            this.rdvPipeline.Pipeline.PipelineRun += (s, e) => this.Start((e) => { });
             this.rdvPipeline.Pipeline.PipelineCompleted += (s, e) => this.Stop(e.CompletedOriginatingTime, () => { });
         }
-
 
         /// <summary>
         /// Overrides the ProcessContexts method to handle HTTP requests for HTML pages.
@@ -56,29 +62,28 @@ namespace SAAC.AnnotationsComponents
         protected override async void ProcessContexts()
         {
             while (!this.token.IsCancellationRequested)
-            { 
+            {
                 try
-                    {
-                var result = await this.httpListener.GetContextAsync();
-                if (result != null)
                 {
-                   
+                    var result = await this.httpListener.GetContextAsync();
+                    if (result != null)
+                    {
                         // Check if this is a WebSocket upgrade request
                         if (result.Request.IsWebSocketRequest)
                         {
                             // Handle WebSocket connection
-                            AcceptWebsocketClients(result);
+                            this.AcceptWebsocketClients(result);
                         }
                         else
                         {
                             // Handle HTML page requests
-                            HandleHTMLRequest(result);
+                            this.HandleHTMLRequest(result);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    rdvPipeline.Log($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
+                    this.rdvPipeline.Log($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
                 }
             }
         }
@@ -106,7 +111,7 @@ namespace SAAC.AnnotationsComponents
                     response.StatusCode = 200;
                     await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
-                else if(urlPath.Contains("/topics"))
+                else if (urlPath.Contains("/topics"))
                 {
                     // Example: Serve a simple JSON response for topics
                     byte[] buffer = Encoding.UTF8.GetBytes(this.annotationsConfiguration);
@@ -141,7 +146,7 @@ namespace SAAC.AnnotationsComponents
             }
             catch (Exception ex)
             {
-                rdvPipeline.Log($"HTTPAnnotationsComponent HandleHTMLRequest Exception: {ex.Message}");
+                this.rdvPipeline.Log($"HTTPAnnotationsComponent HandleHTMLRequest Exception: {ex.Message}");
                 response.StatusCode = 500;
                 response.Close();
             }
@@ -167,23 +172,24 @@ namespace SAAC.AnnotationsComponents
                 {
                     Microsoft.Psi.Data.Annotations.AnnotationSchema annotationSchema = this.annotationSchemas[schemaName];
                     string name = $"{connectionInfo.Item1}-Annotation";
-                    Pipeline pipeline = rdvPipeline.GetOrCreateSubpipeline(name);
+                    Pipeline pipeline = this.rdvPipeline.GetOrCreateSubpipeline(name);
                     WebSocketSource<string>? source = this.ConnectWebsocketSource<string>(pipeline, PsiFormats.PsiFormatString.GetFormat(), connectionInfo.Item1, connectionInfo.Item2, false);
                     if (source is null)
-                    { 
+                    {
                         return;
                     }
-                    Microsoft.Psi.Data.Session session = rdvPipeline.CreateOrGetSessionFromMode(this.sessionName);
-                    Microsoft.Psi.Data.PsiExporter store = rdvPipeline.GetOrCreateStore(pipeline, session, rdvPipeline.GetStoreName(this.sessionName, name, session).Item2);
+
+                    Microsoft.Psi.Data.Session session = this.rdvPipeline.CreateOrGetSessionFromMode(this.sessionName);
+                    Microsoft.Psi.Data.PsiExporter store = this.rdvPipeline.GetOrCreateStore(pipeline, session, this.rdvPipeline.GetStoreName(this.sessionName, name, session).Item2);
                     AnnotationProcessor annotationProcessor = new AnnotationProcessor(pipeline, annotationSchema, $"{name}Processor");
                     annotationProcessor.Write(annotationSchema, "Annotation", store);
                     source.Out.PipeTo(annotationProcessor.In);
                     pipeline.RunAsync();
-                    rdvPipeline.Log($"New annotation WebSocket connection established for host {connectionInfo.Item1} with schema {schemaName}");
+                    this.rdvPipeline.Log($"New annotation WebSocket connection established for host {connectionInfo.Item1} with schema {schemaName}");
                 }
                 else
                 {
-                    rdvPipeline.Log($"Invalid or missing schema parameter in annotation WebSocket connection: {schemaName}");
+                    this.rdvPipeline.Log($"Invalid or missing schema parameter in annotation WebSocket connection: {schemaName}");
                 }
             }
         }
@@ -199,6 +205,7 @@ namespace SAAC.AnnotationsComponents
                     this.annotationSchemasJson.Add(annotationSchema.Name, File.ReadAllText(annotationConfigurationFile));
                 }
             }
+
             this.annotationsConfiguration = JsonConvert.SerializeObject(new { Names = this.annotationSchemas.Keys });
         }
     }

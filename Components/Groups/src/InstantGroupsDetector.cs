@@ -1,36 +1,55 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using MathNet.Spatial.Euclidean;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Groups
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+
+    /// <summary>
+    /// Component that detects groups instantly based on proximity (distance threshold between bodies).
+    /// </summary>
     public class InstantGroupsDetector : IConsumerProducer<Dictionary<uint, Vector3D>, Dictionary<uint, List<uint>>>
     {
-        /// <summary>
-        /// Gets the emitter of groups detected.
-        /// </summary>
-        public Emitter<Dictionary<uint, List<uint>>> Out { get; private set; }
-
+        private readonly InstantGroupsDetectorConfiguration configuration;
+        private readonly string name;
 
         /// <summary>
-        /// Receiver that encapsulates the input list of skeletons
+        /// Initializes a new instance of the <see cref="InstantGroupsDetector"/> class.
         /// </summary>
-        public Receiver<Dictionary<uint, Vector3D>> In { get; private set; }
-
-        public InstantGroupsDetectorConfiguration configuration;
-        private string name;
-
-        public InstantGroupsDetector(Pipeline parent, InstantGroupsDetectorConfiguration? configuration = null, string name = nameof(InstantGroupsDetector)) 
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">Optional configuration for the detector.</param>
+        /// <param name="name">The name of the component.</param>
+        public InstantGroupsDetector(Pipeline parent, InstantGroupsDetectorConfiguration? configuration = null, string name = nameof(InstantGroupsDetector))
         {
             this.name = name;
             this.configuration = configuration ?? new InstantGroupsDetectorConfiguration();
-            In = parent.CreateReceiver<Dictionary<uint, Vector3D>>(this, Process, $"{name}-In");
-            Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, $"{name}-Out");
+            this.In = parent.CreateReceiver<Dictionary<uint, Vector3D>>(this, this.Process, $"{name}-In");
+            this.Out = parent.CreateEmitter<Dictionary<uint, List<uint>>>(this, $"{name}-Out");
         }
 
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
+        /// <summary>
+        /// Gets the emitter of detected groups.
+        /// </summary>
+        public Emitter<Dictionary<uint, List<uint>>> Out { get; private set; }
 
+        /// <summary>
+        /// Gets the receiver that encapsulates the input positions.
+        /// </summary>
+        public Receiver<Dictionary<uint, Vector3D>> In { get; private set; }
+
+        /// <summary>
+        /// Gets the configuration for the detector.
+        /// </summary>
+        public InstantGroupsDetectorConfiguration Configuration => this.configuration;
+
+        /// <summary>
+        /// Processes body positions and detects groups based on distance threshold.
+        /// </summary>
+        /// <param name="skeletons">Dictionary of body positions.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(Dictionary<uint, Vector3D> skeletons, Envelope envelope)
         {
             Dictionary<uint, List<uint>> rawGroups = new Dictionary<uint, List<uint>>();
@@ -41,28 +60,36 @@ namespace SAAC.Groups
                     uint idBody1 = skeletons.ElementAt(iterator1).Key;
                     uint idBody2 = skeletons.ElementAt(iterator2).Key;
                     double distance = MathNet.Numerics.Distance.Euclidean(skeletons.ElementAt(iterator1).Value.ToVector(), skeletons.ElementAt(iterator2).Value.ToVector());
-                    if (distance > configuration.DistanceThreshold)
+                    if (distance > this.configuration.DistanceThreshold)
+                    {
                         continue;
+                    }
 
                     if (rawGroups.ContainsKey(idBody1))
+                    {
                         rawGroups[idBody1].Add(idBody2);
+                    }
                     else
                     {
-                        List<uint> group = [idBody1, idBody2];
+                        List<uint> group =
+                            [idBody1, idBody2];
                         rawGroups.Add(idBody1, group);
                     }
 
                     if (rawGroups.ContainsKey(idBody2))
-                        rawGroups[idBody2].Add(idBody1);
-                    else 
                     {
-                        List<uint> group = [idBody1, idBody2];
-                        rawGroups.Add(idBody2, group); 
+                        rawGroups[idBody2].Add(idBody1);
+                    }
+                    else
+                    {
+                        List<uint> group =
+                            [idBody1, idBody2];
+                        rawGroups.Add(idBody2, group);
                     }
                 }
             }
 
-            ReduceGroups(ref rawGroups);
+            this.ReduceGroups(ref rawGroups);
 
             Dictionary<uint, List<uint>> outData = new Dictionary<uint, List<uint>>();
             foreach (var rawGroup in rawGroups)
@@ -72,33 +99,44 @@ namespace SAAC.Groups
                 uint uid = GroupsHelpers.CantorParingSequence(group);
                 outData.Add(uid, group);
             }
-            Out.Post(outData, envelope.OriginatingTime);
+
+            this.Out.Post(outData, envelope.OriginatingTime);
         }
 
+        /// <summary>
+        /// Reduces and merges overlapping groups by combining groups that share members.
+        /// </summary>
+        /// <param name="groups">The dictionary of groups to reduce.</param>
         protected void ReduceGroups(ref Dictionary<uint, List<uint>> groups)
         {
-            //bool call = true;
-            //while (call)
-            //{
-                bool call = false;
-                foreach (var group in groups)
+            // bool call = true;
+            // while (call)
+            // {
+            bool call = false;
+            foreach (var group in groups)
+            {
+                foreach (var id in group.Value)
                 {
-                    foreach (var id in group.Value)
+                    if (groups.ContainsKey(id) && group.Key != id)
                     {
-                        if (groups.ContainsKey(id) && group.Key != id)
-                        {
-                            groups[group.Key].AddRange(groups[id]);
-                            groups.Remove(id);
-                            call = true;
-                            break;
-                        }
-                    }
-                    if (call)
+                        groups[group.Key].AddRange(groups[id]);
+                        groups.Remove(id);
+                        call = true;
                         break;
+                    }
                 }
-            //}
+
+                if (call)
+                {
+                    break;
+                }
+            }
+
+            // }
             if (call)
-                ReduceGroups(ref groups);
+            {
+                this.ReduceGroups(ref groups);
+            }
         }
     }
 }

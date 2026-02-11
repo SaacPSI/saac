@@ -1,12 +1,13 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace Microsoft.Psi.Interop.Rendezvous
 {
     using System;
     using System.Linq;
-    using Microsoft.Psi.Remoting;
     using Microsoft.Psi.Interop.Transport;
+    using Microsoft.Psi.Remoting;
 
     /// <summary>
     /// Represents a websocket source endpoint providing a remoted data stream(s).
@@ -18,7 +19,7 @@ namespace Microsoft.Psi.Interop.Rendezvous
         /// </summary>
         /// <param name="host">Host name used by the endpoint.</param>
         /// <param name="stream">Endpoint stream.</param>
-        public WebsocketSourceEndpoint(string host, Rendezvous.Stream stream = null)
+        public WebsocketSourceEndpoint(string host, Rendezvous.Stream? stream = null)
             : base(stream is null ? Enumerable.Empty<Rendezvous.Stream>() : new[] { stream })
         {
             if (string.IsNullOrEmpty(host))
@@ -68,15 +69,15 @@ namespace Microsoft.Psi.Interop.Rendezvous
             => new WebsocketSourceEndpoint(address, new Rendezvous.Stream(streamName, typeof(T)));
 
         /// <summary>
-        /// Create a <see cref="WebSocketSource{T}"/> from a <see cref="WebSocketSource{T}"/>.
+        /// Creates a <see cref="WebSocketSource{T}"/> from a <see cref="WebsocketSourceEndpoint"/>.
         /// </summary>
         /// <typeparam name="T">Type of data stream.</typeparam>
-        /// <param name="endpoint"><see cref="WebsocketSourceEndpoint"/> from which to create .</param>
+        /// <param name="endpoint"><see cref="WebsocketSourceEndpoint"/> from which to create the source.</param>
+        /// <param name="manager">The WebSocket manager to use for connection.</param>
         /// <param name="pipeline">The pipeline to add the component to.</param>
         /// <param name="deserializer">The deserializer to use to deserialize messages.</param>
-        /// <returns><see cref="RemoteClockImporter"/>.</returns>
+        /// <returns><see cref="WebSocketSource{T}"/> if successful; otherwise null.</returns>
         public static WebSocketSource<T>? ToRemoteWebSocketSource<T>(this WebsocketSourceEndpoint endpoint, WebSocketsManager manager, Pipeline pipeline, Serialization.IFormatDeserializer deserializer)
             => manager.ConnectWebsocketSource<T>(pipeline, deserializer, endpoint.Host, endpoint.Stream.StreamName, true);
-
     }
 }

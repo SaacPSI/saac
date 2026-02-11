@@ -1,5 +1,9 @@
-﻿using Microsoft.Psi.Interop.Serialization;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
 using System.IO;
+using Microsoft.Psi.Interop.Serialization;
 
 namespace SAAC
 {
@@ -20,9 +24,8 @@ namespace SAAC
 
             public static (PipelineServices.RendezVousPipeline.Command, string) ReadIntSring(BinaryReader reader)
             {
-                return new((PipelineServices.RendezVousPipeline.Command)reader.ReadInt32(), reader.ReadString());
+                return new ((PipelineServices.RendezVousPipeline.Command)reader.ReadInt32(), reader.ReadString());
             }
         }
     }
 }
-

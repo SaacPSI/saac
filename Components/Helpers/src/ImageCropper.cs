@@ -1,31 +1,20 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Helpers
 {
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+    using Microsoft.Psi.Imaging;
+
     /// <summary>
     /// Component that crops a shared image stream to a specified rectangular area.
     /// </summary>
     public class ImageCropper : IConsumerProducer<Shared<Image>, Shared<Image>>
     {
-        private string name;
-        private System.Drawing.Rectangle area;
-
-        /// <summary>
-        /// Gets the receiver for incoming images.
-        /// </summary>
-        public Receiver<Shared<Image>> In { get; private set; }
-
-        /// <summary>
-        /// Gets the emitter for cropped images.
-        /// </summary>
-        public Emitter<Shared<Image>> Out { get; private set; }
+        private readonly string name;
+        private readonly System.Drawing.Rectangle area;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ImageCropper"/> class.
@@ -37,13 +26,21 @@ namespace SAAC.Helpers
         {
             this.name = name;
             this.area = area;
-            this.In = pipeline.CreateReceiver<Shared<Image>>(this, Process, $"{this.name}-In");
+            this.In = pipeline.CreateReceiver<Shared<Image>>(this, this.Process, $"{this.name}-In");
             this.Out = pipeline.CreateEmitter<Shared<Image>>(this, $"{this.name}-Out");
         }
 
         /// <summary>
-        /// Returns the name of the component.
+        /// Gets the receiver for incoming images.
         /// </summary>
+        public Receiver<Shared<Image>> In { get; private set; }
+
+        /// <summary>
+        /// Gets the emitter for cropped images.
+        /// </summary>
+        public Emitter<Shared<Image>> Out { get; private set; }
+
+        /// <inheritdoc/>
         public override string ToString() => this.name;
 
         /// <summary>
@@ -82,7 +79,7 @@ namespace SAAC.Helpers
             }
 
             // Post the cropped image with the same originating time
-            Out.Post(croppedimage, envelope.OriginatingTime);
+            this.Out.Post(croppedimage, envelope.OriginatingTime);
         }
     }
 }

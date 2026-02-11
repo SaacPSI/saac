@@ -1,15 +1,19 @@
-﻿using Microsoft.Psi.Visualization.VisualizationObjects;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using System.Windows.Media;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using SAAC.GlobalHelpers;
-using Microsoft.Psi.Visualization.DataTypes;
-using Win3D = System.Windows.Media.Media3D;
-using MathNet.Spatial.Euclidean;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using System.Windows.Media;
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Psi.Visualization.DataTypes;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using SAAC.GlobalHelpers;
+    using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+    using Win3D = System.Windows.Media.Media3D;
+
     /// <summary>
     /// Implements a visualization object for skeleton hands.
     /// </summary>
@@ -33,8 +37,8 @@ namespace SAAC.Visualizations
                     },
                 nodeFillFunc:
                     jointType =>
-                    { 
-                        return new SolidColorBrush(HandSkeleton.NodeColor);
+                    {
+                        return new SolidColorBrush(this.HandSkeleton.NodeColor);
                     },
                 edgeVisibilityFunc:
                     bone =>
@@ -69,7 +73,7 @@ namespace SAAC.Visualizations
         }
 
         /// <summary>
-        /// Gets the billboard visualization object for the hand.
+        /// Gets or sets the billboard visualization object for the hand.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -79,7 +83,7 @@ namespace SAAC.Visualizations
         public BillboardTextVisualizationObject Billboard { get; set; }
 
         /// <summary>
-        /// Gets the skeleton visualization object for the hand.
+        /// Gets or sets the skeleton visualization object for the hand.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -89,7 +93,7 @@ namespace SAAC.Visualizations
         public SkeletonVisualizationObject<Hand.EHandJointID> HandSkeleton { get; set; }
 
         /// <summary>
-        /// Gets the skeleton visualization object for the body.
+        /// Gets or sets a value indicating whether reversing Y and Z axes.
         /// </summary>
         [DataMember]
         [PropertyOrder(4)]
@@ -133,7 +137,9 @@ namespace SAAC.Visualizations
             {
                 Dictionary<Hand.EHandJointID, Point3D> points = new Dictionary<Hand.EHandJointID, Point3D>();
                 foreach (var joint in this.CurrentData.HandJoints)
+                {
                     points.Add(joint.Key, new Point3D(joint.Value.X, this.ReverseYZ ? joint.Value.Z : joint.Value.Y, this.ReverseYZ ? joint.Value.Y : joint.Value.Z));
+                }
 
                 var graph = new Graph<Hand.EHandJointID, Point3D, bool>(points, HandGraph);
                 this.HandSkeleton.SetCurrentValue(this.SynthesizeMessage(graph));
@@ -158,5 +164,4 @@ namespace SAAC.Visualizations
             this.UpdateChildVisibility(this.Billboard.ModelVisual3D, childrenVisible);
         }
     }
-    
 }

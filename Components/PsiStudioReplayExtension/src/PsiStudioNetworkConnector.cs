@@ -1,16 +1,20 @@
-﻿using System;
-using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.Interop.Transport;
-using Microsoft.Psi.Interop.Rendezvous;
-using Microsoft.Psi.PsiStudio;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.PsiStudioReplayExtension
 {
+    using System;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+    using Microsoft.Psi.Interop.Rendezvous;
+    using Microsoft.Psi.Interop.Transport;
+    using Microsoft.Psi.PsiStudio;
+
     /// <summary>
     /// Class that manage connection de high level functionnalties with PsiStudio Network replay feature (<see cref="NetworkStreamsManager"/> in PsiStudio).
     /// </summary>
-    public class PsiStudioNetworkConnector : IConsumerProducer<PsiStudioNetworkInfo, PsiStudioNetworkInfo>,  IDisposable
+    public class PsiStudioNetworkConnector : IConsumerProducer<PsiStudioNetworkInfo, PsiStudioNetworkInfo>, IDisposable
     {
         private TcpWriter<PsiStudioNetworkInfo>? writer;
         private TcpSource<PsiStudioNetworkInfo>? source;
@@ -32,12 +36,12 @@ namespace SAAC.PsiStudioReplayExtension
         /// <summary>
         /// Gets the Receiver of the component.
         /// </summary>
-        public Receiver<PsiStudioNetworkInfo>? In => writer?.In;
+        public Receiver<PsiStudioNetworkInfo>? In => this.writer?.In;
 
         /// <summary>
         /// Gets the Emitter of the component.
         /// </summary>
-        public Emitter<PsiStudioNetworkInfo>? Out => source?.Out;
+        public Emitter<PsiStudioNetworkInfo>? Out => this.source?.Out;
 
         /// <summary>
         /// Gets the EventHandler for handling incoming message from outside \psi components.
@@ -47,6 +51,7 @@ namespace SAAC.PsiStudioReplayExtension
         /// <summary>
         /// Initializes a new instance of the <see cref="PsiStudioNetworkConnector"/> class.
         /// </summary>
+        /// <param name="synchedPipeline"></param>
         /// <param name="name">Name of the component.</param>
         public PsiStudioNetworkConnector(bool synchedPipeline = false, string name = nameof(PsiStudioNetworkConnector))
         {
@@ -77,14 +82,15 @@ namespace SAAC.PsiStudioReplayExtension
         /// <param name="address">Ip used by the writer.</param>
         /// <param name="port">Port used by the writer.</param>
         /// <param name="processName">The name of the rendezVous process.</param>
+        /// <returns></returns>
         public Rendezvous.Process CreateProcessWriter(Pipeline pipeline, string address, int port, string processName)
-        { 
-            this.pipeline = pipeline;           
-            this.writer = new TcpWriter<PsiStudioNetworkInfo>(pipeline, port, PsiFormatPsiStudioNetworkInfo.GetFormat(), $"{name}-Out");
+        {
+            this.pipeline = pipeline;
+            this.writer = new TcpWriter<PsiStudioNetworkInfo>(pipeline, port, PsiFormatPsiStudioNetworkInfo.GetFormat(), $"{this.name}-Out");
 #if UNITY_6000_0_OR_NEWER
             return new Rendezvous.Process(processName, new System.Collections.Generic.List<Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint>(){writer.ToRendezvousEndpoint(address, name)});
 #else
-            return new Rendezvous.Process(processName, [writer.ToRendezvousEndpoint(address, name)]);
+            return new Rendezvous.Process(processName,[this.writer.ToRendezvousEndpoint(address, this.name)]);
 #endif
         }
 
@@ -96,8 +102,8 @@ namespace SAAC.PsiStudioReplayExtension
         /// <param name="port">Port of the remote writer.</param>
         public void ConnectToSource(Pipeline pipeline, string address, int port)
         {
-            this.source = new TcpSource<PsiStudioNetworkInfo>(pipeline, address, port, PsiFormatPsiStudioNetworkInfo.GetFormat(), null, true, $"{name}-In");
-            this.source.Out.Do((data, enveloppe) => { OnMessage(data); });
+            this.source = new TcpSource<PsiStudioNetworkInfo>(pipeline, address, port, PsiFormatPsiStudioNetworkInfo.GetFormat(), null, true, $"{this.name}-In");
+            this.source.Out.Do((data, enveloppe) => { this.OnMessage(data); });
         }
 
         /// <summary>
@@ -107,9 +113,14 @@ namespace SAAC.PsiStudioReplayExtension
         public void SendPlay(TimeInterval? timeInterval = null)
         {
             if (this.pipeline is null)
+            {
                 return;
+            }
+
             if (timeInterval != null)
+            {
                 this.PlayInterval = timeInterval;
+            }
 
             this.pipelineStartTime = this.pipeline.GetCurrentTime();
             this.Out?.Post(new PsiStudioNetworkInfo(PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing, this.PlayInterval), this.pipelineStartTime);
@@ -121,8 +132,11 @@ namespace SAAC.PsiStudioReplayExtension
         public void SendPause()
         {
             if (this.pipeline is null)
+            {
                 return;
-            SendStop();
+            }
+
+            this.SendStop();
             this.PauseTime = this.isSynchedPipeline ? this.pipeline.GetCurrentTime() : this.PlayInterval.Left.AddSeconds((this.pipeline.GetCurrentTime() - this.pipelineStartTime).TotalSeconds);
         }
 
@@ -133,8 +147,11 @@ namespace SAAC.PsiStudioReplayExtension
         public void SendResume()
         {
             if (this.PauseTime == DateTime.MinValue)
+            {
                 return;
-            SendPlay(new TimeInterval(this.PauseTime, this.PlayInterval.Right));
+            }
+
+            this.SendPlay(new TimeInterval(this.PauseTime, this.PlayInterval.Right));
         }
 
         /// <summary>
@@ -143,9 +160,13 @@ namespace SAAC.PsiStudioReplayExtension
         public void SendStop()
         {
             if (this.pipeline is null)
+            {
                 return;
+            }
+
             this.Out?.Post(new PsiStudioNetworkInfo(PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, this.PlayInterval), this.pipeline.GetCurrentTime());
         }
+
         /// <summary>
         /// Send a new read speed message to PsiStudio.
         /// </summary>
@@ -153,15 +174,21 @@ namespace SAAC.PsiStudioReplayExtension
         public void SendPlaySpeed(double speed)
         {
             if (this.pipeline is null)
+            {
                 return;
+            }
+
             this.Out?.Post(new PsiStudioNetworkInfo(PsiStudioNetworkInfo.PsiStudioNetworkEvent.PlaySpeed, this.PlayInterval, speed), this.pipeline.GetCurrentTime());
         }
 
         private void OnMessage(PsiStudioNetworkInfo message)
         {
             if (message.Event == PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing)
-                PlayInterval = message.Interval; 
-            OnReceiveMessage?.Invoke(this, message);
+            {
+                this.PlayInterval = message.Interval;
+            }
+
+            this.OnReceiveMessage?.Invoke(this, message);
         }
     }
 }

@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.PipelineServices
 {
@@ -11,7 +12,6 @@ namespace SAAC.PipelineServices
     using Microsoft.Psi;
     using Microsoft.Psi.Interop.Rendezvous;
     using Microsoft.Psi.Interop.Serialization;
-    using Microsoft.Psi.Interop.Transport;
 
     /// <summary>
     /// Component that serializes and writes messages to a remote server over TCP.
@@ -27,7 +27,7 @@ namespace SAAC.PipelineServices
         private Thread? acceptingThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TcpWriter{T}"/> class.
+        /// Initializes a new instance of the <see cref="TcpWriterMulti{T}"/> class.
         /// </summary>
         /// <param name="pipeline">The pipeline to add the component to.</param>
         /// <param name="port">The connection port.</param>
@@ -41,7 +41,7 @@ namespace SAAC.PipelineServices
             this.In = pipeline.CreateReceiver<T>(this, this.Receive, $"{name}-In");
             this.listener = new TcpListener(IPAddress.Any, port);
             this.clients = new List<TcpClient>();
-            Start();
+            this.Start();
         }
 
         /// <summary>
@@ -62,10 +62,20 @@ namespace SAAC.PipelineServices
         /// <inheritdoc/>
         public override string ToString() => this.name;
 
+        /// <summary>
+        /// Generate a Rendezvous endpoint for this TCP writer, given an address and a stream name.
+        /// </summary>
+        /// <param name="address">The address used for the connection.</param>
+        /// <param name="streamName">The name of the stream</param>
+        /// <returns>The endpoint for the rendezvous process.</returns>
+        public Rendezvous.Endpoint ToRendezvousEndpoint(string address, string streamName)
+        {
+            return new Rendezvous.TcpSourceEndpoint(address, this.Port, new Rendezvous.Stream(streamName, typeof(T)));
+        }
+
         private void Receive(T message, Envelope envelope)
         {
             (var bytes, int offset, int count) = this.serializer.SerializeMessage(message, envelope.OriginatingTime);
-
 
             if (this.clients.Count != 0)
             {
@@ -77,6 +87,7 @@ namespace SAAC.PipelineServices
                         clientsToRemove.Add(client);
                         continue;
                     }
+
                     try
                     {
                         var stream = client.GetStream();
@@ -89,6 +100,7 @@ namespace SAAC.PipelineServices
                         clientsToRemove.Add(client);
                     }
                 }
+
                 clientsToRemove.ForEach(client =>
                 {
                     this.clients.Remove(client);
@@ -98,19 +110,25 @@ namespace SAAC.PipelineServices
 
         private void Start()
         {
-            acceptingThread = new Thread(new ThreadStart(this.Listen)) { IsBackground = true };
-            acceptingThread.Start();
+            this.acceptingThread = new Thread(new ThreadStart(this.Listen)) { IsBackground = true };
+            this.acceptingThread.Start();
         }
 
         private void Stop()
         {
             this.listener.Stop();
             this.listener.Server.Close();
-            acceptingThread?.Abort();
+            this.acceptingThread?.Abort();
+
             // Dispose active client if any
             if (this.clients.Count != 0)
+            {
                 foreach (var client in this.clients)
+                {
                     client.Dispose();
+                }
+            }
+
             this.clients.Clear();
         }
 
@@ -128,11 +146,6 @@ namespace SAAC.PipelineServices
                     Trace.WriteLine($"TcpWriter Exception: {ex.Message}");
                 }
             }
-        }
-
-        public Rendezvous.Endpoint ToRendezvousEndpoint(string address, string streamName)
-        {
-            return new Rendezvous.TcpSourceEndpoint(address, this.Port, new Rendezvous.Stream(streamName, typeof(T)));
         }
     }
 }

@@ -1,83 +1,124 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using OllamaSharp;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Ollama
 {
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+    using OllamaSharp;
+
+    /// <summary>
+    /// Component that connects to an Ollama server for LLM-based text processing.
+    /// </summary>
     public class OllamaConnector : IConsumerProducer<string, string>
-    { 
-        public Receiver<string> In { get; }
-
-        public Emitter<string> Out { get; }
-
-        private OllamaConectorConfiguration Configuration;
-        private OllamaApiClient Ollama;
-        private Chat Chat;
+    {
+        private OllamaConectorConfiguration configuration;
+        private OllamaApiClient ollama;
+        private Chat chat;
         private string name;
         private bool isChat;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OllamaConnector"/> class.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="isChatting">Whether to use chat mode.</param>
+        /// <param name="name">The name of the component.</param>
         public OllamaConnector(Pipeline parent, OllamaConectorConfiguration configuration, bool isChatting, string name = nameof(OllamaConnector))
         {
-            isChat = isChatting;
+            this.isChat = isChatting;
             this.name = name;
-            Configuration = configuration ?? new OllamaConectorConfiguration();
-            In = parent.CreateReceiver<string>(parent, Process, $"{name}-In");
-            Out = parent.CreateEmitter<string>(parent, $"{name}-Out");
+            this.configuration = configuration ?? new OllamaConectorConfiguration();
+            this.In = parent.CreateReceiver<string>(parent, this.Process, $"{name}-In");
+            this.Out = parent.CreateEmitter<string>(parent, $"{name}-Out");
 
-            Ollama = new OllamaApiClient(Configuration.OllamaAddress);
-            Ollama.SelectedModel = Configuration.Model;
-            Chat = new Chat(Ollama);
+            this.ollama = new OllamaApiClient(this.configuration.OllamaAddress);
+            this.ollama.SelectedModel = this.configuration.Model;
+            this.chat = new Chat(this.ollama);
         }
 
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
+        /// <summary>
+        /// Gets the input receiver.
+        /// </summary>
+        public Receiver<string> In { get; }
 
-        static public List<string> GetAvailableModel(Uri address)
+        /// <summary>
+        /// Gets the output emitter.
+        /// </summary>
+        public Emitter<string> Out { get; }
+
+        /// <summary>
+        /// Gets the list of available models from the Ollama server.
+        /// </summary>
+        /// <param name="address">The Ollama server address.</param>
+        /// <returns>List of available model names.</returns>
+        public static List<string> GetAvailableModel(Uri address)
         {
             var ollama = new OllamaApiClient(address);
             List<string> availableModels = new List<string>();
             var result = ollama.ListLocalModelsAsync().Result;
             foreach (var model in result)
+            {
                 availableModels.Add(model.Name);
+            }
+
             return availableModels;
         }
 
-        private void Process(string message, Envelope envelope) 
+        /// <inheritdoc/>
+        public override string ToString() => this.name;
+
+        private void Process(string message, Envelope envelope)
         {
-            if (isChat)
-                _ = Task.Run(() => StreamChatToOllama(message, envelope).ConfigureAwait(true));
+            if (this.isChat)
+            {
+                _ = Task.Run(() => this.StreamChatToOllama(message, envelope).ConfigureAwait(true));
+            }
             else
-                _ = Task.Run(() => StreamSingleToOllama(message, envelope).ConfigureAwait(true));
+            {
+                _ = Task.Run(() => this.StreamSingleToOllama(message, envelope).ConfigureAwait(true));
+            }
         }
+
         private async Task<DateTime> StreamChatToOllama(string message, Envelope envelope)
         {
             try
             {
-                string response = "";
-                await foreach (var answerToken in Chat.SendAsync(message))
+                string response = string.Empty;
+                await foreach (var answerToken in this.chat.SendAsync(message))
+                {
                     response += answerToken;
-                Out.Post(response, envelope.OriginatingTime);
+                }
+
+                this.Out.Post(response, envelope.OriginatingTime);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+
             return envelope.OriginatingTime;
         }
 
         private async Task<DateTime> StreamSingleToOllama(string message, Envelope envelope)
         {
-            try 
+            try
             {
-                string response = "";
-                await foreach (var answerToken in Ollama.GenerateAsync(message))
+                string response = string.Empty;
+                await foreach (var answerToken in this.ollama.GenerateAsync(message))
+                {
                     response += answerToken;
-                Out.Post(response, envelope.OriginatingTime);
+                }
+
+                this.Out.Post(response, envelope.OriginatingTime);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message); 
+                Console.WriteLine(ex.Message);
             }
+
             return envelope.OriginatingTime;
         }
     }

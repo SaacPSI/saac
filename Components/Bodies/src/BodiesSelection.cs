@@ -1,20 +1,26 @@
-﻿using MathNet.Numerics.LinearAlgebra;
-using MathNet.Spatial.Euclidean;
-using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Azure.Kinect.BodyTracking;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Azure.Kinect.BodyTracking;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+
+    /// <summary>
+    /// Component that selects and merges body detections from two cameras into a unified view.
+    /// </summary>
     public class BodiesSelection
     {
         /// <summary>
-        /// Gets the emitter of groups detected.
+        /// Gets the emitter of calibrated bodies.
         /// </summary>
-        public Emitter<List<SimplifiedBody>> OutBodiesCalibrated{ get; private set; }
+        public Emitter<List<SimplifiedBody>> OutBodiesCalibrated { get; private set; }
 
         /// <summary>
-        /// Gets the emitter of groups detected.
+        /// Gets the emitter of removed body IDs.
         /// </summary>
         public Emitter<List<uint>> OutBodiesRemoved { get; private set; }
 
@@ -44,7 +50,7 @@ namespace SAAC.Bodies
         private Connector<List<SimplifiedBody>> InCamera2BodiesConnector;
 
         /// <summary>
-        /// Receiver that encapsulates the input list  of simplified skeletons from second camera
+        /// Receiver that encapsulates the input list of simplified skeletons from second camera.
         /// </summary>
         public Receiver<List<SimplifiedBody>> InCamera2Bodies => InCamera2BodiesConnector.In;
 
@@ -59,7 +65,7 @@ namespace SAAC.Bodies
         public Receiver<List<LearnedBody>> InCamera1LearnedBodies => InCamera1LearnedBodiesConnector.In;
 
         /// <summary>
-        /// Gets the connector of new learned bodies from second camera..
+        /// Gets the connector of new learned bodies from second camera.
         /// </summary>
         private Connector<List<LearnedBody>> InCamera2LearnedBodiesConnector;
 
@@ -74,84 +80,106 @@ namespace SAAC.Bodies
         private Connector<List<uint>> InCamera1RemovedBodiesConnector;
 
         /// <summary>
-        /// Receiver that encapsulates the input list of removed skeletons
+        /// Receiver that encapsulates the input list of removed skeletons from first camera.
         /// </summary>
         public Receiver<List<uint>> InCamera1RemovedBodies => InCamera1RemovedBodiesConnector.In;
 
         /// <summary>
-        /// Gets the nuitrack connector of lists of removed bodies.
+        /// Gets the connector of lists of removed bodies from second camera.
         /// </summary>
         private Connector<List<uint>> InCamera2RemovedBodiesConnector;
 
         /// <summary>
-        /// Receiver that encapsulates the input list of removed skeletons
+        /// Receiver that encapsulates the input list of removed skeletons from second camera.
         /// </summary>
         public Receiver<List<uint>> InCamera2RemovedBodies => InCamera2RemovedBodiesConnector.In;
 
-        private BodiesSelectionConfiguration configuration;
-
-        private Dictionary<(uint, uint), uint> generatedIdsMap = new Dictionary<(uint, uint), uint>();
-        private Dictionary<(uint, uint), List<uint>> notPairable = new Dictionary<(uint, uint), List<uint>>();
-
+        private readonly BodiesSelectionConfiguration configuration;
+        private readonly Dictionary<(uint, uint), uint> generatedIdsMap = new Dictionary<(uint, uint), uint>();
+        private readonly Dictionary<(uint, uint), List<uint>> notPairable = new Dictionary<(uint, uint), List<uint>>();
         private Dictionary<uint, LearnedBody> camera1LearnedBodies = new Dictionary<uint, LearnedBody>();
         private Dictionary<uint, LearnedBody> camera2LearnedBodies = new Dictionary<uint, LearnedBody>();
+        private readonly string name;
         private uint idCount = 1;
-        private enum TupleState { AlreadyExist, KeyAlreadyInserted, GoodToInsert, Replace  };
-        private string name;
 
+        /// <summary>
+        /// Enumeration of tuple states for correspondence mapping.
+        /// </summary>
+        private enum TupleState
+        {
+            /// <summary>Already exists in the map.</summary>
+            AlreadyExist,
+
+            /// <summary>Key already inserted.</summary>
+            KeyAlreadyInserted,
+
+            /// <summary>Good to insert.</summary>
+            GoodToInsert,
+
+            /// <summary>Should replace existing entry.</summary>
+            Replace
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BodiesSelection"/> class.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">Optional configuration for body selection.</param>
+        /// <param name="name">Optional name for the component.</param>
         public BodiesSelection(Pipeline parent, BodiesSelectionConfiguration? configuration = null, string name = nameof(BodiesSelection))
         {
             this.name = name;
             this.configuration = configuration ?? new BodiesSelectionConfiguration();
 
-            InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>( $"{name}-InCamera1BodiesConnector");
-            InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
-            InCamera1LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>($"{name}-InCamera1LearnedBodiesConnector");
-            InCamera2LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>(  $"{name}-InCamera2LearnedBodiesConnector");
-            InCamera1RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera1RemovedBodiesConnector");
-            InCamera2RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera2RemovedBodiesConnector");
-            InCalibrationMatrixConnector = parent.CreateConnector<CoordinateSystem>($"{name}-InCalibrationMatrixConnector");
-            OutBodiesCalibrated = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-OutBodiOutBodiesCalibratedesRemoved" );
-            OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, $"{name}-OutBodiesRemoved");
+            this.InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera1BodiesConnector");
+            this.InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
+            this.InCamera1LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>($"{name}-InCamera1LearnedBodiesConnector");
+            this.InCamera2LearnedBodiesConnector = parent.CreateConnector<List<LearnedBody>>($"{name}-InCamera2LearnedBodiesConnector");
+            this.InCamera1RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera1RemovedBodiesConnector");
+            this.InCamera2RemovedBodiesConnector = parent.CreateConnector<List<uint>>($"{name}-InCamera2RemovedBodiesConnector");
+            this.InCalibrationMatrixConnector = parent.CreateConnector<CoordinateSystem>($"{name}-InCalibrationMatrixConnector");
+            this.OutBodiesCalibrated = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-OutBodiesCalibrated");
+            this.OutBodiesRemoved = parent.CreateEmitter<List<uint>>(this, $"{name}-OutBodiesRemoved");
 
             if (this.configuration.Camera2ToCamera1Transformation == null)
-                InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Out.Fuse(InCalibrationMatrixConnector.Out, Available.Nearest<CoordinateSystem>()).Do(Process);
+                this.InCamera1BodiesConnector.Pair(this.InCamera2BodiesConnector).Out.Fuse(this.InCalibrationMatrixConnector.Out, Available.Nearest<CoordinateSystem>()).Do(this.Process);
             else
-                InCamera1BodiesConnector.Pair(InCamera2BodiesConnector).Do(Process);
+                this.InCamera1BodiesConnector.Pair(this.InCamera2BodiesConnector).Do(this.Process);
 
-            InCamera1LearnedBodiesConnector.Do(LearnedBodyProcessing1);
-            InCamera2LearnedBodiesConnector.Do(LearnedBodyProcessing2);
+            this.InCamera1LearnedBodiesConnector.Do(this.LearnedBodyProcessing1);
+            this.InCamera2LearnedBodiesConnector.Do(this.LearnedBodyProcessing2);
 
-            InCamera1RemovedBodiesConnector.Do(RemovedBodyProcessing1);
-            InCamera2RemovedBodiesConnector.Do(RemovedBodyProcessing2);
+            this.InCamera1RemovedBodiesConnector.Do(this.RemovedBodyProcessing1);
+            this.InCamera2RemovedBodiesConnector.Do(this.RemovedBodyProcessing2);
         }
-        
+
         /// <inheritdoc/>
         public override string ToString() => this.name;
 
         private void Process((List<SimplifiedBody>, List<SimplifiedBody>, CoordinateSystem) bodies, Envelope envelope)
         {
-            configuration.Camera2ToCamera1Transformation = bodies.Item3;
-            Process((bodies.Item1, bodies.Item2), envelope);
+            this.configuration.Camera2ToCamera1Transformation = bodies.Item3;
+            this.Process((bodies.Item1, bodies.Item2), envelope);
         }
 
         private void Process((List<SimplifiedBody>, List<SimplifiedBody>) bodies, Envelope envelope)
         {
             Dictionary<uint, SimplifiedBody> dicsC1 = new Dictionary<uint, SimplifiedBody>(), dicsC2 = new Dictionary<uint, SimplifiedBody>();
-            UpdateCorrespondanceMap(bodies.Item1, bodies.Item2, ref dicsC1, ref dicsC2, envelope.OriginatingTime);
-            var bbody = SelectBestBody(dicsC1, dicsC2);
-            OutBodiesCalibrated.Post(bbody, envelope.OriginatingTime);
-            //OutBodiesCalibrated.Post(SelectBestBody(dicsC1, dicsC2), envelope.OriginatingTime);
+            this.UpdateCorrespondanceMap(bodies.Item1, bodies.Item2, ref dicsC1, ref dicsC2, envelope.OriginatingTime);
+            var bbody = this.SelectBestBody(dicsC1, dicsC2);
+            this.OutBodiesCalibrated.Post(bbody, envelope.OriginatingTime);
         }
 
         private void LearnedBodyProcessing1(List<LearnedBody> list, Envelope envelope)
         {
-            LearnedBodyProcessing(list, ref camera1LearnedBodies);
+            this.LearnedBodyProcessing(list, ref this.camera1LearnedBodies);
         }
+
         private void LearnedBodyProcessing2(List<LearnedBody> list, Envelope envelope)
         {
-            LearnedBodyProcessing(list, ref camera2LearnedBodies);
+            this.LearnedBodyProcessing(list, ref this.camera2LearnedBodies);
         }
+
         private void LearnedBodyProcessing(List<LearnedBody> list, ref Dictionary<uint, LearnedBody> dic)
         {
             lock (this)
@@ -167,17 +195,17 @@ namespace SAAC.Bodies
 
         private void RemovedBodyProcessing1(List<uint> list, Envelope envelope)
         {
-            RemovedBodyProcessing(list, true, ref camera1LearnedBodies, envelope);
+            this.RemovedBodyProcessing(list, true, ref this.camera1LearnedBodies, envelope);
         }
 
         private void RemovedBodyProcessing2(List<uint> list, Envelope envelope)
         {
-            RemovedBodyProcessing(list, false, ref camera2LearnedBodies, envelope);
+            this.RemovedBodyProcessing(list, false, ref this.camera2LearnedBodies, envelope);
         }
 
         private void RemovedBodyProcessing(List<uint> list, bool isMaster, ref Dictionary<uint, LearnedBody> dic, Envelope envelope)
         {
-            lock(this)
+            lock (this)
             {
                 List<uint> removedId = new List<uint>();
                 foreach (uint id in list)
@@ -189,36 +217,36 @@ namespace SAAC.Bodies
                         tuple = (id, 0);
                     else
                         tuple = (0, id);
-                    if (KeyOrValueExistInList(tuple, out ouTuple) != 0)
+                    if (this.KeyOrValueExistInList(tuple, out ouTuple) != 0)
                     {
-                        removedId.Add(generatedIdsMap[(ouTuple.Item1, ouTuple.Item2)]);
-                        generatedIdsMap.Remove((ouTuple.Item1, ouTuple.Item2));
+                        removedId.Add(this.generatedIdsMap[(ouTuple.Item1, ouTuple.Item2)]);
+                        this.generatedIdsMap.Remove((ouTuple.Item1, ouTuple.Item2));
                     }
                 }
-                OutBodiesRemoved.Post(removedId, envelope.OriginatingTime);
+
+                this.OutBodiesRemoved.Post(removedId, envelope.OriginatingTime);
             }
         }
 
         private void UpdateCorrespondanceMap(List<SimplifiedBody> camera1, List<SimplifiedBody> camera2, ref Dictionary<uint, SimplifiedBody> d1, ref Dictionary<uint, SimplifiedBody> d2, DateTime time)
         {
-            var newMapping = ComputeCorrespondenceMap(camera1, camera2, ref d1, ref d2);
+            var newMapping = this.ComputeCorrespondenceMap(camera1, camera2, ref d1, ref d2);
 
-            //checking consistancy with old mapping
             foreach (var iterator in newMapping)
             {
                 (uint, uint) tuple;
-                switch (KeyOrValueExistInList(iterator, out tuple))
+                switch (this.KeyOrValueExistInList(iterator, out tuple))
                 {
                     case TupleState.AlreadyExist:
                         break;
                     case TupleState.KeyAlreadyInserted:
-                        FindCorrectPairFromBones(ref d1, ref d2, iterator, tuple, time);
+                        this.FindCorrectPairFromBones(ref d1, ref d2, iterator, tuple, time);
                         break;
                     case TupleState.GoodToInsert:
-                        generatedIdsMap[(iterator.Item1, iterator.Item2)] = idCount++;
+                        this.generatedIdsMap[(iterator.Item1, iterator.Item2)] = this.idCount++;
                         break;
                     case TupleState.Replace:
-                        IntegrateInDicsAndList(tuple, iterator, time);
+                        this.IntegrateInDicsAndList(tuple, iterator, time);
                         break;
                 }
             }
@@ -248,7 +276,7 @@ namespace SAAC.Bodies
                     generatedIdsMap.Remove((0, newItem.Item2));
                 }
             }
-            else if(!generatedIdsMap.ContainsKey((newItem.Item1, newItem.Item2)))
+            else if (!generatedIdsMap.ContainsKey((newItem.Item1, newItem.Item2)))
                 generatedIdsMap[(newItem.Item1, newItem.Item2)] = idCount++;
         }
 
@@ -285,16 +313,16 @@ namespace SAAC.Bodies
 
             var statistics1 = MathNet.Numerics.Statistics.Statistics.MeanStandardDeviation(dist1);
             var statistics2 = MathNet.Numerics.Statistics.Statistics.MeanStandardDeviation(dist2);
-            
+
             if (statistics1.Item2 < statistics2.Item2)
                 IntegrateInDicsAndList(tuple, iterator, time);
             else
                 IntegrateInDicsAndList(iterator, tuple, time);
         }
 
-        private List<(uint, uint)> ComputeCorrespondenceMap(List<SimplifiedBody> camera1, List<SimplifiedBody> camera2, ref Dictionary<uint, SimplifiedBody> d1, ref Dictionary<uint, SimplifiedBody> d2) 
+        private List<(uint, uint)> ComputeCorrespondenceMap(List<SimplifiedBody> camera1, List<SimplifiedBody> camera2, ref Dictionary<uint, SimplifiedBody> d1, ref Dictionary<uint, SimplifiedBody> d2)
         {
-            if ((camera1.Count == 0 && camera2.Count == 0) || configuration.Camera2ToCamera1Transformation == null) 
+            if ((camera1.Count == 0 && camera2.Count == 0) || configuration.Camera2ToCamera1Transformation == null)
                 return new List<(uint, uint)>();
 
             // Bruteforce ftm, might simplify to check directly the max allowed distance.
@@ -305,14 +333,14 @@ namespace SAAC.Bodies
                 d1[bodyC1.Id] = bodyC1;
                 distances[bodyC1.Id] = new List<Tuple<double, uint>>();
                 foreach (SimplifiedBody bodyC2 in camera2)
-                    if(!notPairable.ContainsKey((bodyC1.Id,0)) || !notPairable[(bodyC1.Id, 0)].Contains(bodyC2.Id))
+                    if (!notPairable.ContainsKey((bodyC1.Id, 0)) || !notPairable[(bodyC1.Id, 0)].Contains(bodyC2.Id))
                         distances[bodyC1.Id].Add(new Tuple<double, uint>(MathNet.Numerics.Distance.Euclidean(bodyC1.Joints[configuration.JointUsedForCorrespondence].Item2.ToVector(), configuration.Camera2ToCamera1Transformation.Transform(bodyC2.Joints[configuration.JointUsedForCorrespondence].Item2).ToVector()), bodyC2.Id));
             }
 
             List<(uint, uint)> correspondanceMap = new List<(uint, uint)>();
             List<uint> notMissingC2 = new List<uint>();
-            foreach(var iterator in distances)
-            { 
+            foreach (var iterator in distances)
+            {
                 iterator.Value.Sort(new TupleDoubleUintComparer());
                 //to check if sort is good
                 if (iterator.Value.Count > 1)
@@ -338,7 +366,7 @@ namespace SAAC.Bodies
                 else
                     correspondanceMap.Add((iterator.Key, 0));
             }
-            foreach(SimplifiedBody bodyC2 in camera2)
+            foreach (SimplifiedBody bodyC2 in camera2)
             {
                 d2[bodyC2.Id] = bodyC2;
                 if (!notMissingC2.Contains(bodyC2.Id))
@@ -347,7 +375,7 @@ namespace SAAC.Bodies
             return correspondanceMap;
         }
 
-        private void SelectByConfidence(Dictionary<uint, SimplifiedBody> camera1, Dictionary<uint, SimplifiedBody> camera2, (uint,uint) ids, ref List<SimplifiedBody> bestBodies)
+        private void SelectByConfidence(Dictionary<uint, SimplifiedBody> camera1, Dictionary<uint, SimplifiedBody> camera2, (uint, uint) ids, ref List<SimplifiedBody> bestBodies)
         {
             if (AccumulatedConfidence(camera1[ids.Item1]) < AccumulatedConfidence(camera2[ids.Item2]))
             {
@@ -399,11 +427,11 @@ namespace SAAC.Bodies
         private List<SimplifiedBody> SelectBestBody(Dictionary<uint, SimplifiedBody> camera1, Dictionary<uint, SimplifiedBody> camera2)
         {
             List<SimplifiedBody> bestBodies = new List<SimplifiedBody>();
-            foreach(var pair in generatedIdsMap)
+            foreach (var pair in generatedIdsMap)
             {
                 if (camera1.ContainsKey(pair.Key.Item1) && camera2.ContainsKey(pair.Key.Item2))
                 {
-                    if(camera1LearnedBodies.ContainsKey(pair.Key.Item1) && camera1LearnedBodies.ContainsKey(pair.Key.Item2))
+                    if (camera1LearnedBodies.ContainsKey(pair.Key.Item1) && camera1LearnedBodies.ContainsKey(pair.Key.Item2))
                         SelectByLearnedBodies(camera1, camera2, pair.Key, ref bestBodies);
                     else
                         SelectByConfidence(camera1, camera2, pair.Key, ref bestBodies);
@@ -448,8 +476,8 @@ namespace SAAC.Bodies
                 }
             }
             return bestBodies;
-        } 
-        
+        }
+
         private TupleState KeyOrValueExistInList((uint, uint) tuple, out (uint, uint) value)
         {
             bool checkTupleItem1 = tuple.Item1 != 0;
@@ -465,7 +493,7 @@ namespace SAAC.Bodies
                     value = tuple;
                     return TupleState.AlreadyExist;
                 }
-                else if((!checkIteratorItem1 && checkSameItem2) || (checkSameItem1 && !checkIteratorItem2))
+                else if ((!checkIteratorItem1 && checkSameItem2) || (checkSameItem1 && !checkIteratorItem2))
                 {
                     value = iterator.Key;
                     return TupleState.Replace;
@@ -484,14 +512,14 @@ namespace SAAC.Bodies
         {
             //might use coef for usefull joints.
             int accumulator = 0;
-            foreach(var joint in body.Joints)
-                accumulator+=(int)joint.Value.Item1;
+            foreach (var joint in body.Joints)
+                accumulator += (int)joint.Value.Item1;
             return accumulator;
         }
 
         private SimplifiedBody TransformBody(SimplifiedBody body)
         {
-            if(configuration.Camera2ToCamera1Transformation == null)
+            if (configuration.Camera2ToCamera1Transformation == null)
                 return body;
             SimplifiedBody transformed = body.DeepClone();
             foreach (var joint in body.Joints)
@@ -504,7 +532,7 @@ namespace SAAC.Bodies
     {
         public override int Compare(Tuple<double, uint> a, Tuple<double, uint> b)
         {
-            if(a.Item1 == b.Item1)
+            if (a.Item1 == b.Item1)
                 return 0;
             return a.Item1 > b.Item1 ? 1 : -1;
         }

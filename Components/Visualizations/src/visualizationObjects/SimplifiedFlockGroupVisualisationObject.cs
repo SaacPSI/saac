@@ -1,16 +1,16 @@
-﻿using Microsoft.Psi.AzureKinect;
-using Microsoft.Azure.Kinect.BodyTracking;
-using Microsoft.Psi.Visualization.DataTypes;
-using Microsoft.Psi.Visualization.VisualizationObjects;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using System.Windows.Media;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using Win3D = System.Windows.Media.Media3D;
-using System.Windows.Media.Media3D;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using System.Windows.Media.Media3D;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+    using Win3D = System.Windows.Media.Media3D;
+
     /// <summary>
     /// Implements a visualization object for simplified flock group.
     /// </summary>
@@ -50,7 +50,7 @@ namespace SAAC.Visualizations
         }
 
         /// <summary>
-        /// Gets the billboard visualization object for the body.
+        /// Gets the billboard visualization object.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -60,7 +60,7 @@ namespace SAAC.Visualizations
         public BillboardTextVisualizationObject Billboard { get; private set; }
 
         /// <summary>
-        /// Gets the skeleton visualization object for the body.
+        /// Gets the group volume 3D rect parameters.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -70,7 +70,7 @@ namespace SAAC.Visualizations
         public Rect3DVisualizationObject GroupVolume { get; private set; }
 
         /// <summary>
-        /// Gets the skeleton visualization object for the body.
+        /// Gets the group direction 3D ray parameters.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -124,8 +124,9 @@ namespace SAAC.Visualizations
         {
             if (this.CurrentData != null)
             {
-                MathNet.Spatial.Euclidean.Ray3D? ray = new MathNet.Spatial.Euclidean.Ray3D(new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Area.Center.X, this.CurrentData.Area.Center.Y, 0.0),
-                                                                                            new MathNet.Spatial.Euclidean.Vector3D(this.CurrentData.Direction.X, this.CurrentData.Direction.Y, 0.0));
+                MathNet.Spatial.Euclidean.Ray3D? ray = new MathNet.Spatial.Euclidean.Ray3D(
+                    new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Area.Center.X, this.CurrentData.Area.Center.Y, 0.0),
+                    new MathNet.Spatial.Euclidean.Vector3D(this.CurrentData.Direction.X, this.CurrentData.Direction.Y, 0.0));
                 this.GroupDirection.SetCurrentValue(this.SynthesizeMessage(ray));
             }
         }

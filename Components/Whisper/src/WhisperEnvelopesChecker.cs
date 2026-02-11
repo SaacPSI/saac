@@ -1,59 +1,100 @@
-﻿using Microsoft.Psi.Audio;
-using Microsoft.Psi.Speech;
-using Microsoft.Psi;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Whisper
 {
+    using Microsoft.Psi;
+    using Microsoft.Psi.Audio;
+    using Microsoft.Psi.Speech;
+
+    /// <summary>
+    /// Checks and validates envelopes for Whisper speech recognition pipeline.
+    /// </summary>
     public class WhisperEnvelopesChecker
     {
-        public Receiver<bool> vadIn { get; private set; }
-        public Receiver<AudioBuffer> audioIn { get; private set; }
-        public Receiver<IStreamingSpeechRecognitionResult> sttIn { get; private set; }
-        public Emitter<bool> vadOut { get; private set; }
-        public Emitter<AudioBuffer> audioOut { get; private set; }
-        public Emitter<IStreamingSpeechRecognitionResult> sttOut { get; private set; }
-        public string Name { get; private set; }
-
         private DateTime lastVadOut = DateTime.MinValue;
         private DateTime lastAudioOut = DateTime.MinValue;
         private DateTime lastSttOut = DateTime.MinValue;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WhisperEnvelopesChecker"/> class.
+        /// </summary>
+        /// <param name="pipeline">The pipeline.</param>
+        /// <param name="name">The component name.</param>
         public WhisperEnvelopesChecker(Pipeline pipeline, string name = nameof(WhisperEnvelopesChecker))
         {
-            Name = name;
-            this.vadIn = pipeline.CreateReceiver<bool>(this, Process, $"{Name}-{nameof(this.vadIn)}");
-            this.audioIn = pipeline.CreateReceiver<AudioBuffer>(this, Process, $"{Name}-{nameof(this.audioIn)}");
-            this.sttIn = pipeline.CreateReceiver<IStreamingSpeechRecognitionResult>(this, Process, $"{Name}-{nameof(this.sttIn)}");
-            this.vadOut = pipeline.CreateEmitter<bool>(this, $"{Name}-{nameof(this.vadOut)}");
-            this.audioOut = pipeline.CreateEmitter<AudioBuffer>(this, $"{Name}-{nameof(this.audioOut)}");
-            this.sttOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, $"{Name}-{nameof(this.sttOut)}");
+            this.Name = name;
+            this.VadIn = pipeline.CreateReceiver<bool>(this, this.Process, $"{this.Name}-{nameof(this.VadIn)}");
+            this.AudioIn = pipeline.CreateReceiver<AudioBuffer>(this, this.Process, $"{this.Name}-{nameof(this.AudioIn)}");
+            this.SttIn = pipeline.CreateReceiver<IStreamingSpeechRecognitionResult>(this, this.Process, $"{this.Name}-{nameof(this.SttIn)}");
+            this.VadOut = pipeline.CreateEmitter<bool>(this, $"{this.Name}-{nameof(this.VadOut)}");
+            this.AudioOut = pipeline.CreateEmitter<AudioBuffer>(this, $"{this.Name}-{nameof(this.AudioOut)}");
+            this.SttOut = pipeline.CreateEmitter<IStreamingSpeechRecognitionResult>(this, $"{this.Name}-{nameof(this.SttOut)}");
         }
 
-        public override string ToString() => Name;
+        /// <summary>
+        /// Gets the VAD input receiver.
+        /// </summary>
+        public Receiver<bool> VadIn { get; private set; }
+
+        /// <summary>
+        /// Gets the audio input receiver.
+        /// </summary>
+        public Receiver<AudioBuffer> AudioIn { get; private set; }
+
+        /// <summary>
+        /// Gets the STT input receiver.
+        /// </summary>
+        public Receiver<IStreamingSpeechRecognitionResult> SttIn { get; private set; }
+
+        /// <summary>
+        /// Gets the VAD output emitter.
+        /// </summary>
+        public Emitter<bool> VadOut { get; private set; }
+
+        /// <summary>
+        /// Gets the audio output emitter.
+        /// </summary>
+        public Emitter<AudioBuffer> AudioOut { get; private set; }
+
+        /// <summary>
+        /// Gets the STT output emitter.
+        /// </summary>
+        public Emitter<IStreamingSpeechRecognitionResult> SttOut { get; private set; }
+
+        /// <summary>
+        /// Gets the component name.
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <inheritdoc/>
+        public override string ToString() => this.Name;
 
         private void Process(bool value, Envelope envelope)
         {
-            if (envelope.OriginatingTime > lastVadOut)
+            if (envelope.OriginatingTime > this.lastVadOut)
             {
-                vadOut.Post(value, envelope.OriginatingTime);
-                lastVadOut = envelope.OriginatingTime;
+                this.VadOut.Post(value, envelope.OriginatingTime);
+                this.lastVadOut = envelope.OriginatingTime;
             }
         }
 
         private void Process(AudioBuffer buffer, Envelope envelope)
         {
-            if (envelope.OriginatingTime > lastAudioOut)
+            if (envelope.OriginatingTime > this.lastAudioOut)
             {
-                audioOut.Post(buffer, envelope.OriginatingTime);
-                lastAudioOut = envelope.OriginatingTime;
+                this.AudioOut.Post(buffer, envelope.OriginatingTime);
+                this.lastAudioOut = envelope.OriginatingTime;
             }
         }
+
         private void Process(IStreamingSpeechRecognitionResult finalResult, Envelope envelope)
         {
-            if (envelope.OriginatingTime > lastSttOut)
+            if (envelope.OriginatingTime > this.lastSttOut)
             {
-                sttOut.Post(finalResult, envelope.OriginatingTime);
-                lastSttOut = envelope.OriginatingTime;
+                this.SttOut.Post(finalResult, envelope.OriginatingTime);
+                this.lastSttOut = envelope.OriginatingTime;
             }
         }
     }

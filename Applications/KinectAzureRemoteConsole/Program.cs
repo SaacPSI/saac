@@ -1,5 +1,11 @@
-﻿using SAAC.RemoteConnectors;
+// <copyright file="Program.cs" company="SAAC">
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+// </copyright>
+
 using SAAC.PipelineServices;
+using SAAC.RemoteConnectors;
 
 namespace KinectAzureRemoteConsole
 {
@@ -59,7 +65,7 @@ namespace KinectAzureRemoteConsole
 
         void SetupKinect()
         {
-            if (kinect != null) 
+            if (kinect != null)
                 return;
             kinect = new KinectAzureRemoteStreams(client.GetOrCreateSubpipeline("azure"), configKinect, configKinect.RendezVousApplicationName);
             client.AddProcess(kinect.GenerateProcess());
@@ -117,7 +123,7 @@ namespace KinectAzureRemoteConsole
     {
         static void Main(string[] args)
         {
-            if(args.Length < 4)
+            if (args.Length < 4)
                 Console.WriteLine("Missing arguments !");
             try
             {

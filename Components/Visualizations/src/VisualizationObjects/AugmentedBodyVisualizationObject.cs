@@ -1,15 +1,19 @@
-﻿using Microsoft.Psi.AzureKinect;
-using Microsoft.Azure.Kinect.BodyTracking;
-using Microsoft.Psi.Visualization.DataTypes;
-using Microsoft.Psi.Visualization.VisualizationObjects;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using System.Windows.Media;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using Win3D = System.Windows.Media.Media3D;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using System.Windows.Media;
+    using Microsoft.Azure.Kinect.BodyTracking;
+    using Microsoft.Psi.AzureKinect;
+    using Microsoft.Psi.Visualization.DataTypes;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+    using Win3D = System.Windows.Media.Media3D;
+
     /// <summary>
     /// Implements a visualization object for azure bodies with confidence color on joint.
     /// </summary>
@@ -40,7 +44,7 @@ namespace SAAC.Visualizations
                         var isTracked = jointState == JointConfidenceLevel.High || jointState == JointConfidenceLevel.Medium;
                         if (this.Skeleton.DisplayConfidence)
                         {
-                            switch(jointState) 
+                            switch (jointState)
                             {
                                 case JointConfidenceLevel.High:
                                 case JointConfidenceLevel.Medium:
@@ -50,6 +54,7 @@ namespace SAAC.Visualizations
                                 case JointConfidenceLevel.None:
                                     return new SolidColorBrush(Color.FromRgb(255, 0, 0));
                             }
+
                             return new SolidColorBrush(this.Skeleton.NodeColor);
                         }
                         else

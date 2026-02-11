@@ -52,13 +52,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\build\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\build\bin\Interop\$(ProjectName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\Interop\$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\build\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\build\bin\Interop\$(ProjectName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\Interop\$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

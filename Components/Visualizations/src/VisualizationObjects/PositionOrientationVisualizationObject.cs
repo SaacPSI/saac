@@ -1,20 +1,21 @@
-﻿using Microsoft.Psi.Visualization.VisualizationObjects;
-using System.ComponentModel;
-using System.Runtime.Serialization;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
-using Win3D = System.Windows.Media.Media3D;
-using System.Numerics;
-using MathNet.Spatial.Euclidean;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
+    using Win3D = System.Windows.Media.Media3D;
+
     /// <summary>
     /// Implements a visualization object for simplified bodies.
     /// </summary>
     [VisualizationObject("Position Orientation")]
     public class PositionOrientationVisualizationObject : ModelVisual3DValueVisualizationObject<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>>
     {
-
         private double billboardHeightCm = 100;
 
         /// <summary>
@@ -22,7 +23,7 @@ namespace SAAC.Visualizations
         /// </summary>
         public PositionOrientationVisualizationObject()
         {
-            System = new CoordinateSystemVisualizationObject();
+            this.System = new CoordinateSystemVisualizationObject();
             this.System.RegisterChildPropertyChangedNotifications(this, nameof(this.System));
 
             this.Billboard = new BillboardTextVisualizationObject() { Visible = false };
@@ -45,7 +46,7 @@ namespace SAAC.Visualizations
         }
 
         /// <summary>
-        /// Gets the billboard visualization object for the body.
+        /// Gets or sets the billboard visualization object.
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -55,7 +56,7 @@ namespace SAAC.Visualizations
         public BillboardTextVisualizationObject Billboard { get; set; }
 
         /// <summary>
-        /// Gets the skeleton visualization object for the body.
+        /// Gets or sets the coordinates system visualization object .
         /// </summary>
         [ExpandableObject]
         [DataMember]
@@ -64,9 +65,8 @@ namespace SAAC.Visualizations
         [Description("The representation object.")]
         public CoordinateSystemVisualizationObject System { get; set; }
 
-
         /// <summary>
-        /// Gets the skeleton visualization object for the body.
+        /// Gets or sets a value indicating whether reversing Y and Z axes.
         /// </summary>
         [DataMember]
         [PropertyOrder(4)]
@@ -108,8 +108,8 @@ namespace SAAC.Visualizations
         {
             if (this.CurrentData != null)
             {
-                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, ReverseYZ ? this.CurrentData.Item1.Z : this.CurrentData.Item1.Y, ReverseYZ ? this.CurrentData.Item1.Y : this.CurrentData.Item1.Z);
-                MathNet.Spatial.Euclidean.CoordinateSystem rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X), MathNet.Spatial.Units.Angle.FromDegrees(ReverseYZ ? this.CurrentData.Item2.Z : this.CurrentData.Item2.Y), MathNet.Spatial.Units.Angle.FromDegrees(ReverseYZ ? this.CurrentData.Item2.Y : this.CurrentData.Item2.Z));
+                MathNet.Spatial.Euclidean.Point3D origin = new MathNet.Spatial.Euclidean.Point3D(this.CurrentData.Item1.X, this.ReverseYZ ? this.CurrentData.Item1.Z : this.CurrentData.Item1.Y, this.ReverseYZ ? this.CurrentData.Item1.Y : this.CurrentData.Item1.Z);
+                MathNet.Spatial.Euclidean.CoordinateSystem rot = MathNet.Spatial.Euclidean.CoordinateSystem.Rotation(MathNet.Spatial.Units.Angle.FromDegrees(this.CurrentData.Item2.X), MathNet.Spatial.Units.Angle.FromDegrees(this.ReverseYZ ? this.CurrentData.Item2.Z : this.CurrentData.Item2.Y), MathNet.Spatial.Units.Angle.FromDegrees(this.ReverseYZ ? this.CurrentData.Item2.Y : this.CurrentData.Item2.Z));
                 MathNet.Spatial.Euclidean.CoordinateSystem newValue = new MathNet.Spatial.Euclidean.CoordinateSystem(origin, rot.XAxis, rot.YAxis, rot.ZAxis);
                 this.System.SetCurrentValue(this.SynthesizeMessage(newValue));
             }
@@ -120,8 +120,8 @@ namespace SAAC.Visualizations
             if (this.CurrentData != null)
             {
                 var origin = this.CurrentData.Item1;
-                var pos = new Win3D.Point3D(origin.X, ReverseYZ ? origin.Z : origin.Y, (ReverseYZ ? origin.Y : origin.Z) + (this.BillboardHeightCm / 100.0));
-                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"{SourceStreamName}")));
+                var pos = new Win3D.Point3D(origin.X, this.ReverseYZ ? origin.Z : origin.Y, (this.ReverseYZ ? origin.Y : origin.Z) + (this.BillboardHeightCm / 100.0));
+                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"{this.SourceStreamName}")));
             }
         }
 

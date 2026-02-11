@@ -1,7 +1,13 @@
-﻿using Microsoft.Psi.Interop.Serialization;
+// <copyright file="PsiFormatListOfSimplifiedBody.cs" company="SAAC">
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+// </copyright>
+
 using System.IO;
-using SAAC.Bodies;
 using Microsoft.Azure.Kinect.BodyTracking;
+using Microsoft.Psi.Interop.Serialization;
+using SAAC.Bodies;
 using static SAAC.Bodies.SimplifiedBody;
 
 namespace SAAC.PsiFormats
@@ -28,7 +34,8 @@ namespace SAAC.PsiFormats
                     writer.Write(joint.Value.Item2.X);
                     writer.Write(joint.Value.Item2.Y);
                     writer.Write(joint.Value.Item2.Z);
-                };
+                }
+                ;
             }
         }
 
@@ -36,15 +43,15 @@ namespace SAAC.PsiFormats
         {
             List<SimplifiedBody> bodies = new List<SimplifiedBody>();
             int count = reader.ReadInt32();
-            for(int bodiesIterator = 0; bodiesIterator < count; bodiesIterator++)
+            for (int bodiesIterator = 0; bodiesIterator < count; bodiesIterator++)
             {
                 uint id = reader.ReadUInt32();
                 SensorOrigin origin = (SensorOrigin)reader.ReadInt32();
                 int jointCount = reader.ReadInt32();
                 Dictionary<JointId, Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D>> joints = new Dictionary<JointId, Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D>>();
-                for(int jointIterator = 0; jointIterator <jointCount; jointIterator++ )
+                for (int jointIterator = 0; jointIterator < jointCount; jointIterator++)
                 {
-                    joints.Add((JointId)reader.ReadInt32(), new Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D>((JointConfidenceLevel)reader.ReadInt32(), 
+                    joints.Add((JointId)reader.ReadInt32(), new Tuple<JointConfidenceLevel, MathNet.Spatial.Euclidean.Vector3D>((JointConfidenceLevel)reader.ReadInt32(),
                         new MathNet.Spatial.Euclidean.Vector3D(reader.ReadDouble(), reader.ReadDouble(), reader.ReadDouble())));
                 }
                 bodies.Add(new SimplifiedBody(origin, id, joints));

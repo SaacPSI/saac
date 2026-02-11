@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace Microsoft.Psi.PsiStudio.PipelinePlugin
 {
@@ -36,35 +37,35 @@ namespace Microsoft.Psi.PsiStudio.PipelinePlugin
         /// Return the dataset loaded by the plugin.
         /// </summary>
         /// <returns>The dataset of the plugin.</returns>
-        public Dataset GetDataset();
+        Dataset GetDataset();
 
         /// <summary>
         /// Run the pipeline's) of the plugin.
         /// </summary>
         /// <param name="timeInterval">Interval to replay incase some stores are read.</param>
-        public void RunPipeline(TimeInterval timeInterval);
+        void RunPipeline(TimeInterval timeInterval);
 
         /// <summary>
         /// Stop the pipeline's of the plugin.
         /// </summary>
-        public void StopPipeline();
+        void StopPipeline();
 
         /// <summary>
         /// Dispose the plugin.
         /// </summary>
-        public void Dispose();
+        void Dispose();
 
         /// <summary>
         /// Gets the time of pipeline start (Pipeline.StartTime).
         /// </summary>
         /// <returns>Returns the start time of the pipeline.</returns>
-        public DateTime GetStartTime();
+        DateTime GetStartTime();
 
         /// <summary>
         /// Gets the mode of the plugin.
         /// </summary>
         /// <returns>Returns the replay mode.</returns>
-        public PipelineReplaybleMode GetReplaybleMode();
+        PipelineReplaybleMode GetReplaybleMode();
 
         // *** Optionnals *** //
         // /// <summary>

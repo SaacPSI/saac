@@ -1,63 +1,50 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Remoting;
-//using Microsoft.Psi.Interop.Rendezvous;
-//using WebRTC;
-using Microsoft.Psi.Imaging;
-//using Microsoft.Psi.AzureKinect;
-//using Bodies;
-//using OpenFace;
-using System.Configuration;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using Microsoft.Psi.Components;
-using SAAC;
-//using SAAC.Bodies;
-using System.Text;
-//using SAAC.Groups;
-//using Microsoft.Psi.Interop.Serialization;
-//using Microsoft.Psi.Interop.Transport;
-//using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
-//using System.IO;
-using SAAC.PipelineServices;
-//using SAAC.Helpers;
-//using static SAAC.PipelineServices.RendezVousPipeline;
-using System.Windows;
-using SAAC.GlobalHelpers;
-using SAAC.Helpers;
-using MathNet.Spatial.Euclidean;
-using Microsoft.Psi.Interop.Transport;
-using Microsoft.Psi.Interop.Rendezvous;
-//using PLUME;
-//using SAAC.Ollama;
-//using SAAC.LabStreamLayer;
-//using static LSL.liblsl;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
+// using PLUME;
+// using SAAC.Ollama;
+// using SAAC.LabStreamLayer;
+// using static LSL.liblsl;
 
-
-using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
+using Microsoft.Psi;
+
+// using SAAC.Helpers;
+// using static SAAC.PipelineServices.RendezVousPipeline;
+using Microsoft.Psi.Interop.Rendezvous;
+
+// using Microsoft.Psi.Interop.Rendezvous;
+// using WebRTC;
+// using Microsoft.Psi.AzureKinect;
+// using Bodies;
+// using OpenFace;
+// using SAAC.Bodies;
+// using SAAC.Groups;
+// using Microsoft.Psi.Interop.Serialization;
+// using Microsoft.Psi.Interop.Transport;
+// using static Microsoft.Psi.Interop.Rendezvous.Rendezvous;
+// using System.IO;
+using SAAC.PipelineServices;
 
 namespace TestingConsole
 {
     internal class Program
     {
-        //*****Uncomment OpenFace, Microsoft.Psi.Imaging and Microsoft.Psi.AzureKinect
-        //***** Add OpenFace deps
+        // *****Uncomment OpenFace, Microsoft.Psi.Imaging and Microsoft.Psi.AzureKinect
+        // ***** Add OpenFace deps
         //   static void OpenFace(Pipeline p)
         //    {
 
-        //        //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
+        // //Microsoft.Psi.Media.MediaCaptureConfiguration camConfig = new Microsoft.Psi.Media.MediaCaptureConfiguration();
         //        //Microsoft.Psi.Media.MediaCapture webcam = new Microsoft.Psi.Media.MediaCapture(p, camConfig);
 
-        //        AzureKinectSensor webcam = new AzureKinectSensor(p);
+        // AzureKinectSensor webcam = new AzureKinectSensor(p);
 
-        //        OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
+        // OpenFaceConfiguration configuration = new OpenFaceConfiguration("./");
         //        configuration.Face = false;
         //        configuration.Eyes = false;
         //        configuration.Pose = false;
@@ -65,16 +52,16 @@ namespace TestingConsole
         //        webcam.ColorImage.PipeTo(facer.In);
         //        //sensor.ColorImage.PipeTo(facer.In);
 
-        //        FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
+        // FaceBlurrer faceBlurrer = new FaceBlurrer(p, "Blurrer");
         //        facer.OutBoundingBoxes.PipeTo(faceBlurrer.InBBoxes);
         //        webcam.ColorImage.PipeTo(faceBlurrer.InImage);
         //        //sensor.ColorImage.PipeTo(faceBlurrer.InImage);
 
-        //        var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
+        // var store = PsiStore.Create(p, "Blurrer", "D:\\Stores");
         //    }
 
-        //static void WebRTCVideoAudio(Pipeline p)
-        //{
+        // static void WebRTCVideoAudio(Pipeline p)
+        // {
         //    WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
         //    config.WebsocketAddress = System.Net.IPAddress.Loopback;
         //    config.WebsocketPort = 80;
@@ -85,12 +72,12 @@ namespace TestingConsole
         //    WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
         //    var store = PsiStore.Create(p, "WebRTC", "F:\\Stores");
 
-        //    store.Write(stream.OutImage.EncodeJpeg(), "Image");
+        // store.Write(stream.OutImage.EncodeJpeg(), "Image");
         //    store.Write(stream.OutAudio, "Audio");
-        //}
+        // }
 
-        //static void FullWebRTC(Pipeline p)
-        //{
+        // static void FullWebRTC(Pipeline p)
+        // {
         //    WebRTCVideoStreamConfiguration config = new WebRTCVideoStreamConfiguration();
         //    config.WebsocketAddress = System.Net.IPAddress.Parse("127.0.0.1");
         //    config.WebsocketPort = 80;
@@ -99,37 +86,37 @@ namespace TestingConsole
         //    config.FFMPEGFullPath = "D:\\ffmpeg\\bin\\";
         //    config.Log = Microsoft.Extensions.Logging.LogLevel.Information;
 
-        //    var emitter = new WebRTCDataChannelToEmitter<string>(p);
+        // var emitter = new WebRTCDataChannelToEmitter<string>(p);
         //    var incoming = WebRTCDataReceiverToChannelFactory.Create<TimeSpan>(p, "timing");
         //    config.OutputChannels.Add("Events", emitter);
         //    config.InputChannels.Add("Timing", incoming);
 
-        //    WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
+        // WebRTCVideoStream stream = new WebRTCVideoStream(p, config);
         //    var store = PsiStore.Create(p, "WebRTC", "D:\\Stores");
 
-        //    store.Write(stream.OutImage.EncodeJpeg(), "Image");
+        // store.Write(stream.OutImage.EncodeJpeg(), "Image");
         //    store.Write(stream.OutAudio, "Audio");
         //    store.Write(emitter.Out, "Events");
 
-        //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
-        //    timer.Out.PipeTo(incoming.In);    
-        //}
+        // var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
+        //    timer.Out.PipeTo(incoming.In);
+        // }
 
-        //static void UnityDemo(Pipeline p)
-        //{
+        // static void UnityDemo(Pipeline p)
+        // {
         //    string host = "127.0.0.1";
         //    var server = new RendezvousServer();
         //    var process = new Rendezvous.Process("Console");
 
-        //    RemoteClockExporter exporter = new RemoteClockExporter(11511);
+        // RemoteClockExporter exporter = new RemoteClockExporter(11511);
         //    process.AddEndpoint(exporter.ToRendezvousEndpoint(host));
 
-        //    RemoteExporter remoteExporter = new RemoteExporter(p, 11412, TransportKind.Tcp);
+        // RemoteExporter remoteExporter = new RemoteExporter(p, 11412, TransportKind.Tcp);
         //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(5));
         //    remoteExporter.Exporter.Write(timer.Out, "PingInter");
         //    process.AddEndpoint(remoteExporter.ToRendezvousEndpoint(host));
 
-        //    server.Rendezvous.ProcessAdded += (_, process) =>
+        // server.Rendezvous.ProcessAdded += (_, process) =>
         //    {
         //        Console.WriteLine($"Process added: {process.Name}");
         //        if (process.Name.Contains("Console"))
@@ -151,12 +138,12 @@ namespace TestingConsole
         //                    {
         //                        var pos = remoteImporter.Importer.OpenStream<Vector3>("Position");
 
-        //                        var emiOut = subP.CreateEmitter<Vector3>(pos, "modificator"); 
+        // var emiOut = subP.CreateEmitter<Vector3>(pos, "modificator");
         //                        pos.Do((vec, env) => { Console.WriteLine("posImp : " + vec.ToString()); emiOut.Post(vec + Vector3.One, env.OriginatingTime); }) ;
         //                        processF = new Rendezvous.Process("ConsoleForward");
         //                        RemoteExporter remoteF = new RemoteExporter(p, 11420, TransportKind.Tcp);
 
-        //                        remoteF.Exporter.Write(emiOut, "PositionModified");
+        // remoteF.Exporter.Write(emiOut, "PositionModified");
         //                        processF.AddEndpoint(remoteF.ToRendezvousEndpoint(host));
         //                    }
         //                }
@@ -167,31 +154,30 @@ namespace TestingConsole
         //        subP.RunAsync();
         //    };
 
-        //    server.Rendezvous.TryAddProcess(process);
+        // server.Rendezvous.TryAddProcess(process);
         //    server.Start();
-        //}
+        // }
 
-        //static void testBodies(Pipeline p)
-        //{
+        // static void testBodies(Pipeline p)
+        // {
         //    AzureKinectSensorConfiguration configKinect = new AzureKinectSensorConfiguration();
         //    configKinect.DeviceIndex = 0;
         //    configKinect.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
         //    AzureKinectSensor sensor = new AzureKinectSensor(p, configKinect);
 
-        //    /*** BODIES CONVERTERS ***/
+        // /*** BODIES CONVERTERS ***/
         //    Bodies.BodiesConverter bodiesConverter = new Bodies.BodiesConverter(p);
 
-        //    Bodies.HandsProximityDetectorConfiguration configHands = new Bodies.HandsProximityDetectorConfiguration();
+        // Bodies.HandsProximityDetectorConfiguration configHands = new Bodies.HandsProximityDetectorConfiguration();
         //    configHands.IsPairToCheckGiven = false;
         //    Bodies.HandsProximityDetector detector = new Bodies.HandsProximityDetector(p, configHands);
 
-
-        //    Bodies.BodyPosturesDetectorConfiguration configPostures = new Bodies.BodyPosturesDetectorConfiguration();
+        // Bodies.BodyPosturesDetectorConfiguration configPostures = new Bodies.BodyPosturesDetectorConfiguration();
         //    Bodies.BodyPosturesDetector postures = new Bodies.BodyPosturesDetector(p, configPostures);
 
-        //    sensor.Bodies.PipeTo(bodiesConverter.InBodiesAzure);
+        // sensor.Bodies.PipeTo(bodiesConverter.InBodiesAzure);
 
-        //    //Connector<List<(uint, uint)>> connector = p.CreateConnector<List<(uint, uint)>>("random");
+        // //Connector<List<(uint, uint)>> connector = p.CreateConnector<List<(uint, uint)>>("random");
         //    //connector.Out.PipeTo(detector.InPair);
         //    //sensor.Bodies.Do((m, e) =>
         //    //{
@@ -205,24 +191,24 @@ namespace TestingConsole
         //    bodiesConverter.Out.PipeTo(detector.In);
         //    bodiesConverter.Out.PipeTo(postures.In);
 
-        //    detector.Out.Do((m, e) => { 
+        // detector.Out.Do((m, e) => {
         //        foreach (var data in m)
         //        {
         //            foreach(var item in data.Value)
         //                Console.WriteLine($"{data.Key} - {item}");
         //        } });
 
-        //    postures.Out.Do((m, e) => {
+        // postures.Out.Do((m, e) => {
         //        foreach (var data in m)
         //        {
         //            foreach (var item in data.Value)
         //                Console.WriteLine($"{data.Key} - {item}");
         //        }
         //    });
-        //}
+        // }
 
-        //static void testOllama()
-        //{
+        // static void testOllama()
+        // {
         //    Pipeline p = Pipeline.Create();
         //    OllamaConectorConfiguration config = new OllamaConectorConfiguration();
         //    config.OllamaAddress = new Uri("http://localhost:11434");
@@ -230,56 +216,54 @@ namespace TestingConsole
         //    OllamaConnector ollama = new OllamaConnector(p, config, true);
         //    KeyboardReader.KeyboardReader reader = new KeyboardReader.KeyboardReader(p);
 
-        //    reader.Out.PipeTo(ollama.In);
+        // reader.Out.PipeTo(ollama.In);
         //    ollama.Out.Do((m, e) => { Console.WriteLine($"{(e.CreationTime - e.OriginatingTime).TotalSeconds} \n {m} \n>"); });
         //    p.Run();
-        //}
+        // }
 
-        //static void testGroups(Pipeline p)
-        //{
+        // static void testGroups(Pipeline p)
+        // {
         //    var azureConfig = new AzureKinectSensorConfiguration();
         //    azureConfig.BodyTrackerConfiguration = new AzureKinectBodyTrackerConfiguration();
         //    azureConfig.BodyTrackerConfiguration.CpuOnlyMode = false;
         //    var azureKinect = new AzureKinectSensor(p, azureConfig);
 
-
-
-        //    // Create the store component
+        // // Create the store component
         //    var store = PsiStore.Create(p, "Azure", "D:\\Stores");
 
-        //    // Write incoming data in the store
+        // // Write incoming data in the store
         //    //store.Write(azureKinect.ColorImage, "Color");
         //    //store.Write(azureKinect.DepthImage, "Depth");
         //    store.Write(azureKinect.Bodies, "Bodies");
         //    store.Write(azureKinect.Imu, "Imu");
 
-        //    BodiesConverter converter = new BodiesConverter(p);
+        // BodiesConverter converter = new BodiesConverter(p);
         //    azureKinect.Bodies.PipeTo(converter.InBodiesAzure);
         //    store.Write(converter.Out, "BodiesS");
         //    converter.Out.Do((d, e) => { Console.WriteLine("c"); });
 
-        //    SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
+        // SimpleBodiesPositionExtraction extractor = new SimpleBodiesPositionExtraction(p);
         //    azureKinect.Bodies.PipeTo(extractor.InBodiesAzure);
 
-        //    SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
+        // SimplifiedFlockGroupsDetector groupsDetector = new SimplifiedFlockGroupsDetector(p);
         //    extractor.Out.PipeTo(groupsDetector.In);
 
-        //    store.Write(groupsDetector.Out, "Groups");
+        // store.Write(groupsDetector.Out, "Groups");
         //    groupsDetector.Out.Do((d,e) => { Console.WriteLine("g"); });
-        //}
+        // }
 
-        //static private void Connection<T>(string name, TcpSourceEndpoint? source, Pipeline p, Format<T> deserializer)
-        //{
+        // static private void Connection<T>(string name, TcpSourceEndpoint? source, Pipeline p, Format<T> deserializer)
+        // {
         //    source?.ToTcpSource<T>(p, deserializer, null, true, name).Do((d, e) => { Console.WriteLine($"Recieve {name} data @{e} : {d}"); });
-        //}
+        // }
 
-        //static void Quest2Demo(Pipeline p)
-        //{
+        // static void Quest2Demo(Pipeline p)
+        // {
         //    //var host = "192.168.1.191";
         //    var host = "10.44.192.131";
         //    var remoteClock = new RemoteClockExporter(port: 11510);
 
-        //    //Light
+        // //Light
         //    Emitter<bool> lightEmitter = p.CreateEmitter<bool>(p, "lightEmitter");
         //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(1));
         //    bool alternate = false;
@@ -292,7 +276,7 @@ namespace TestingConsole
         //    TcpWriter<bool> tcpWiter = new TcpWriter<bool>(p, 11511, PsiFormatBoolean.GetFormat(), "Light");
         //    lightEmitter.PipeTo(tcpWiter);
 
-        //    bool canStart = false;
+        // bool canStart = false;
         //    var process = new Rendezvous.Process("Server", new[] { remoteClock.ToRendezvousEndpoint(host), tcpWiter.ToRendezvousEndpoint<bool>(host, "Light") });
         //    var server = new RendezvousServer();
         //    server.Rendezvous.TryAddProcess(process);
@@ -342,16 +326,16 @@ namespace TestingConsole
         //    server.Start();
         //    while (!canStart) Thread.Sleep(500);
         //    Thread.Sleep(500);
-        //}
+        // }
 
-        //static bool alternate = true;
-        //static void testKinectRemote(Pipeline p)
-        //{
+        // static bool alternate = true;
+        // static void testKinectRemote(Pipeline p)
+        // {
         //    RendezvousServer server = new RendezvousServer(11411);
         //    KinectAzureRemoteConnector receiver = new KinectAzureRemoteConnector(p);
         //    server.Rendezvous.ProcessAdded += receiver.GenerateProcess();
 
-        //    var emitter = p.CreateEmitter<KinectAzureRemoteStreamsConfiguration?>(p, "config");
+        // var emitter = p.CreateEmitter<KinectAzureRemoteStreamsConfiguration?>(p, "config");
         //    var timer = Timers.Timer(p, TimeSpan.FromSeconds(15));
         //    RemoteExporter exporter = new RemoteExporter(p, 11511, TransportKind.Tcp);
         //    KinectAzureRemoteStreamsConfiguration cfg = new KinectAzureRemoteStreamsConfiguration();
@@ -372,16 +356,16 @@ namespace TestingConsole
         //    Console.WriteLine("start");
         //    //var store = PsiStore.Create(p, "testKinectRemote", "D:\\Stores");
 
-        //}
+        // }
 
-        //private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
-        //{
+        // private static void OnNewProcess(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        // {
         //    RendezVousPipeline? parent = sender as RendezVousPipeline;
         //    if (parent == null)
         //        return;
         //    var sessionp = parent.GetSession("Unity.");
 
-        //    var newStreams = e.Item2[e.Item1];
+        // var newStreams = e.Item2[e.Item1];
         //    foreach (var stream in newStreams)
         //    {
         //        if (stream.Key == "Image")
@@ -398,15 +382,15 @@ namespace TestingConsole
         //            return;
         //        }
         //    }
-        //}
+        // }
 
-        //static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
-        //{
+        // static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        // {
         //    Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
-        //}
+        // }
 
-        //static void Main(string[] args)
-        //{
+        // static void Main(string[] args)
+        // {
         //    RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
         //    configuration.AutomaticPipelineRun = true;
         //    configuration.Debug = true;
@@ -415,24 +399,22 @@ namespace TestingConsole
         //    configuration.DatasetName = "RendezVousPipeline.pds";
         //    configuration.RendezVousHost = "127.0.0.1";
 
-        //    configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+        // configuration.AddTopicFormatAndTransformer("Cube", typeof(System.Numerics.Matrix4x4),new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
 
-        //    RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
+        // RendezVousPipeline pipeline = new RendezVousPipeline(configuration);
 
-        //    pipeline.Start();
+        // pipeline.Start();
 
-        //    // Waiting for an out key
+        // // Waiting for an out key
         //    Console.WriteLine("Press any key to stop the application.");
         //    Console.ReadLine();
         //    pipeline.Stop();
-        //}
+        // }
 
-   
-            // Copyright (c) Microsoft Corporation. All rights reserved.
-            // Licensed under the MIT license.
+        // Copyright (c) Microsoft Corporation. All rights reserved.
+        // Licensed under the MIT license.
 
-
-        internal class testrdv
+        internal class Testrdv
         {
             /// <summary>
             /// Default TCP port on which to listen for clients.
@@ -445,13 +427,13 @@ namespace TestingConsole
             internal const short ProtocolVersion = 2;
 
             private readonly int port;
-            private readonly ConcurrentDictionary<Guid, BinaryWriter> writers = new();
+            private readonly ConcurrentDictionary<Guid, BinaryWriter> writers = new ();
 
             private TcpListener listener;
             private bool active = false;
             private string serverAddress;
 
-            public testrdv(int port = DefaultPort)
+            public Testrdv(int port = DefaultPort)
             {
                 this.port = port;
             }
@@ -476,7 +458,6 @@ namespace TestingConsole
                     throw new Exception($"{nameof(RendezvousServer)} already started.");
                 }
 
-             
                 this.listener = new TcpListener(IPAddress.Any, this.port);
                 this.active = true;
                 new Thread(new ThreadStart(this.ListenForClients)) { IsBackground = true }.Start();
@@ -533,7 +514,6 @@ namespace TestingConsole
                         writer.Write(remoteAddress);
                         writer.Flush();
 
-
                         // set the server address to the address of the local endpoint from which the client was received
                         this.serverAddress = localAddress;
 
@@ -557,7 +537,6 @@ namespace TestingConsole
                 {
                     do
                     {
-                        
                     }
                     while (this.active && this.listener != null);
                 }
@@ -582,7 +561,7 @@ namespace TestingConsole
             }
         }
 
-        static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
             Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
         }
@@ -591,46 +570,46 @@ namespace TestingConsole
         {
             public void Report(double value)
             {
-               Console.WriteLine($"Progress @ {value}");
+                Console.WriteLine($"Progress @ {value}");
             }
         }
 
-        //static void PlumeSample()
-        //{
+        // static void PlumeSample()
+        // {
         //    DatasetPipelineConfiguration config = new DatasetPipelineConfiguration();
         //    config.AutomaticPipelineRun = false;
         //    config.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
         //    config.DatasetPath = @"E:\SAAC\Stores\";
         //    config.DatasetName = "SAAC.pds";
 
-        //    PlumeDatasetPipeline pipeline = new PlumeDatasetPipeline(config, "exampleParser");
+        // PlumeDatasetPipeline pipeline = new PlumeDatasetPipeline(config, "exampleParser");
         //    pipeline.LoadPlumeFile(@"E:\SAAC\record.plm", new Dictionary<string, Type>() { { "Main Camera", typeof(MathNet.Spatial.Euclidean.CoordinateSystem) } });
         //    pipeline.Dispose();
-        //}
-        static void Main(string[] args)
+        // }
+        private static void Main(string[] args)
         {
-            //testrdv test = new testrdv(13331);
-            //test.Start();
-            //Thread.Sleep(100);
-            //testOllama();
-
+            // testrdv test = new testrdv(13331);
+            // test.Start();
+            // Thread.Sleep(100);
+            // testOllama();
 
             RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
             configuration.AutomaticPipelineRun = true;
             configuration.Debug = false;
             configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
             configuration.DatasetName = "RendezVousPipeline.pds";
-            //configuration.RendezVousHost = "10.144.37.90";
+
+            // configuration.RendezVousHost = "10.144.37.90";
             configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             configuration.StoreMode = DatasetPipeline.StoreMode.Process;
             configuration.CommandDelegate = Program.CommandDel;
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
             RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
-            //rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
-            //List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
-            //SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
 
+            // rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
+            // List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
+            // SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
             rdvPipeline.Start();
 
             int i = 0;
@@ -640,29 +619,29 @@ namespace TestingConsole
                 Console.ReadLine();
                 rdvPipeline.AddProcess(new Rendezvous.Process($"test{i++}"));
             }
+
             // annot.Start((e) => { });
 
-
-            //Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
-            //websocketManager.OnNewWebSocketConnectedHandler += (s, e) => 
-            //{
+            // Microsoft.Psi.Interop.Transport.WebSocketsManager websocketManager = new Microsoft.Psi.Interop.Transport.WebSocketsManager(true, true, "https://localhost:8080/ws/");
+            // websocketManager.OnNewWebSocketConnectedHandler += (s, e) =>
+            // {
             //    Console.WriteLine($"New WebSocket connected: {e.Item1}:{e.Item2}");
             //    Emitter<string> emitter = pw.CreateEmitter<string>(pw, "emitter");
             //    WebSocketWriter<string>? writer = websocketManager.CreateWebsocketWriter<string>(pw, SAAC.PsiFormats.PsiFormatString.GetFormat(), e.Item1, e.Item2, "testw");
             //    emitter.PipeTo(writer);
             //    pw.RunAsync();
             //    emitter.Post("hello", pw.GetCurrentTime());
-            //};
-            //websocketManager.Start((e) => { });
-            //Console.ReadLine();
-            //return;
-            //Random rnd = new Random();
+            // };
+            // websocketManager.Start((e) => { });
+            // Console.ReadLine();
+            // return;
+            // Random rnd = new Random();
             //// create stream info and outlet
-            //StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
-            //StreamOutlet outlet = new StreamOutlet(info);
-            //float[] data = new float[8];
-            //Thread thread = new Thread(() =>
-            //{
+            // StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
+            // StreamOutlet outlet = new StreamOutlet(info);
+            // float[] data = new float[8];
+            // Thread thread = new Thread(() =>
+            // {
             //    Console.WriteLine("LSL Outlet started...");
             //    while (true)
             //    {
@@ -673,20 +652,20 @@ namespace TestingConsole
             //        outlet.push_sample(data);
             //        Console.WriteLine($"PTime : {DateTime.UtcNow}");
             //    }
-            //});
+            // });
 
-            //Pipeline p = Pipeline.Create();
-            //LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);
-            //manager.Start();
-            //Console.ReadLine();
-            //LabStreamLayerComponent<float>? TEST = manager.LabStreamComponents.First().Value as LabStreamLayerComponent<float>;
+            // Pipeline p = Pipeline.Create();
+            // LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);
+            // manager.Start();
+            // Console.ReadLine();
+            // LabStreamLayerComponent<float>? TEST = manager.LabStreamComponents.First().Value as LabStreamLayerComponent<float>;
 
-            //TEST?.Out.Do((m, e) => { Console.WriteLine($"Data @ {e.OriginatingTime}"); });
+            // TEST?.Out.Do((m, e) => { Console.WriteLine($"Data @ {e.OriginatingTime}"); });
 
-            //p.RunAsync();
-            //thread.Start();
-            //Console.ReadLine();
-            //return;
+            // p.RunAsync();
+            // thread.Start();
+            // Console.ReadLine();
+            // return;
             ////PlumeSample();
             ////return;
 
@@ -700,72 +679,68 @@ namespace TestingConsole
             ////ReplayPipeline replayPipeline = new ReplayPipeline(replayConfig);
             ////replayPipeline.LoadDatasetAndConnectors();
 
-            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            //configuration.AutomaticPipelineRun = true;
-            //configuration.Debug = false;
-            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            //configuration.DatasetName = "RendezVousPipeline.pds";
-            //configuration.RendezVousHost = "localhost";
-            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
-            //configuration.CommandPort = 0;
+            // RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            // configuration.AutomaticPipelineRun = true;
+            // configuration.Debug = false;
+            // configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            // configuration.DatasetName = "RendezVousPipeline.pds";
+            // configuration.RendezVousHost = "localhost";
+            // configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            // configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            // configuration.CommandPort = 0;
 
             // Topics to receive from Unity
             // do a all-in management of streams
 
-            //configuration.AddTopicFormatAndTransformer("Left", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            //configuration.AddTopicFormatAndTransformer("Right", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            //configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
-            //configuration.AddTopicFormatAndTransformer("Hand-Left", typeof(Hand), new PsiFormatHand());
-            //configuration.AddTopicFormatAndTransformer("Hand-Right", typeof(Hand), new PsiFormatHand());
-            //configuration.AddTopicFormatAndTransformer("EyeTracking", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector(), typeof(TupleOfVectorToRay));
-            //configuration.AddTopicFormatAndTransformer("GazeEvent", typeof(GazeEvent), new PsiFormatGazeEvent());
-            //configuration.AddTopicFormatAndTransformer("GrabEvent", typeof(GrabEvent), new PsiFormatGrabEvent());
+            // configuration.AddTopicFormatAndTransformer("Left", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            // configuration.AddTopicFormatAndTransformer("Right", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            // configuration.AddTopicFormatAndTransformer("Head", typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4(), typeof(MatrixToCoordinateSystem));
+            // configuration.AddTopicFormatAndTransformer("Hand-Left", typeof(Hand), new PsiFormatHand());
+            // configuration.AddTopicFormatAndTransformer("Hand-Right", typeof(Hand), new PsiFormatHand());
+            // configuration.AddTopicFormatAndTransformer("EyeTracking", typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector(), typeof(TupleOfVectorToRay));
+            // configuration.AddTopicFormatAndTransformer("GazeEvent", typeof(GazeEvent), new PsiFormatGazeEvent());
+            // configuration.AddTopicFormatAndTransformer("GrabEvent", typeof(GrabEvent), new PsiFormatGrabEvent());
 
             // Instantiate the class that manage the RendezVous system and the pipeline execution?
             // RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Server");
-            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Client", "localhost");
-            //TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo> wrt = new TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo>(rdvPipeline.Pipeline, 18888, Microsoft.Psi.PsiStudio.PsiFormatPsiStudioNetworkInfo.GetFormat());
-
+            // RendezVousPipeline rdvPipeline = new RendezVousPipeline(/*replayPipeline.Pipeline,*/ configuration, "Client", "localhost");
+            // TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo> wrt = new TcpWriter<Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo>(rdvPipeline.Pipeline, 18888, Microsoft.Psi.PsiStudio.PsiFormatPsiStudioNetworkInfo.GetFormat());
 
             // Register an action when receive the incoming connection from Unity
-            //rdvPipeline.AddNewProcessEvent(OnNewProcess);
+            // rdvPipeline.AddNewProcessEvent(OnNewProcess);
 
             // Start the rendezVous and the pipeline
-            //rdvPipeline.Start();
-            //rdvPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process("PsiStudioCommand", [wrt.ToRendezvousEndpoint("localhost","Command")]));
+            // rdvPipeline.Start();
+            // rdvPipeline.AddProcess(new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process("PsiStudioCommand", [wrt.ToRendezvousEndpoint("localhost","Command")]));
 
-            //Console.WriteLine("Press any key to send RUN command to Unity.");
-            //Console.ReadLine();
-            //rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
+            // Console.WriteLine("Press any key to send RUN command to Unity.");
+            // Console.ReadLine();
+            // rdvPipeline.SendCommand(RendezVousPipeline.Command.Run, "UnityB", "");
             ////replayPipeline.RunPipelineAndSubpipelines();
 
-            //Console.WriteLine("Press any key to send STOP command to Unity.");
-            //int count = 0;
-            //while (true)
-            //{
+            // Console.WriteLine("Press any key to send STOP command to Unity.");
+            // int count = 0;
+            // while (true)
+            // {
             //    Console.ReadLine();
 
-            //    wrt.Receive(new Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo(count++ % 2 > 0 ? Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing: Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, TimeInterval.Infinite, "test"), new Envelope());
-            //}
+            // wrt.Receive(new Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo(count++ % 2 > 0 ? Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Playing: Microsoft.Psi.PsiStudio.PsiStudioNetworkInfo.PsiStudioNetworkEvent.Stopping, TimeInterval.Infinite, "test"), new Envelope());
+            // }
 
-            //rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
+            // rdvPipeline.SendCommand(RendezVousPipeline.Command.Stop, "UnityB", "");
 
             // Waiting for an out key to Stop
 
-
-            //while (true)
-            //{
+            // while (true)
+            // {
             //    Console.WriteLine("Press any key to send status.");
             //    Console.ReadLine();
             //    rdvPipeline.SendCommand(RendezVousPipeline.Command.Status, "WhisperStreaming", "");
-            //}
-            //Console.WriteLine("Press any key to stop the application.");
-            //Console.ReadLine();
-            //rdvPipeline.Dispose();
-            //replayPipeline.Stop();
+            // }
+            // Console.WriteLine("Press any key to stop the application.");
+            // Console.ReadLine();
+            // rdvPipeline.Dispose();
+            // replayPipeline.Stop();
         }
-
-
     }
 }

@@ -1,14 +1,26 @@
-﻿using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Whisper
 {
+    using DocumentFormat.OpenXml;
+    using DocumentFormat.OpenXml.Packaging;
+    using DocumentFormat.OpenXml.Wordprocessing;
+
+    /// <summary>
+    /// Manages Whisper transcriptions and exports them to Word documents.
+    /// </summary>
     public class WhipserTranscriptionToWordManager : WhisperTranscriptionManager
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WhipserTranscriptionToWordManager"/> class.
+        /// </summary>
         public WhipserTranscriptionToWordManager()
-        { }
+        {
+        }
 
+        /// <inheritdoc/>
         public override void WriteTranscription(string file, bool cleanList = true)
         {
             WordprocessingDocument wordDocument = WordprocessingDocument.Create(file, WordprocessingDocumentType.Document);
@@ -16,7 +28,7 @@ namespace SAAC.Whisper
             mainPart.Document = new Document();
             Body body = new Body();
 
-            foreach (var entry in SortTranscriptions())
+            foreach (var entry in this.SortTranscriptions())
             {
                 // Create a run for the DateTime in italic
                 Run dateTimeRun = new Run(new Text(entry.Item1.ToString("HH:mm:ss")));
@@ -44,7 +56,9 @@ namespace SAAC.Whisper
             wordDocument.Save();
 
             if (cleanList)
-                Transcriptions.Clear();
+            {
+                this.Transcriptions.Clear();
+            }
         }
     }
 }

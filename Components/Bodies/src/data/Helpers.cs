@@ -1,32 +1,60 @@
-﻿using MathNet.Spatial.Euclidean;
-using MathNet.Numerics.LinearAlgebra;
-using System.IO;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies.Helpers
 {
+    using System.IO;
+    using MathNet.Numerics.LinearAlgebra;
+    using MathNet.Spatial.Euclidean;
+
     /// <summary>
-    /// Helpers class for bodies components, containing static methods used across components.
+    /// Helper class for bodies components, containing static utility methods.
     /// </summary>
     public class Helpers
     {
-        static public bool CheckConfidenceLevel(in Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>[] array, Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel minimumConfidenceLevel)
+        /// <summary>
+        /// Checks if all joints in an array meet the minimum confidence level.
+        /// </summary>
+        /// <param name="array">The array of joint data with confidence levels.</param>
+        /// <param name="minimumConfidenceLevel">The minimum required confidence level.</param>
+        /// <returns>True if all joints meet the minimum; otherwise false.</returns>
+        public static bool CheckConfidenceLevel(in Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>[] array, Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel minimumConfidenceLevel)
         {
             if (array.Select(j => j.Item1).Any(c => c <= minimumConfidenceLevel))
+            {
                 return false;
+            }
+
             return true;
         }
 
-        static public Vector3D NuitrackToMathNet(nuitrack.Vector3 vect)
+        /// <summary>
+        /// Converts a Nuitrack Vector3 to a MathNet Vector3D.
+        /// </summary>
+        /// <param name="vect">The Nuitrack vector.</param>
+        /// <returns>The MathNet vector.</returns>
+        public static Vector3D NuitrackToMathNet(nuitrack.Vector3 vect)
         {
             return new Vector3D(vect.X, vect.Y, vect.Z);
         }
 
-        static public Vector3D NumericToMathNet(System.Numerics.Vector3 vect)
+        /// <summary>
+        /// Converts a System.Numerics Vector3 to a MathNet Vector3D.
+        /// </summary>
+        /// <param name="vect">The System.Numerics vector.</param>
+        /// <returns>The MathNet vector.</returns>
+        public static Vector3D NumericToMathNet(System.Numerics.Vector3 vect)
         {
             return new Vector3D(vect.X, vect.Y, vect.Z);
         }
 
-        static public Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel FloatToConfidence(float confidence)
+        /// <summary>
+        /// Converts a float confidence value to a JointConfidenceLevel enum.
+        /// </summary>
+        /// <param name="confidence">The confidence value (0.0 to 1.0).</param>
+        /// <returns>The corresponding confidence level.</returns>
+        public static Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel FloatToConfidence(float confidence)
         {
             if (confidence == 0f)
                 return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.None;
@@ -37,7 +65,13 @@ namespace SAAC.Bodies.Helpers
             return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.High;
         }
 
-        static public Vector3D CalculateTransform(Vector3D origin, Matrix<double> transformationMatrix)
+        /// <summary>
+        /// Applies a transformation matrix to a 3D vector.
+        /// </summary>
+        /// <param name="origin">The origin vector to transform.</param>
+        /// <param name="transformationMatrix">The 4x4 transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector3D CalculateTransform(Vector3D origin, Matrix<double> transformationMatrix)
         {
             Vector<double> v4Origin = Vector<double>.Build.Dense(4);
             v4Origin[0] = origin.X;
@@ -48,12 +82,24 @@ namespace SAAC.Bodies.Helpers
             return new Vector3D(result[0], result[1], result[2]);
         }
 
-        static public void PushToList(Vector3D origin, Matrix<double> transformationMatrix, ref Tuple<List<double>, List<double>> list)
+        /// <summary>
+        /// Adds vector components to a list after applying a transformation.
+        /// </summary>
+        /// <param name="origin">The origin vector.</param>
+        /// <param name="transformationMatrix">The transformation matrix to apply.</param>
+        /// <param name="list">The tuple of lists to add the values to.</param>
+        public static void PushToList(Vector3D origin, Matrix<double> transformationMatrix, ref Tuple<List<double>, List<double>> list)
         {
             PushToList(origin, CalculateTransform(origin, transformationMatrix), ref list);
         }
 
-        static public void PushToList(Vector3D origin, Vector3D transformed, ref Tuple<List<double>, List<double>> list)
+        /// <summary>
+        /// Adds vector components from origin and transformed vectors to a list.
+        /// </summary>
+        /// <param name="origin">The origin vector.</param>
+        /// <param name="transformed">The transformed vector.</param>
+        /// <param name="list">The tuple of lists to add the values to.</param>
+        public static void PushToList(Vector3D origin, Vector3D transformed, ref Tuple<List<double>, List<double>> list)
         {
             var ov = origin.ToVector();
             var tv = transformed.ToVector();
@@ -64,21 +110,30 @@ namespace SAAC.Bodies.Helpers
             }
         }
 
-        static public double CalculateRMSE(ref Tuple<List<double>, List<double>> list)
+        /// <summary>
+        /// Calculates the Root Mean Square Error (RMSE) between two lists of values.
+        /// </summary>
+        /// <param name="list">The tuple containing the two lists to compare.</param>
+        /// <returns>The calculated RMSE value.</returns>
+        public static double CalculateRMSE(ref Tuple<List<double>, List<double>> list)
         {
-            //From https://github.com/mathnet/mathnet-numerics/issues/673
             var offsetAndSlope = MathNet.Numerics.LinearRegression.SimpleRegression.Fit(list.Item1.ToArray(), list.Item2.ToArray());
             var offset = offsetAndSlope.Item1;
             var slope = offsetAndSlope.Item2;
 
-            var yBest = list.Item1.Select(p => offset + p * slope).ToArray(); // Best fitted y values
+            var yBest = list.Item1.Select(p => offset + (p * slope)).ToArray();
 
             var RSS = MathNet.Numerics.Distance.SSD(list.Item2.ToArray(), yBest);
             var degreeOfFreedom = list.Item1.Count - 2;
             return Math.Sqrt(RSS / degreeOfFreedom);
         }
 
-        static public void StoreCalibrationMatrix(string filepath, Matrix<double> matrix)
+        /// <summary>
+        /// Stores a calibration matrix to a file.
+        /// </summary>
+        /// <param name="filepath">The file path where to store the matrix.</param>
+        /// <param name="matrix">The matrix to store.</param>
+        public static void StoreCalibrationMatrix(string filepath, Matrix<double> matrix)
         {
             if (filepath.Length > 4)
                 File.WriteAllText(filepath, matrix.ToMatrixString());

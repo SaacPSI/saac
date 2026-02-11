@@ -1,27 +1,58 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.AzureKinect;
-using Microsoft.Psi.Remoting;
-using Microsoft.Psi.Audio;
-using Microsoft.Psi.Imaging;
-using Microsoft.Psi.Interop.Rendezvous;
-using Microsoft.Azure.Kinect.Sensor;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.RemoteConnectors
 {
+    using Microsoft.Azure.Kinect.Sensor;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Audio;
+    using Microsoft.Psi.AzureKinect;
+    using Microsoft.Psi.Imaging;
+    using Microsoft.Psi.Interop.Rendezvous;
+    using Microsoft.Psi.Remoting;
+
     /// <summary>
-    /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connect and sort the streams with the application.
+    /// Component to be used in parallel with KinectAzureRemoteApp, it automatically connects and sorts the streams with the application.
     /// See KinectAzureRemoteConnectorConfiguration class for details.
     /// </summary>
     public class KinectAzureRemoteConnector
     {
         /// <summary>
+        /// Parent pipeline that the component is part of, used for creating emitters and managing component lifecycle.
+        /// </summary>
+        protected Pipeline pipeline;
+
+        private readonly LogStatus logStatus;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KinectAzureRemoteConnector"/> class.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">Optional configuration for the connector.</param>
+        /// <param name="name">The name of the component.</param>
+        /// <param name="log">Optional logging delegate.</param>
+        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector), LogStatus? log = null)
+        {
+            this.pipeline = parent;
+            this.logStatus = log ?? ((logMessage) => { Console.WriteLine(logMessage); });
+            this.Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
+            this.OutColorImage = null;
+            this.OutDepthImage = null;
+            this.OutBodies = null;
+            this.OutDepthDeviceCalibrationInfo = null;
+            this.OutAudio = null;
+            this.OutIMU = null;
+            this.OutInfraredImage = null;
+        }
+
+        /// <summary>
         /// Gets the emitter of color image.
         /// </summary>
         public Emitter<Shared<EncodedImage>>? OutColorImage { get; private set; }
 
-
         /// <summary>
-        /// Gets the emitter of color image.
+        /// Gets the emitter of infrared image.
         /// </summary>
         public Emitter<Shared<EncodedImage>>? OutInfraredImage { get; private set; }
 
@@ -50,91 +81,98 @@ namespace SAAC.RemoteConnectors
         /// </summary>
         public Emitter<ImuSample>? OutIMU { get; private set; }
 
+        /// <summary>
+        /// Gets the configuration for the connector.
+        /// </summary>
         public KinectAzureRemoteConnectorConfiguration Configuration { get; private set; }
 
-        protected Pipeline pipeline;
-        protected SAAC.LogStatus logStatus;
-
-        public KinectAzureRemoteConnector(Pipeline parent, KinectAzureRemoteConnectorConfiguration? configuration = null, string name = nameof(KinectAzureRemoteConnector), LogStatus? log = null)
-        {
-            pipeline = parent;
-            logStatus = log ?? ((log) => { Console.WriteLine(log); });
-            Configuration = configuration ?? new KinectAzureRemoteConnectorConfiguration();
-            OutColorImage = null;
-            OutDepthImage = null;
-            OutBodies = null;
-            OutDepthDeviceCalibrationInfo = null;
-            OutAudio = null;
-            OutIMU = null;
-            OutInfraredImage = null;
-        }
-
+        /// <summary>
+        /// Establishes a connection to a remote stream.
+        /// </summary>
+        /// <typeparam name="T">The type of data in the stream.</typeparam>
+        /// <param name="name">The name of the stream.</param>
+        /// <param name="remoteImporter">The remote importer for the stream.</param>
+        /// <returns>The emitter for the connected stream, or null if connection failed.</returns>
         protected virtual Emitter<T>? Connection<T>(string name, RemoteImporter remoteImporter)
         {
             if (remoteImporter.Connected.WaitOne() == false)
             {
-                logStatus(Configuration.RendezVousApplicationName + " failed to connect stream " + name);
+                this.logStatus(this.Configuration.RendezVousApplicationName + " failed to connect stream " + name);
                 return null;
             }
-            logStatus(Configuration.RendezVousApplicationName + " stream " + name + " connected.");
+
+            this.logStatus(this.Configuration.RendezVousApplicationName + " stream " + name + " connected.");
             var stream = remoteImporter.Importer.OpenStream<T>(name).Out;
-            if (Configuration.Debug)
-                stream.Do((m, e) => { logStatus($"Message recieved on {name} @{e.OriginatingTime} : {m}"); });
+            if (this.Configuration.Debug)
+            {
+                stream.Do((m, e) => { this.logStatus($"Message received on {name} @{e.OriginatingTime} : {m}"); });
+            }
+
             return stream;
         }
 
+        /// <summary>
+        /// Generates an event handler for processing rendezvous processes.
+        /// </summary>
+        /// <returns>An event handler for rendezvous process events.</returns>
         public EventHandler<Rendezvous.Process> GenerateProcess()
         {
             return (_, p) =>
             {
-                Process(p);
+                this.Process(p);
             };
         }
 
+        /// <summary>
+        /// Processes a rendezvous process event, connecting to available streams.
+        /// </summary>
+        /// <param name="p">The rendezvous process to handle.</param>
         protected virtual void Process(Rendezvous.Process p)
         {
-            if (p.Name == Configuration.RendezVousApplicationName)
+            if (p.Name == this.Configuration.RendezVousApplicationName)
             {
                 foreach (var endpoint in p.Endpoints)
                 {
                     if (endpoint is Rendezvous.RemoteExporterEndpoint remoteExporterEndpoint)
                     {
-                        var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(pipeline);
+                        var remoteImporter = remoteExporterEndpoint.ToRemoteImporter(this.pipeline);
                         foreach (var stream in remoteExporterEndpoint.Streams)
                         {
                             if (stream.StreamName.Contains("Audio"))
                             {
-                                OutAudio = Connection<AudioBuffer>(stream.StreamName, remoteImporter);
+                                this.OutAudio = this.Connection<AudioBuffer>(stream.StreamName, remoteImporter);
                                 break;
                             }
+
                             if (stream.StreamName.Contains("Bodies"))
                             {
-                                OutBodies = Connection<List<AzureKinectBody>>(stream.StreamName, remoteImporter);
+                                this.OutBodies = this.Connection<List<AzureKinectBody>>(stream.StreamName, remoteImporter);
                                 break;
                             }
+
                             if (stream.StreamName.Contains("Calibration"))
                             {
-                                OutDepthDeviceCalibrationInfo = Connection<Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo>(stream.StreamName, remoteImporter);
+                                this.OutDepthDeviceCalibrationInfo = this.Connection<Microsoft.Psi.Calibration.IDepthDeviceCalibrationInfo>(stream.StreamName, remoteImporter);
                                 break;
                             }
                             else if (stream.StreamName.Contains("RGB"))
                             {
-                                OutColorImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
+                                this.OutColorImage = this.Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
                                 break;
                             }
                             else if (stream.StreamName.Contains("Infrared"))
                             {
-                                OutInfraredImage = Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
+                                this.OutInfraredImage = this.Connection<Shared<EncodedImage>>(stream.StreamName, remoteImporter);
                                 break;
                             }
                             else if (stream.StreamName.Contains("Depth"))
                             {
-                                OutDepthImage = Connection<Shared<EncodedDepthImage>>(stream.StreamName, remoteImporter);
+                                this.OutDepthImage = this.Connection<Shared<EncodedDepthImage>>(stream.StreamName, remoteImporter);
                                 break;
                             }
                             else if (stream.StreamName.Contains("IMU"))
                             {
-                                OutIMU = Connection<ImuSample>(stream.StreamName, remoteImporter);
+                                this.OutIMU = this.Connection<ImuSample>(stream.StreamName, remoteImporter);
                                 break;
                             }
                         }

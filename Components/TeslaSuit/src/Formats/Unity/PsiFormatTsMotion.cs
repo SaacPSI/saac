@@ -1,16 +1,32 @@
-using Microsoft.Psi.Interop.Serialization;
-using System.IO;
-using TsAPI.Types;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.PsiFormats
 {
+    using System.IO;
+    using Microsoft.Psi.Interop.Serialization;
+    using TsAPI.Types;
+
+    /// <summary>
+    /// Provides Psi format serialization for TeslaSuit motion data.
+    /// </summary>
     public class PsiFormatTsMotion
     {
+        /// <summary>
+        /// Gets the format configuration for TeslaSuit motion data.
+        /// </summary>
+        /// <returns>The format configuration.</returns>
         public static Format<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>> GetFormat()
         {
             return new Format<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>>(WriteTsMotion, ReadTsMotion);
         }
 
+        /// <summary>
+        /// Writes TeslaSuit motion data to a binary writer.
+        /// </summary>
+        /// <param name="data">The motion data dictionary to write.</param>
+        /// <param name="writer">The binary writer.</param>
         public static void WriteTsMotion(Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4> data, BinaryWriter writer)
         {
             writer.Write(data.Count);
@@ -36,6 +52,11 @@ namespace SAAC.PsiFormats
             }
         }
 
+        /// <summary>
+        /// Reads TeslaSuit motion data from a binary reader.
+        /// </summary>
+        /// <param name="reader">The binary reader.</param>
+        /// <returns>The dictionary of motion data.</returns>
         public static Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4> ReadTsMotion(BinaryReader reader)
         {
             Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4> data = new Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>();
@@ -43,7 +64,7 @@ namespace SAAC.PsiFormats
             for (int i = 0; i < count; i++)
             {
                 TsHumanBoneIndex index = (TsHumanBoneIndex)reader.ReadInt32();
-                System.Numerics.Matrix4x4 matrix = new System.Numerics.Matrix4x4();
+                System.Numerics.Matrix4x4 matrix = default(System.Numerics.Matrix4x4);
                 matrix.M11 = reader.ReadSingle();
                 matrix.M12 = reader.ReadSingle();
                 matrix.M13 = reader.ReadSingle();
@@ -62,6 +83,7 @@ namespace SAAC.PsiFormats
                 matrix.M44 = reader.ReadSingle();
                 data.Add(index, matrix);
             }
+
             return data;
         }
     }

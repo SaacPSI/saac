@@ -1,37 +1,35 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.AzureKinect;
-using MathNet.Spatial.Euclidean;
-using nuitrack;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Psi;
+    using Microsoft.Psi.AzureKinect;
+    using nuitrack;
+
+    /// <summary>
+    /// Component that converts body tracking data from different sources (Nuitrack or Azure Kinect) into a unified SimplifiedBody format.
+    /// </summary>
     public class BodiesConverter : IProducer<List<SimplifiedBody>>
     {
-        /// <summary>
-        /// Gets the emitter of bodies converted.
-        /// </summary>
-        public Emitter<List<SimplifiedBody>> Out { get; private set; }
+        private readonly Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> nuiToAzure;
+        private readonly string name;
 
         /// <summary>
-        /// Gets the nuitrack receiver of lists of currently tracked bodies.
+        /// Initializes a new instance of the <see cref="BodiesConverter"/> class.
         /// </summary>
-        public Receiver<List<Skeleton>> InBodiesNuitrack;
-
-        /// <summary>
-        /// Gets the azure reciever of lists of currently tracked bodies.
-        /// </summary>
-        public Receiver<List<AzureKinectBody>> InBodiesAzure;
-
-        private Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> nuiToAzure;
-        private string name;
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="name">The name of the component.</param>
         public BodiesConverter(Pipeline parent, string name = nameof(BodiesConverter))
         {
             this.name = name;
-            InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(this, Process, $"{name}-InBodiesNuitrack");
-            InBodiesAzure= parent.CreateReceiver<List<AzureKinectBody>>(this, Process, $"{name}-InBodiesAzure");
-            Out = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-Out");
-            nuiToAzure = new Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId> {
+            this.InBodiesNuitrack = parent.CreateReceiver<List<Skeleton>>(this, this.Process, $"{name}-InBodiesNuitrack");
+            this.InBodiesAzure = parent.CreateReceiver<List<AzureKinectBody>>(this, this.Process, $"{name}-InBodiesAzure");
+            this.Out = parent.CreateEmitter<List<SimplifiedBody>>(this, $"{name}-Out");
+            this.nuiToAzure = new Dictionary<JointType, Microsoft.Azure.Kinect.BodyTracking.JointId>
+            {
                 { JointType.Head, Microsoft.Azure.Kinect.BodyTracking.JointId.Head },
                 { JointType.Neck, Microsoft.Azure.Kinect.BodyTracking.JointId.Neck },
                 { JointType.Torso, Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest },
@@ -55,12 +53,33 @@ namespace SAAC.Bodies
                 { JointType.RightHip, Microsoft.Azure.Kinect.BodyTracking.JointId.HipRight },
                 { JointType.RightKnee, Microsoft.Azure.Kinect.BodyTracking.JointId.KneeRight },
                 { JointType.RightAnkle, Microsoft.Azure.Kinect.BodyTracking.JointId.AnkleRight },
-                { JointType.RightFoot, Microsoft.Azure.Kinect.BodyTracking.JointId.FootRight }};
+                { JointType.RightFoot, Microsoft.Azure.Kinect.BodyTracking.JointId.FootRight }
+            };
         }
+
+        /// <summary>
+        /// Gets the emitter of converted bodies.
+        /// </summary>
+        public Emitter<List<SimplifiedBody>> Out { get; private set; }
+
+        /// <summary>
+        /// Gets the Nuitrack receiver for lists of currently tracked bodies.
+        /// </summary>
+        public Receiver<List<Skeleton>> InBodiesNuitrack { get; private set; }
+
+        /// <summary>
+        /// Gets the Azure Kinect receiver for lists of currently tracked bodies.
+        /// </summary>
+        public Receiver<List<AzureKinectBody>> InBodiesAzure { get; private set; }
 
         /// <inheritdoc/>
         public override string ToString() => this.name;
 
+        /// <summary>
+        /// Processes Nuitrack skeleton data and converts it to simplified bodies.
+        /// </summary>
+        /// <param name="bodies">The list of Nuitrack skeletons.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(List<Skeleton> bodies, Envelope envelope)
         {
             List<SimplifiedBody> returnedBodies = new List<SimplifiedBody>();
@@ -68,15 +87,29 @@ namespace SAAC.Bodies
             {
                 SimplifiedBody body = new SimplifiedBody(SimplifiedBody.SensorOrigin.Azure, (uint)skeleton.ID);
                 foreach (var joint in skeleton.Joints)
-                    if (nuiToAzure.ContainsKey(joint.Type))
-                        body.Joints.Add(nuiToAzure[joint.Type], new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
-                            (Helpers.Helpers.FloatToConfidence(joint.Confidence), Helpers.Helpers.NuitrackToMathNet(joint.Real)));
-                CompleteBody(ref body);
+                {
+                    if (this.nuiToAzure.ContainsKey(joint.Type))
+                    {
+                        body.Joints.Add(
+                            this.nuiToAzure[joint.Type],
+                            new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(
+                                Helpers.Helpers.FloatToConfidence(joint.Confidence),
+                                Helpers.Helpers.NuitrackToMathNet(joint.Real)));
+                    }
+                }
+
+                this.CompleteBody(ref body);
                 returnedBodies.Add(body);
             }
-            Out.Post(returnedBodies, envelope.OriginatingTime);
+
+            this.Out.Post(returnedBodies, envelope.OriginatingTime);
         }
 
+        /// <summary>
+        /// Completes a body by adding missing joints based on existing joints.
+        /// Creates fake positions for joints not provided by Nuitrack.
+        /// </summary>
+        /// <param name="body">The body to complete.</param>
         private void CompleteBody(ref SimplifiedBody body)
         {
             Vector3D fakePosition = (body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest].Item2 + body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Pelvis].Item2) / 2.0;
@@ -91,6 +124,11 @@ namespace SAAC.Bodies
             body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.EarLeft] = body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Head];
         }
 
+        /// <summary>
+        /// Processes Azure Kinect body data and converts it to simplified bodies.
+        /// </summary>
+        /// <param name="bodies">The list of Azure Kinect bodies.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(List<AzureKinectBody> bodies, Envelope envelope)
         {
             List<SimplifiedBody> returnedBodies = new List<SimplifiedBody>();
@@ -98,11 +136,14 @@ namespace SAAC.Bodies
             {
                 SimplifiedBody body = new SimplifiedBody(SimplifiedBody.SensorOrigin.Azure, skeleton.TrackingId);
                 foreach (var joint in skeleton.Joints)
-                    body.Joints.Add(joint.Key, new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
-                        (joint.Value.Confidence, joint.Value.Pose.Origin.ToVector3D()));
+                {
+                    body.Joints.Add(joint.Key, new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(joint.Value.Confidence, joint.Value.Pose.Origin.ToVector3D()));
+                }
+
                 returnedBodies.Add(body);
             }
-            Out.Post(returnedBodies, envelope.OriginatingTime);
+
+            this.Out.Post(returnedBodies, envelope.OriginatingTime);
         }
     }
 }

@@ -1,470 +1,629 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.Data;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
 using System.ComponentModel;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Net;
-using System.IO;
+using System.Windows.Controls;
+using Microsoft.Psi;
+using Microsoft.Psi.Data;
+using Microsoft.Psi.Imaging;
+using Microsoft.Psi.Interop.Rendezvous;
+using Microsoft.Psi.Media;
+using Microsoft.Psi.Media_Interop;
 using Microsoft.Win32;
 using SAAC;
-using SAAC.RemoteConnectors;
 using SAAC.PipelineServices;
-using System.Windows.Controls;
-using Microsoft.Psi.Media;
-using Microsoft.Psi.Interop.Rendezvous;
-using Microsoft.Psi.Imaging;
-using Microsoft.Psi.Components;
-using Microsoft.Psi.Media_Interop;
-using MathNet.Numerics.Statistics;
+using SAAC.RemoteConnectors;
 
 namespace CameraRemoteApp
 {
-
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Main window for the Camera Remote Application that manages camera and sensor streaming.
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-
         #region INotifyPropertyChanged
+
+        /// <summary>
+        /// Event raised when a property value changes.
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
+
         private List<string> notTriggerProperties;
+
+        /// <summary>
+        /// Sets a property value and raises the PropertyChanged event if the value has changed.
+        /// </summary>
+        /// <typeparam name="T">The type of the property.</typeparam>
+        /// <param name="field">Reference to the backing field.</param>
+        /// <param name="value">The new value.</param>
+        /// <param name="propertyName">The name of the property (automatically provided by CallerMemberName).</param>
         private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             {
-                if (propertyName != null && !notTriggerProperties.Contains(propertyName))
+                if (propertyName != null && !this.notTriggerProperties.Contains(propertyName))
                 {
-                    BtnLoadConfig?.IsEnabled = true;
-                    BtnSaveConfig?.IsEnabled = true;
+                    this.BtnLoadConfig.IsEnabled = true;
+                    this.BtnSaveConfig.IsEnabled = true;
                 }
+
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
+
         #endregion
 
         private KinectRemoteStreamsComponentConfiguration kinectConfiguration = new KinectRemoteStreamsComponentConfiguration();
         private KinectAzureRemoteStreamsConfiguration azureConfiguration = new KinectAzureRemoteStreamsConfiguration();
         private NuitrackRemoteStreamsConfiguration nuitrackConfiguration = new NuitrackRemoteStreamsConfiguration();
         private RendezVousPipelineConfiguration pipelineConfiguration = new RendezVousPipelineConfiguration();
-
-        // General Tab
         private string state = "Not Initialised";
-        public string State
-        {
-            get => state;
-            set => SetProperty(ref state, value);
-        }
-
         private bool isRemoteServer = true;
-        public bool IsRemoteServer
-        {
-            get => isRemoteServer;
-            set => SetProperty(ref isRemoteServer, value);
-        }
-
         private bool isStreaming = true;
-        public bool IsStreaming
-        {
-            get => isStreaming;
-            set => SetProperty(ref isStreaming, value);
-        }
-
         private bool isLocalRecording = true;
-        public bool IsLocalRecording
-        {
-            get => isLocalRecording;
-            set => SetProperty(ref isLocalRecording, value);
-        }
-
-        // Network Tab
-        public List<string> IPsList { get; set; }
-
         private string rendezVousServerIp = "localhost";
-        public string RendezVousServerIp
-        {
-            get => rendezVousServerIp;
-            set => SetProperty(ref rendezVousServerIp, value);
-        }
-
-
-        public RendezVousPipelineConfiguration PipelineConfigurationUI
-        {
-            get => pipelineConfiguration;
-            set => SetProperty(ref pipelineConfiguration, value);
-        }
-
         private int exportPort;
-        public int ExportPort
-        {
-            get => exportPort;
-            set => SetProperty(ref exportPort, value);
-        }
-
         private string rendezVousApplicationName;
-        public string RendezVousApplicationNameUI
-        {
-            get => rendezVousApplicationName;
-            set => SetProperty(ref rendezVousApplicationName, value);
-        }
-
         private string ipSelected;
-        public string IpSelectedUI
-        {
-            get => ipSelected;
-            set => SetProperty(ref ipSelected, value);
-        }
-
         private string commandSource = "Server";
-        public string CommandSource
-        {
-            get => commandSource;
-            set => SetProperty(ref commandSource, value);
-        }
-
         private int commandPort;
-        public int CommandPort
-        {
-            get => commandPort;
-            set => SetProperty(ref commandPort, value);
-        }
-
-        // VideoSources Tab
-
-        public KinectRemoteStreamsComponentConfiguration KinectRemoteStreamsConfigurationUI
-        {
-            get => kinectConfiguration;
-            set => SetProperty(ref kinectConfiguration, value);
-        }
-        public KinectAzureRemoteStreamsConfiguration KinectAzureRemoteStreamsConfigurationUI
-        {
-            get => azureConfiguration;
-            set => SetProperty(ref azureConfiguration, value);
-        }
-
-        public NuitrackRemoteStreamsConfiguration NuitrackRemoteStreamsConfigurationUI
-        {
-            get => nuitrackConfiguration;
-            set => SetProperty(ref nuitrackConfiguration, value);
-        }
-
         private int encodingLevel = 90;
-
-        public int EncodingLevel
-        {
-            get => encodingLevel;
-            set => SetProperty(ref encodingLevel, value);
-        }
-        public enum ESensorType { Camera, Kinect, AzureKinect, Nuitrack }
-
         private ESensorType sensorType;
-
-        public List<ESensorType> SensorTypeList { get; }
-        public List<string> VideoSourceList { get; set; }
-
-        public List<string> CameraCaptureFormat { get; private set; }
-        public List<Microsoft.Azure.Kinect.Sensor.ColorResolution> ResolutionsList { get; }
-        public List<Microsoft.Azure.Kinect.Sensor.FPS> FPSList { get; }
-
-        // LocalRecording Tab
-
-        private string localSessionName = "";
-        public string LocalSessionName
-        {
-            get => localSessionName;
-            set => SetProperty(ref localSessionName, value);
-        }
-        public string LocalDatasetPath
-        {
-            get => PipelineConfigurationUI.DatasetPath;
-            set => SetProperty(ref PipelineConfigurationUI.DatasetPath, value);
-        }
-
-        public string LocalDatasetName
-        {
-            get => PipelineConfigurationUI.DatasetName;
-            set => SetProperty(ref PipelineConfigurationUI.DatasetName, value);
-        }
-
-        // Log Tab
-        private string log = "";
-        public string Log
-        {
-            get => log;
-            set => SetProperty(ref log, value);
-        }
-        public void DelegateMethod(string logs)
-        {
-            Log = logs;
-        }
-
-        // varialbles
-        ///ToDo add more resolution definition
-        private enum SetupState
-        {
-            NotInitialised,
-            PipelineInitialised,
-            CameraInitialised
-        };
+        private string localSessionName = string.Empty;
+        private string log = string.Empty;
         private DatasetPipeline? datasetPipeline;
         private SetupState setupState;
         private LogStatus internalLog;
         private List<CaptureFormat> cameraFormats;
 
+        /// <summary>
+        /// Gets or sets the current application state.
+        /// </summary>
+        public string State
+        {
+            get => this.state;
+            set => this.SetProperty(ref this.state, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the application is acting as a remote server.
+        /// </summary>
+        public bool IsRemoteServer
+        {
+            get => this.isRemoteServer;
+            set => this.SetProperty(ref this.isRemoteServer, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether streaming is enabled.
+        /// </summary>
+        public bool IsStreaming
+        {
+            get => this.isStreaming;
+            set => this.SetProperty(ref this.isStreaming, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether local recording is enabled.
+        /// </summary>
+        public bool IsLocalRecording
+        {
+            get => this.isLocalRecording;
+            set => this.SetProperty(ref this.isLocalRecording, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the list of available IP addresses.
+        /// </summary>
+        public List<string> IPsList { get; set; }
+
+        /// <summary>
+        /// Gets or sets the RendezVous server IP address.
+        /// </summary>
+        public string RendezVousServerIp
+        {
+            get => this.rendezVousServerIp;
+            set => this.SetProperty(ref this.rendezVousServerIp, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the pipeline configuration.
+        /// </summary>
+        public RendezVousPipelineConfiguration PipelineConfigurationUI
+        {
+            get => this.pipelineConfiguration;
+            set => this.SetProperty(ref this.pipelineConfiguration, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the export port for streaming.
+        /// </summary>
+        public int ExportPort
+        {
+            get => this.exportPort;
+            set => this.SetProperty(ref this.exportPort, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the RendezVous application name.
+        /// </summary>
+        public string RendezVousApplicationNameUI
+        {
+            get => this.rendezVousApplicationName;
+            set => this.SetProperty(ref this.rendezVousApplicationName, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the selected IP address.
+        /// </summary>
+        public string IpSelectedUI
+        {
+            get => this.ipSelected;
+            set => this.SetProperty(ref this.ipSelected, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the command source identifier.
+        /// </summary>
+        public string CommandSource
+        {
+            get => this.commandSource;
+            set => this.SetProperty(ref this.commandSource, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the command port.
+        /// </summary>
+        public int CommandPort
+        {
+            get => this.commandPort;
+            set => this.SetProperty(ref this.commandPort, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the Kinect remote streams configuration.
+        /// </summary>
+        public KinectRemoteStreamsComponentConfiguration KinectRemoteStreamsConfigurationUI
+        {
+            get => this.kinectConfiguration;
+            set => this.SetProperty(ref this.kinectConfiguration, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the Azure Kinect remote streams configuration.
+        /// </summary>
+        public KinectAzureRemoteStreamsConfiguration KinectAzureRemoteStreamsConfigurationUI
+        {
+            get => this.azureConfiguration;
+            set => this.SetProperty(ref this.azureConfiguration, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the Nuitrack remote streams configuration.
+        /// </summary>
+        public NuitrackRemoteStreamsConfiguration NuitrackRemoteStreamsConfigurationUI
+        {
+            get => this.nuitrackConfiguration;
+            set => this.SetProperty(ref this.nuitrackConfiguration, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the encoding quality level.
+        /// </summary>
+        public int EncodingLevel
+        {
+            get => this.encodingLevel;
+            set => this.SetProperty(ref this.encodingLevel, value);
+        }
+
+        /// <summary>
+        /// Represents the available sensor types.
+        /// </summary>
+        public enum ESensorType
+        {
+            /// <summary>Standard camera.</summary>
+            Camera,
+
+            /// <summary>Microsoft Kinect sensor.</summary>
+            Kinect,
+
+            /// <summary>Azure Kinect sensor.</summary>
+            AzureKinect,
+
+            /// <summary>Nuitrack sensor.</summary>
+            Nuitrack,
+        }
+
+        /// <summary>
+        /// Gets the list of available sensor types.
+        /// </summary>
+        public List<ESensorType> SensorTypeList { get; }
+
+        /// <summary>
+        /// Gets or sets the list of available video sources.
+        /// </summary>
+        public List<string> VideoSourceList { get; set; }
+
+        /// <summary>
+        /// Gets the list of camera capture formats.
+        /// </summary>
+        public List<string> CameraCaptureFormat { get; private set; }
+
+        /// <summary>
+        /// Gets the list of available Azure Kinect color resolutions.
+        /// </summary>
+        public List<Microsoft.Azure.Kinect.Sensor.ColorResolution> ResolutionsList { get; }
+
+        /// <summary>
+        /// Gets the list of available Azure Kinect FPS settings.
+        /// </summary>
+        public List<Microsoft.Azure.Kinect.Sensor.FPS> FPSList { get; }
+
+        /// <summary>
+        /// Gets or sets the local session name for recording.
+        /// </summary>
+        public string LocalSessionName
+        {
+            get => this.localSessionName;
+            set => this.SetProperty(ref this.localSessionName, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the local dataset path.
+        /// </summary>
+        public string LocalDatasetPath
+        {
+            get => this.PipelineConfigurationUI.DatasetPath;
+            set => this.SetProperty(ref this.PipelineConfigurationUI.DatasetPath, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the local dataset name.
+        /// </summary>
+        public string LocalDatasetName
+        {
+            get => this.PipelineConfigurationUI.DatasetName;
+            set => this.SetProperty(ref this.PipelineConfigurationUI.DatasetName, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the log text displayed in the UI.
+        /// </summary>
+        public string Log
+        {
+            get => this.log;
+            set => this.SetProperty(ref this.log, value);
+        }
+
+        /// <summary>
+        /// Delegate method for adding log entries.
+        /// </summary>
+        /// <param name="logs">The log message to add.</param>
+        public void DelegateMethod(string logs)
+        {
+            this.Log = logs;
+        }
+
+        /// <summary>
+        /// Represents the initialization state of the application.
+        /// </summary>
+        private enum SetupState
+        {
+            /// <summary>Application has not been initialized.</summary>
+            NotInitialised,
+
+            /// <summary>Pipeline has been initialized.</summary>
+            PipelineInitialised,
+
+            /// <summary>Camera/sensor has been initialized.</summary>
+            CameraInitialised,
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// </summary>
         public MainWindow()
         {
-            notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
-            internalLog = (log) =>
+            this.notTriggerProperties = new List<string> { "Log", "State", "AudioSourceDatasetPath", "AudioSourceSessionName" };
+            this.internalLog = (log) =>
             {
                 Application.Current?.Dispatcher?.Invoke(new Action(() =>
                 {
-                    Log += $"{log}\n";
+                    this.Log += $"{log}\n";
                 }));
             };
 
-            DataContext = this;
-            pipelineConfiguration.ClockPort = pipelineConfiguration.CommandPort = 0;
-            pipelineConfiguration.AutomaticPipelineRun = true;
-            pipelineConfiguration.RecordIncomingProcess = false;
-            SensorTypeList = new List<ESensorType>(Enum.GetValues(typeof(ESensorType)).Cast<ESensorType>());
-            VideoSourceList = Microsoft.Psi.Media.MediaCapture.GetAvailableCameras();
-            ResolutionsList = new List<Microsoft.Azure.Kinect.Sensor.ColorResolution>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.ColorResolution)).Cast<Microsoft.Azure.Kinect.Sensor.ColorResolution>());
-            FPSList = new List<Microsoft.Azure.Kinect.Sensor.FPS>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.FPS)).Cast<Microsoft.Azure.Kinect.Sensor.FPS>());
-            CameraCaptureFormat = new List<string>();
-            cameraFormats = new List<CaptureFormat>();
+            this.DataContext = this;
+            this.pipelineConfiguration.ClockPort = this.pipelineConfiguration.CommandPort = 0;
+            this.pipelineConfiguration.AutomaticPipelineRun = true;
+            this.pipelineConfiguration.RecordIncomingProcess = false;
+            this.SensorTypeList = new List<ESensorType>(Enum.GetValues(typeof(ESensorType)).Cast<ESensorType>());
+            this.VideoSourceList = Microsoft.Psi.Media.MediaCapture.GetAvailableCameras();
+            this.ResolutionsList = new List<Microsoft.Azure.Kinect.Sensor.ColorResolution>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.ColorResolution)).Cast<Microsoft.Azure.Kinect.Sensor.ColorResolution>());
+            this.FPSList = new List<Microsoft.Azure.Kinect.Sensor.FPS>(Enum.GetValues(typeof(Microsoft.Azure.Kinect.Sensor.FPS)).Cast<Microsoft.Azure.Kinect.Sensor.FPS>());
+            this.CameraCaptureFormat = new List<string>();
+            this.cameraFormats = new List<CaptureFormat>();
 
-            IPsList = new List<string> {"localhost"};
-            IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
-            datasetPipeline = null;
+            this.IPsList = new List<string> { "localhost" };
+            this.IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
+            this.datasetPipeline = null;
 
-            LoadConfigurations();
-            InitializeComponent();
-            UpdateLayout();
+            this.LoadConfigurations();
+            this.InitializeComponent();
+            this.UpdateLayout();
 
-            SetupNetworkTab();
-            SetupLocalRecordingTab();
-            SetupVideoSourceTab();
-            RefreshUIFromConfiguration();
-            UpdateLocalRecordingTab();
+            this.SetupNetworkTab();
+            this.SetupLocalRecordingTab();
+            this.SetupVideoSourceTab();
+            this.RefreshUIFromConfiguration();
+            this.UpdateLocalRecordingTab();
         }
 
+        /// <summary>
+        /// Sets up the video source tab UI components.
+        /// </summary>
         private void SetupVideoSourceTab()
         {
-            UiGenerator.SetTextBoxPreviewTextChecker<int>(EncodingLevelTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(this.EncodingLevelTextBox, int.TryParse);
         }
 
+        /// <summary>
+        /// Sets up the network tab UI components and validation.
+        /// </summary>
         private void SetupNetworkTab()
         {
-            UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
-            UiGenerator.SetTextBoxPreviewTextChecker<int>(RendezVousPortTextBox, int.TryParse);
-            UiGenerator.SetTextBoxPreviewTextChecker<int>(CommandPortTextBox, int.TryParse);
-            UiGenerator.SetTextBoxPreviewTextChecker<int>(StreamingPortRangeStartTextBox, int.TryParse);
-            UpdateNetworkTab();
+            UiGenerator.SetTextBoxOutFocusChecker<System.Net.IPAddress>(this.RendezVousServerIpTextBox, UiGenerator.IPAddressTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(this.RendezVousPortTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(this.CommandPortTextBox, int.TryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<int>(this.StreamingPortRangeStartTextBox, int.TryParse);
+            this.UpdateNetworkTab();
         }
 
+        /// <summary>
+        /// Sets up the local recording tab UI components and validation.
+        /// </summary>
         private void SetupLocalRecordingTab()
         {
-            UiGenerator.SetTextBoxOutFocusChecker<Uri>(LocalRecordingDatasetDirectoryTextBox, UiGenerator.UriTryParse);
-            UiGenerator.SetTextBoxPreviewTextChecker<string>(LocalRecordingDatasetNameTextBox, UiGenerator.PathTryParse);
-            LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataset file already exist, make sure to use a different session name.", ".pds", LocalRecordingDatasetDirectoryTextBox);
+            UiGenerator.SetTextBoxOutFocusChecker<Uri>(this.LocalRecordingDatasetDirectoryTextBox, UiGenerator.UriTryParse);
+            UiGenerator.SetTextBoxPreviewTextChecker<string>(this.LocalRecordingDatasetNameTextBox, UiGenerator.PathTryParse);
+            this.LocalRecordingDatasetNameTextBox.LostFocus += UiGenerator.IsFileExistChecker("Dataset file already exist, make sure to use a different session name.", ".pds", this.LocalRecordingDatasetDirectoryTextBox);
         }
 
+        /// <summary>
+        /// Updates the network tab UI elements based on the remote server state.
+        /// </summary>
         private void UpdateNetworkTab()
         {
-            BtnStartNet.IsEnabled = isRemoteServer;
-            foreach (UIElement networkUIElement in NetworkGrid.Children)
+            this.BtnStartNet.IsEnabled = this.isRemoteServer;
+            foreach (UIElement networkUIElement in this.NetworkGrid.Children)
+            {
                 if (!(networkUIElement is CheckBox))
-                    networkUIElement.IsEnabled = isRemoteServer;
-            isStreaming = isRemoteServer ? isStreaming : false;
-            GeneralNetworkStreamingCheckBox.IsEnabled = NetworkStreamingCheckBox.IsEnabled = isRemoteServer;
-            if (isRemoteServer)
-                UpdateStreamingPortRangeStartTextBox();
+                {
+                    networkUIElement.IsEnabled = this.isRemoteServer;
+                }
+            }
+
+            this.isStreaming = this.isRemoteServer ? this.isStreaming : false;
+            this.GeneralNetworkStreamingCheckBox.IsEnabled = this.NetworkStreamingCheckBox.IsEnabled = this.isRemoteServer;
+            if (this.isRemoteServer)
+            {
+                this.UpdateStreamingPortRangeStartTextBox();
+            }
         }
 
+        /// <summary>
+        /// Updates the streaming port range start text box state.
+        /// </summary>
         private void UpdateStreamingPortRangeStartTextBox()
         {
-            GeneralNetworkStreamingCheckBox.IsChecked = NetworkStreamingCheckBox.IsChecked = isStreaming;
-            StreamingPortRangeStartTextBox.IsEnabled = isStreaming & isRemoteServer;
+            this.GeneralNetworkStreamingCheckBox.IsChecked = this.NetworkStreamingCheckBox.IsChecked = this.isStreaming;
+            this.StreamingPortRangeStartTextBox.IsEnabled = this.isStreaming & this.isRemoteServer;
         }
 
+        /// <summary>
+        /// Updates the local recording tab UI elements based on the local recording state.
+        /// </summary>
         private void UpdateLocalRecordingTab()
         {
-            foreach (UIElement networkUIElement in LocalRecordingGrid.Children)
+            foreach (UIElement networkUIElement in this.LocalRecordingGrid.Children)
+            {
                 if (!(networkUIElement is CheckBox))
-                    networkUIElement.IsEnabled = isLocalRecording;
+                {
+                    networkUIElement.IsEnabled = this.isLocalRecording;
+                }
+            }
         }
 
+        /// <summary>
+        /// Refreshes UI elements from the current configuration.
+        /// </summary>
         private void RefreshUIFromConfiguration()
         {
             // Network Tab
-            RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
-            PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
-            PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
-            RendezVousApplicationNameUI = Properties.Settings.Default.ApplicationName;
-            IpSelectedUI = Properties.Settings.Default.IpToUse;
-            ExportPort = (int)Properties.Settings.Default.remotePort;
+            this.RendezVousServerIp = Properties.Settings.Default.rendezVousServerIp;
+            this.PipelineConfigurationUI.RendezVousPort = (int)(Properties.Settings.Default.rendezVousServerPort);
+            this.PipelineConfigurationUI.CommandPort = Properties.Settings.Default.commandPort;
+            this.RendezVousApplicationNameUI = Properties.Settings.Default.ApplicationName;
+            this.IpSelectedUI = Properties.Settings.Default.IpToUse;
+            this.ExportPort = (int)Properties.Settings.Default.remotePort;
 
-            IsRemoteServer = Properties.Settings.Default.isServer;
-            IsStreaming = Properties.Settings.Default.isStreaming;
-            IsLocalRecording = Properties.Settings.Default.isLocalRecording;
+            this.IsRemoteServer = Properties.Settings.Default.isServer;
+            this.IsStreaming = Properties.Settings.Default.isStreaming;
+            this.IsLocalRecording = Properties.Settings.Default.isLocalRecording;
 
             // Local Recording Tab
-            LocalRecordingDatasetDirectoryTextBox.Text = PipelineConfigurationUI.DatasetPath = Properties.Settings.Default.DatasetPath;
-            LocalRecordingDatasetNameTextBox.Text = PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
-            LocalSessionName = Properties.Settings.Default.localSessionName;
+            this.LocalRecordingDatasetDirectoryTextBox.Text = this.PipelineConfigurationUI.DatasetPath = Properties.Settings.Default.DatasetPath;
+            this.LocalRecordingDatasetNameTextBox.Text = this.PipelineConfigurationUI.DatasetName = Properties.Settings.Default.DatasetName;
+            this.LocalSessionName = Properties.Settings.Default.localSessionName;
 
             // VideoSources Tab
-            EncodingLevel = Properties.Settings.Default.encodingLevel;
-            SensorTypeComboBox.SelectedIndex = Properties.Settings.Default.sensorType;
-            VideoSourceComboBox.SelectedIndex = VideoSourceList.IndexOf(Properties.Settings.Default.videoSource);
+            this.EncodingLevel = Properties.Settings.Default.encodingLevel;
+            this.SensorTypeComboBox.SelectedIndex = Properties.Settings.Default.sensorType;
+            this.VideoSourceComboBox.SelectedIndex = this.VideoSourceList.IndexOf(Properties.Settings.Default.videoSource);
 
-            LoadConfigurations();
+            this.LoadConfigurations();
             Properties.Settings.Default.Save();
-            UpdateLayout();
-            UpdateCameraCaptureFormat(Properties.Settings.Default.cameraCaptureFormat);
+            this.UpdateLayout();
+            this.UpdateCameraCaptureFormat(Properties.Settings.Default.cameraCaptureFormat);
         }
 
+        /// <summary>
+        /// Loads configuration settings from application properties.
+        /// </summary>
         private void LoadConfigurations()
         {
             // Load Command settings
-            CommandSource = Properties.Settings.Default.commandSource;
-            CommandPort = Properties.Settings.Default.commandPort;
-            PipelineConfigurationUI.CommandPort = CommandPort;
+            this.CommandSource = Properties.Settings.Default.commandSource;
+            this.CommandPort = Properties.Settings.Default.commandPort;
+            this.PipelineConfigurationUI.CommandPort = this.CommandPort;
 
             // Load common sensor configurations
             int startingPort = (int)Properties.Settings.Default.remotePort;
-            KinectAzureRemoteStreamsConfigurationUI.StartingPort = startingPort;
-            KinectRemoteStreamsConfigurationUI.StartingPort = startingPort;
-            NuitrackRemoteStreamsConfigurationUI.StartingPort = startingPort;
+            this.KinectAzureRemoteStreamsConfigurationUI.StartingPort = startingPort;
+            this.KinectRemoteStreamsConfigurationUI.StartingPort = startingPort;
+            this.NuitrackRemoteStreamsConfigurationUI.StartingPort = startingPort;
 
             // Load Azure Kinect configuration
-            KinectAzureRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
-            KinectAzureRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
-            KinectAzureRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            KinectAzureRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
-            KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
-            KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
-            KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS;
-            KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
+            this.KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
+            this.KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS;
+            this.KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
 
             // Load Kinect configuration
-            KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
-            KinectRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
-            KinectRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            KinectRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
-            KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
-            KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
-            KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
-            KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
+            this.KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            this.KinectRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            this.KinectRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.KinectRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            this.KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
+            this.KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
+            this.KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
+            this.KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
 
             // Load Nuitrack configuration
-            NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
-            NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
-            NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
-            NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
-            NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
+            this.NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
+            this.NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
+            this.NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
+            this.NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
+            this.NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
         }
 
+        /// <summary>
+        /// Refreshes the configuration from UI elements and saves to settings.
+        /// </summary>
         private void RefreshConfigurationFromUI()
         {
             // Network Tab
-            Properties.Settings.Default.rendezVousServerIp = RendezVousServerIp;
-            Properties.Settings.Default.rendezVousServerPort = (uint)PipelineConfigurationUI.RendezVousPort;
-            Properties.Settings.Default.commandSource = CommandSource;
-            Properties.Settings.Default.commandPort = CommandPort;
-            Properties.Settings.Default.ApplicationName = RendezVousApplicationNameUI;
-            Properties.Settings.Default.IpToUse = IpSelectedUI;
+            Properties.Settings.Default.rendezVousServerIp = this.RendezVousServerIp;
+            Properties.Settings.Default.rendezVousServerPort = (uint)this.PipelineConfigurationUI.RendezVousPort;
+            Properties.Settings.Default.commandSource = this.CommandSource;
+            Properties.Settings.Default.commandPort = this.CommandPort;
+            Properties.Settings.Default.ApplicationName = this.RendezVousApplicationNameUI;
+            Properties.Settings.Default.IpToUse = this.IpSelectedUI;
 
-            Properties.Settings.Default.isServer = IsRemoteServer;
-            Properties.Settings.Default.isStreaming = IsStreaming;
-            Properties.Settings.Default.isLocalRecording = IsLocalRecording;
+            Properties.Settings.Default.isServer = this.IsRemoteServer;
+            Properties.Settings.Default.isStreaming = this.IsStreaming;
+            Properties.Settings.Default.isLocalRecording = this.IsLocalRecording;
 
             // Local Recording Tab
-            Properties.Settings.Default.DatasetPath = PipelineConfigurationUI.DatasetPath;
-            Properties.Settings.Default.DatasetName = PipelineConfigurationUI.DatasetName;
-            Properties.Settings.Default.localSessionName = LocalSessionName;
+            Properties.Settings.Default.DatasetPath = this.PipelineConfigurationUI.DatasetPath;
+            Properties.Settings.Default.DatasetName = this.PipelineConfigurationUI.DatasetName;
+            Properties.Settings.Default.localSessionName = this.LocalSessionName;
 
             // VideoSources Tab - Common settings
-            Properties.Settings.Default.encodingLevel = EncodingLevel;
-            Properties.Settings.Default.sensorType = SensorTypeComboBox.SelectedIndex;
-            Properties.Settings.Default.videoSource = VideoSourceComboBox.SelectedValue as string ?? "";
-            Properties.Settings.Default.cameraCaptureFormat = CameraCaptureFormatComboBox.SelectedIndex >= 0 ? CameraCaptureFormatComboBox.SelectedIndex : 0;
+            Properties.Settings.Default.encodingLevel = this.EncodingLevel;
+            Properties.Settings.Default.sensorType = this.SensorTypeComboBox.SelectedIndex;
+            Properties.Settings.Default.videoSource = this.VideoSourceComboBox.SelectedValue as string ?? string.Empty;
+            Properties.Settings.Default.cameraCaptureFormat = this.CameraCaptureFormatComboBox.SelectedIndex >= 0 ? this.CameraCaptureFormatComboBox.SelectedIndex : 0;
 
             // Save sensor-specific settings based on selected sensor type
-            switch ((ESensorType)SensorTypeComboBox.SelectedIndex)
+            switch ((ESensorType)this.SensorTypeComboBox.SelectedIndex)
             {
                 case ESensorType.Camera:
                     // No specific settings for camera
                     break;
 
                 case ESensorType.Kinect:
-                    Properties.Settings.Default.remotePort = (uint)KinectRemoteStreamsConfigurationUI.StartingPort;
-                    Properties.Settings.Default.audio = KinectRemoteStreamsConfigurationUI.OutputAudio;
-                    Properties.Settings.Default.skeleton = KinectRemoteStreamsConfigurationUI.OutputBodies;
-                    Properties.Settings.Default.rgb = KinectRemoteStreamsConfigurationUI.OutputColor;
-                    Properties.Settings.Default.depth = KinectRemoteStreamsConfigurationUI.OutputDepth;
-                    Properties.Settings.Default.depthCalibration = KinectRemoteStreamsConfigurationUI.OutputCalibration;
-                    Properties.Settings.Default.infrared = KinectRemoteStreamsConfigurationUI.OutputInfrared;
-                    Properties.Settings.Default.longExposureInfrared = KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared;
-                    Properties.Settings.Default.colorToCameraMapping = KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping;
-                    Properties.Settings.Default.rgbd = KinectRemoteStreamsConfigurationUI.OutputRGBD;
+                    Properties.Settings.Default.remotePort = (uint)this.KinectRemoteStreamsConfigurationUI.StartingPort;
+                    Properties.Settings.Default.audio = this.KinectRemoteStreamsConfigurationUI.OutputAudio;
+                    Properties.Settings.Default.skeleton = this.KinectRemoteStreamsConfigurationUI.OutputBodies;
+                    Properties.Settings.Default.rgb = this.KinectRemoteStreamsConfigurationUI.OutputColor;
+                    Properties.Settings.Default.depth = this.KinectRemoteStreamsConfigurationUI.OutputDepth;
+                    Properties.Settings.Default.depthCalibration = this.KinectRemoteStreamsConfigurationUI.OutputCalibration;
+                    Properties.Settings.Default.infrared = this.KinectRemoteStreamsConfigurationUI.OutputInfrared;
+                    Properties.Settings.Default.longExposureInfrared = this.KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared;
+                    Properties.Settings.Default.colorToCameraMapping = this.KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping;
+                    Properties.Settings.Default.rgbd = this.KinectRemoteStreamsConfigurationUI.OutputRGBD;
                     break;
 
                 case ESensorType.AzureKinect:
-                    Properties.Settings.Default.remotePort = (uint)KinectAzureRemoteStreamsConfigurationUI.StartingPort;
-                    Properties.Settings.Default.audio = KinectAzureRemoteStreamsConfigurationUI.OutputAudio;
-                    Properties.Settings.Default.skeleton = KinectAzureRemoteStreamsConfigurationUI.OutputBodies;
-                    Properties.Settings.Default.rgb = KinectAzureRemoteStreamsConfigurationUI.OutputColor;
-                    Properties.Settings.Default.infrared = KinectAzureRemoteStreamsConfigurationUI.OutputInfrared;
-                    Properties.Settings.Default.depth = KinectAzureRemoteStreamsConfigurationUI.OutputDepth;
-                    Properties.Settings.Default.depthCalibration = KinectAzureRemoteStreamsConfigurationUI.OutputCalibration;
-                    Properties.Settings.Default.IMU = KinectAzureRemoteStreamsConfigurationUI.OutputImu;
-                    Properties.Settings.Default.FPS = FPSList.IndexOf(KinectAzureRemoteStreamsConfigurationUI.CameraFPS);
-                    Properties.Settings.Default.videoResolution = ResolutionsList.IndexOf(KinectAzureRemoteStreamsConfigurationUI.ColorResolution);
+                    Properties.Settings.Default.remotePort = (uint)this.KinectAzureRemoteStreamsConfigurationUI.StartingPort;
+                    Properties.Settings.Default.audio = this.KinectAzureRemoteStreamsConfigurationUI.OutputAudio;
+                    Properties.Settings.Default.skeleton = this.KinectAzureRemoteStreamsConfigurationUI.OutputBodies;
+                    Properties.Settings.Default.rgb = this.KinectAzureRemoteStreamsConfigurationUI.OutputColor;
+                    Properties.Settings.Default.infrared = this.KinectAzureRemoteStreamsConfigurationUI.OutputInfrared;
+                    Properties.Settings.Default.depth = this.KinectAzureRemoteStreamsConfigurationUI.OutputDepth;
+                    Properties.Settings.Default.depthCalibration = this.KinectAzureRemoteStreamsConfigurationUI.OutputCalibration;
+                    Properties.Settings.Default.IMU = this.KinectAzureRemoteStreamsConfigurationUI.OutputImu;
+                    Properties.Settings.Default.FPS = this.FPSList.IndexOf(this.KinectAzureRemoteStreamsConfigurationUI.CameraFPS);
+                    Properties.Settings.Default.videoResolution = this.ResolutionsList.IndexOf(this.KinectAzureRemoteStreamsConfigurationUI.ColorResolution);
                     break;
 
                 case ESensorType.Nuitrack:
-                    Properties.Settings.Default.remotePort = (uint)NuitrackRemoteStreamsConfigurationUI.StartingPort;
-                    Properties.Settings.Default.skeleton = NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking;
-                    Properties.Settings.Default.rgb = NuitrackRemoteStreamsConfigurationUI.OutputColor;
-                    Properties.Settings.Default.depth = NuitrackRemoteStreamsConfigurationUI.OutputDepth;
-                    Properties.Settings.Default.hands = NuitrackRemoteStreamsConfigurationUI.OutputHandTracking;
-                    Properties.Settings.Default.gestures = NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer;
-                    Properties.Settings.Default.nuitrackKey = NuitrackRemoteStreamsConfigurationUI.ActivationKey;
-                    Properties.Settings.Default.nuitrackDevice = NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber;
+                    Properties.Settings.Default.remotePort = (uint)this.NuitrackRemoteStreamsConfigurationUI.StartingPort;
+                    Properties.Settings.Default.skeleton = this.NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking;
+                    Properties.Settings.Default.rgb = this.NuitrackRemoteStreamsConfigurationUI.OutputColor;
+                    Properties.Settings.Default.depth = this.NuitrackRemoteStreamsConfigurationUI.OutputDepth;
+                    Properties.Settings.Default.hands = this.NuitrackRemoteStreamsConfigurationUI.OutputHandTracking;
+                    Properties.Settings.Default.gestures = this.NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer;
+                    Properties.Settings.Default.nuitrackKey = this.NuitrackRemoteStreamsConfigurationUI.ActivationKey;
+                    Properties.Settings.Default.nuitrackDevice = this.NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber;
                     break;
             }
 
             Properties.Settings.Default.Save();
         }
 
+        /// <summary>
+        /// Updates configuration from command line arguments.
+        /// </summary>
+        /// <param name="args">The command line arguments array.</param>
+        /// <returns>True if configuration was updated successfully; otherwise false.</returns>
         private bool UpdateConfigurationFromArgs(string[] args)
         {
             try
             {
-                KinectAzureRemoteStreamsConfigurationUI.KinectDeviceIndex = int.Parse(args[1]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputAudio = bool.Parse(args[2]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputBodies = bool.Parse(args[3]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputColor = bool.Parse(args[4]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputDepth = bool.Parse(args[5]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = bool.Parse(args[6]);
-                KinectAzureRemoteStreamsConfigurationUI.OutputImu = bool.Parse(args[7]);
-                KinectAzureRemoteStreamsConfigurationUI.EncodingVideoLevel = int.Parse(args[8]);
-                KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)int.Parse(args[9]);
-                KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)int.Parse(args[10]);
-                KinectAzureRemoteStreamsConfigurationUI.IpToUse = args[11];
-                KinectAzureRemoteStreamsConfigurationUI.StartingPort = int.Parse(args[12]);
-            } 
-            catch(Exception ex)
+                this.KinectAzureRemoteStreamsConfigurationUI.KinectDeviceIndex = int.Parse(args[1]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputAudio = bool.Parse(args[2]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputBodies = bool.Parse(args[3]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputColor = bool.Parse(args[4]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputDepth = bool.Parse(args[5]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = bool.Parse(args[6]);
+                this.KinectAzureRemoteStreamsConfigurationUI.OutputImu = bool.Parse(args[7]);
+                this.KinectAzureRemoteStreamsConfigurationUI.EncodingVideoLevel = int.Parse(args[8]);
+                this.KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)int.Parse(args[9]);
+                this.KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)int.Parse(args[10]);
+                this.KinectAzureRemoteStreamsConfigurationUI.IpToUse = args[11];
+                this.KinectAzureRemoteStreamsConfigurationUI.StartingPort = int.Parse(args[12]);
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 return false;
             }
+
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
                 RefreshUIFromConfiguration();
@@ -473,475 +632,651 @@ namespace CameraRemoteApp
             return true;
         }
 
+        /// <summary>
+        /// Handles received commands from the RendezVous server.
+        /// </summary>
+        /// <param name="source">The command source.</param>
+        /// <param name="message">The command message.</param>
         private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
         {
-            if ($"{CommandSource}-Command" != source)
+            if ($"{this.CommandSource}-Command" != source)
+            {
                 return;
+            }
+
             var args = message.Data.Item2.Split([';']);
 
-            if (args[0] != RendezVousApplicationNameUI && args[0] != "*")
+            if (args[0] != this.RendezVousApplicationNameUI && args[0] != "*")
+            {
                 return;
+            }
 
-            datasetPipeline.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
+            this.datasetPipeline.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
             switch (message.Data.Item1)
             {
                 case RendezVousPipeline.Command.Initialize:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        UpdateConfigurationFromArgs(args);
+                        this.UpdateConfigurationFromArgs(args);
                     }));
                     break;
                 case RendezVousPipeline.Command.Run:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        SetupSensor();
-                        Start();
+                        this.SetupSensor();
+                        this.Start();
                     }));
                     break;
                 case RendezVousPipeline.Command.Stop:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        Stop();
+                        this.Stop();
                     }));
                     break;
                 case RendezVousPipeline.Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        Stop();
-                        Close();
+                        this.Stop();
+                        this.Close();
                     }));
                     break;
                 case RendezVousPipeline.Command.Status:
-                    (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, CommandSource, datasetPipeline.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
+                    (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.CommandSource, this.datasetPipeline.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     break;
             }
         }
+
+        /// <summary>
+        /// Sets up the pipeline based on current configuration.
+        /// </summary>
         private void SetupPipeline()
         {
-            if (setupState >= SetupState.PipelineInitialised)
+            if (this.setupState >= SetupState.PipelineInitialised)
+            {
                 return;
-            if (!isRemoteServer && !isLocalRecording)
+            }
+
+            if (!this.isRemoteServer && !this.isLocalRecording)
             {
                 MessageBox.Show("You cannot start the application without Network or Local Recording.", "Configuration error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
                 return;
             }
 
-            pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            pipelineConfiguration.AutomaticPipelineRun = false;
-            pipelineConfiguration.CommandDelegate = CommandRecieved;
-            pipelineConfiguration.Debug = false;
-            pipelineConfiguration.RecordIncomingProcess = false;
-            pipelineConfiguration.ClockPort = 0;
-            pipelineConfiguration.CommandPort = CommandPort;
-            if (isLocalRecording)
+            this.pipelineConfiguration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            this.pipelineConfiguration.AutomaticPipelineRun = false;
+            this.pipelineConfiguration.CommandDelegate = this.CommandRecieved;
+            this.pipelineConfiguration.Debug = false;
+            this.pipelineConfiguration.RecordIncomingProcess = false;
+            this.pipelineConfiguration.ClockPort = 0;
+            this.pipelineConfiguration.CommandPort = this.CommandPort;
+            if (this.isLocalRecording)
             {
-                pipelineConfiguration.DatasetPath = LocalDatasetPath;
-                pipelineConfiguration.DatasetName = LocalDatasetName;
+                this.pipelineConfiguration.DatasetPath = this.LocalDatasetPath;
+                this.pipelineConfiguration.DatasetName = this.LocalDatasetName;
             }
             else
             {
-                pipelineConfiguration.DatasetPath = "";
-                pipelineConfiguration.DatasetName = "";
+                this.pipelineConfiguration.DatasetPath = string.Empty;
+                this.pipelineConfiguration.DatasetName = string.Empty;
             }
-            pipelineConfiguration.RendezVousHost = IpSelectedUI;
 
-            if (isRemoteServer)
+            this.pipelineConfiguration.RendezVousHost = this.IpSelectedUI;
+
+            if (this.isRemoteServer)
             {
-                datasetPipeline = new RendezVousPipeline(pipelineConfiguration, rendezVousApplicationName, RendezVousServerIp, internalLog);
+                this.datasetPipeline = new RendezVousPipeline(this.pipelineConfiguration, this.rendezVousApplicationName, this.RendezVousServerIp, this.internalLog);
             }
             else
             {
-                datasetPipeline = new DatasetPipeline(pipelineConfiguration, rendezVousApplicationName, internalLog);
+                this.datasetPipeline = new DatasetPipeline(this.pipelineConfiguration, this.rendezVousApplicationName, this.internalLog);
             }
-            setupState = SetupState.PipelineInitialised;
+
+            this.setupState = SetupState.PipelineInitialised;
         }
 
+        /// <summary>
+        /// Sets up the selected sensor based on current configuration.
+        /// </summary>
         private void SetupSensor()
         {
-            if (setupState >= SetupState.CameraInitialised)
+            if (this.setupState >= SetupState.CameraInitialised)
+            {
                 return;
+            }
+
             try
             {
-                switch (sensorType)
+                switch (this.sensorType)
                 {
                     case ESensorType.Camera:
-                        SetupCamera();
+                        this.SetupCamera();
                         break;
                     case ESensorType.Kinect:
-                        SetupKinect();
+                        this.SetupKinect();
                         break;
                     case ESensorType.AzureKinect:
-                        SetupAzureKinect();
+                        this.SetupAzureKinect();
                         break;
                     case ESensorType.Nuitrack:
-                        SetupNuitrack();
+                        this.SetupNuitrack();
                         break;
                 }
-                setupState = SetupState.CameraInitialised;
+
+                this.setupState = SetupState.CameraInitialised;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error during sensor setup: {ex.Message}", "Sensor Setup Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                AddLog(State = "Sensor setup failed");
-                (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Error");
+                this.AddLog(this.State = "Sensor setup failed");
+                (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Error");
             }
         }
 
+        /// <summary>
+        /// Sets up Azure Kinect sensor configuration and streams.
+        /// </summary>
         private void SetupAzureKinect()
         {
-            azureConfiguration.EncodingVideoLevel = encodingLevel;
-            if (isRemoteServer)
+            this.azureConfiguration.EncodingVideoLevel = this.encodingLevel;
+            if (this.isRemoteServer)
             {
-                RendezVousPipeline rdv = datasetPipeline as RendezVousPipeline;
-                azureConfiguration.RendezVousApplicationName = rendezVousApplicationName;
-                azureConfiguration.IpToUse = ipSelected;
-                azureConfiguration.StartingPort = exportPort;
-                var kinectStreams = new SAAC.RemoteConnectors.KinectAzureStreamsComponent(rdv, azureConfiguration, isLocalRecording);
+                RendezVousPipeline rdv = this.datasetPipeline as RendezVousPipeline;
+                this.azureConfiguration.RendezVousApplicationName = this.rendezVousApplicationName;
+                this.azureConfiguration.IpToUse = this.ipSelected;
+                this.azureConfiguration.StartingPort = this.exportPort;
+                var kinectStreams = new SAAC.RemoteConnectors.KinectAzureStreamsComponent(rdv, this.azureConfiguration, this.isLocalRecording);
                 rdv.AddProcess(kinectStreams.GenerateProcess());
             }
             else
             {
-                if (azureConfiguration.OutputBodies == true)
+                if (this.azureConfiguration.OutputBodies == true)
                 {
-                    azureConfiguration.OutputDepth = azureConfiguration.OutputInfrared = azureConfiguration.OutputCalibration = true;
-                    azureConfiguration.BodyTrackerConfiguration = new Microsoft.Psi.AzureKinect.AzureKinectBodyTrackerConfiguration();
+                    this.azureConfiguration.OutputDepth = this.azureConfiguration.OutputInfrared = this.azureConfiguration.OutputCalibration = true;
+                    this.azureConfiguration.BodyTrackerConfiguration = new Microsoft.Psi.AzureKinect.AzureKinectBodyTrackerConfiguration();
                 }
-                var Sensor = new Microsoft.Psi.AzureKinect.AzureKinectSensor(datasetPipeline.Pipeline, azureConfiguration);
-                Session session = datasetPipeline.CreateOrGetSession(localSessionName);
-                if (azureConfiguration.OutputAudio == true)
+
+                var sensor = new Microsoft.Psi.AzureKinect.AzureKinectSensor(this.datasetPipeline.Pipeline, this.azureConfiguration);
+                Session session = this.datasetPipeline.CreateOrGetSession(this.localSessionName);
+                if (this.azureConfiguration.OutputAudio == true)
                 {
                     Microsoft.Psi.Audio.AudioCaptureConfiguration configuration = new Microsoft.Psi.Audio.AudioCaptureConfiguration();
                     int index = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ToList().FindIndex(value => { return value.Contains("Azure"); });
                     configuration.DeviceName = Microsoft.Psi.Audio.AudioCapture.GetAvailableDevices().ElementAt(index);
-                    Microsoft.Psi.Audio.AudioCapture audioCapture = new Microsoft.Psi.Audio.AudioCapture(datasetPipeline.Pipeline, configuration);
-                    datasetPipeline.CreateConnectorAndStore("Audio", "Audio", session, datasetPipeline.Pipeline, audioCapture.GetType(), audioCapture.Out, isLocalRecording);
+                    Microsoft.Psi.Audio.AudioCapture audioCapture = new Microsoft.Psi.Audio.AudioCapture(this.datasetPipeline.Pipeline, configuration);
+                    this.datasetPipeline.CreateConnectorAndStore("Audio", "Audio", session, this.datasetPipeline.Pipeline, audioCapture.GetType(), audioCapture.Out, this.isLocalRecording);
                 }
-                if (azureConfiguration.OutputBodies == true)
-                    datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, datasetPipeline.Pipeline, Sensor.Bodies.GetType(), Sensor.Bodies, isLocalRecording);
-                if (azureConfiguration.OutputColor == true)
+
+                if (this.azureConfiguration.OutputBodies == true)
                 {
-                    var compressed = Sensor.ColorImage.EncodeJpeg(encodingLevel);
-                    datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    this.datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, this.datasetPipeline.Pipeline, sensor.Bodies.GetType(), sensor.Bodies, this.isLocalRecording);
                 }
-                if (azureConfiguration.OutputInfrared == true)
+
+                if (this.azureConfiguration.OutputColor == true)
                 {
-                    var compressed = Sensor.InfraredImage.EncodeJpeg(encodingLevel);
-                    datasetPipeline.CreateConnectorAndStore("Infrared", "Infrared", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.ColorImage.EncodeJpeg(this.encodingLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (azureConfiguration.OutputDepth == true)
+
+                if (this.azureConfiguration.OutputInfrared == true)
                 {
-                    var compressed = Sensor.DepthImage.EncodePng();
-                    datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.InfraredImage.EncodeJpeg(this.encodingLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("Infrared", "Infrared", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (azureConfiguration.OutputCalibration == true)
-                     datasetPipeline.CreateConnectorAndStore("Calibration", "Calibration", session, datasetPipeline.Pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo, isLocalRecording);
-                if (azureConfiguration.OutputImu == true)
-                    datasetPipeline.CreateConnectorAndStore("Imu", "Imu", session, datasetPipeline.Pipeline, Sensor.Imu.GetType(), Sensor.Imu, isLocalRecording);
+
+                if (this.azureConfiguration.OutputDepth == true)
+                {
+                    var compressed = sensor.DepthImage.EncodePng();
+                    this.datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
+                }
+
+                if (this.azureConfiguration.OutputCalibration == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Calibration", "Calibration", session, this.datasetPipeline.Pipeline, sensor.DepthDeviceCalibrationInfo.GetType(), sensor.DepthDeviceCalibrationInfo, this.isLocalRecording);
+                }
+
+                if (this.azureConfiguration.OutputImu == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Imu", "Imu", session, this.datasetPipeline.Pipeline, sensor.Imu.GetType(), sensor.Imu, this.isLocalRecording);
+                }
             }
         }
 
+        /// <summary>
+        /// Sets up Kinect sensor configuration and streams.
+        /// </summary>
         private void SetupKinect()
         {
-            kinectConfiguration.EncodingVideoLevel = encodingLevel;
-            if (isRemoteServer)
+            this.kinectConfiguration.EncodingVideoLevel = this.encodingLevel;
+            if (this.isRemoteServer)
             {
-                RendezVousPipeline rdv = datasetPipeline as RendezVousPipeline;
-                kinectConfiguration.RendezVousApplicationName = rendezVousApplicationName;
-                kinectConfiguration.IpToUse = ipSelected;
-                kinectConfiguration.StartingPort = exportPort;
-                var KinectStreams = new SAAC.RemoteConnectors.KinectStreamsComponent(rdv, kinectConfiguration, isLocalRecording);
-                rdv.AddProcess(KinectStreams.GenerateProcess());
+                RendezVousPipeline rdv = this.datasetPipeline as RendezVousPipeline;
+                this.kinectConfiguration.RendezVousApplicationName = this.rendezVousApplicationName;
+                this.kinectConfiguration.IpToUse = this.ipSelected;
+                this.kinectConfiguration.StartingPort = this.exportPort;
+                var kinectStreams = new SAAC.RemoteConnectors.KinectRemoteStreamsComponent(rdv, this.kinectConfiguration, this.isLocalRecording);
+                rdv.AddProcess(kinectStreams.GenerateProcess());
             }
-            else 
+            else
             {
-                var Sensor = new Microsoft.Psi.Kinect.KinectSensor(datasetPipeline.Pipeline, kinectConfiguration);
-                var session = datasetPipeline.CreateOrGetSessionFromMode(localSessionName);
-                if (kinectConfiguration.OutputAudio == true)
-                    datasetPipeline.CreateConnectorAndStore("Audio", "Audio", session, datasetPipeline.Pipeline, Sensor.Audio.GetType(), Sensor.Audio, isLocalRecording);
+                var sensor = new Microsoft.Psi.Kinect.KinectSensor(this.datasetPipeline.Pipeline, this.kinectConfiguration);
+                var session = this.datasetPipeline.CreateOrGetSessionFromMode(this.localSessionName);
+                if (this.kinectConfiguration.OutputAudio == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Audio", "Audio", session, this.datasetPipeline.Pipeline, sensor.Audio.GetType(), sensor.Audio, this.isLocalRecording);
+                }
 
-                if (kinectConfiguration.OutputBodies == true)
-                    datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, datasetPipeline.Pipeline, Sensor.Bodies.GetType(), Sensor.Bodies, isLocalRecording);
+                if (this.kinectConfiguration.OutputBodies == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, this.datasetPipeline.Pipeline, sensor.Bodies.GetType(), sensor.Bodies, this.isLocalRecording);
+                }
 
-                if (kinectConfiguration.OutputColor == true)
+                if (this.kinectConfiguration.OutputColor == true)
                 {
-                    var compressed = Sensor.ColorImage.EncodeJpeg(kinectConfiguration.EncodingVideoLevel);
-                    datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.ColorImage.EncodeJpeg(this.kinectConfiguration.EncodingVideoLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (kinectConfiguration.OutputRGBD == true)
+
+                if (this.kinectConfiguration.OutputRGBD == true)
                 {
-                    var compressed = Sensor.RGBDImage.EncodeJpeg(kinectConfiguration.EncodingVideoLevel);
-                    datasetPipeline.CreateConnectorAndStore("RGBD", "RGBD", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.RGBDImage.EncodeJpeg(this.kinectConfiguration.EncodingVideoLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("RGBD", "RGBD", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (kinectConfiguration.OutputDepth == true)
+
+                if (this.kinectConfiguration.OutputDepth == true)
                 {
-                    var compressed = Sensor.DepthImage.EncodePng();
-                    datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.DepthImage.EncodePng();
+                    this.datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (kinectConfiguration.OutputInfrared == true)
+
+                if (this.kinectConfiguration.OutputInfrared == true)
                 {
-                    var compressed = Sensor.InfraredImage.EncodeJpeg(kinectConfiguration.EncodingVideoLevel);
-                    datasetPipeline.CreateConnectorAndStore("Infrared", "Infrared", session, datasetPipeline.Pipeline, compressed.GetType(), compressed, isLocalRecording);
+                    var compressed = sensor.InfraredImage.EncodeJpeg(this.kinectConfiguration.EncodingVideoLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("Infrared", "Infrared", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed, this.isLocalRecording);
                 }
-                if (kinectConfiguration.OutputLongExposureInfrared == true)
+
+                if (this.kinectConfiguration.OutputLongExposureInfrared == true)
                 {
-                    var compressed = Sensor.LongExposureInfraredImage.EncodeJpeg(kinectConfiguration.EncodingVideoLevel);
-                    datasetPipeline.CreateConnectorAndStore("LongExposureInfrared", "LongExposureInfrared", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, isLocalRecording);
+                    var compressed = sensor.LongExposureInfraredImage.EncodeJpeg(this.kinectConfiguration.EncodingVideoLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("LongExposureInfrared", "LongExposureInfrared", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.isLocalRecording);
                 }
-                if (kinectConfiguration.OutputColorToCameraMapping == true)
-                    datasetPipeline.CreateConnectorAndStore("ColorToCameraMapper", "ColorToCameraMapper", session, datasetPipeline.Pipeline, Sensor.ColorToCameraMapper.GetType(), Sensor.ColorToCameraMapper, isLocalRecording);
-                if (kinectConfiguration.OutputCalibration == true)
-                    datasetPipeline.CreateConnectorAndStore("Calibration", "Calibration", session, datasetPipeline.Pipeline, Sensor.DepthDeviceCalibrationInfo.GetType(), Sensor.DepthDeviceCalibrationInfo, isLocalRecording);
+
+                if (this.kinectConfiguration.OutputColorToCameraMapping == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("ColorToCameraMapper", "ColorToCameraMapper", session, this.datasetPipeline.Pipeline, sensor.ColorToCameraMapper.GetType(), sensor.ColorToCameraMapper, this.isLocalRecording);
+                }
+
+                if (this.kinectConfiguration.OutputCalibration == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Calibration", "Calibration", session, this.datasetPipeline.Pipeline, sensor.DepthDeviceCalibrationInfo.GetType(), sensor.DepthDeviceCalibrationInfo, this.isLocalRecording);
+                }
             }
         }
 
+        /// <summary>
+        /// Sets up Nuitrack sensor configuration and streams.
+        /// </summary>
         private void SetupNuitrack()
         {
-            nuitrackConfiguration.EncodingVideoLevel = encodingLevel;
-            if (isRemoteServer)
+            this.nuitrackConfiguration.EncodingVideoLevel = this.encodingLevel;
+            if (this.isRemoteServer)
             {
-                RendezVousPipeline rdv = datasetPipeline as RendezVousPipeline;
-                nuitrackConfiguration.RendezVousApplicationName = RendezVousApplicationNameUI;
-                nuitrackConfiguration.IpToUse = ipSelected;
-                nuitrackConfiguration.StartingPort = exportPort;
-                var nuitrackStreams = new SAAC.RemoteConnectors.NuitrackRemoteStreamsComponent(rdv, nuitrackConfiguration, isLocalRecording);
+                RendezVousPipeline rdv = this.datasetPipeline as RendezVousPipeline;
+                this.nuitrackConfiguration.RendezVousApplicationName = this.RendezVousApplicationNameUI;
+                this.nuitrackConfiguration.IpToUse = this.ipSelected;
+                this.nuitrackConfiguration.StartingPort = this.exportPort;
+                var nuitrackStreams = new SAAC.RemoteConnectors.NuitrackRemoteStreamsComponent(rdv, this.nuitrackConfiguration, this.isLocalRecording);
                 rdv.AddProcess(nuitrackStreams.GenerateProcess());
             }
             else
             {
-                var Sensor = new SAAC.Nuitrack.NuitrackSensor(datasetPipeline.Pipeline, nuitrackConfiguration);
-                var session = datasetPipeline.CreateOrGetSessionFromMode(localSessionName);
-                if (nuitrackConfiguration.OutputSkeletonTracking == true)
-                    datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, datasetPipeline.Pipeline, Sensor.OutBodies.GetType(), Sensor.OutBodies, isLocalRecording);
-
-                if (nuitrackConfiguration.OutputColor == true)
+                var Sensor = new SAAC.Nuitrack.NuitrackSensor(this.datasetPipeline.Pipeline, this.nuitrackConfiguration);
+                var session = this.datasetPipeline.CreateOrGetSessionFromMode(this.localSessionName);
+                if (this.nuitrackConfiguration.OutputSkeletonTracking == true)
                 {
-                    var compressed = Sensor.OutColorImage.EncodeJpeg(nuitrackConfiguration.EncodingVideoLevel);
-                    datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, datasetPipeline.Pipeline, compressed.GetType(), compressed, isLocalRecording);
+                    this.datasetPipeline.CreateConnectorAndStore("Bodies", "Bodies", session, this.datasetPipeline.Pipeline, Sensor.OutBodies.GetType(), Sensor.OutBodies, this.isLocalRecording);
                 }
-                if (nuitrackConfiguration.OutputDepth == true)
+
+                if (this.nuitrackConfiguration.OutputColor == true)
+                {
+                    var compressed = Sensor.OutColorImage.EncodeJpeg(this.nuitrackConfiguration.EncodingVideoLevel);
+                    this.datasetPipeline.CreateConnectorAndStore("RGB", "RGB", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed, this.isLocalRecording);
+                }
+
+                if (this.nuitrackConfiguration.OutputDepth == true)
                 {
                     var compressed = Sensor.OutDepthImage.EncodePng();
-                    datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, datasetPipeline.Pipeline, compressed.GetType(), compressed, isLocalRecording);
+                    this.datasetPipeline.CreateConnectorAndStore("Depth", "Depth", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed, this.isLocalRecording);
                 }
-                if (nuitrackConfiguration.OutputHandTracking == true)
-                    datasetPipeline.CreateConnectorAndStore("Hands", "Hands", session, datasetPipeline.Pipeline, Sensor.OutHands.GetType(), Sensor.OutHands, isLocalRecording);
-                if (nuitrackConfiguration.OutputUserTracking == true)
-                    datasetPipeline.CreateConnectorAndStore("Users", "Users", session, datasetPipeline.Pipeline, Sensor.OutUsers.GetType(), Sensor.OutUsers, isLocalRecording);
-                if (nuitrackConfiguration.OutputGestureRecognizer == true)
-                    datasetPipeline.CreateConnectorAndStore("Gestures", "Gestures", session, datasetPipeline.Pipeline, Sensor.OutGestures.GetType(), Sensor.OutGestures, isLocalRecording);
+
+                if (this.nuitrackConfiguration.OutputHandTracking == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Hands", "Hands", session, this.datasetPipeline.Pipeline, Sensor.OutHands.GetType(), Sensor.OutHands, this.isLocalRecording);
+                }
+
+                if (this.nuitrackConfiguration.OutputUserTracking == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Users", "Users", session, this.datasetPipeline.Pipeline, Sensor.OutUsers.GetType(), Sensor.OutUsers, this.isLocalRecording);
+                }
+
+                if (this.nuitrackConfiguration.OutputGestureRecognizer == true)
+                {
+                    this.datasetPipeline.CreateConnectorAndStore("Gestures", "Gestures", session, this.datasetPipeline.Pipeline, Sensor.OutGestures.GetType(), Sensor.OutGestures, this.isLocalRecording);
+                }
             }
         }
 
+        /// <summary>
+        /// Sets up camera configuration and streams.
+        /// </summary>
         private void SetupCamera()
         {
             MediaCaptureConfiguration configuration = new MediaCaptureConfiguration();
-            CaptureFormat formats = cameraFormats[CameraCaptureFormatComboBox.SelectedIndex];
+            CaptureFormat formats = this.cameraFormats[this.CameraCaptureFormatComboBox.SelectedIndex];
             configuration.Framerate = formats.nFrameRateNumerator / formats.nFrameRateDenominator;
             configuration.Height = formats.nHeight;
             configuration.Width = formats.nWidth;
-            configuration.DeviceId = VideoSourceComboBox.SelectedValue as string;
-            MediaCapture camera = new MediaCapture(datasetPipeline.Pipeline, configuration);
-            var compressed = camera.Out.EncodeJpeg(encodingLevel);
+            configuration.DeviceId = this.VideoSourceComboBox.SelectedValue as string;
+            MediaCapture camera = new MediaCapture(this.datasetPipeline.Pipeline, configuration);
+            var compressed = camera.Out.EncodeJpeg(this.encodingLevel);
             string streamName = "RGB";
-            var session = datasetPipeline.CreateOrGetSessionFromMode(isLocalRecording ? localSessionName : rendezVousApplicationName);
-            datasetPipeline.CreateConnectorAndStore(streamName, $"{rendezVousApplicationName}-{streamName}", session, datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, IsLocalRecording);
-            if (isRemoteServer && isStreaming)
+            var session = this.datasetPipeline.CreateOrGetSessionFromMode(this.isLocalRecording ? this.localSessionName : this.rendezVousApplicationName);
+            this.datasetPipeline.CreateConnectorAndStore(streamName, $"{this.rendezVousApplicationName}-{streamName}", session, this.datasetPipeline.Pipeline, compressed.GetType(), compressed.Out, this.IsLocalRecording);
+            if (this.isRemoteServer && this.isStreaming)
             {
-                RendezVousPipeline rdv = datasetPipeline as RendezVousPipeline;
-                if (isStreaming)
+                RendezVousPipeline rdv = this.datasetPipeline as RendezVousPipeline;
+                if (this.isStreaming)
                 {
-                    Microsoft.Psi.Remoting.RemoteExporter cameraExporter = new Microsoft.Psi.Remoting.RemoteExporter(datasetPipeline.Pipeline, exportPort);
-                    cameraExporter.Exporter.Write(compressed, streamName); 
-                    rdv.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [cameraExporter.ToRendezvousEndpoint(ipSelected)], "Version1.0"));
+                    Microsoft.Psi.Remoting.RemoteExporter cameraExporter = new Microsoft.Psi.Remoting.RemoteExporter(this.datasetPipeline.Pipeline, this.exportPort);
+                    cameraExporter.Exporter.Write(compressed, streamName);
+                    rdv.AddProcess(new Rendezvous.Process(this.rendezVousApplicationName, [cameraExporter.ToRendezvousEndpoint(this.ipSelected)], "Version1.0"));
                 }
             }
         }
 
+        /// <summary>
+        /// Stops the pipeline and disposes of resources.
+        /// </summary>
         private void Stop()
         {
-            AddLog(State = "Stopping");
-            (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Stopping");
-            if (datasetPipeline is RendezVousPipeline)
+            this.AddLog(this.State = "Stopping");
+            (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Stopping");
+            if (this.datasetPipeline is RendezVousPipeline)
             {
-                (datasetPipeline as RendezVousPipeline)?.Dispose();
+                (this.datasetPipeline as RendezVousPipeline)?.Dispose();
             }
             else
             {
-                datasetPipeline?.Dispose();
+                this.datasetPipeline?.Dispose();
             }
+
             Application.Current.Shutdown();
         }
 
+        /// <summary>
+        /// Starts the network connection to the RendezVous server.
+        /// </summary>
         private void StartNetwork()
         {
-            SetupPipeline();
-            if (setupState == SetupState.PipelineInitialised)
+            this.SetupPipeline();
+            if (this.setupState == SetupState.PipelineInitialised)
             {
-                BtnStartNet.IsEnabled = false;
-                AddLog(State = "Waiting for server");
-                (datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { AddLog(State = "Connected to server"); (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Waiting"); }));}); 
+                this.BtnStartNet.IsEnabled = false;
+                this.AddLog(this.State = "Waiting for server");
+                (this.datasetPipeline as RendezVousPipeline)?.Start((d) =>
+                {
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.AddLog(this.State = "Connected to server");
+                        (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Waiting");
+                    }));
+                });
             }
         }
 
+        /// <summary>
+        /// Starts the pipeline and sensor capture.
+        /// </summary>
         private void Start()
         {
-            SetupPipeline();
-            SetupSensor();
-            if (setupState == SetupState.CameraInitialised)
+            this.SetupPipeline();
+            this.SetupSensor();
+            if (this.setupState == SetupState.CameraInitialised)
             {
-                BtnStart.IsEnabled = BtnStartNet.IsEnabled = false;
-                datasetPipeline.RunPipelineAndSubpipelines();
-                (datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, commandSource, "Running");
-                AddLog(State = "Started");
+                this.BtnStart.IsEnabled = this.BtnStartNet.IsEnabled = false;
+                this.datasetPipeline.RunPipelineAndSubpipelines();
+                (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Running");
+                this.AddLog(this.State = "Started");
             }
         }
- 
+
+        /// <summary>
+        /// Handles the window closing event.
+        /// </summary>
+        /// <param name="e">The event arguments.</param>
         protected override void OnClosing(CancelEventArgs e)
         {
-            Stop();
+            this.Stop();
             base.OnClosing(e);
         }
 
+        /// <summary>
+        /// Handles the start RendezVous button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void BtnStartRendezVous(object sender, RoutedEventArgs e)
         {
-            StartNetwork();
+            this.StartNetwork();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the start all button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void BtnStartAll(object sender, RoutedEventArgs e)
         {
-            Start();
+            this.Start();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the quit button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void BtnQuitClick(object sender, RoutedEventArgs e)
         {
-            Close();
+            this.Close();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the load configuration button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void BtnLoadConfiguration(object sender, RoutedEventArgs e)
         {
-            RefreshUIFromConfiguration();
-            AddLog(State = "Configuration Loaded");
+            this.RefreshUIFromConfiguration();
+            this.AddLog(this.State = "Configuration Loaded");
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the save configuration button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void BtnSaveConfiguration(object sender, RoutedEventArgs e)
         {
-            RefreshConfigurationFromUI();
-            AddLog(State = "Configuration Saved");
+            this.RefreshConfigurationFromUI();
+            this.AddLog(this.State = "Configuration Saved");
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Updates the camera capture format list based on the selected video source.
+        /// </summary>
+        /// <param name="index">The selected format index.</param>
         private void UpdateCameraCaptureFormat(int index = 0)
         {
-            if ((VideoSourceComboBox.SelectedValue as string) is null && Properties.Settings.Default.videoSource?.Length == 0)
-            {
-                return;
-            }
-            CameraCaptureFormat.Clear();
-            cameraFormats = MediaCapture.GetAvailableFormats(VideoSourceComboBox.SelectedValue as string ?? Properties.Settings.Default.videoSource);
-            if (cameraFormats is null)
+            if ((this.VideoSourceComboBox.SelectedValue as string) is null && Properties.Settings.Default.videoSource?.Length == 0)
             {
                 return;
             }
 
-            foreach (CaptureFormat format in cameraFormats)
+            this.CameraCaptureFormat.Clear();
+            this.cameraFormats = MediaCapture.GetAvailableFormats(this.VideoSourceComboBox.SelectedValue as string ?? Properties.Settings.Default.videoSource);
+            if (this.cameraFormats is null)
             {
-                CameraCaptureFormat.Add($"{format.nWidth}x{format.nHeight}@{format.nFrameRateNumerator}");
+                return;
             }
-            if (CameraCaptureFormat.Count > 0)
+
+            foreach (CaptureFormat format in this.cameraFormats)
             {
-                CameraCaptureFormatComboBox.SelectedIndex = index > CameraCaptureFormat.Count ? 0 : index;
+                this.CameraCaptureFormat.Add($"{format.nWidth}x{format.nHeight}@{format.nFrameRateNumerator}");
+            }
+
+            if (this.CameraCaptureFormat.Count > 0)
+            {
+                this.CameraCaptureFormatComboBox.SelectedIndex = index > this.CameraCaptureFormat.Count ? 0 : index;
             }
         }
 
+        /// <summary>
+        /// Handles the video source selection changed event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void VideoSourceSelected(object sender, RoutedEventArgs e)
         {
-            UpdateCameraCaptureFormat();
+            this.UpdateCameraCaptureFormat();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the sensor type selection changed event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void SensorTypeSelected(object sender, RoutedEventArgs e)
         {
-            CameraConfiguration.Visibility = KinectConfiguration.Visibility = NuitrackConfiguration.Visibility = AzureKinectConfiguration.Visibility = Visibility.Collapsed;
-            switch (SensorTypeComboBox.SelectedIndex)
+            this.CameraConfiguration.Visibility = this.KinectConfiguration.Visibility = this.NuitrackConfiguration.Visibility = this.AzureKinectConfiguration.Visibility = Visibility.Collapsed;
+            switch (this.SensorTypeComboBox.SelectedIndex)
             {
                 case 3:
-                    sensorType = ESensorType.Nuitrack;
-                    NuitrackConfiguration.Visibility = Visibility.Visible;
+                    this.sensorType = ESensorType.Nuitrack;
+                    this.NuitrackConfiguration.Visibility = Visibility.Visible;
                     break;
                 case 2:
-                    sensorType = ESensorType.AzureKinect;
-                    AzureKinectConfiguration.Visibility = Visibility.Visible;
+                    this.sensorType = ESensorType.AzureKinect;
+                    this.AzureKinectConfiguration.Visibility = Visibility.Visible;
                     break;
                 case 1:
-                    sensorType = ESensorType.Kinect;
-                    KinectConfiguration.Visibility = Visibility.Visible;
+                    this.sensorType = ESensorType.Kinect;
+                    this.KinectConfiguration.Visibility = Visibility.Visible;
                     break;
                 case 0:
-                    sensorType = ESensorType.Camera; 
-                    UpdateCameraCaptureFormat();
-                    CameraConfiguration.Visibility = Visibility.Visible;
+                    this.sensorType = ESensorType.Camera;
+                    this.UpdateCameraCaptureFormat();
+                    this.CameraConfiguration.Visibility = Visibility.Visible;
                     break;
             }
 
-            BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+            this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Adds a log message to the log window.
+        /// </summary>
+        /// <param name="logMessage">The log message to add.</param>
         private void AddLog(string logMessage)
         {
-            Log += $"{logMessage}\n";
+            this.Log += $"{logMessage}\n";
         }
 
+        /// <summary>
+        /// Handles the log text box text changed event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void Log_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             TextBox? log = sender as TextBox;
             if (log == null)
+            {
                 return;
+            }
+
             log.CaretIndex = log.Text.Length;
             log.ScrollToEnd();
         }
 
+        /// <summary>
+        /// Handles the activate network checkbox click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void CkbActivateNetwork(object sender, RoutedEventArgs e)
         {
-            UpdateNetworkTab();
+            this.UpdateNetworkTab();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the activate streaming checkbox click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void CkbActivateStreaming(object sender, RoutedEventArgs e)
         {
-            UpdateStreamingPortRangeStartTextBox();
+            this.UpdateStreamingPortRangeStartTextBox();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the activate local recording checkbox click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void CkbActivateLocalRecording(object sender, RoutedEventArgs e)
         {
-            UpdateLocalRecordingTab();
+            this.UpdateLocalRecordingTab();
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Handles the local recording dataset directory button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void LocalRecordingDatasetDirectoryButtonClick(object sender, RoutedEventArgs e)
         {
             UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker();
             if (openFileDialog.ShowDialog() == true)
             {
-                LocalDatasetPath = openFileDialog.ResultName;
-                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                this.LocalDatasetPath = openFileDialog.ResultName;
+                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             }
         }
 
+        /// <summary>
+        /// Handles the local recording dataset name button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void LocalRecordingDatasetNameButtonClick(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Dataset (*.pds)|*.pds";
             if (openFileDialog.ShowDialog() == true)
             {
-                LocalDatasetPath = openFileDialog.FileName.Substring(0, openFileDialog.FileName.IndexOf(openFileDialog.SafeFileName));
-                LocalDatasetName = openFileDialog.SafeFileName;
-                BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                this.LocalDatasetPath = openFileDialog.FileName.Substring(0, openFileDialog.FileName.IndexOf(openFileDialog.SafeFileName));
+                this.LocalDatasetName = openFileDialog.SafeFileName;
+                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             }
         }
     }

@@ -1,33 +1,36 @@
-﻿using Microsoft.Psi;
-using Microsoft.Psi.AzureKinect;
-using MathNet.Spatial.Euclidean;
-using Microsoft.Psi.Components;
-using TsAPI.Types;
-using Microsoft.Azure.Kinect.BodyTracking;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Azure.Kinect.BodyTracking;
+    using Microsoft.Psi;
+    using Microsoft.Psi.AzureKinect;
+    using Microsoft.Psi.Components;
+    using TsAPI.Types;
+
+    /// <summary>
+    /// Component that converts Tesla Suit motion data to simplified body format.
+    /// </summary>
     public class TsMotionToSimplifiedBody : IConsumerProducer<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>, List<SimplifiedBody>>
     {
-        /// <summary>
-        /// Gets the emitter of body.
-        /// </summary>
-        public Emitter<List<SimplifiedBody>> Out { get; private set; }
+        private readonly Dictionary<TsHumanBoneIndex, Microsoft.Azure.Kinect.BodyTracking.JointId> tsToAzure;
+        private readonly string name;
 
         /// <summary>
-        /// Gets the nuitrack receiver of lists of currently tracked bodies.
+        /// Initializes a new instance of the <see cref="TsMotionToSimplifiedBody"/> class.
         /// </summary>
-        public Receiver<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>> In { get; private set; }
-
-        private Dictionary<TsHumanBoneIndex, Microsoft.Azure.Kinect.BodyTracking.JointId> tsToAzure;
-        private string name;
-
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="name">The name of the component.</param>
         public TsMotionToSimplifiedBody(Pipeline parent, string name = nameof(TsMotionToSimplifiedBody))
         {
             this.name = name;
-            In = parent.CreateReceiver<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>>(this, Process, $"{name}-In");
-            Out = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(Out));
-            tsToAzure = new Dictionary<TsHumanBoneIndex, Microsoft.Azure.Kinect.BodyTracking.JointId> {
+            this.In = parent.CreateReceiver<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>>(this, this.Process, $"{name}-In");
+            this.Out = parent.CreateEmitter<List<SimplifiedBody>>(this, nameof(this.Out));
+            this.tsToAzure = new Dictionary<TsHumanBoneIndex, Microsoft.Azure.Kinect.BodyTracking.JointId>
+            {
                 { TsHumanBoneIndex.Head, Microsoft.Azure.Kinect.BodyTracking.JointId.Head },
                 { TsHumanBoneIndex.Neck, Microsoft.Azure.Kinect.BodyTracking.JointId.Neck },
                 { TsHumanBoneIndex.UpperSpine, Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest },
@@ -45,26 +48,53 @@ namespace SAAC.Bodies
                 { TsHumanBoneIndex.RightUpperArm, Microsoft.Azure.Kinect.BodyTracking.JointId.ElbowRight },
                 { TsHumanBoneIndex.RightLowerArm, Microsoft.Azure.Kinect.BodyTracking.JointId.WristRight },
                 { TsHumanBoneIndex.RightHand, Microsoft.Azure.Kinect.BodyTracking.JointId.HandRight },
-                { TsHumanBoneIndex.LeftFoot, Microsoft.Azure.Kinect.BodyTracking.JointId.FootLeft }};
+                { TsHumanBoneIndex.LeftFoot, Microsoft.Azure.Kinect.BodyTracking.JointId.FootLeft }
+            };
         }
 
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
+        /// <summary>
+        /// Gets the emitter of converted bodies.
+        /// </summary>
+        public Emitter<List<SimplifiedBody>> Out { get; private set; }
 
+        /// <summary>
+        /// Gets the receiver for Tesla Suit motion data.
+        /// </summary>
+        public Receiver<Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4>> In { get; private set; }
+
+        /// <summary>
+        /// Processes Tesla Suit motion data and converts it to simplified body format.
+        /// </summary>
+        /// <param name="body">The Tesla Suit bone data.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(Dictionary<TsHumanBoneIndex, System.Numerics.Matrix4x4> body, Envelope envelope)
         {
             if (body.Count == 0)
+            {
                 return;
+            }
+
             SimplifiedBody sBody = new SimplifiedBody(SimplifiedBody.SensorOrigin.TeslaSuit, 0);
             foreach (var joint in body)
             {
-                if (tsToAzure.ContainsKey(joint.Key))
-                    sBody.Joints.Add(tsToAzure[joint.Key], new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(JointConfidenceLevel.High, Helpers.Helpers.NumericToMathNet(joint.Value.Translation)));
+                if (this.tsToAzure.ContainsKey(joint.Key))
+                {
+                    sBody.Joints.Add(
+                        this.tsToAzure[joint.Key],
+                        new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(
+                            JointConfidenceLevel.High,
+                            Helpers.Helpers.NumericToMathNet(joint.Value.Translation)));
+                }
             }
-            CompleteBody(ref sBody);
-            Out.Post([sBody], envelope.OriginatingTime);
+
+            this.CompleteBody(ref sBody);
+            this.Out.Post([sBody], envelope.OriginatingTime);
         }
 
+        /// <summary>
+        /// Completes a Tesla Suit body by adding missing joints based on existing joints.
+        /// </summary>
+        /// <param name="body">The body to complete.</param>
         private void CompleteBody(ref SimplifiedBody body)
         {
             Vector3D fakePosition = (body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest].Item2 + body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Pelvis].Item2) / 2.0;
@@ -87,6 +117,11 @@ namespace SAAC.Bodies
             body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.AnkleLeft] = body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.FootLeft];
         }
 
+        /// <summary>
+        /// Processes Azure Kinect body data (alternative overload).
+        /// </summary>
+        /// <param name="bodies">The list of Azure Kinect bodies.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(List<AzureKinectBody> bodies, Envelope envelope)
         {
             List<SimplifiedBody> returnedBodies = new List<SimplifiedBody>();
@@ -94,11 +129,18 @@ namespace SAAC.Bodies
             {
                 SimplifiedBody body = new SimplifiedBody(SimplifiedBody.SensorOrigin.Azure, skeleton.TrackingId);
                 foreach (var joint in skeleton.Joints)
-                    body.Joints.Add(joint.Key, new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
-                        (joint.Value.Confidence, joint.Value.Pose.Origin.ToVector3D()));
+                {
+                    body.Joints.Add(
+                        joint.Key,
+                        new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(
+                            joint.Value.Confidence,
+                            joint.Value.Pose.Origin.ToVector3D()));
+                }
+
                 returnedBodies.Add(body);
             }
-            Out.Post(returnedBodies, envelope.OriginatingTime);
+
+            this.Out.Post(returnedBodies, envelope.OriginatingTime);
         }
     }
 }

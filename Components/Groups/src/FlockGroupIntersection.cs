@@ -1,34 +1,47 @@
-﻿using Microsoft.Psi.Components;
-using Microsoft.Psi;
-using MathNet.Spatial.Euclidean;
-using System.Collections.Generic;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Groups
 {
+    using MathNet.Spatial.Euclidean;
+    using Microsoft.Psi;
+    using Microsoft.Psi.Components;
+
+    /// <summary>
+    /// Component that calculates intersection points and time ratios between flock groups based on their trajectories.
+    /// </summary>
     public class FlockGroupIntersection : IConsumerProducer<Dictionary<uint, SimplifiedFlockGroup>, Dictionary<(uint, uint), double>>
     {
+        private readonly string name;
+
         /// <summary>
-        /// Gets the emitter of groups detected.
+        /// Initializes a new instance of the <see cref="FlockGroupIntersection"/> class.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="name">The name of the component.</param>
+        public FlockGroupIntersection(Pipeline parent, string name = nameof(FlockGroupIntersection))
+        {
+            this.name = name;
+            this.In = parent.CreateReceiver<Dictionary<uint, SimplifiedFlockGroup>>(this, this.Process, $"{name}-In");
+            this.Out = parent.CreateEmitter<Dictionary<(uint, uint), double>>(this, $"{name}-Out");
+        }
+
+        /// <summary>
+        /// Gets the emitter of group intersection ratios.
         /// </summary>
         public Emitter<Dictionary<(uint, uint), double>> Out { get; private set; }
 
         /// <summary>
-        /// Receiver that encapsulates the input list of groups
+        /// Gets the receiver for input flock groups.
         /// </summary>
         public Receiver<Dictionary<uint, SimplifiedFlockGroup>> In { get; private set; }
 
-        private string name;
-
-        public FlockGroupIntersection(Pipeline parent, string name = nameof(FlockGroupIntersection))
-        {
-            this.name = name;
-            In = parent.CreateReceiver<Dictionary<uint, SimplifiedFlockGroup>>(this, Process, $"{name}-In");
-            Out = parent.CreateEmitter<Dictionary<(uint, uint), double>>(this, $"{name}-Out");
-        }
-
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
-
+        /// <summary>
+        /// Processes flock groups and calculates trajectory intersections between pairs of groups.
+        /// </summary>
+        /// <param name="groups">Dictionary of flock groups.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(Dictionary<uint, SimplifiedFlockGroup> groups, Envelope envelope)
         {
             Dictionary<(uint, uint), double> intersectors = new Dictionary<(uint, uint), double>();
@@ -41,16 +54,19 @@ namespace SAAC.Groups
                     SimplifiedFlockGroup groupB = groups.ElementAt(iterator2).Value;
                     Line2D lineB = new Line2D(groupB.Area.Center, groupB.Area.Center + groupB.Direction);
                     Point2D? intersection = lineA.IntersectWith(lineB);
-                    if (intersection != null) 
+                    if (intersection != null)
                     {
-                        double ratio = groupA.Velocity / (intersection.Value - groupA.Area.Center).Length * 
+                        double ratio = groupA.Velocity / (intersection.Value - groupA.Area.Center).Length *
                                       groupB.Velocity / (intersection.Value - groupB.Area.Center).Length;
                         intersectors.Add((groupA.Id, groupB.Id), ratio);
                     }
                 }
             }
+
             if (intersectors.Count > 0)
-                Out.Post(intersectors, envelope.OriginatingTime);
+            {
+                this.Out.Post(intersectors, envelope.OriginatingTime);
+            }
         }
     }
 }

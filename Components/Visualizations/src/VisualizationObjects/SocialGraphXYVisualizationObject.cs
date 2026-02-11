@@ -1,51 +1,41 @@
-﻿using System.ComponentModel;
-using System.Runtime.Serialization;
-using System.Windows;
-using Microsoft.Psi.Visualization.Helpers;
-using Microsoft.Psi.Visualization.VisualizationObjects;
-using Microsoft.Psi.Visualization.Views.Visuals2D;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Visualizations
 {
+    using System.ComponentModel;
+    using System.Runtime.Serialization;
+    using System.Windows;
+    using Microsoft.Psi.Visualization.Helpers;
+    using Microsoft.Psi.Visualization.VisualizationObjects;
+    using SAAC.Groups;
+
     /// <summary>
-    /// Sociogramme XY : snapshot multi-nœuds/arêtes rendu dans un XY panel.
+    /// XY Sociogram: multi-node/edge snapshot rendered in an XY panel.
     /// </summary>
     [VisualizationObject("SocialGraph 2D")]
     public class SocialGraphXYVisualizationObject : XYValueVisualizationObject<IndividualPairCharacteristics>
     {
-        // ==== Réglages nœuds ====
         private bool showLabels = true;
         private double nodeMinRadius = 10;
         private double nodeMaxRadius = 20;
-
-        // ==== Réglages arêtes (génériques) ====
         private double edgeMinThickness = 1;
         private double edgeMaxThickness = 6;
-
-        // ==== Affichages par variable (commutateurs) ====
-        // Nodes
         private bool showNodesSpeakingTime = true;
-
-        // Edges
         private bool showEdgesGaze = true;
         private bool showEdgesSynchrony = true;
         private bool showEdgesJVA = true;
         private bool showEdgesSpeechEquality = true;
-
-        // Segments/capsules JVA additionnels éventuels
         private bool showJVASegment = true;
-
-        // ==== Mise à l’échelle monde↔écran (XY panel) ====
-        // 1 mètre = 100 px par défaut (0.01 m/px)
         private double metersPerPixel = 0.008;
-
-        // ==== “Distance compressée & deadband” (utilisé par la vue) ====
         private double displayMinDistanceMeters = 0.60;
         private double distanceGainK = 0.90;
         private double deadbandMeters = 0.04;
 
-        // -------------------- Propriétés publiques --------------------
-
+        /// <summary>
+        /// Gets or sets a value indicating whether labels are shown on the visualization.
+        /// </summary>
         [DataMember]
         public bool ShowLabels
         {
@@ -53,6 +43,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowLabels), ref this.showLabels, value);
         }
 
+        /// <summary>
+        /// Gets or sets the minimum radius for nodes in pixels.
+        /// </summary>
         [DataMember]
         public double NodeMinRadius
         {
@@ -60,6 +53,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.NodeMinRadius), ref this.nodeMinRadius, value);
         }
 
+        /// <summary>
+        /// Gets or sets the maximum radius for nodes in pixels.
+        /// </summary>
         [DataMember]
         public double NodeMaxRadius
         {
@@ -67,6 +63,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.NodeMaxRadius), ref this.nodeMaxRadius, value);
         }
 
+        /// <summary>
+        /// Gets or sets the minimum thickness for edges in pixels.
+        /// </summary>
         [DataMember]
         public double EdgeMinThickness
         {
@@ -74,6 +73,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.EdgeMinThickness), ref this.edgeMinThickness, value);
         }
 
+        /// <summary>
+        /// Gets or sets the maximum thickness for edges in pixels.
+        /// </summary>
         [DataMember]
         public double EdgeMaxThickness
         {
@@ -81,9 +83,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.EdgeMaxThickness), ref this.edgeMaxThickness, value);
         }
 
-        // ---- Commutateurs d’affichage (Nodes) ----
-
-        /// <summary>Afficher la couche "node size ~ SpeakingTime".</summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether node size reflects speaking time.
+        /// </summary>
         [DataMember]
         public bool ShowNodesSpeakingTime
         {
@@ -91,9 +93,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowNodesSpeakingTime), ref this.showNodesSpeakingTime, value);
         }
 
-        // ---- Commutateurs d’affichage (Edges) ----
-
-        /// <summary>Afficher l’arête "Gaze on peers".</summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether gaze-on-peers edges are displayed.
+        /// </summary>
         [DataMember]
         public bool ShowEdgesGaze
         {
@@ -101,7 +103,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowEdgesGaze), ref this.showEdgesGaze, value);
         }
 
-        /// <summary>Afficher l’arête "Synchrony".</summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether synchrony edges are displayed.
+        /// </summary>
         [DataMember]
         public bool ShowEdgesSynchrony
         {
@@ -109,7 +113,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowEdgesSynchrony), ref this.showEdgesSynchrony, value);
         }
 
-        /// <summary>Afficher l’arête "JVA".</summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether JVA (Joint Visual Attention) edges are displayed.
+        /// </summary>
         [DataMember]
         public bool ShowEdgesJVA
         {
@@ -117,7 +123,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowEdgesJVA), ref this.showEdgesJVA, value);
         }
 
-        /// <summary>Afficher l’arête "Speech equality".</summary>
+        /// <summary>
+        /// Gets or sets a value indicating whether speech equality edges are displayed.
+        /// </summary>
         [DataMember]
         public bool ShowEdgesSpeechEquality
         {
@@ -125,9 +133,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.ShowEdgesSpeechEquality), ref this.showEdgesSpeechEquality, value);
         }
 
-        // ---- Monde ↔ écran ----
-
-        /// <summary>Échelle monde↔écran. Exemple : 0.01 → 1 m = 100 px.</summary>
+        /// <summary>
+        /// Gets or sets the world-to-screen scale in meters per pixel. Example: 0.01 means 1 meter = 100 pixels.
+        /// </summary>
         [DataMember]
         public double MetersPerPixel
         {
@@ -135,7 +143,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.MetersPerPixel), ref this.metersPerPixel, value);
         }
 
-        /// <summary>Distance résiduelle d’affichage pour éviter la superposition.</summary>
+        /// <summary>
+        /// Gets or sets the minimum display distance in meters to avoid overlap.
+        /// </summary>
         [DataMember]
         public double DisplayMinDistanceMeters
         {
@@ -143,7 +153,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.DisplayMinDistanceMeters), ref this.displayMinDistanceMeters, value);
         }
 
-        /// <summary>Gain de distance (&lt;=1) pour espacer visuellement.</summary>
+        /// <summary>
+        /// Gets or sets the distance gain factor (less than or equal to 1) for visual spacing.
+        /// </summary>
         [DataMember]
         public double DistanceGainK
         {
@@ -151,7 +163,9 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.DistanceGainK), ref this.distanceGainK, Clamp(value, 0.1, 1.0));
         }
 
-        /// <summary>Seuil d’insensibilité pour lisser le jitter (m).</summary>
+        /// <summary>
+        /// Gets or sets the deadband threshold in meters to smooth jitter.
+        /// </summary>
         [DataMember]
         public double DeadbandMeters
         {
@@ -159,45 +173,84 @@ namespace SAAC.Visualizations
             set => this.Set(nameof(this.DeadbandMeters), ref this.deadbandMeters, value);
         }
 
-        // -------------------- API utilisée par la vue --------------------
-
-        /// <summary>Rayon (px) du nœud, par défaut en fonction de SpeakingTime. Si la couche est désactivée, retourne le rayon min.</summary>
-        public double GetNodeRadius(PersonNode n)
-        {
-            if (n == null) return this.nodeMinRadius;
-            double v = Clamp(n.SpeakingTime, 0.0, 1.0);
-            if (!this.showNodesSpeakingTime)
-                return this.nodeMinRadius;
-            return this.nodeMinRadius + (this.nodeMaxRadius - this.nodeMinRadius) * v;
-        }
-
-        /// <summary>
-        /// Distance "compressée" pour l’affichage : min + gain * (d - min).
-        /// </summary>
-        public double CompressDistanceMeters(double dRealMeters)
-            => this.displayMinDistanceMeters + this.distanceGainK * System.Math.Max(0, dRealMeters - this.displayMinDistanceMeters);
-
-        // ---- Méthodes utilitaires pour pilotage d’affichage dans la vue ----
-        public bool ShouldShowNodeSpeakingTime() => this.showNodesSpeakingTime;
-
-        public bool ShouldShowEdgeGaze() => this.showEdgesGaze;
-        public bool ShouldShowEdgeSynchrony() => this.showEdgesSynchrony;
-        public bool ShouldShowEdgeJVA() => this.showEdgesJVA;
-        public bool ShouldShowEdgeSpeechEquality() => this.showEdgesSpeechEquality;
-
-        // -------------------- Utils --------------------
-
-        private static double Clamp(double value, double min, double max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
-        }
-
         /// <inheritdoc/>
         [Browsable(false)]
         [IgnoreDataMember]
         public override DataTemplate DefaultViewTemplate
             => XamlHelper.CreateTemplate(this.GetType(), typeof(SocialGraphXYVisualizationObjectViews));
+
+        /// <summary>
+        /// Gets the node radius in pixels based on speaking time. Returns minimum radius if the layer is disabled.
+        /// </summary>
+        /// <param name="n">The person node.</param>
+        /// <returns>The calculated radius in pixels.</returns>
+        public double GetNodeRadius(PersonNode n)
+        {
+            if (n == null)
+            {
+                return this.nodeMinRadius;
+            }
+
+            double v = Clamp(n.SpeakingTime, 0.0, 1.0);
+            if (!this.showNodesSpeakingTime)
+            {
+                return this.nodeMinRadius;
+            }
+
+            return this.nodeMinRadius + ((this.nodeMaxRadius - this.nodeMinRadius) * v);
+        }
+
+        /// <summary>
+        /// Compresses the distance for display: min + gain * (d - min).
+        /// </summary>
+        /// <param name="dRealMeters">The real distance in meters.</param>
+        /// <returns>The compressed display distance in meters.</returns>
+        public double CompressDistanceMeters(double dRealMeters)
+            => this.displayMinDistanceMeters + (this.distanceGainK * System.Math.Max(0, dRealMeters - this.displayMinDistanceMeters));
+
+        /// <summary>
+        /// Determines whether to show node speaking time visualization.
+        /// </summary>
+        /// <returns>True if speaking time should be shown; otherwise, false.</returns>
+        public bool ShouldShowNodeSpeakingTime() => this.showNodesSpeakingTime;
+
+        /// <summary>
+        /// Determines whether to show gaze edge visualization.
+        /// </summary>
+        /// <returns>True if gaze edges should be shown; otherwise, false.</returns>
+        public bool ShouldShowEdgeGaze() => this.showEdgesGaze;
+
+        /// <summary>
+        /// Determines whether to show synchrony edge visualization.
+        /// </summary>
+        /// <returns>True if synchrony edges should be shown; otherwise, false.</returns>
+        public bool ShouldShowEdgeSynchrony() => this.showEdgesSynchrony;
+
+        /// <summary>
+        /// Determines whether to show JVA edge visualization.
+        /// </summary>
+        /// <returns>True if JVA edges should be shown; otherwise, false.</returns>
+        public bool ShouldShowEdgeJVA() => this.showEdgesJVA;
+
+        /// <summary>
+        /// Determines whether to show speech equality edge visualization.
+        /// </summary>
+        /// <returns>True if speech equality edges should be shown; otherwise, false.</returns>
+        public bool ShouldShowEdgeSpeechEquality() => this.showEdgesSpeechEquality;
+
+        private static double Clamp(double value, double min, double max)
+        {
+            if (value < min)
+            {
+                return min;
+            }
+
+            if (value > max)
+            {
+                return max;
+            }
+
+            return value;
+        }
     }
 }

@@ -1,16 +1,18 @@
-﻿using Microsoft.Azure.Kinect.BodyTracking;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies
 {
+    using Microsoft.Azure.Kinect.BodyTracking;
+
+    /// <summary>
+    /// Configuration for the bodies identification component.
+    /// </summary>
     public class BodiesIdentificationConfiguration
     {
         /// <summary>
-        /// Get or set minium acceptable confidence for calculation.
+        /// Gets or sets the minimum acceptable confidence level for learning body characteristics.
         /// </summary>
         public JointConfidenceLevel MinimumConfidenceLevelForLearning { get; set; } = JointConfidenceLevel.Low;
 

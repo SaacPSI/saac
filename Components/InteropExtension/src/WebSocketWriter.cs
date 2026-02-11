@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace Microsoft.Psi.Interop.Transport
 {
@@ -73,7 +74,7 @@ namespace Microsoft.Psi.Interop.Transport
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"WebsocketWriter {name} Exception: {ex.Message}");
+                Trace.WriteLine($"WebsocketWriter {this.name} Exception: {ex.Message}");
             }
         }
     }

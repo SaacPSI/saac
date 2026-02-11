@@ -1,85 +1,126 @@
-﻿using Microsoft.Azure.Kinect.BodyTracking;
-using Microsoft.Psi;
-using Microsoft.Psi.AzureKinect;
-using Microsoft.Psi.Components;
-using System.IO;
-using MathNet.Numerics.Statistics;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
 namespace SAAC.Bodies.Statistics
 {
+    using System.IO;
+    using MathNet.Numerics.Statistics;
+    using Microsoft.Azure.Kinect.BodyTracking;
+    using Microsoft.Psi;
+    using Microsoft.Psi.AzureKinect;
+
+    /// <summary>
+    /// Configuration for the bodies statistics component.
+    /// </summary>
     public class BodiesStatisticsConfiguration
     {
         /// <summary>
-        /// Gets or sets the confidence level used for statistics.
+        /// Gets or sets the minimum confidence level required for joints used in statistics.
         /// </summary>
         public JointConfidenceLevel ConfidenceLevel { get; set; } = JointConfidenceLevel.Medium;
 
         /// <summary>
-        ///  File in csv format to write stats.
+        /// Gets or sets the file path for storing statistics in CSV format.
         /// </summary>
         public string StoringPath { get; set; } = "./Stats.csv";
     }
 
+    /// <summary>
+    /// Component that collects and calculates statistics on body bone lengths.
+    /// </summary>
     public class BodiesStatistics : IConsumer<List<SimplifiedBody>>, IDisposable
     {
-        public Receiver<List<SimplifiedBody>> In { get; }
+        private readonly BodiesStatisticsConfiguration configuration;
+        private readonly Dictionary<uint, StatisticBody> data = new Dictionary<uint, StatisticBody>();
+        private readonly string name;
+        private string statsCount = string.Empty;
 
-        protected string StatsCount = "";
-
-        protected Dictionary<uint, StatisticBody> Data = new Dictionary<uint, StatisticBody>();
-
-        protected BodiesStatisticsConfiguration Configuration;
-        private string name;
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BodiesStatistics"/> class.
+        /// </summary>
+        /// <param name="pipeline">The pipeline to add the component to.</param>
+        /// <param name="configuration">Optional configuration for statistics collection.</param>
+        /// <param name="name">The name of the component.</param>
+        /// <param name="defaultDeliveryPolicy">Optional default delivery policy.</param>
         public BodiesStatistics(Pipeline pipeline, BodiesStatisticsConfiguration? configuration, string name = nameof(BodiesStatistics), DeliveryPolicy? defaultDeliveryPolicy = null)
         {
             this.name = name;
-            Configuration = configuration ?? new BodiesStatisticsConfiguration();
-            In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, Process, $"{name}-In");
+            this.configuration = configuration ?? new BodiesStatisticsConfiguration();
+            this.In = pipeline.CreateReceiver<List<SimplifiedBody>>(this, this.Process, $"{name}-In");
         }
 
-        /// <inheritdoc/>
-        public override string ToString() => this.name;
+        /// <summary>
+        /// Gets the receiver for input simplified bodies.
+        /// </summary>
+        public Receiver<List<SimplifiedBody>> In { get; }
 
+        /// <summary>
+        /// Disposes the component and writes collected statistics to file.
+        /// </summary>
         public void Dispose()
         {
-            StatsCount = "body_id;bone_id;count;mean;std_dev;var\n";
-            foreach (var body in Data)
+            this.statsCount = "body_id;bone_id;count;mean;std_dev;var\n";
+            foreach (var body in this.data)
             {
                 foreach (var bone in body.Value.BonesValues)
                 {
                     var std = bone.Value.MeanStandardDeviation();
                     var variance = bone.Value.MeanVariance();
                     string statis = body.Key.ToString() + ";" + bone.Key.Item1.ToString() + "-" + bone.Key.Item2.ToString() + ";" + bone.Value.Count.ToString() + ";" + std.Item1.ToString() + ";" + std.Item2.ToString() + ";" + variance.Item2.ToString();
-                    StatsCount += statis + "\n";
+                    this.statsCount += statis + "\n";
                 }
-                StatsCount += "\n";
+
+                this.statsCount += "\n";
             }
 
-            File.WriteAllText(Configuration.StoringPath, StatsCount);
+            File.WriteAllText(this.configuration.StoringPath, this.statsCount);
         }
 
+        /// <summary>
+        /// Processes a list of simplified bodies and collects bone length statistics.
+        /// </summary>
+        /// <param name="bodies">The list of simplified bodies.</param>
+        /// <param name="envelope">The message envelope.</param>
         private void Process(List<SimplifiedBody> bodies, Envelope envelope)
         {
             foreach (SimplifiedBody body in bodies)
             {
-                if (!Data.ContainsKey(body.Id))
-                    Data.Add(body.Id, new StatisticBody());
+                if (!this.data.ContainsKey(body.Id))
+                {
+                    this.data.Add(body.Id, new StatisticBody());
+                }
+
                 foreach (var bone in AzureKinectBody.Bones)
-                    if (body.Joints[bone.ParentJoint].Item1 >= Configuration.ConfidenceLevel && body.Joints[bone.ChildJoint].Item1 >= Configuration.ConfidenceLevel)
-                        Data[body.Id].BonesValues[bone].Add(MathNet.Numerics.Distance.Euclidean(body.Joints[bone.ParentJoint].Item2.ToVector(), body.Joints[bone.ChildJoint].Item2.ToVector()));
+                {
+                    if (body.Joints[bone.ParentJoint].Item1 >= this.configuration.ConfidenceLevel && body.Joints[bone.ChildJoint].Item1 >= this.configuration.ConfidenceLevel)
+                    {
+                        this.data[body.Id].BonesValues[bone].Add(MathNet.Numerics.Distance.Euclidean(body.Joints[bone.ParentJoint].Item2.ToVector(), body.Joints[bone.ChildJoint].Item2.ToVector()));
+                    }
+                }
             }
         }
     }
 
+    /// <summary>
+    /// Represents statistical data collected for a single body.
+    /// </summary>
     public class StatisticBody
     {
-        public Dictionary<(JointId, JointId), List<double>> BonesValues = new Dictionary<(JointId, JointId), List<double>>();
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StatisticBody"/> class.
+        /// </summary>
         public StatisticBody()
         {
             foreach (var bone in AzureKinectBody.Bones)
-                BonesValues.Add(bone, new List<double>());
+            {
+                this.BonesValues.Add(bone, new List<double>());
+            }
         }
+
+        /// <summary>
+        /// Gets the dictionary of bone length measurements.
+        /// </summary>
+        public Dictionary<(JointId, JointId), List<double>> BonesValues { get; } = new Dictionary<(JointId, JointId), List<double>>();
     }
 }

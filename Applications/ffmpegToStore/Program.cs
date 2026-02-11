@@ -1,44 +1,56 @@
-﻿using System.Runtime.InteropServices;
-using System.Windows.Navigation;
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
+using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
 using Microsoft.Psi;
 using Microsoft.Psi.Audio;
 using Microsoft.Psi.Data;
 using Microsoft.Psi.Imaging;
 
-class ffmpegToStore
+internal class FfmpegToStore
 {
     private Pipeline pipeline;
     private Emitter<Shared<Image>> videoEmitter;
     private Emitter<AudioBuffer>? audioEmitter;
 
-    public ffmpegToStore(string ffmpegPath, string file, DateTime startTime, string videoStoreName, string storePath, int encodingLevel, string? audioStoreName)
+    public FfmpegToStore(string ffmpegPath, string file, DateTime startTime, string videoStoreName, string storePath, int encodingLevel, string? audioStoreName)
     {
-        pipeline = Pipeline.Create();
-        videoEmitter = pipeline.CreateEmitter<Shared<Image>>(pipeline, "image");
-        PsiExporter videoStore = PsiStore.Create(pipeline, videoStoreName, storePath);
-        videoStore.Write(videoEmitter.EncodeJpeg(encodingLevel), "video");
+        this.pipeline = Pipeline.Create();
+        this.videoEmitter = this.pipeline.CreateEmitter<Shared<Image>>(this.pipeline, "image");
+        PsiExporter videoStore = PsiStore.Create(this.pipeline, videoStoreName, storePath);
+        videoStore.Write(this.videoEmitter.EncodeJpeg(encodingLevel), "video");
         if (audioStoreName != null)
         {
-            PsiExporter audioStore = PsiStore.Create(pipeline, audioStoreName, storePath);
-            audioEmitter = pipeline.CreateEmitter<AudioBuffer>(pipeline, "audio");
-            audioStore.Write(audioEmitter, "audio");
+            PsiExporter audioStore = PsiStore.Create(this.pipeline, audioStoreName, storePath);
+            this.audioEmitter = this.pipeline.CreateEmitter<AudioBuffer>(this.pipeline, "audio");
+            audioStore.Write(this.audioEmitter, "audio");
         }
         else
-            audioEmitter = null;
-        pipeline.RunAsync();
-        ExtractFrames(ffmpegPath, file, startTime);
-        pipeline.Dispose();
+        {
+            this.audioEmitter = null;
+        }
+
+        this.pipeline.RunAsync();
+        this.ExtractFrames(ffmpegPath, file, startTime);
+        this.pipeline.Dispose();
     }
 
-    unsafe int InitialiseAudio(AVFormatContext* formatContext, AVCodecParameters** codecParameters, AVCodec** audioCodec, AVCodecContext** audioCodecContext, SwrContext** audioSwrctx)
+    [Obsolete]
+    private unsafe int InitialiseAudio(AVFormatContext* formatContext, AVCodecParameters** codecParameters, AVCodec** audioCodec, AVCodecContext** audioCodecContext, SwrContext** audioSwrctx)
     {
-        if (audioEmitter == null)
+        if (this.audioEmitter == null)
+        {
             return -1;
+        }
+
         int audioStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_AUDIO, -1, -1, audioCodec, 0);
         if (audioStreamIndex < 0)
+        {
             return audioStreamIndex;
-      
+        }
+
         *audioCodecContext = ffmpeg.avcodec_alloc_context3(*audioCodec);
         if (audioCodecContext == null)
         {
@@ -75,7 +87,7 @@ class ffmpegToStore
             return -1;
         }
 
-        if(ffmpeg.swr_init(*audioSwrctx) < 0)
+        if (ffmpeg.swr_init(*audioSwrctx) < 0)
         {
             Console.WriteLine("Failed to initialise audio converter.");
             ffmpeg.avcodec_close(*audioCodecContext);
@@ -87,7 +99,8 @@ class ffmpegToStore
         return audioStreamIndex;
     }
 
-    unsafe void ExtractFrames(string ffmpegPath, string videoPath, DateTime startTime)
+    [Obsolete]
+    private unsafe void ExtractFrames(string ffmpegPath, string videoPath, DateTime startTime)
     {
         ffmpeg.RootPath = ffmpegPath;
         ffmpeg.avdevice_register_all();
@@ -106,7 +119,7 @@ class ffmpegToStore
         };
         ffmpeg.av_log_set_callback(value);
 
-        AVInputFormat* formatInputFormat = ffmpeg.av_find_input_format(videoPath.Substring(videoPath.LastIndexOf(".")+1));
+        AVInputFormat* formatInputFormat = ffmpeg.av_find_input_format(videoPath.Substring(videoPath.LastIndexOf(".") + 1));
 
         AVFormatContext* formatContext = null;
         if (ffmpeg.avformat_open_input(&formatContext, videoPath, formatInputFormat, null) != 0)
@@ -115,7 +128,7 @@ class ffmpegToStore
             return;
         }
 
-        /// VIDEO
+        // VIDEO
         AVCodec* videoCodec = null;
         int videoStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
         if (videoStreamIndex < 0)
@@ -124,7 +137,7 @@ class ffmpegToStore
             ffmpeg.avformat_close_input(&formatContext);
             return;
         }
-       
+
         if (ffmpeg.avformat_find_stream_info(formatContext, null) < 0)
         {
             Console.WriteLine("Stream info not found.");
@@ -134,7 +147,7 @@ class ffmpegToStore
 
         AVCodecParameters* videoCodecParameters = formatContext->streams[videoStreamIndex]->codecpar;
         var pixelFormat = (AVPixelFormat)formatContext->streams[videoStreamIndex]->codecpar->format;
-    
+
         if (videoCodec == null)
         {
             Console.WriteLine("Codec not found.");
@@ -176,11 +189,11 @@ class ffmpegToStore
 
         int dataSize = videoCodecParameters->width * videoCodecParameters->height * 3;
         byte[] bgrData = new byte[dataSize];
-        byte_ptrArray4 dstData = new byte_ptrArray4();
+        byte_ptrArray4 dstData = default(byte_ptrArray4);
         int[] dstLinesize = new int[4];
         dstLinesize[0] = videoCodecParameters->width * 3;
 
-        /// AUDIO
+        // AUDIO
         AVCodec* audioCodec = null;
         AVCodecContext* audioCodecContext = null;
         SwrContext* audioSwrctx = null;
@@ -188,14 +201,14 @@ class ffmpegToStore
 
         double timeRatio = 1.0;
         AVCodecParameters* audioCodecParameters;
-        if (audioEmitter != null)
+        if (this.audioEmitter != null)
         {
-            audioStreamIndex = InitialiseAudio(formatContext, &audioCodecParameters, &audioCodec, &audioCodecContext, &audioSwrctx);
+            audioStreamIndex = this.InitialiseAudio(formatContext, &audioCodecParameters, &audioCodec, &audioCodecContext, &audioSwrctx);
             var stream = formatContext->streams[audioStreamIndex];
             timeRatio = stream->time_base.num / (double)stream->time_base.den;
         }
 
-        /// PROCESSING
+        // PROCESSING
         AVPacket* packet = ffmpeg.av_packet_alloc();
         while (ffmpeg.av_read_frame(formatContext, packet) >= 0)
         {
@@ -210,12 +223,16 @@ class ffmpegToStore
                     {
                         dstData[0] = bgrPtr;
                         if (ffmpeg.sws_scale(videoSwsctx, frame->data, frame->linesize, 0, frame->height, dstData, dstLinesize) < 0)
+                        {
                             continue;
+                        }
                     }
+
                     image.Resource.CopyFrom(bgrData);
                     DateTime date = startTime.AddSeconds(frame->coded_picture_number / (double)formatContext->streams[videoStreamIndex]->avg_frame_rate.num);
-                    videoEmitter.Post(image, date);
+                    this.videoEmitter.Post(image, date);
                 }
+
                 ffmpeg.av_frame_free(&frame);
             }
             else if (packet->stream_index == audioStreamIndex)
@@ -233,12 +250,14 @@ class ffmpegToStore
 
                         DateTime dateA = startTime.AddSeconds(frame->pts * timeRatio);
                         WaveFormat wave = WaveFormat.Create16BitPcm(audioCodecContext->sample_rate, audioCodecContext->channels);
-                        audioEmitter.Post(new AudioBuffer(convertedSamples, wave), dateA);
+                        this.audioEmitter.Post(new AudioBuffer(convertedSamples, wave), dateA);
                     }
                 }
+
                 ffmpeg.av_frame_free(&frame);
             }
         }
+
         ffmpeg.av_packet_free(&packet);
         ffmpeg.avcodec_close(videoCodecContext);
         ffmpeg.avcodec_free_context(&videoCodecContext);
@@ -248,19 +267,20 @@ class ffmpegToStore
             ffmpeg.avcodec_close(audioCodecContext);
             ffmpeg.avcodec_free_context(&audioCodecContext);
             ffmpeg.swr_free(&audioSwrctx);
-         }
+        }
+
         ffmpeg.avformat_close_input(&formatContext);
     }
 }
 
-class Program
+internal class Program
 {
-    static public void Main(string[] args)
+    public static void Main(string[] args)
     {
         DateTime time = DateTime.Now;
         DateTime.TryParse(args[2], out time);
         int encodingLevel = 50;
         int.TryParse(args[5], out encodingLevel);
-        var process = new ffmpegToStore(args[0], args[1], time, args[3], args[4], encodingLevel, args.Length >= 7 ? args[6] : null);
+        var process = new FfmpegToStore(args[0], args[1], time, args[3], args[4], encodingLevel, args.Length >= 7 ? args[6] : null);
     }
 }
