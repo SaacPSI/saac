@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Configuration Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tab-container {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 30px;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #555;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="color"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .json-preview {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .item-list {
+            margin-top: 15px;
+        }
+
+        .item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-input input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .storage-status {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .storage-status h4 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .nested-item {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .small-btn {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 JSON Configuration Generator</h1>
+            <p class="subtitle">Generate DLL Configuration and Annotation Schema Files</p>
+        </header>
+
+        <div class="tab-container">
+            <button class="tab active" onclick="switchTab('dll')">DLL Configuration</button>
+            <button class="tab" onclick="switchTab('annotation')">Annotation Schema</button>
+        </div>
+
+        <div class="content">
+            <div id="alert-container"></div>
+
+            <!-- DLL Configuration Tab -->
+            <div id="dll-tab" class="tab-content active">
+                <div class="section">
+                    <h3>Add DLL Entry</h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="dll-topic">Topic:</label>
+                            <input type="text" id="dll-topic" placeholder="e.g., 1-Head">
+                        </div>
+                        <div class="form-group">
+                            <label for="dll-type">Type:</label>
+                            <input type="text" id="dll-type" placeholder="e.g., System.String">
+                        </div>
+                        <div class="form-group">
+                            <label for="dll-classFormat">Class Format:</label>
+                            <input type="text" id="dll-classFormat" placeholder="e.g., PsiFormatString">
+                        </div>
+                        <div class="form-group">
+                            <label for="dll-streamToStore">Stream to Store:</label>
+                            <input type="text" id="dll-streamToStore" placeholder="e.g., Heads">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="addDllEntry()">➕ Add Entry</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>DLL Entries</h3>
+                    <div id="dll-list" class="item-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Actions</h3>
+                    <div class="button-group">
+                        <button class="btn-success" onclick="saveDllFile()">💾 Save to File</button>
+                        <button class="btn-info" onclick="loadDllFile()">📂 Load from File</button>
+                        <button class="btn-warning" onclick="saveDllToStorage()">💿 Save to Local Storage</button>
+                        <button class="btn-info" onclick="loadDllFromStorage()">🔄 Load from Local Storage</button>
+                        <button class="btn-danger" onclick="clearDllEntries()">🗑️ Clear All</button>
+                    </div>
+                    <input type="file" id="dll-file-input" accept=".json" style="display: none" onchange="handleDllFileLoad(event)">
+                </div>
+
+                <div class="section">
+                    <h3>JSON Preview</h3>
+                    <div class="json-preview" id="dll-preview">[]</div>
+                </div>
+
+                <div class="storage-status" id="dll-storage-status"></div>
+            </div>
+
+            <!-- Annotation Schema Tab -->
+            <div id="annotation-tab" class="tab-content">
+                <div class="section">
+                    <h3>Schema Configuration</h3>
+                    <div class="form-group">
+                        <label for="schema-name">Schema Name:</label>
+                        <input type="text" id="schema-name" placeholder="e.g., Utterance" value="Utterance">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Add Attribute</h3>
+                    <div class="form-group">
+                        <label for="attr-name">Attribute Name:</label>
+                        <input type="text" id="attr-name" placeholder="e.g., Transcript">
+                    </div>
+                    <div class="form-group">
+                        <label for="attr-description">Description:</label>
+                        <input type="text" id="attr-description" placeholder="e.g., The utterance transcript">
+                    </div>
+                    <div class="form-group">
+                        <label for="attr-type">Value Schema Type:</label>
+                        <select id="attr-type" onchange="updateAttributeForm()">
+                            <option value="string">String</option>
+                            <option value="enumerable">Enumerable</option>
+                        </select>
+                    </div>
+
+                    <div id="string-schema-fields" style="display: none;">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="str-fillcolor">Fill Color:</label>
+                                <div class="color-input">
+                                    <input type="color" id="str-fillcolor" value="#00FFFF">
+                                    <input type="text" id="str-fillcolor-text" value="Cyan">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="str-textcolor">Text Color:</label>
+                                <div class="color-input">
+                                    <input type="color" id="str-textcolor" value="#0000FF">
+                                    <input type="text" id="str-textcolor-text" value="Blue">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="str-default">Default Value:</label>
+                            <input type="text" id="str-default" placeholder="e.g., Hello World">
+                        </div>
+                    </div>
+
+                    <div id="enum-schema-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="enum-default">Default Value:</label>
+                            <input type="text" id="enum-default" placeholder="e.g., Neutral">
+                        </div>
+                        <div class="form-group">
+                            <label>Possible Values:</label>
+                            <div id="enum-values-list"></div>
+                            <div style="margin-top: 10px;">
+                                <input type="text" id="enum-value" placeholder="Value name" style="width: 30%; margin-right: 10px;">
+                                <div class="color-input" style="display: inline-flex; margin-right: 10px;">
+                                    <input type="color" id="enum-fillcolor" value="#808080">
+                                    <input type="text" id="enum-fillcolor-text" value="DarkGray" style="width: 100px;">
+                                </div>
+                                <div class="color-input" style="display: inline-flex; margin-right: 10px;">
+                                    <input type="color" id="enum-textcolor" value="#FFFFFF">
+                                    <input type="text" id="enum-textcolor-text" value="White" style="width: 100px;">
+                                </div>
+                                <button class="btn-primary small-btn" onclick="addEnumValue()">➕ Add Value</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="addAttribute()">➕ Add Attribute</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Attributes</h3>
+                    <div id="attribute-list" class="item-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Actions</h3>
+                    <div class="button-group">
+                        <button class="btn-success" onclick="saveAnnotationFile()">💾 Save to File</button>
+                        <button class="btn-info" onclick="loadAnnotationFile()">📂 Load from File</button>
+                        <button class="btn-warning" onclick="saveAnnotationToStorage()">💿 Save to Local Storage</button>
+                        <button class="btn-info" onclick="loadAnnotationFromStorage()">🔄 Load from Local Storage</button>
+                        <button class="btn-danger" onclick="clearAnnotationSchema()">🗑️ Clear All</button>
+                    </div>
+                    <input type="file" id="annotation-file-input" accept=".json" style="display: none" onchange="handleAnnotationFileLoad(event)">
+                </div>
+
+                <div class="section">
+                    <h3>JSON Preview</h3>
+                    <div class="json-preview" id="annotation-preview">{}</div>
+                </div>
+
+                <div class="storage-status" id="annotation-storage-status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data stores
+        let dllEntries = [];
+        let annotationSchema = {
+            Name: "Utterance",
+            AttributeSchemas: []
+        };
+        let enumValues = [];
+
+        // Tab switching
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'dll') {
+                tabs[0].classList.add('active');
+                document.getElementById('dll-tab').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('annotation-tab').classList.add('active');
+            }
+        }
+
+        // Alert system
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // DLL Configuration Functions
+        function addDllEntry() {
+            const topic = document.getElementById('dll-topic').value.trim();
+            const type = document.getElementById('dll-type').value.trim();
+            const classFormat = document.getElementById('dll-classFormat').value.trim();
+            const streamToStore = document.getElementById('dll-streamToStore').value.trim();
+
+            if (!topic || !type || !classFormat || !streamToStore) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            dllEntries.push({ topic, type, classFormat, streamToStore });
+            
+            document.getElementById('dll-topic').value = '';
+            document.getElementById('dll-type').value = '';
+            document.getElementById('dll-classFormat').value = '';
+            document.getElementById('dll-streamToStore').value = '';
+            
+            updateDllList();
+            updateDllPreview();
+            showAlert('DLL entry added successfully', 'success');
+        }
+
+        function updateDllList() {
+            const list = document.getElementById('dll-list');
+            list.innerHTML = '';
+            
+            dllEntries.forEach((entry, index) => {
+                const item = document.createElement('div');
+                item.className = 'item';
+                item.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-title">${entry.topic}</span>
+                        <button class="btn-danger small-btn" onclick="removeDllEntry(${index})">🗑️ Remove</button>
+                    </div>
+                    <div><strong>Type:</strong> ${entry.type}</div>
+                    <div><strong>Class Format:</strong> ${entry.classFormat}</div>
+                    <div><strong>Stream to Store:</strong> ${entry.streamToStore}</div>
+                `;
+                list.appendChild(item);
+            });
+
+            if (dllEntries.length === 0) {
+                list.innerHTML = '<p style="color: #999; text-align: center;">No entries added yet</p>';
+            }
+        }
+
+        function removeDllEntry(index) {
+            dllEntries.splice(index, 1);
+            updateDllList();
+            updateDllPreview();
+            showAlert('Entry removed', 'info');
+        }
+
+        function updateDllPreview() {
+            document.getElementById('dll-preview').textContent = JSON.stringify(dllEntries, null, 2);
+        }
+
+        function clearDllEntries() {
+            if (confirm('Are you sure you want to clear all DLL entries?')) {
+                dllEntries = [];
+                updateDllList();
+                updateDllPreview();
+                showAlert('All entries cleared', 'info');
+            }
+        }
+
+        function saveDllFile() {
+            const dataStr = JSON.stringify(dllEntries, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Dll.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            showAlert('File saved successfully', 'success');
+        }
+
+        function loadDllFile() {
+            document.getElementById('dll-file-input').click();
+        }
+
+        function handleDllFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    dllEntries = JSON.parse(e.target.result);
+                    updateDllList();
+                    updateDllPreview();
+                    showAlert('File loaded successfully', 'success');
+                } catch (error) {
+                    showAlert('Error parsing JSON file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function saveDllToStorage() {
+            localStorage.setItem('dllConfig', JSON.stringify(dllEntries));
+            localStorage.setItem('dllConfig_timestamp', new Date().toISOString());
+            showAlert('Saved to local storage', 'success');
+            updateStorageStatus('dll');
+        }
+
+        function loadDllFromStorage() {
+            const stored = localStorage.getItem('dllConfig');
+            if (stored) {
+                dllEntries = JSON.parse(stored);
+                updateDllList();
+                updateDllPreview();
+                showAlert('Loaded from local storage', 'success');
+            } else {
+                showAlert('No data found in local storage', 'error');
+            }
+        }
+
+        // Annotation Schema Functions
+        function updateAttributeForm() {
+            const type = document.getElementById('attr-type').value;
+            document.getElementById('string-schema-fields').style.display = type === 'string' ? 'block' : 'none';
+            document.getElementById('enum-schema-fields').style.display = type === 'enumerable' ? 'block' : 'none';
+        }
+
+        function addAttribute() {
+            const name = document.getElementById('attr-name').value.trim();
+            const description = document.getElementById('attr-description').value.trim();
+            const type = document.getElementById('attr-type').value;
+
+            if (!name || !description) {
+                showAlert('Please fill in name and description', 'error');
+                return;
+            }
+
+            let valueSchema;
+
+            if (type === 'string') {
+                valueSchema = {
+                    "$type": "Microsoft.Psi.Data.Annotations.StringAnnotationValueSchema, Microsoft.Psi.Data",
+                    "FillColor": document.getElementById('str-fillcolor-text').value || "Cyan",
+                    "TextColor": document.getElementById('str-textcolor-text').value || "Blue",
+                    "DefaultValue": document.getElementById('str-default').value || ""
+                };
+            } else {
+                if (enumValues.length === 0) {
+                    showAlert('Please add at least one possible value for enumerable type', 'error');
+                    return;
+                }
+                valueSchema = {
+                    "$type": "Microsoft.Psi.Data.Annotations.EnumerableAnnotationValueSchema`1[[System.String, mscorlib]], Microsoft.Psi.Data",
+                    "DefaultValue": document.getElementById('enum-default').value || enumValues[0].Value,
+                    "PossibleValues": [...enumValues]
+                };
+            }
+
+            annotationSchema.AttributeSchemas.push({
+                Name: name,
+                Description: description,
+                ValueSchema: valueSchema
+            });
+
+            document.getElementById('attr-name').value = '';
+            document.getElementById('attr-description').value = '';
+            document.getElementById('str-default').value = '';
+            document.getElementById('enum-default').value = '';
+            enumValues = [];
+            
+            updateAttributeList();
+            updateAnnotationPreview();
+            updateEnumValuesList();
+            showAlert('Attribute added successfully', 'success');
+        }
+
+        function addEnumValue() {
+            const value = document.getElementById('enum-value').value.trim();
+            const fillColor = document.getElementById('enum-fillcolor-text').value.trim();
+            const textColor = document.getElementById('enum-textcolor-text').value.trim();
+
+            if (!value) {
+                showAlert('Please enter a value name', 'error');
+                return;
+            }
+
+            enumValues.push({
+                Value: value,
+                FillColor: fillColor || "Gray",
+                TextColor: textColor || "White"
+            });
+
+            document.getElementById('enum-value').value = '';
+            updateEnumValuesList();
+        }
+
+        function updateEnumValuesList() {
+            const list = document.getElementById('enum-values-list');
+            list.innerHTML = '';
+            
+            enumValues.forEach((val, index) => {
+                const item = document.createElement('div');
+                item.className = 'nested-item';
+                item.innerHTML = `
+                    <strong>${val.Value}</strong> - Fill: ${val.FillColor}, Text: ${val.TextColor}
+                    <button class="btn-danger small-btn" style="float: right;" onclick="removeEnumValue(${index})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function removeEnumValue(index) {
+            enumValues.splice(index, 1);
+            updateEnumValuesList();
+        }
+
+        function updateAttributeList() {
+            const list = document.getElementById('attribute-list');
+            list.innerHTML = '';
+            
+            annotationSchema.AttributeSchemas.forEach((attr, index) => {
+                const item = document.createElement('div');
+                item.className = 'item';
+                const isEnum = attr.ValueSchema.$type.includes('Enumerable');
+                item.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-title">${attr.Name}</span>
+                        <button class="btn-danger small-btn" onclick="removeAttribute(${index})">🗑️ Remove</button>
+                    </div>
+                    <div><strong>Description:</strong> ${attr.Description}</div>
+                    <div><strong>Type:</strong> ${isEnum ? 'Enumerable' : 'String'}</div>
+                    <div><strong>Default:</strong> ${attr.ValueSchema.DefaultValue}</div>
+                    ${isEnum ? `<div><strong>Possible Values:</strong> ${attr.ValueSchema.PossibleValues.map(v => v.Value).join(', ')}</div>` : ''}
+                `;
+                list.appendChild(item);
+            });
+
+            if (annotationSchema.AttributeSchemas.length === 0) {
+                list.innerHTML = '<p style="color: #999; text-align: center;">No attributes added yet</p>';
+            }
+        }
+
+        function removeAttribute(index) {
+            annotationSchema.AttributeSchemas.splice(index, 1);
+            updateAttributeList();
+            updateAnnotationPreview();
+            showAlert('Attribute removed', 'info');
+        }
+
+        function updateAnnotationPreview() {
+            annotationSchema.Name = document.getElementById('schema-name').value || "Utterance";
+            document.getElementById('annotation-preview').textContent = JSON.stringify(annotationSchema, null, 2);
+        }
+
+        function clearAnnotationSchema() {
+            if (confirm('Are you sure you want to clear the annotation schema?')) {
+                annotationSchema = {
+                    Name: document.getElementById('schema-name').value || "Utterance",
+                    AttributeSchemas: []
+                };
+                enumValues = [];
+                updateAttributeList();
+                updateAnnotationPreview();
+                updateEnumValuesList();
+                showAlert('Schema cleared', 'info');
+            }
+        }
+
+        function saveAnnotationFile() {
+            annotationSchema.Name = document.getElementById('schema-name').value || "Utterance";
+            const dataStr = JSON.stringify(annotationSchema, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'annotation.schema.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            showAlert('File saved successfully', 'success');
+        }
+
+        function loadAnnotationFile() {
+            document.getElementById('annotation-file-input').click();
+        }
+
+        function handleAnnotationFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    annotationSchema = JSON.parse(e.target.result);
+                    document.getElementById('schema-name').value = annotationSchema.Name;
+                    updateAttributeList();
+                    updateAnnotationPreview();
+                    showAlert('File loaded successfully', 'success');
+                } catch (error) {
+                    showAlert('Error parsing JSON file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function saveAnnotationToStorage() {
+            annotationSchema.Name = document.getElementById('schema-name').value || "Utterance";
+            localStorage.setItem('annotationSchema', JSON.stringify(annotationSchema));
+            localStorage.setItem('annotationSchema_timestamp', new Date().toISOString());
+            showAlert('Saved to local storage', 'success');
+            updateStorageStatus('annotation');
+        }
+
+        function loadAnnotationFromStorage() {
+            const stored = localStorage.getItem('annotationSchema');
+            if (stored) {
+                annotationSchema = JSON.parse(stored);
+                document.getElementById('schema-name').value = annotationSchema.Name;
+                updateAttributeList();
+                updateAnnotationPreview();
+                showAlert('Loaded from local storage', 'success');
+            } else {
+                showAlert('No data found in local storage', 'error');
+            }
+        }
+
+        function updateStorageStatus(type) {
+            const statusDiv = document.getElementById(`${type}-storage-status`);
+            const timestamp = localStorage.getItem(`${type === 'dll' ? 'dllConfig' : 'annotationSchema'}_timestamp`);
+            
+            if (timestamp) {
+                const date = new Date(timestamp);
+                statusDiv.innerHTML = `
+                    <h4>💾 Local Storage Status</h4>
+                    <p>Last saved: ${date.toLocaleString()}</p>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <h4>💾 Local Storage Status</h4>
+                    <p>No data saved yet</p>
+                `;
+            }
+        }
+
+        // Sync color inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAttributeForm();
+            updateDllPreview();
+            updateAnnotationPreview();
+            updateStorageStatus('dll');
+            updateStorageStatus('annotation');
+
+            // Color picker sync
+            const colorInputs = [
+                { colorId: 'str-fillcolor', textId: 'str-fillcolor-text' },
+                { colorId: 'str-textcolor', textId: 'str-textcolor-text' },
+                { colorId: 'enum-fillcolor', textId: 'enum-fillcolor-text' },
+                { colorId: 'enum-textcolor', textId: 'enum-textcolor-text' }
+            ];
+
+            colorInputs.forEach(({ colorId, textId }) => {
+                const colorPicker = document.getElementById(colorId);
+                const textInput = document.getElementById(textId);
+
+                if (colorPicker && textInput) {
+                    colorPicker.addEventListener('input', function() {
+                        const namedColor = getColorName(this.value);
+                        textInput.value = namedColor;
+                    });
+
+                    textInput.addEventListener('input', function() {
+                        const hexColor = getColorHex(this.value);
+                        if (hexColor) {
+                            colorPicker.value = hexColor;
+                        }
+                    });
+                }
+            });
+        });
+
+        function getColorName(hex) {
+            const colors = {
+                '#FF0000': 'Red', '#00FF00': 'Lime', '#0000FF': 'Blue',
+                '#FFFF00': 'Yellow', '#00FFFF': 'Cyan', '#FF00FF': 'Magenta',
+                '#FFFFFF': 'White', '#000000': 'Black', '#808080': 'Gray',
+                '#A9A9A9': 'DarkGray', '#D3D3D3': 'LightGray', '#FFA500': 'Orange',
+                '#800080': 'Purple', '#008000': 'Green', '#800000': 'Maroon'
+            };
+            return colors[hex.toUpperCase()] || hex;
+        }
+
+        function getColorHex(name) {
+            const colors = {
+                'Red': '#FF0000', 'Lime': '#00FF00', 'Blue': '#0000FF',
+                'Yellow': '#FFFF00', 'Cyan': '#00FFFF', 'Magenta': '#FF00FF',
+                'White': '#FFFFFF', 'Black': '#000000', 'Gray': '#808080',
+                'DarkGray': '#A9A9A9', 'LightGray': '#D3D3D3', 'Orange': '#FFA500',
+                'Purple': '#800080', 'Green': '#008000', 'Maroon': '#800000'
+            };
+            return colors[name];
+        }
+    </script>
+</body>
+</html>

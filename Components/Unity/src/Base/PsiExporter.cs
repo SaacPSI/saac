@@ -6,9 +6,13 @@ using Microsoft.Psi.Interop.Transport;
 
 public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
 {
+    [Tooltip("Name of the topic to which data will be exported")]
     public string TopicName = "Topic";
+    
+    [Tooltip("Rate at which data should be sent per second (0 = no throttling)")]
     public float DataPerSecond = 0.0f;
 
+    [Tooltip("Type of export method to use (Rendezvous, TCPWriter, etc.)")]
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
 
     protected PsiPipelineManager PsiManager;

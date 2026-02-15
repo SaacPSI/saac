@@ -986,9 +986,9 @@ namespace CameraRemoteApp
                 RendezVousPipeline rdv = this.datasetPipeline as RendezVousPipeline;
                 if (this.isStreaming)
                 {
-                    Microsoft.Psi.Remoting.RemoteExporter cameraExporter = new Microsoft.Psi.Remoting.RemoteExporter(this.datasetPipeline.Pipeline, this.exportPort);
-                    cameraExporter.Exporter.Write(compressed, streamName);
-                    rdv.AddProcess(new Rendezvous.Process(this.rendezVousApplicationName, [cameraExporter.ToRendezvousEndpoint(this.ipSelected)], "Version1.0"));
+                    Microsoft.Psi.Remoting.RemoteExporter cameraExporter = new Microsoft.Psi.Remoting.RemoteExporter(datasetPipeline.Pipeline, exportPort, Microsoft.Psi.Remoting.TransportKind.Tcp);
+                    cameraExporter.Exporter.Write(compressed, streamName); 
+                    rdv.AddProcess(new Rendezvous.Process(rendezVousApplicationName, [cameraExporter.ToRendezvousEndpoint(ipSelected)], "Version1.0"));
                 }
             }
         }

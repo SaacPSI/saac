@@ -49,21 +49,47 @@ public class PsiPipelineManager : MonoBehaviour
     private bool initializedEventTriggered;
 
     public enum PsiManagerStartMode { Manual, Connection, Automatic };
+    
+    [Tooltip("Determines when the pipeline starts (Manual, Connection, or Automatic)")]
     public PsiManagerStartMode StartMode = PsiManagerStartMode.Automatic;
+    
+    [Tooltip("Number of exporters expected before starting the pipeline (0 = no requirement)")]
     public int ExporterNumberExpectedAtStart = 0;
+    
+    [Tooltip("IP address or hostname of the Rendezvous server")]
     public string RendezVousServerAddress = "";
+    
+    [Tooltip("Port number of the Rendezvous server")]
     public int RendezVousServerPort = 13331;
+    
+    [Tooltip("Name used to identify this process in the Rendezvous system")]
     public string UsedProcessName = "Unity";
+    
+    [Tooltip("IP address used for this process (auto-detected if empty)")]
     public string UsedAddress = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString();
+    
+    [Tooltip("List of process names that must connect before pipeline can start")]
     public List<string> WaitedProcess;
+    
+    [Tooltip("List of process names that are allowed to connect")]
     public List<string> AcceptedProcess;
+    
     public delegate void PsiEvent();
     public PsiEvent onConnected;
     public PsiEvent onInitialized;
+    
+    [Tooltip("Maximum number of streams allowed in low-frequency exporters")]
     public int ExportersMaxLowFrequencyStreams = 12;
+    
+    [Tooltip("Starting port number for exporters (incremented for each exporter)")]
     public int ExportersStartingPort = 11411;
+    
+    [Tooltip("GameObject containing a TextMeshPro component for displaying logs")]
     public GameObject TextLogObject;
+    
     public Emitter<(Command, string)> CommandEmitter { get; private set; } = null;
+    
+    [Tooltip("Port number for the command emitter")]
     public int CommandEmitterPort = 11511;
 
     public enum PsiPipelineManagerState { Instantiated, Connecting, Connected, Served, Initializing, Initialized, Running, Stopped, Failed };
