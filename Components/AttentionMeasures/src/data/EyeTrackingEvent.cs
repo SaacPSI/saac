@@ -4,21 +4,35 @@
 
 namespace SAAC.AttentionMeasures
 {
-    // Class to send events to PSI
+    /// <summary>
+    /// Class to send events to PSI.
+    /// </summary>
     public class EyeTrackingEvent
     {
+        /// <summary>
+        /// Enumeration of event types.
+        /// </summary>
         public enum EventType
         {
+            /// <summary>Beginning of experiment.</summary>
             BeginningExperiment,
+
+            /// <summary>Ending of experiment.</summary>
             EndingExperiment
         }
 
-        public EventType eventType;
+        /// <summary>
+        /// Gets or sets the event type.
+        /// </summary>
+        public EventType EventTypeValue { get; set; }
 
-        // Constructors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EyeTrackingEvent"/> class.
+        /// </summary>
+        /// <param name="e">The event type.</param>
         public EyeTrackingEvent(EventType e)
         {
-            this.eventType = e;
+            this.EventTypeValue = e;
         }
     }
 }

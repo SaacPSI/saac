@@ -11,22 +11,6 @@ namespace SAAC.Bodies.Statistics
     using Microsoft.Psi.AzureKinect;
 
     /// <summary>
-    /// Configuration for the bodies statistics component.
-    /// </summary>
-    public class BodiesStatisticsConfiguration
-    {
-        /// <summary>
-        /// Gets or sets the minimum confidence level required for joints used in statistics.
-        /// </summary>
-        public JointConfidenceLevel ConfidenceLevel { get; set; } = JointConfidenceLevel.Medium;
-
-        /// <summary>
-        /// Gets or sets the file path for storing statistics in CSV format.
-        /// </summary>
-        public string StoringPath { get; set; } = "./Stats.csv";
-    }
-
-    /// <summary>
     /// Component that collects and calculates statistics on body bone lengths.
     /// </summary>
     public class BodiesStatistics : IConsumer<List<SimplifiedBody>>, IDisposable

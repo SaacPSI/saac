@@ -113,8 +113,7 @@ namespace SAAC.Bodies
         private void CompleteBody(ref SimplifiedBody body)
         {
             Vector3D fakePosition = (body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.SpineChest].Item2 + body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Pelvis].Item2) / 2.0;
-            body.Joints.Add(Microsoft.Azure.Kinect.BodyTracking.JointId.SpineNavel, new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>
-                              (body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Pelvis].Item1, fakePosition));
+            body.Joints.Add(Microsoft.Azure.Kinect.BodyTracking.JointId.SpineNavel, new Tuple<Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel, Vector3D>(body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Pelvis].Item1, fakePosition));
             body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.ThumbLeft] = body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.WristLeft];
             body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.ThumbRight] = body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.WristRight];
             body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Nose] = body.Joints[Microsoft.Azure.Kinect.BodyTracking.JointId.Head];

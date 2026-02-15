@@ -31,6 +31,5 @@ namespace SAAC.Bodies
         /// Gets or sets the minimum distance threshold that excludes body pairs from pairing.
         /// </summary>
         public double NotPairableDistanceThreshold { get; set; } = 8;
-
     }
 }

@@ -28,16 +28,20 @@ namespace SAAC.Bodies
             (JointId.ShoulderLeft, JointId.ClavicleLeft),
             (JointId.ElbowLeft, JointId.ShoulderLeft),
             (JointId.WristLeft, JointId.ElbowLeft),
-            //(JointId.HandLeft, JointId.WristLeft),
-            //(JointId.HandTipLeft, JointId.HandLeft),
-            //(JointId.ThumbLeft, JointId.WristLeft),
+
+            // Uncomment these lines if you want to include hand joints
+            // (JointId.HandLeft, JointId.WristLeft),
+            // (JointId.HandTipLeft, JointId.HandLeft),
+            // (JointId.ThumbLeft, JointId.WristLeft),
             (JointId.ClavicleRight, JointId.SpineChest),
             (JointId.ShoulderRight, JointId.ClavicleRight),
             (JointId.ElbowRight, JointId.ShoulderRight),
             (JointId.WristRight, JointId.ElbowRight),
-            //(JointId.HandRight, JointId.WristRight),
-            //(JointId.HandTipRight, JointId.HandRight),
-            //(JointId.ThumbRight, JointId.WristRight),
+
+            // Uncomment these lines if you want to include hand joints
+            // (JointId.HandRight, JointId.WristRight),
+            // (JointId.HandTipRight, JointId.HandRight),
+            // (JointId.ThumbRight, JointId.WristRight),
             (JointId.HipLeft, JointId.Pelvis),
             (JointId.KneeLeft, JointId.HipLeft),
             (JointId.AnkleLeft, JointId.KneeLeft),
@@ -47,35 +51,37 @@ namespace SAAC.Bodies
             (JointId.AnkleRight, JointId.KneeRight),
             (JointId.FootRight, JointId.AnkleRight),
             (JointId.Head, JointId.Neck),
-            //(JointId.Nose, JointId.Head),
-            //(JointId.EyeLeft, JointId.Head),
-            //(JointId.EarLeft, JointId.Head),
-            //(JointId.EyeRight, JointId.Head),
-            //(JointId.EarRight, JointId.Head)
+
+            // Uncomment these lines if you want to include head joints
+            // (JointId.Nose, JointId.Head),
+            // (JointId.EyeLeft, JointId.Head),
+            // (JointId.EarLeft, JointId.Head),
+            // (JointId.EyeRight, JointId.Head),
+            // (JointId.EarRight, JointId.Head)
         };
 
         /// <summary>
-        /// Gets or sets maximum acceptable duration for correpondance in millisecond
+        /// Gets or sets maximum acceptable duration for correpondance in millisecond.
         /// </summary>
         public TimeSpan MaximumIdentificationTime { get; set; } = new TimeSpan(0, 0, 0, 0, 500);
 
         /// <summary>
-        /// Gets or sets minimum time for trying the correspondance below that time we trust the Kinect identification algo
+        /// Gets or sets minimum time for trying the correspondance below that time we trust the Kinect identification algo.
         /// </summary>
         public TimeSpan MinimumIdentificationTime { get; set; } = new TimeSpan(0, 1, 0);
 
         /// <summary>
-        /// Gets or sets maximum acceptable duration for between old id pop again without identification in millisecond
+        /// Gets or sets maximum acceptable duration for between old id pop again without identification in millisecond.
         /// </summary>
         public TimeSpan MaximumLostTime { get; set; } = new TimeSpan(0, 5, 0);
 
         /// <summary>
-        /// Gets or sets maximum acceptable deviation for correpondance in meter
+        /// Gets or sets maximum acceptable deviation for correpondance in meter.
         /// </summary>
         public double MaximumDeviationAllowed { get; set; } = 0.0025;
 
         /// <summary>
-        /// Gets or sets maximum acceptable deviation for correpondance in meter
+        /// Gets or sets maximum acceptable deviation for correpondance in meter.
         /// </summary>
         public uint MinimumBonesForIdentification { get; set; } = 5;
     }

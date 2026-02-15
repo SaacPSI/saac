@@ -4,32 +4,56 @@
 
 namespace SAAC.AttentionMeasures
 {
-    // Class representing an eye movement from a set of samplings. This movement can be a fixation or a saccade
+    /// <summary>
+    /// Class representing an eye movement from a set of samplings. This movement can be a fixation or a saccade.
+    /// </summary>
     public class EyeMovement
     {
-        // Is the movement a fixation ? If not, then it is a saccade
-        public bool IsFixation;
+        /// <summary>
+        /// Gets or sets a value indicating whether the movement is a fixation. If not, then it is a saccade.
+        /// </summary>
+        public bool IsFixation { get; set; }
 
-        // Timestamps of the first  and last EyeTrackingData labeled in this movement
-        public DateTime FirstTimeStamp;
-        public DateTime LastTimeStamp;
+        /// <summary>
+        /// Gets or sets the timestamp of the first EyeTrackingData labeled in this movement.
+        /// </summary>
+        public DateTime FirstTimeStamp { get; set; }
 
-        // Amount of eyeTracking messages in this mouvement
-        public int MessagesCount;
+        /// <summary>
+        /// Gets or sets the timestamp of the last EyeTrackingData labeled in this movement.
+        /// </summary>
+        public DateTime LastTimeStamp { get; set; }
 
-        // Average position of the fixation (null if the movement is a saccade)
-        public System.Numerics.Vector3 FixDirection;
+        /// <summary>
+        /// Gets or sets the amount of eyeTracking messages in this movement.
+        /// </summary>
+        public int MessagesCount { get; set; }
 
-        // Identification key of the fixated object (null if the movement is a saccade)
-        public (int, string) FixedObjectKey;
+        /// <summary>
+        /// Gets or sets the average position of the fixation (null if the movement is a saccade).
+        /// </summary>
+        public System.Numerics.Vector3 FixDirection { get; set; }
 
-        // Direction of the starting fixation of the saccade (null if the movement is a fixation)
-        public System.Numerics.Vector3 SaccStartDirection;
+        /// <summary>
+        /// Gets or sets the identification key of the fixated object (null if the movement is a saccade).
+        /// </summary>
+        public (int, string) FixedObjectKey { get; set; }
 
-        // Direction of the ending fixation of the saccade (null if the movement is a fixation)
-        public System.Numerics.Vector3 SaccEndDirection;
+        /// <summary>
+        /// Gets or sets the direction of the starting fixation of the saccade (null if the movement is a fixation).
+        /// </summary>
+        public System.Numerics.Vector3 SaccStartDirection { get; set; }
 
-        // Constructor
+        /// <summary>
+        /// Gets or sets the direction of the ending fixation of the saccade (null if the movement is a fixation).
+        /// </summary>
+        public System.Numerics.Vector3 SaccEndDirection { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EyeMovement"/> class.
+        /// </summary>
+        /// <param name="beginTime">The beginning time of the movement.</param>
+        /// <param name="isFix">A value indicating whether this is a fixation.</param>
         public EyeMovement(DateTime beginTime, bool isFix)
         {
             this.FirstTimeStamp = beginTime;
@@ -37,13 +61,19 @@ namespace SAAC.AttentionMeasures
             this.MessagesCount = 1;
         }
 
-        // Getters
+        /// <summary>
+        /// Gets the duration of the eye movement.
+        /// </summary>
+        /// <returns>The duration as a TimeSpan.</returns>
         public TimeSpan GetDuration()
         {
             return this.LastTimeStamp - this.FirstTimeStamp;
         }
 
-        // Saccade amplitude in degrees
+        /// <summary>
+        /// Gets the saccade amplitude in degrees.
+        /// </summary>
+        /// <returns>The saccade amplitude in degrees.</returns>
         public double GetSaccAmplitude()
         {
             double angle = 0;
@@ -59,6 +89,12 @@ namespace SAAC.AttentionMeasures
             return angle * 180 / Math.PI;
         }
 
+        /// <summary>
+        /// Equality operator for EyeMovement.
+        /// </summary>
+        /// <param name="e1">First eye movement.</param>
+        /// <param name="e2">Second eye movement.</param>
+        /// <returns>True if equal; otherwise false.</returns>
         public static bool operator ==(EyeMovement e1, EyeMovement e2)
         {
             if (e1 is null || e2 is null)
@@ -76,6 +112,12 @@ namespace SAAC.AttentionMeasures
                         && e1.SaccEndDirection == e2.SaccEndDirection;
         }
 
+        /// <summary>
+        /// Inequality operator for EyeMovement.
+        /// </summary>
+        /// <param name="e1">First eye movement.</param>
+        /// <param name="e2">Second eye movement.</param>
+        /// <returns>True if not equal; otherwise false.</returns>
         public static bool operator !=(EyeMovement e1, EyeMovement e2)
         {
             if (e1 is null || e2 is null)

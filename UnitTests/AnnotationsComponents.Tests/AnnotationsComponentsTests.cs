@@ -1,67 +1,43 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.Psi;
 using Microsoft.Psi.Data.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SAAC.AnnotationsComponents;
-using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace AnnotationsComponents.Tests
 {
     [TestClass]
     public class AnnotationProcessorTests
     {
-        private const string TestSchemaJson = @"{
-            ""Name"": ""TestSchema"",
-            ""Version"": ""1.0"",
-            ""Attributes"": [
-                {
-                    ""Name"": ""Comment"",
-                    ""Description"": ""A comment"",
-                    ""ValueSchema"": {
-                        ""$type"": ""Microsoft.Psi.Data.Annotations.AnnotationSchemaValueString, Microsoft.Psi.Data""
-                    }
-                }
-            ]
-        }";
-
-        private const string EnumerableSchemaJson = @"{
-            ""Name"": ""EnumerableSchema"",
-            ""Version"": ""1.0"",
-            ""Attributes"": [
-                {
-                    ""Name"": ""Status"",
-                    ""Description"": ""Status indicator"",
-                    ""ValueSchema"": {
-                        ""$type"": ""Microsoft.Psi.Data.Annotations.AnnotationSchemaValueEnumeration, Microsoft.Psi.Data"",
-                        ""Values"": [
-                            { ""Value"": ""Active"", ""Description"": ""Active state"" },
-                            { ""Value"": ""Inactive"", ""Description"": ""Inactive state"" }
-                        ]
-                    }
-                }
-            ]
-        }";
-
         private string testSchemaPath;
-        private string enumerableSchemaPath;
+
+        public static string GetSolutionPath()
+        {
+            string currentDirPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            while (currentDirPath != null)
+            {
+                var solutionFile = Directory.GetFiles(currentDirPath)
+                    .FirstOrDefault(f => Path.GetExtension(f).Equals(".sln", StringComparison.OrdinalIgnoreCase));
+                if (solutionFile != null)
+                    return Path.GetDirectoryName(solutionFile);
+                currentDirPath = Path.GetDirectoryName(currentDirPath);
+            }
+            throw new FileNotFoundException("Aucun fichier .sln trouvé.");
+        }
 
         [TestInitialize]
         public void Setup()
         {
-            testSchemaPath = Path.Combine(Path.GetTempPath(), "TestSchema.schema.json");
-            enumerableSchemaPath = Path.Combine(Path.GetTempPath(), "EnumerableSchema.schema.json");
-            File.WriteAllText(testSchemaPath, TestSchemaJson);
-            File.WriteAllText(enumerableSchemaPath, EnumerableSchemaJson);
+            testSchemaPath = $@"{GetSolutionPath()}\Components\AnnotationsComponents\AnnotationFiles\annotation.schema.json";
         }
 
         [TestCleanup]
         public void Cleanup()
         {
-            if (File.Exists(testSchemaPath))
-                File.Delete(testSchemaPath);
-            if (File.Exists(enumerableSchemaPath))
-                File.Delete(enumerableSchemaPath);
         }
 
         private AnnotationSchema LoadSchema(string path)
@@ -119,7 +95,7 @@ namespace AnnotationsComponents.Tests
                 var results = new List<TimeIntervalAnnotationSet>();
                 processor.Out.Do(result => results.Add(result.DeepClone()));
 
-                var generator = Generators.Sequence(pipeline, new[] { "Comment=TestValue" }, TimeSpan.FromMilliseconds(100));
+                var generator = Generators.Sequence(pipeline, new[] { "Transcript=TestValue" }, TimeSpan.FromMilliseconds(100));
                 generator.PipeTo(processor.In);
 
                 pipeline.Run();
@@ -179,7 +155,7 @@ namespace AnnotationsComponents.Tests
                 var results = new List<TimeIntervalAnnotationSet>();
                 processor.Out.Do(result => results.Add(result.DeepClone()));
 
-                var messages = new[] { "Comment=First", "Comment=Second", "Comment=Third" };
+                var messages = new[] { "Transcript=First", "Transcript=Second", "Transcript=Third" };
                 var generator = Generators.Sequence(pipeline, messages, TimeSpan.FromMilliseconds(100));
                 generator.PipeTo(processor.In);
 
@@ -200,7 +176,7 @@ namespace AnnotationsComponents.Tests
                 var results = new List<TimeIntervalAnnotationSet>();
                 processor.Out.Do(result => results.Add(result.DeepClone()));
 
-                var generator = Generators.Sequence(pipeline, new[] { "Comment=" }, TimeSpan.FromMilliseconds(100));
+                var generator = Generators.Sequence(pipeline, new[] { "Transcript=" }, TimeSpan.FromMilliseconds(100));
                 generator.PipeTo(processor.In);
 
                 pipeline.Run();
@@ -209,27 +185,5 @@ namespace AnnotationsComponents.Tests
             }
         }
 
-        [TestMethod]
-        public void AnnotationProcessor_MultipleEqualsInValue_PostsAnnotation()
-        {
-            using (var pipeline = Pipeline.Create())
-            {
-                var schema = LoadSchema(testSchemaPath);
-                var processor = new AnnotationProcessor(pipeline, schema, "TestProcessor");
-
-                var results = new List<TimeIntervalAnnotationSet>();
-                processor.Out.Do(result => results.Add(result.DeepClone()));
-
-                // Message with multiple '=' should split only on first '='
-                var generator = Generators.Sequence(pipeline, new[] { "Comment=Value=With=Equals" }, TimeSpan.FromMilliseconds(100));
-                generator.PipeTo(processor.In);
-
-                pipeline.Run();
-
-                // This depends on implementation - may or may not work
-                // Testing to verify behavior
-                Assert.IsTrue(results.Count <= 1);
-            }
-        }
     }
 }

@@ -22,7 +22,7 @@ namespace SAAC.AudioRecording
         /// <summary>
         /// Gets or sets a value indicating whether microphones have been initialized.
         /// </summary>
-        public bool isMicrophoneInit = false;
+        public bool IsMicrophoneInit = false;
 
         /// <summary>
         /// Gets the PSI exporter for storing audio data.

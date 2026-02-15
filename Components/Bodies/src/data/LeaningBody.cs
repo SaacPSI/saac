@@ -48,16 +48,20 @@ namespace SAAC.Bodies
         /// </summary>
         /// <param name="time">The current time.</param>
         /// <param name="duration">The maximum learning duration.</param>
-        /// <param name="MinimumBonesForIdentification">The minimum number of bones required.</param>
+        /// <param name="minimumBonesForIdentification">The minimum number of bones required.</param>
         /// <returns>True if still learning; otherwise false.</returns>
-        public bool StillLearning(DateTime time, TimeSpan duration, uint MinimumBonesForIdentification)
+        public bool StillLearning(DateTime time, TimeSpan duration, uint minimumBonesForIdentification)
         {
             uint count = 0;
-            foreach (var bone in LearningBones)
-                if (bone.Value.Count >= MinimumBonesForIdentification)
+            foreach (var bone in this.LearningBones)
+            {
+                if (bone.Value.Count >= minimumBonesForIdentification)
+                {
                     count++;
+                }
+            }
 
-            return ((time - CreationTime) < duration) || MinimumBonesForIdentification >= count;
+            return ((time - this.CreationTime) < duration) || minimumBonesForIdentification >= count;
         }
 
         /// <summary>
@@ -68,15 +72,20 @@ namespace SAAC.Bodies
         public LearnedBody GeneratorLearnedBody(double maxStdDev)
         {
             Dictionary<(JointId ChildJoint, JointId ParentJoint), double> learnedBones = new Dictionary<(JointId ChildJoint, JointId ParentJoint), double>();
-            foreach (var iterator in LearningBones)
+            foreach (var iterator in this.LearningBones)
             {
                 var statistics = MathNet.Numerics.Statistics.Statistics.MeanStandardDeviation(iterator.Value);
                 if (statistics.Item2 < maxStdDev)
+                {
                     learnedBones[iterator.Key] = statistics.Item1;
+                }
                 else
+                {
                     learnedBones[iterator.Key] = -1;
+                }
             }
-            return new LearnedBody(Id, learnedBones);
+
+            return new LearnedBody(this.Id, learnedBones);
         }
     }
 }

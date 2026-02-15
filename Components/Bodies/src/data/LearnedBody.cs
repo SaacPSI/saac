@@ -82,9 +82,14 @@ namespace SAAC.Bodies
         public double ProcessDifference(LearnedBody b)
         {
             List<double> diff = new List<double>();
-            foreach (var iterator in LearnedBones)
+            foreach (var iterator in this.LearnedBones)
+            {
                 if (iterator.Value > 0.0 && b.LearnedBones[iterator.Key] > 0.0)
+                {
                     diff.Add(Math.Abs(iterator.Value - b.LearnedBones[iterator.Key]));
+                }
+            }
+
             var statistics = MathNet.Numerics.Statistics.Statistics.MeanStandardDeviation(diff);
             return statistics.Item2;
         }
@@ -99,30 +104,39 @@ namespace SAAC.Bodies
         {
             List<KeyValuePair<double, LearnedBody>> pairs = new List<KeyValuePair<double, LearnedBody>>();
             foreach (var pair in listOfBodies)
-                pairs.Add(new KeyValuePair<double, LearnedBody>(ProcessDifference(pair), pair));
+            {
+                pairs.Add(new KeyValuePair<double, LearnedBody>(this.ProcessDifference(pair), pair));
+            }
+
             pairs.Sort(new TupleDoubleLearnedBodyComparer());
-            if (pairs.Count == 0 || Double.IsNaN(pairs.First().Key) || maxDeviation < pairs.First().Key)
+            if (pairs.Count == 0 || double.IsNaN(pairs.First().Key) || maxDeviation < pairs.First().Key)
+            {
                 return 0;
+            }
+
             return pairs.First().Value.Id;
         }
-    }
 
-    /// <summary>
-    /// Comparer for sorting learned bodies by difference value.
-    /// </summary>
-    internal class TupleDoubleLearnedBodyComparer : Comparer<KeyValuePair<double, LearnedBody>>
-    {
         /// <summary>
-        /// Compares two key-value pairs by their double key.
+        /// Comparer for sorting learned bodies by difference value.
         /// </summary>
-        /// <param name="a">The first pair.</param>
-        /// <param name="b">The second pair.</param>
-        /// <returns>A value indicating the relative order.</returns>
-        public override int Compare(KeyValuePair<double, LearnedBody> a, KeyValuePair<double, LearnedBody> b)
+        internal class TupleDoubleLearnedBodyComparer : Comparer<KeyValuePair<double, LearnedBody>>
         {
-            if (a.Key == b.Key)
-                return 0;
-            return a.Key > b.Key ? 1 : -1;
+            /// <summary>
+            /// Compares two key-value pairs by their double key.
+            /// </summary>
+            /// <param name="a">The first pair.</param>
+            /// <param name="b">The second pair.</param>
+            /// <returns>A value indicating the relative order.</returns>
+            public override int Compare(KeyValuePair<double, LearnedBody> a, KeyValuePair<double, LearnedBody> b)
+            {
+                if (a.Key == b.Key)
+                {
+                    return 0;
+                }
+
+                return a.Key > b.Key ? 1 : -1;
+            }
         }
     }
 }

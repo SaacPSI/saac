@@ -24,9 +24,9 @@ namespace SAAC.PipelineServices
         public Pipeline Pipeline { get; private set; }
 
         /// <summary>
-        /// Logging delegate for status messages.
+        /// Gets or sets the logging delegate for status messages.
         /// </summary>
-        public LogStatus Log;
+        public LogStatus Log { get; set; }
 
         /// <summary>
         /// Defines the naming mode for sessions.
@@ -91,49 +91,83 @@ namespace SAAC.PipelineServices
             Export
         }
 
-        protected bool isPipelineRunning = false;
+        /// <summary>
+        /// Gets or sets a value indicating whether the pipeline is running.
+        /// </summary>
+        protected bool IsPipelineRunning { get; set; } = false;
 
+        /// <summary>
+        /// Gets or sets the configuration for the dataset pipeline.
+        /// </summary>
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
 
-        protected Dictionary<string, Subpipeline> subpipelines;
+        /// <summary>
+        /// Gets the dictionary of subpipelines.
+        /// </summary>
+        protected Dictionary<string, Subpipeline> Subpipelines { get; private set; }
 
-        protected bool owningPipeline;
+        /// <summary>
+        /// Gets a value indicating whether this instance owns the pipeline.
+        /// </summary>
+        protected bool OwningPipeline { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the current session.
+        /// </summary>
         public Session? CurrentSession { get; private set; } = null;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DatasetPipeline"/> class with a parent pipeline.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="configuration">Optional configuration.</param>
+        /// <param name="name">The pipeline name.</param>
+        /// <param name="log">Optional logging delegate.</param>
+        /// <param name="connectors">Optional connectors dictionary.</param>
         public DatasetPipeline(Pipeline parent, DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
             : base(string.Empty, connectors, name)
         {
-            this.owningPipeline = false;
+            this.OwningPipeline = false;
             this.Pipeline = parent;
             this.Pipeline.PipelineRun += this.TriggerRun;
             this.Initialize(configuration, log);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DatasetPipeline"/> class.
+        /// </summary>
+        /// <param name="configuration">Optional configuration.</param>
+        /// <param name="name">The pipeline name.</param>
+        /// <param name="log">Optional logging delegate.</param>
+        /// <param name="connectors">Optional connectors dictionary.</param>
         public DatasetPipeline(DatasetPipelineConfiguration? configuration = null, string name = nameof(DatasetPipeline), LogStatus? log = null, Dictionary<string, Dictionary<string, ConnectorInfo>>? connectors = null)
             : base(string.Empty, connectors, name)
         {
-            this.owningPipeline = true;
+            this.OwningPipeline = true;
             this.Initialize(configuration, log);
             this.Pipeline = Pipeline.Create(name, enableDiagnostics: this.Configuration?.Diagnostics != DiagnosticsMode.Off);
         }
 
+        /// <summary>
+        /// Runs the pipeline and all subpipelines.
+        /// </summary>
+        /// <returns>True if the pipeline is running; otherwise false.</returns>
         public bool RunPipelineAndSubpipelines()
         {
-            if (!this.owningPipeline)
+            if (!this.OwningPipeline)
             {
                 this.Log($"{this.name} does not own Pipeline, it cannot be started from here.");
-                return this.isPipelineRunning;
+                return this.IsPipelineRunning;
             }
 
-            if (this.isPipelineRunning)
+            if (this.IsPipelineRunning)
             {
                 return true;
             }
 
             try
             {
-                this.isPipelineRunning = true;
+                this.IsPipelineRunning = true;
                 this.PipelineRunAsync();
                 this.Log("Pipeline running.");
 
@@ -151,18 +185,22 @@ namespace SAAC.PipelineServices
                 this.Log($"{ex.Message}\n{ex.InnerException}");
             }
 
-            return this.isPipelineRunning;
+            return this.IsPipelineRunning;
         }
 
+        /// <summary>
+        /// Stops the pipeline and saves the dataset.
+        /// </summary>
+        /// <param name="maxWaitingTime">Maximum waiting time in milliseconds.</param>
         public virtual void Stop(int maxWaitingTime = 100)
         {
-            if (!this.owningPipeline)
+            if (!this.OwningPipeline)
             {
                 this.Log($"{this.name} does not own Pipeline, it cannot be stopped from here.");
             }
-            else if (this.isPipelineRunning)
+            else if (this.IsPipelineRunning)
             {
-                foreach (var subpipeline in this.subpipelines)
+                foreach (var subpipeline in this.Subpipelines)
                 {
                     subpipeline.Value.Stop(this.Pipeline.GetCurrentTime(), () => { });
                 }
@@ -172,24 +210,29 @@ namespace SAAC.PipelineServices
             }
 
             this.Dataset?.Save();
-            this.isPipelineRunning = false;
+            this.IsPipelineRunning = false;
         }
 
+        /// <summary>
+        /// Resets the pipeline to its initial state.
+        /// </summary>
+        /// <param name="pipeline">Optional pipeline to use instead of creating a new one.</param>
         public virtual void Reset(Pipeline? pipeline = null)
         {
             this.Dispose();
-            this.subpipelines.Clear();
+            this.Subpipelines.Clear();
             this.Connectors.Clear();
-            this.owningPipeline = pipeline == null;
-            this.isPipelineRunning = false;
+            this.OwningPipeline = pipeline == null;
+            this.IsPipelineRunning = false;
             this.Pipeline = pipeline ?? Pipeline.Create(this.name, enableDiagnostics: this.Configuration?.Diagnostics != DiagnosticsMode.Off);
         }
 
+        /// <inheritdoc/>
         public new void Dispose()
         {
             base.Dispose();
-            this.subpipelines.Clear();
-            if (!this.owningPipeline)
+            this.Subpipelines.Clear();
+            if (!this.OwningPipeline)
             {
                 this.Log($"{this.name} does not own Pipeline, it cannot be dispose from here.");
                 return;
@@ -198,6 +241,11 @@ namespace SAAC.PipelineServices
             this.Pipeline?.Dispose();
         }
 
+        /// <summary>
+        /// Gets a session by name from the dataset.
+        /// </summary>
+        /// <param name="sessionName">The session name to retrieve.</param>
+        /// <returns>The session if found; otherwise null.</returns>
         public Session? GetSession(string sessionName)
         {
             if (this.Dataset != null)
@@ -238,6 +286,11 @@ namespace SAAC.PipelineServices
             return null;
         }
 
+        /// <summary>
+        /// Creates a new session or gets an existing one with the specified name.
+        /// </summary>
+        /// <param name="sessionName">The session name.</param>
+        /// <returns>The session if created or found; otherwise null.</returns>
         public Session? CreateOrGetSession(string sessionName)
         {
             if (this.Dataset == null)
@@ -256,6 +309,11 @@ namespace SAAC.PipelineServices
             return this.CurrentSession = this.Dataset.AddEmptySession(sessionName);
         }
 
+        /// <summary>
+        /// Creates a new iterative session with an incremented name.
+        /// </summary>
+        /// <param name="sessionName">The base session name.</param>
+        /// <returns>The created session; otherwise null.</returns>
         public Session? CreateIterativeSession(string sessionName)
         {
             if (this.Dataset is null)
@@ -280,6 +338,11 @@ namespace SAAC.PipelineServices
             return this.CurrentSession = this.Dataset.AddEmptySession($"{sessionName}.{iterator:D3}");
         }
 
+        /// <summary>
+        /// Creates or gets a session based on the configured session naming mode.
+        /// </summary>
+        /// <param name="sessionName">Optional session name suffix.</param>
+        /// <returns>The session if created or found; otherwise null.</returns>
         public Session? CreateOrGetSessionFromMode(string sessionName = "")
         {
             switch (this.Configuration.SessionMode)
@@ -294,6 +357,13 @@ namespace SAAC.PipelineServices
             }
         }
 
+        /// <summary>
+        /// Gets the store name for a stream based on the configured store mode.
+        /// </summary>
+        /// <param name="streamName">The stream name.</param>
+        /// <param name="processName">The process name.</param>
+        /// <param name="session">The session.</param>
+        /// <returns>A tuple containing the stream name and store name.</returns>
         public virtual (string, string) GetStoreName(string streamName, string processName, Session? session)
         {
             switch (this.Configuration.StoreMode)
@@ -325,19 +395,29 @@ namespace SAAC.PipelineServices
             }
         }
 
+        /// <summary>
+        /// Gets an existing subpipeline or creates a new one with the specified name.
+        /// </summary>
+        /// <param name="name">The subpipeline name.</param>
+        /// <returns>The subpipeline.</returns>
         public Subpipeline GetOrCreateSubpipeline(string name = "SaaCSubPipeline")
         {
-            if (!this.subpipelines.ContainsKey(name))
+            if (!this.Subpipelines.ContainsKey(name))
             {
-                this.subpipelines.Add(name, Subpipeline.Create(this.Pipeline, name));
+                this.Subpipelines.Add(name, Subpipeline.Create(this.Pipeline, name));
             }
 
-            return this.subpipelines[name];
+            return this.Subpipelines[name];
         }
 
+        /// <summary>
+        /// Triggered when the pipeline starts running.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The pipeline run event arguments.</param>
         protected virtual void TriggerRun(object sender, PipelineRunEventArgs e)
         {
-            this.isPipelineRunning = true;
+            this.IsPipelineRunning = true;
 
             // foreach (Subpipeline sub in subpipelines)
             // {
@@ -349,16 +429,24 @@ namespace SAAC.PipelineServices
             // }
         }
 
+        /// <summary>
+        /// Runs the pipeline asynchronously.
+        /// </summary>
         protected virtual void PipelineRunAsync()
         {
             this.Pipeline.RunAsync();
         }
 
+        /// <summary>
+        /// Initializes the dataset pipeline with configuration and logging.
+        /// </summary>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="log">The logging delegate.</param>
         private void Initialize(DatasetPipelineConfiguration? configuration = null, LogStatus? log = null)
         {
-            this.Log = log ?? ((log) => { Console.WriteLine(log); });
+            this.Log = log ?? ((logMessage) => { Console.WriteLine(logMessage); });
             this.Configuration = configuration ?? new DatasetPipelineConfiguration();
-            this.subpipelines = new Dictionary<string, Subpipeline>();
+            this.Subpipelines = new Dictionary<string, Subpipeline>();
             if (this.Configuration.DatasetName.Length > 4)
             {
                 string fullPath = Path.Combine(this.Configuration.DatasetPath, this.Configuration.DatasetName);

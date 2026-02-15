@@ -111,7 +111,9 @@ namespace SAAC.PipelineServices
                 }
 
                 Type producedType = Type.GetType(streamMetadata.TypeName);
-                this.Connectors[streamMetadata.StoreName].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(store,[streamMetadata.Name, null, null])));
+                this.Connectors[streamMetadata.StoreName].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(
+                    store,
+                    [streamMetadata.Name, null, null])));
             }
             catch (Exception ex)
             {

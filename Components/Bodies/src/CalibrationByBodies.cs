@@ -23,32 +23,32 @@ namespace SAAC.Bodies
         /// <summary>
         /// Gets the connector for synchronization signals for capturing skeletons.
         /// </summary>
-        private Connector<bool> InSynchEventConnector;
+        private Connector<bool> inSynchEventConnector;
 
         /// <summary>
         /// Gets the receiver that encapsulates the synch signal.
         /// </summary>
-        public Receiver<bool> InSynchEvent => InSynchEventConnector.In;
+        public Receiver<bool> InSynchEvent => this.inSynchEventConnector.In;
 
         /// <summary>
         /// Gets the connector of lists of currently tracked bodies from first camera.
         /// </summary>
-        private Connector<List<SimplifiedBody>> InCamera1BodiesConnector;
+        private Connector<List<SimplifiedBody>> inCamera1BodiesConnector;
 
         /// <summary>
         /// Gets the receiver that encapsulates the input list of skeletons from first camera.
         /// </summary>
-        public Receiver<List<SimplifiedBody>> InCamera1Bodies => InCamera1BodiesConnector.In;
+        public Receiver<List<SimplifiedBody>> InCamera1Bodies => this.inCamera1BodiesConnector.In;
 
         /// <summary>
         /// Gets the connector of lists of currently tracked bodies from second camera.
         /// </summary>
-        private Connector<List<SimplifiedBody>> InCamera2BodiesConnector;
+        private Connector<List<SimplifiedBody>> inCamera2BodiesConnector;
 
         /// <summary>
         /// Gets the receiver that encapsulates the input list of skeletons from second camera.
         /// </summary>
-        public Receiver<List<SimplifiedBody>> InCamera2Bodies => InCamera2BodiesConnector.In;
+        public Receiver<List<SimplifiedBody>> InCamera2Bodies => this.inCamera2BodiesConnector.In;
 
         private CalibrationByBodiesConfiguration Configuration { get; }
 
@@ -87,18 +87,18 @@ namespace SAAC.Bodies
         {
             this.name = name;
             this.Configuration = configuration ?? new CalibrationByBodiesConfiguration();
-            this.InCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera1BodiesConnector");
-            this.InCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
+            this.inCamera1BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera1BodiesConnector");
+            this.inCamera2BodiesConnector = parent.CreateConnector<List<SimplifiedBody>>($"{name}-InCamera2BodiesConnector");
             this.Out = parent.CreateEmitter<CoordinateSystem>(this, $"{name}-Out");
-            this.InSynchEventConnector = parent.CreateConnector<bool>($"{name}-InSynchEventConnector");
+            this.inSynchEventConnector = parent.CreateConnector<bool>($"{name}-InSynchEventConnector");
 
             if (this.Configuration.SynchedCalibration)
             {
-                this.InSynchEventConnector.Pair(this.InCamera1BodiesConnector).Pair(this.InCamera2BodiesConnector).Do(this.Process);
+                this.inSynchEventConnector.Pair(this.inCamera1BodiesConnector).Pair(this.inCamera2BodiesConnector).Do(this.Process);
             }
             else
             {
-                this.InCamera1BodiesConnector.Pair(this.InCamera2BodiesConnector).Do(this.Process);
+                this.inCamera1BodiesConnector.Pair(this.inCamera2BodiesConnector).Do(this.Process);
             }
 
             Emgu.CV.Structure.MCvPoint3D32f[] camera1 = new Emgu.CV.Structure.MCvPoint3D32f[(int)this.Configuration.NumberOfJointForCalibration];

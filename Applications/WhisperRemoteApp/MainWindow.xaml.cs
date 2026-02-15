@@ -765,7 +765,9 @@ namespace WhisperRemoteApp
                         Dictionary<string, ConnectorInfo> audioStreams = new Dictionary<string, ConnectorInfo>();
                         foreach (var userAudio in this.audioManager.GetDictonaryIdAudioStream())
                         {
-                            this.rendezVousPipeline.CreateConnectorAndStore("Audio", $"Audio_User_{userAudio.Key}", this.rendezVousPipeline.CreateOrGetSessionFromMode(this.PipelineConfigurationUI.SessionName), this.pipeline, typeof(AudioBuffer), userAudio.Value, this.IsLocalRecording);
+                            Session? session = this.rendezVousPipeline.CreateOrGetSessionFromMode(this.PipelineConfigurationUI.SessionName);
+                            var names = this.rendezVousPipeline.GetStoreName("Audio", $"Audio_User_{userAudio.Key}", session);
+                            this.rendezVousPipeline.CreateConnectorAndStore(names.Item1, names.Item2, session, this.pipeline, typeof(AudioBuffer), userAudio.Value, this.IsLocalRecording);
                             audioStreams.Add($"Audio_User_{userAudio.Key}", this.rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"]);
                         }
 

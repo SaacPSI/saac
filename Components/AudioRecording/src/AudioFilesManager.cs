@@ -37,6 +37,18 @@ namespace SAAC.AudioRecording
         }
 
         /// <summary>
+        /// Converts Unix timestamp (in seconds) to a DateTime object.
+        /// </summary>
+        /// <param name="timestamp">The Unix timestamp in seconds.</param>
+        /// <param name="local">Whether to return local time (true) or UTC (false).</param>
+        /// <returns>The corresponding DateTime object.</returns>
+        public static DateTime UnixSecondsToDateTime(long timestamp, bool local = false)
+        {
+            var offset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+            return local ? offset.LocalDateTime : offset.UtcDateTime;
+        }
+
+        /// <summary>
         /// Stops all wave file importers associated with this manager.
         /// </summary>
         public void Stop()
@@ -98,18 +110,6 @@ namespace SAAC.AudioRecording
                 audio.PipeTo(resampler);
                 this.FilesAudioStreamDictionnary.Add(Path.GetFileNameWithoutExtension(file), resampler.Out);
             }
-        }
-
-        /// <summary>
-        /// Converts Unix timestamp (in seconds) to a DateTime object.
-        /// </summary>
-        /// <param name="timestamp">The Unix timestamp in seconds.</param>
-        /// <param name="local">Whether to return local time (true) or UTC (false).</param>
-        /// <returns>The corresponding DateTime object.</returns>
-        public static DateTime UnixSecondsToDateTime(long timestamp, bool local = false)
-        {
-            var offset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
-            return local ? offset.LocalDateTime : offset.UtcDateTime;
         }
     }
 }

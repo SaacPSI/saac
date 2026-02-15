@@ -789,8 +789,12 @@ namespace VideoRemoteApp
             {
                 this.BtnStartNet.IsEnabled = false;
                 this.AddLog(this.State = "Waiting for server");
-                (this.datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() => { this.AddLog(this.State = "Connected to server");
-                    (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Waiting"); })); });
+                (this.datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.AddLog(this.State = "Connected to server");
+                        (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Waiting");
+                    }));
+                });
             }
         }
 

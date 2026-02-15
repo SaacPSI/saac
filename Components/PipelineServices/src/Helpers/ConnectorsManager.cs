@@ -13,7 +13,7 @@ namespace SAAC.PipelineServices
     public abstract class ConnectorsManager : IDisposable
     {
         /// <summary>
-        /// Gets or sets the dictionary of connectors organized by store and stream name.
+        /// Gets the dictionary of connectors organized by store and stream name.
         /// </summary>
         public Dictionary<string, Dictionary<string, ConnectorInfo>> Connectors { get; internal set; }
 

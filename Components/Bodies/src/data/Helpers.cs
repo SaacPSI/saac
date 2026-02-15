@@ -57,11 +57,20 @@ namespace SAAC.Bodies.Helpers
         public static Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel FloatToConfidence(float confidence)
         {
             if (confidence == 0f)
+            {
                 return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.None;
+            }
+
             if (confidence < 0.33f)
+            {
                 return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.Low;
+            }
+
             if (confidence < 0.66f)
+            {
                 return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.Medium;
+            }
+
             return Microsoft.Azure.Kinect.BodyTracking.JointConfidenceLevel.High;
         }
 
@@ -123,9 +132,9 @@ namespace SAAC.Bodies.Helpers
 
             var yBest = list.Item1.Select(p => offset + (p * slope)).ToArray();
 
-            var RSS = MathNet.Numerics.Distance.SSD(list.Item2.ToArray(), yBest);
+            var rss = MathNet.Numerics.Distance.SSD(list.Item2.ToArray(), yBest);
             var degreeOfFreedom = list.Item1.Count - 2;
-            return Math.Sqrt(RSS / degreeOfFreedom);
+            return Math.Sqrt(rss / degreeOfFreedom);
         }
 
         /// <summary>
@@ -136,10 +145,18 @@ namespace SAAC.Bodies.Helpers
         public static void StoreCalibrationMatrix(string filepath, Matrix<double> matrix)
         {
             if (filepath.Length > 4)
+            {
                 File.WriteAllText(filepath, matrix.ToMatrixString());
+            }
         }
 
-        static public bool ReadCalibrationFromFile(string filepath, out Matrix<double> matrix)
+        /// <summary>
+        /// Reads a calibration matrix from a file.
+        /// </summary>
+        /// <param name="filepath">The file path to read from.</param>
+        /// <param name="matrix">The matrix to populate with the read data.</param>
+        /// <returns>True if successful; otherwise false.</returns>
+        public static bool ReadCalibrationFromFile(string filepath, out Matrix<double> matrix)
         {
             matrix = Matrix<double>.Build.DenseIdentity(4, 4);
             try
@@ -152,11 +169,15 @@ namespace SAAC.Bodies.Helpers
                     foreach (string value in line.Split(' '))
                     {
                         if (value.Length == 0)
+                        {
                             continue;
-                        valuesD[count / 4, count % 4] = Double.Parse(value);
+                        }
+
+                        valuesD[count / 4, count % 4] = double.Parse(value);
                         count++;
                     }
                 }
+
                 matrix = Matrix<double>.Build.DenseOfArray(valuesD);
             }
             catch (Exception ex)
@@ -164,21 +185,56 @@ namespace SAAC.Bodies.Helpers
                 System.Diagnostics.Debug.Write(ex.Message);
                 return false;
             }
+
             return true;
         }
 
+        /// <summary>
+        /// Checks if a double value is valid (not NaN or Infinity).
+        /// </summary>
+        /// <param name="val">The value to check.</param>
+        /// <returns>True if valid; otherwise false.</returns>
         public static bool IsValidDouble(double val)
         {
-            if (Double.IsNaN(val))
+            if (double.IsNaN(val))
+            {
                 return false;
-            if (Double.IsInfinity(val))
+            }
+
+            if (double.IsInfinity(val))
+            {
                 return false;
+            }
+
             return true;
         }
 
+        /// <summary>
+        /// Checks if a Point2D is valid (not NaN or Infinity).
+        /// </summary>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if valid; otherwise false.</returns>
         public static bool IsValidPoint2D(Point2D point) => IsValidDouble(point.X) && IsValidDouble(point.Y);
+
+        /// <summary>
+        /// Checks if a Vector2D is valid (not NaN or Infinity).
+        /// </summary>
+        /// <param name="vector">The vector to check.</param>
+        /// <returns>True if valid; otherwise false.</returns>
         public static bool IsValidVector2D(Vector2D vector) => IsValidDouble(vector.X) && IsValidDouble(vector.Y);
+
+        /// <summary>
+        /// Checks if a Point3D is valid (not NaN or Infinity).
+        /// </summary>
+        /// <param name="point">The point to check.</param>
+        /// <returns>True if valid; otherwise false.</returns>
         public static bool IsValidPoint3D(Point3D point) => IsValidDouble(point.X) && IsValidDouble(point.Y) && IsValidDouble(point.Z);
+
+        /// <summary>
+        /// Checks if a Vector3D is valid (not NaN or Infinity).
+        /// </summary>
+        /// <param name="vector">The vector to check.</param>
+        /// <returns>True if valid; otherwise false.</returns>
         public static bool IsValidVector3D(Vector3D vector) => IsValidDouble(vector.X) && IsValidDouble(vector.Y) && IsValidDouble(vector.Z);
     }
 }

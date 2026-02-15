@@ -2,7 +2,7 @@
 // This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
 // See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
-// USING https://github.com/SaacPSI/psi/ branch 'Pipeline' version of Psi.Runtime package
+// USING https://github.com/SaacPSI/psi/ branch 'Pipeline' or 'PsiStudio' version of Psi.Runtime package
 namespace SAAC.PipelineServices
 {
     using System.Runtime.InteropServices;
@@ -446,9 +446,10 @@ namespace SAAC.PipelineServices
         /// <param name="port">The TCP port.</param>
         /// <param name="connectors">The dictionary of connectors.</param>
         /// <param name="process">The process to add the endpoint to.</param>
-        public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process)
+        /// <param name="transportKind">The transport kind for the remote endpoint.</param>
+        public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process, TransportKind transportKind = TransportKind.Tcp)
         {
-            RemoteExporter writer = new RemoteExporter(parent, port, TransportKind.Tcp);
+            RemoteExporter writer = new RemoteExporter(parent, port, transportKind);
             foreach (var connector in connectors)
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value,[parent]);
