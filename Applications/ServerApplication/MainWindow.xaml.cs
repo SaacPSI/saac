@@ -15,6 +15,7 @@ using Microsoft.Psi.Data;
 using Microsoft.Psi.PsiStudio.PipelinePlugin;
 using Newtonsoft.Json;
 using SAAC;
+using SAAC.LabStreamLayer;
 using SAAC.PipelineServices;
 
 namespace ServerApplication
@@ -38,6 +39,7 @@ namespace ServerApplication
         private bool isDebug = false;
         private string externalConfigurationDirectory = string.Empty;
         private bool isAnnotationEnabled = false;
+        private bool isLSLEnabled = false;
         private string annotationSchemaDirectory = string.Empty;
         private string annotationWebPage = string.Empty;
         private uint annotationPort = 8080;
@@ -261,6 +263,15 @@ namespace ServerApplication
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether LabStreamLayer are enabled.
+        /// </summary>
+        public bool IsLSLEnabled
+        {
+            get => this.isLSLEnabled;
+            set => this.SetProperty(ref this.isLSLEnabled, value);
+        }
+
+        /// <summary>
         /// Gets or sets the log text displayed in the UI.
         /// </summary>
         public string Log
@@ -341,6 +352,7 @@ namespace ServerApplication
 
             // Annotation Tab
             this.IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
+            this.IsLSLEnabled = Properties.Settings.Default.IsLSLEnabled;
             this.AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
@@ -358,6 +370,7 @@ namespace ServerApplication
 
             // Annotation Tab
             this.IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
+            this.IsLSLEnabled = Properties.Settings.Default.IsLSLEnabled;
             this.AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
@@ -386,6 +399,7 @@ namespace ServerApplication
 
             // Annotation Tab
             Properties.Settings.Default.IsAnnotationEnabled = this.IsAnnotationEnabled;
+            Properties.Settings.Default.IsLSLEnabled = this.IsLSLEnabled;
             Properties.Settings.Default.AnnotationSchemasPath = this.AnnotationSchemaDirectory;
             Properties.Settings.Default.AnnotationHtmlPage = this.AnnotationWebPage;
             Properties.Settings.Default.AnnotationPort = this.AnnotationPort;
@@ -502,6 +516,11 @@ namespace ServerApplication
             // Setup annotations if enabled
             this.SetupWebSocketsAndAnnotations();
 
+            if (this.isLSLEnabled)
+            {
+                this.SetupLabStreamLayer();
+            }
+
             this.server.Start();
             this.AddLog("Server started");
             this.StartStatusMonitoring();
@@ -571,6 +590,35 @@ namespace ServerApplication
             var source = this.websocketManager.ConnectWebsocketSource<string>(pipeline, this.configuration.TypesSerializers[this.configuration.TopicsTypes[e.Item2]].GetFormat(), e.Item1, e.Item2, false);
             this.server.CreateConnectorAndStore(e.Item2, e.Item1, this.server.CurrentSession, pipeline, typeof(string), source);
             pipeline.RunAsync();
+        }
+
+        /// <summary>
+        /// Setup LSL manager.
+        /// </summary>
+        private void SetupLabStreamLayer()
+        {
+            LabStreamLayerManager manager = new LabStreamLayerManager(this.pipeline, this.internalLog, 500, 100);
+            manager.NewStream += this.OnNewLSLStream;
+            manager.Start();
+        }
+
+        /// <summary>
+        /// Handles new LabStreamLayer connections.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="key">The connection information.</param>
+        private void OnNewLSLStream(object sender, string key)
+        {
+            LabStreamLayerManager? manager = sender as LabStreamLayerManager;
+            if (manager is null)
+            {
+                return;
+            }
+
+            ILabStreamLayerComponent component = manager.LabStreamComponents[key];
+            dynamic labstreamlayerComponent = component;
+            this.server.CreateConnectorAndStore(component.GetStreamInfo().name(), component.GetStreamInfo().hostname(), this.server.CurrentSession, this.pipeline, labstreamlayerComponent.Out.Type, labstreamlayerComponent);
+            this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()})");
         }
 
         /// <summary>
@@ -996,6 +1044,17 @@ namespace ServerApplication
         private void CkbActivateAnnotation(object sender, RoutedEventArgs e)
         {
             this.UpdateAnnotationTab();
+            this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Handles the activate LabStreamLayer checkbox click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void CkbActivateLSL(object sender, RoutedEventArgs e)
+        {
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             e.Handled = true;
         }

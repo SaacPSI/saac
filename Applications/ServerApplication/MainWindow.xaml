@@ -1,4 +1,4 @@
-﻿<Window x:Class="ServerApplication.MainWindow"
+<Window x:Class="ServerApplication.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ServerApplication"
@@ -145,20 +145,18 @@
 
                 </Grid>
             </TabItem>
-            <TabItem Header="Annotation" x:Name="AnnotationTab">
+            <TabItem Header="Annotation and LSL" x:Name="AnnotationLSLTab">
                 <Grid Background="{StaticResource WindowBackgroundBrush}" Name="AnnotationGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="AnnotationEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsAnnotationEnabled}" Checked="CkbActivateAnnotation" Unchecked="CkbActivateAnnotation"/>
-
-                    <GroupBox Header="Annotation Settings" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,5,5,5">
+                    <GroupBox Header="Annotation Settings" FontWeight="Bold" Grid.Row="0" Grid.Column="0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -169,20 +167,39 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
+                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="AnnotationEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsAnnotationEnabled}" Checked="CkbActivateAnnotation" Unchecked="CkbActivateAnnotation"/>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="Annotation Schema Directory:" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Name="AnnotationSchemaDirectoryTextBox" TextWrapping="Wrap" Text="{Binding AnnotationSchemaDirectory}" Margin="5,10,5,5" VerticalAlignment="Center"/>
-                            <Button Grid.Row="0" Grid.Column="2" Content="Browse" Name="BtnBrowseSchemaDirectory" Click="BtnBrowseSchemaDirectoryClick" Margin="5,10,5,5" Width="75"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Annotation Schema Directory:" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Name="AnnotationSchemaDirectoryTextBox" TextWrapping="Wrap" Text="{Binding AnnotationSchemaDirectory}" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <Button Grid.Row="1" Grid.Column="2" Content="Browse" Name="BtnBrowseSchemaDirectory" Click="BtnBrowseSchemaDirectoryClick" Margin="5,10,5,5" Width="75"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="Annotation Web Page (HTML):" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Name="AnnotationWebPageTextBox" TextWrapping="Wrap" Text="{Binding AnnotationWebPage}" Margin="5,10,5,5" VerticalAlignment="Center"/>
-                            <Button Grid.Row="1" Grid.Column="2" Content="Browse" Name="BtnBrowseWebPage" Click="BtnBrowseWebPageClick" Margin="5,10,5,5" Width="75"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Annotation Web Page (HTML):" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Name="AnnotationWebPageTextBox" TextWrapping="Wrap" Text="{Binding AnnotationWebPage}" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <Button Grid.Row="2" Grid.Column="2" Content="Browse" Name="BtnBrowseWebPage" Click="BtnBrowseWebPageClick" Margin="5,10,5,5" Width="75"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="Annotation Port:" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Name="AnnotationPortTextBox" TextWrapping="Wrap" Text="{Binding AnnotationPort}" Margin="5,10,5,5" VerticalAlignment="Center" TextChanged="AnnotationPortTextBox_TextChanged"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Annotation Port:" FontWeight="Bold" Margin="5,10,5,5" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Name="AnnotationPortTextBox" TextWrapping="Wrap" Text="{Binding AnnotationPort}" Margin="5,10,5,5" VerticalAlignment="Center" TextChanged="AnnotationPortTextBox_TextChanged"/>
                         </Grid>
+                    </GroupBox>
+                    
+                    <GroupBox Header="LSL Settings" FontWeight="Bold" Grid.Row="1" Grid.Column="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="LSLEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsLSLEnabled}" Checked="CkbActivateLSL" Unchecked="CkbActivateLSL"/>
+
+                        </Grid>
+                    </GroupBox>
+                    
+                    <GroupBox Header="Annotation Logs" FontWeight="Bold" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1">
+                        <TextBox x:Name="AnnotationLogs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True" Margin="10,0,6,6"/>
                     </GroupBox>
                 </Grid>
             </TabItem>

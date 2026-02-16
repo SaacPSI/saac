@@ -52,6 +52,12 @@
 	 <ItemGroup>
     <ProjectReference Include="..\..\Components\AnnotationsComponents\AnnotationsComponents.csproj" />
     <ProjectReference Include="..\..\Components\GlobalHelpers\GlobalHelpers.csproj" />
+    <ProjectReference Include="..\..\Components\LabStreamLayer\LabStreamLayer.csproj" />
     <ProjectReference Include="..\..\Components\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>
+	 <ItemGroup>
+	   <Reference Include="lsl_csharp">
+	     <HintPath>..\..\Components\LabStreamLayer\dep\lsl_csharp.dll</HintPath>
+	   </Reference>
+	 </ItemGroup>
 </Project>
