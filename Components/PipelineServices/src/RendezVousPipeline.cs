@@ -282,7 +282,7 @@ namespace SAAC.PipelineServices
         {
             if (!this.processNames.Contains(ClockSynchProcessName))
             {
-                if (this.owningPipeline)
+                if (this.OwningPipeline)
                 {
                     var remoteClock = new RemoteClockExporter(this.Configuration.ClockPort);
                     this.AddProcess(new Rendezvous.Process(
@@ -431,7 +431,7 @@ namespace SAAC.PipelineServices
                 typeof(RendezVousPipeline).GetMethod("GenerateTCPEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this,[parent, startingPort++, producer, connector.Key, process]);
             }
 
-            if (this.isPipelineRunning)
+            if (this.IsPipelineRunning)
             {
                 parent.Start((d) => { this.Log($"SubPipeline {process.Name} started @{d}."); });
             }
@@ -703,7 +703,7 @@ namespace SAAC.PipelineServices
                         {
                             Subpipeline processSubPipeline = this.GetOrCreateSubpipeline(process.Name);
                             this.Connection(stream.StreamName, DiagnosticsProcessName, this.CreateOrGetSession(this.Configuration.SessionName + "_Diagnostics"), source, processSubPipeline, true);
-                            if (this.isPipelineRunning)
+                            if (this.IsPipelineRunning)
                             {
                                 processSubPipeline.Start((d) => { });
                                 this.Log($"SubPipeline {process.Name} started.");
@@ -782,7 +782,7 @@ namespace SAAC.PipelineServices
 
                 return;
             }
-            else if (this.isPipelineRunning)
+            else if (this.IsPipelineRunning)
             {
                 processSubPipeline.Start((d) => { });
                 this.Log($"SubPipeline {process.Name} started.");
@@ -799,9 +799,9 @@ namespace SAAC.PipelineServices
         /// <param name="e">The process that was removed.</param>
         private void RendezvousProcessRemoved(object sender, Rendezvous.Process e)
         {
-            if (this.subpipelines.ContainsKey(e.Name))
+            if (this.Subpipelines.ContainsKey(e.Name))
             {
-                this.subpipelines[e.Name].Dispose();
+                this.Subpipelines[e.Name].Dispose();
                 this.Connectors.Remove(e.Name);
 
                 // TriggerNewProcessEvent(e.Name);
@@ -905,7 +905,7 @@ namespace SAAC.PipelineServices
                 this.rendezvousRelay = this.rendezVous = new RendezvousClient(rendezVousServerAddress, this.Configuration.RendezVousPort);
             }
 
-            this.isStarted = this.isPipelineRunning = false;
+            this.isStarted = this.IsPipelineRunning = false;
         }
     }
 }
