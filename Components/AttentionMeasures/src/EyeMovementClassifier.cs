@@ -10,12 +10,12 @@ namespace SAAC.AttentionMeasures
     /// <summary>
     /// Psi component classifying the raw EyeTracking data into eye movements (fixations or saccades).
     /// </summary>
-    public class EyeMovementClassifier : ConsumerProducer<Dictionary<ETData, IEyeTracking>, EyeMovement>
+    public class EyeMovementClassifier : ConsumerProducer<Dictionary<IEyeTracking.ETData, IEyeTracking>, EyeMovement>
     {
         /// <summary>
         /// Last received message and timestamp.
         /// </summary>
-        private Dictionary<ETData, IEyeTracking> lastInput;
+        private Dictionary<IEyeTracking.ETData, IEyeTracking> lastInput;
 
         private DateTime lastTimeStamp;
         private string name;
@@ -60,17 +60,17 @@ namespace SAAC.AttentionMeasures
         /// </summary>
         /// <param name="input">The input data.</param>
         /// <param name="envelope">The message envelope.</param>
-        protected override void Receive(Dictionary<ETData, IEyeTracking> input, Envelope envelope)
+        protected override void Receive(Dictionary<IEyeTracking.ETData, IEyeTracking> input, Envelope envelope)
         {
             // Not treating data when it is the exact same
             if (!input.SequenceEqual(this.lastInput))
             {
                 // Recovering gaze vectors from inputs
-                var previousGaze = System.Numerics.Vector3.Normalize(((EyeTrackingVector3)this.lastInput[ETData.AverageGaze]).Content);
-                var currentGaze = System.Numerics.Vector3.Normalize(((EyeTrackingVector3)input[ETData.AverageGaze]).Content).DeepClone();
+                var previousGaze = System.Numerics.Vector3.Normalize(((EyeTrackingVector3)this.lastInput[IEyeTracking.ETData.AverageGaze]).Content);
+                var currentGaze = System.Numerics.Vector3.Normalize(((EyeTrackingVector3)input[IEyeTracking.ETData.AverageGaze]).Content).DeepClone();
 
                 // Recovering the gazed object id key
-                var gazedObjectKey = (((EyeTrackingInt)input[ETData.GazedObjectID]).Content.DeepClone(), ((EyeTrackingString)input[ETData.GazedObjectName]).Content.DeepClone());
+                var gazedObjectKey = (((EyeTrackingInt)input[IEyeTracking.ETData.GazedObjectID]).Content.DeepClone(), ((EyeTrackingString)input[IEyeTracking.ETData.GazedObjectName]).Content.DeepClone());
 
                 // Classifying the current message
                 bool isCurrentMessageFix = this.ClassifyCurrentMessage(envelope.OriginatingTime, previousGaze, currentGaze);
