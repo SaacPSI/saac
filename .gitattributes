@@ -58,3 +58,17 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 *.dat filter=lfs diff=lfs merge=lfs -text
+
+###############################################################################
+# SAAC-specific: Treat shared files as regular text files (not symlinks)
+#
+# Some files are shared across multiple applications. Developers can optionally
+# use symbolic links locally via scripts/Setup-DevSymlinks.ps1, but the files
+# are stored as regular text files in the repository to ensure compatibility
+# for all users regardless of symlink support.
+###############################################################################
+Applications/ServerApplication/UiGenerator.cs text
+Applications/VideoRemoteApp/UiGenerator.cs text
+Applications/WhisperRemoteApp/UiGenerator.cs text
+Applications/CameraRemoteApp/UiGenerator.cs text
+

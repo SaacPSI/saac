@@ -348,3 +348,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# SAAC-specific: Backup files created by Setup-DevSymlinks.ps1
+*.backup
+

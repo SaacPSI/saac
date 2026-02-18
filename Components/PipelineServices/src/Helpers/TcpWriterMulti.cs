@@ -66,7 +66,7 @@ namespace SAAC.PipelineServices
         /// Generate a Rendezvous endpoint for this TCP writer, given an address and a stream name.
         /// </summary>
         /// <param name="address">The address used for the connection.</param>
-        /// <param name="streamName">The name of the stream</param>
+        /// <param name="streamName">The name of the stream.</param>
         /// <returns>The endpoint for the rendezvous process.</returns>
         public Rendezvous.Endpoint ToRendezvousEndpoint(string address, string streamName)
         {
