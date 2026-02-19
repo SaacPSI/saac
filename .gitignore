@@ -19,7 +19,6 @@ mono_crash.*
 # Build results
 Build/
 bld/
-[Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -76,6 +75,7 @@ StyleCopReport.xml
 *.tli
 *.tlh
 *.tmp
+*.exp
 *.tmp_proj
 *_wpftmp.csproj
 *.log
@@ -345,3 +345,4 @@ MigrationBackup/
 # SAAC-specific: Backup files created by Setup-DevSymlinks.ps1
 *.backup
 
+/Interop/PlumeInterop/bin
