@@ -57,7 +57,12 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+###############################################################################
+# Git LFS - Large File Storage
+# Binary files that should be tracked with Git LFS
+###############################################################################
 *.dat filter=lfs diff=lfs merge=lfs -text
+*.lib filter=lfs diff=lfs merge=lfs -text
 
 ###############################################################################
 # SAAC-specific: Treat shared files as regular text files (not symlinks)
