@@ -768,11 +768,11 @@ namespace WhisperRemoteApp
                             Session? session = this.rendezVousPipeline.CreateOrGetSessionFromMode(this.PipelineConfigurationUI.SessionName);
                             var names = this.rendezVousPipeline.GetStoreName("Audio", $"Audio_User_{userAudio.Key}", session);
                             this.rendezVousPipeline.CreateConnectorAndStore(names.Item1, names.Item2, session, this.pipeline, typeof(AudioBuffer), userAudio.Value, this.IsLocalRecording);
-                            audioStreams.Add($"Audio_User_{userAudio.Key}", this.rendezVousPipeline.Connectors[$"Audio_User_{userAudio.Key}"]["Audio"]);
+                            audioStreams.Add($"Audio_User_{userAudio.Key}", this.rendezVousPipeline.Connectors[names.Item2][names.Item1]);
                         }
 
                         Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(this.WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName, "Version1.0");
-                        this.rendezVousPipeline.GenerateRemoteEnpoint(this.pipeline, this.remoteConfiguration.ExportPort, audioStreams, ref process);
+                        this.rendezVousPipeline.GenerateRemotesEnpoint(this.pipeline, this.remoteConfiguration.ExportPort, audioStreams, ref process);
                         this.rendezVousPipeline.AddProcess(process);
                     }
                     else if (this.IsLocalRecording)

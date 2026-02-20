@@ -303,8 +303,6 @@ namespace ServerApplication
             this.server = null;
             this.configuration = new RendezVousPipelineConfiguration();
 
-            this.configuration.Debug = true;
-
             this.LoadConfig();
             this.InitializeComponent();
             this.DataContext = this;
@@ -361,6 +359,7 @@ namespace ServerApplication
             this.AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
+            this.isDebug = this.Configuration.Debug = Properties.Settings.Default.Debug;
             this.UpdateAnnotationTab();
 
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = false;
@@ -479,7 +478,7 @@ namespace ServerApplication
             this.configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             this.configuration.AutomaticPipelineRun = true;
             this.configuration.CommandDelegate = this.CommandReceived;
-            this.configuration.Debug = true;
+            this.configuration.Debug = this.IsDebug;
             this.configuration.RecordIncomingProcess = true;
             this.configuration.CommandPort = 11610;
             this.configuration.ClockPort = 11621;

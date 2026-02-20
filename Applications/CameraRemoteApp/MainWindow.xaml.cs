@@ -355,7 +355,6 @@ namespace CameraRemoteApp
 
             this.InitializeComponent();
             this.LoadConfigurations();
-          
             this.UpdateLayout();
 
             this.SetupNetworkTab();
