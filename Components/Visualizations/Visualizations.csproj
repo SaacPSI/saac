@@ -40,8 +40,9 @@
     </PropertyGroup>
     <!-- Copier les DLLs Azure Kinect depuis NuGet -->
     <ItemGroup>
-      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.sensor\*\lib\net462\*.dll" />
-      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.bodytracking\*\lib\net462\*.dll" />
+      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.sensor\*\lib\netstandard2.0\*.dll" />
+      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.azure.kinect.bodytracking\*\lib\netstandard2.0\*.dll" />
+      <AzureKinectDlls Include="$(NuGetPackageRoot)microsoft.psi.azurekinect.x64\*\lib\netstandard2.0\*.dll" />
     </ItemGroup>
     <!-- Copier les assemblies du répertoire packages -->
     <Copy SourceFiles="@(AzureKinectDlls)" DestinationFolder="$(OutputDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
