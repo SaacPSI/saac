@@ -353,8 +353,8 @@ namespace CameraRemoteApp
             this.IPsList.AddRange(Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(ip => ip.ToString()));
             this.datasetPipeline = null;
 
-            this.LoadConfigurations();
             this.InitializeComponent();
+            this.LoadConfigurations();
             this.UpdateLayout();
 
             this.SetupNetworkTab();

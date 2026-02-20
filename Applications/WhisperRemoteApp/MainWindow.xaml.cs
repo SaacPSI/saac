@@ -772,7 +772,7 @@ namespace WhisperRemoteApp
                         }
 
                         Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process process = new Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process(this.WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName, "Version1.0");
-                        this.rendezVousPipeline.GenerateRemoteEnpoint(this.pipeline, this.remoteConfiguration.ExportPort, audioStreams, ref process);
+                        this.rendezVousPipeline.GenerateRemotesEnpoint(this.pipeline, this.remoteConfiguration.ExportPort, audioStreams, ref process);
                         this.rendezVousPipeline.AddProcess(process);
                     }
                     else if (this.IsLocalRecording)

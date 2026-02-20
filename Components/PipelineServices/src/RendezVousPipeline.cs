@@ -440,6 +440,60 @@ namespace SAAC.PipelineServices
         }
 
         /// <summary>
+        /// Generates remotes endpoints for a set of connectors with RemoteExporter for each streams.
+        /// </summary>
+        /// <param name="parent">The parent pipeline.</param>
+        /// <param name="port">The TCP port.</param>
+        /// <param name="connectors">The dictionary of connectors.</param>
+        /// <param name="process">The process to add the endpoint to.</param>
+        /// <param name="transportKind">The transport kind for the remote endpoint.</param>
+        public void GenerateRemotesEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process, TransportKind transportKind = TransportKind.Tcp)
+        {
+            foreach (var connector in connectors)
+            {
+                RemoteExporter writer = new RemoteExporter(parent, port, transportKind);
+                var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
+
+                // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?
+                // Removing the amiguity of the Write method with the one from Exporter class which is the one we want to call, as the RemoteExporter class also have a Write method but with a different signature.
+                typeof(Exporter).GetMethods().FirstOrDefault(m => m.Name == "Write" && m.IsGenericMethodDefinition).MakeGenericMethod(connector.Value.DataType).Invoke(writer.Exporter, [producer, connector.Key, Marshal.SizeOf(connector.Value.DataType) > 4096, null]);
+                process.AddEndpoint(writer.ToRendezvousEndpoint(this.Configuration.RendezVousHost));
+            }
+        }
+
+        /// <summary>
+        /// Generates remotes process from connectors in the specified store with RemoteExporter for each streams.
+        /// </summary>
+        /// <param name="storeName">The store name.</param>
+        /// <param name="startingPort">The starting TCP port.</param>
+        /// <returns>True if the process was generated successfully; otherwise false.</returns>
+        public bool GenerateRemotesProcessFromConnectors(string storeName, int startingPort)
+        {
+            if (this.Connectors.ContainsKey(storeName))
+            {
+                return this.GenerateRemotesProcessFromConnectors(storeName, this.Connectors[storeName], startingPort);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Generates remotes process from a dictionary of connectors with RemoteExporter for each streams.
+        /// </summary>
+        /// <param name="processName">The process name.</param>
+        /// <param name="connectors">The dictionary of connectors.</param>
+        /// <param name="startingPort">The starting TCP port.</param>
+        /// <returns>True if the process was generated successfully; otherwise false.</returns>
+        public bool GenerateRemotesProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        {
+            Rendezvous.Process process = new Rendezvous.Process(processName);
+            Pipeline parent = this.GetOrCreateSubpipeline(processName);
+            this.GenerateRemotesEnpoint(parent, startingPort, connectors, ref process);
+            parent.RunAsync();
+            return this.AddProcess(process);
+        }
+
+        /// <summary>
         /// Generates a remote endpoint for a set of connectors.
         /// </summary>
         /// <param name="parent">The parent pipeline.</param>
@@ -447,7 +501,7 @@ namespace SAAC.PipelineServices
         /// <param name="connectors">The dictionary of connectors.</param>
         /// <param name="process">The process to add the endpoint to.</param>
         /// <param name="transportKind">The transport kind for the remote endpoint.</param>
-        public void GenerateRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process, TransportKind transportKind = TransportKind.Tcp)
+        public void GenerateSingleRemoteEnpoint(Pipeline parent, int port, Dictionary<string, ConnectorInfo> connectors, ref Rendezvous.Process process, TransportKind transportKind = TransportKind.Tcp)
         {
             RemoteExporter writer = new RemoteExporter(parent, port, transportKind);
             foreach (var connector in connectors)
@@ -468,11 +522,11 @@ namespace SAAC.PipelineServices
         /// <param name="storeName">The store name.</param>
         /// <param name="startingPort">The starting TCP port.</param>
         /// <returns>True if the process was generated successfully; otherwise false.</returns>
-        public bool GenerateRemoteProcessFromConnectors(string storeName, int startingPort)
+        public bool GenerateSingleRemoteProcessFromConnectors(string storeName, int startingPort)
         {
             if (this.Connectors.ContainsKey(storeName))
             {
-                return this.GenerateRemoteProcessFromConnectors(storeName, this.Connectors[storeName], startingPort);
+                return this.GenerateSingleRemoteProcessFromConnectors(storeName, this.Connectors[storeName], startingPort);
             }
 
             return false;
@@ -485,11 +539,11 @@ namespace SAAC.PipelineServices
         /// <param name="connectors">The dictionary of connectors.</param>
         /// <param name="startingPort">The starting TCP port.</param>
         /// <returns>True if the process was generated successfully; otherwise false.</returns>
-        public bool GenerateRemoteProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        public bool GenerateSingleRemoteProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
         {
             Rendezvous.Process process = new Rendezvous.Process(processName);
             Pipeline parent = this.GetOrCreateSubpipeline(processName);
-            this.GenerateRemoteEnpoint(parent, startingPort, connectors, ref process);
+            this.GenerateSingleRemoteEnpoint(parent, startingPort, connectors, ref process);
             parent.RunAsync();
             return this.AddProcess(process);
         }
