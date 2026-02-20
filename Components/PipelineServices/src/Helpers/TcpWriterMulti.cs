@@ -21,10 +21,12 @@ namespace SAAC.PipelineServices
     {
         private readonly IFormatSerializer serializer;
         private readonly string name;
+        private readonly object clientsLock = new object();
 
         private TcpListener listener;
         private List<TcpClient> clients;
         private Thread? acceptingThread;
+        private CancellationTokenSource cancellationTokenSource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TcpWriterMulti{T}"/> class.
@@ -41,6 +43,7 @@ namespace SAAC.PipelineServices
             this.In = pipeline.CreateReceiver<T>(this, this.Receive, $"{name}-In");
             this.listener = new TcpListener(IPAddress.Any, port);
             this.clients = new List<TcpClient>();
+            this.cancellationTokenSource = new CancellationTokenSource();
             this.Start();
         }
 
@@ -77,10 +80,21 @@ namespace SAAC.PipelineServices
         {
             (var bytes, int offset, int count) = this.serializer.SerializeMessage(message, envelope.OriginatingTime);
 
-            if (this.clients.Count != 0)
+            List<TcpClient> clientsSnapshot;
+            lock (this.clientsLock)
+            {
+                if (this.clients.Count == 0)
+                {
+                    return;
+                }
+
+                clientsSnapshot = new List<TcpClient>(this.clients);
+            }
+
+            if (clientsSnapshot.Count != 0)
             {
                 List<TcpClient> clientsToRemove = new List<TcpClient>();
-                foreach (var client in this.clients)
+                foreach (var client in clientsSnapshot)
                 {
                     if (!client.Connected)
                     {
@@ -101,10 +115,25 @@ namespace SAAC.PipelineServices
                     }
                 }
 
-                clientsToRemove.ForEach(client =>
+                if (clientsToRemove.Count > 0)
                 {
-                    this.clients.Remove(client);
-                });
+                    lock (this.clientsLock)
+                    {
+                        foreach (var client in clientsToRemove)
+                        {
+                            this.clients.Remove(client);
+                            try
+                            {
+                                client.Close();
+                                client.Dispose();
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine($"TcpWriterMulti client disposal exception: {ex.Message}");
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -116,34 +145,82 @@ namespace SAAC.PipelineServices
 
         private void Stop()
         {
-            this.listener.Stop();
-            this.listener.Server.Close();
-            this.acceptingThread?.Abort();
+            this.cancellationTokenSource?.Cancel();
 
-            // Dispose active client if any
-            if (this.clients.Count != 0)
+            try
             {
-                foreach (var client in this.clients)
-                {
-                    client.Dispose();
-                }
+                this.listener?.Stop();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"TcpWriterMulti listener stop exception: {ex.Message}");
             }
 
-            this.clients.Clear();
+            if (this.acceptingThread != null && !this.acceptingThread.Join(TimeSpan.FromSeconds(2)))
+            {
+                Trace.WriteLine("TcpWriterMulti: Accept thread did not terminate gracefully");
+            }
+
+            // Dispose active client if any
+            lock (this.clientsLock)
+            {
+                if (this.clients.Count != 0)
+                {
+                    foreach (var client in this.clients)
+                    {
+                        try
+                        {
+                            client.Close();
+                            client.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine($"TcpWriterMulti client disposal exception: {ex.Message}");
+                        }
+                    }
+                }
+
+                this.clients.Clear();
+            }
+
+            this.cancellationTokenSource?.Dispose();
         }
 
         private void Listen()
         {
-            while (this.listener != null)
+            try
+            {
+                this.listener.Start();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"TcpWriterMulti: Failed to start listener: {ex.Message}");
+                return;
+            }
+
+            while (!this.cancellationTokenSource.Token.IsCancellationRequested && this.listener != null)
             {
                 try
                 {
-                    this.listener.Start();
-                    this.clients.Add(this.listener.AcceptTcpClient());
+                    var client = this.listener.AcceptTcpClient();
+                    lock (this.clientsLock)
+                    {
+                        this.clients.Add(client);
+                    }
+
+                    Trace.WriteLine($"TcpWriterMulti: Client connected from {client.Client.RemoteEndPoint}");
+                }
+                catch (SocketException ex) when (this.cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    // Expected when stopping
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"TcpWriter Exception: {ex.Message}");
+                    if (!this.cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        Trace.WriteLine($"TcpWriterMulti Exception: {ex.Message}");
+                    }
                 }
             }
         }
