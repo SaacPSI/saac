@@ -83,7 +83,10 @@ namespace SAAC.AnnotationsComponents
                 }
                 catch (Exception ex)
                 {
-                    this.rdvPipeline.Log($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
+                    if (!this.token.IsCancellationRequested)
+                    {
+                        this.rdvPipeline.Log($"HTTPAnnotationsComponent ProcessContexts Exception: {ex.Message}");
+                    }
                 }
             }
         }

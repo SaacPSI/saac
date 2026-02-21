@@ -59,8 +59,8 @@ namespace SAAC.RemoteConnectors
         public Rendezvous.Process GenerateProcess()
         {
             int portCount = this.Configuration.StartingPort + 1;
-            this.Sensor = new NuitrackSensor(this.pipeline, this.Configuration);
             this.pipeline = this.server.GetOrCreateSubpipeline(this.name);
+            this.Sensor = new NuitrackSensor(this.pipeline, this.Configuration);
             var session = this.server.CreateOrGetSessionFromMode(this.Configuration.RendezVousApplicationName);
             List<Rendezvous.Endpoint> exporters = new List<Rendezvous.Endpoint>();
             if (this.Configuration.OutputSkeletonTracking == true)
