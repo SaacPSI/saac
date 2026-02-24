@@ -54,4 +54,9 @@
     <ProjectReference Include="..\..\Components\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\..\Components\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>
+	 <ItemGroup>
+	   <Reference Include="nuitrack.net">
+	     <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
+	   </Reference>
+	 </ItemGroup>
 </Project>
