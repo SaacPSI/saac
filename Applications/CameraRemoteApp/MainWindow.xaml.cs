@@ -516,8 +516,8 @@ namespace CameraRemoteApp
             this.NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
             this.NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
             this.NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
-            this.NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
-            this.NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
+            this.NuitrackActivationKey.Text = this.NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
+            this.NuitrackDeviceSerialNumber.Text = this.NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
         }
 
         /// <summary>

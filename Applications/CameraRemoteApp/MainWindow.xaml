@@ -1,4 +1,4 @@
-﻿<Window x:Class="CameraRemoteApp.MainWindow"
+<Window x:Class="CameraRemoteApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -124,9 +124,9 @@
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
                             <Label Grid.Row="0" Grid.Column="0" Content="Device Serial Number"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Name="NuitrackDeviceSerialNumber" Text="{Binding NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="NuitrackDeviceSerialNumber" Text="{Binding NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber}"/>
                             <Label Grid.Row="1" Grid.Column="0" Content="Activation Key"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Name="NuitrackActivationKey" Text="{Binding NuitrackRemoteStreamsConfigurationUI.ActivationKey}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Name="NuitrackActivationKey" Text="{Binding NuitrackRemoteStreamsConfigurationUI.ActivationKey}"/>
                             <CheckBox Grid.Row="2" Grid.Column="0" Name="NuitrackSkeleton" Content="Skeleton" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking}"/>
                             <CheckBox Grid.Row="3" Grid.Column="0" Name="NuitrackRGB" Content="RGB" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputColor}"/>
                             <CheckBox Grid.Row="4" Grid.Column="0" Name="NuitrackDepth" Content="Depth" IsChecked="{Binding NuitrackRemoteStreamsConfigurationUI.OutputDepth}"/>
