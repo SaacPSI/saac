@@ -451,7 +451,7 @@ namespace SAAC.PipelineServices
         {
             foreach (var connector in connectors)
             {
-                RemoteExporter writer = new RemoteExporter(parent, port, transportKind);
+                RemoteExporter writer = new RemoteExporter(parent, port++, transportKind);
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value, [parent]);
 
                 // Marshal.SizeOf(connector.Value.DataType) > 4096 if true allow only one stream in exporter ?

@@ -489,33 +489,33 @@ namespace CameraRemoteApp
             this.NuitrackRemoteStreamsConfigurationUI.StartingPort = startingPort;
 
             // Load Azure Kinect configuration
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
-            this.KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
+            this.AzureKinectAudio.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            this.AzureKinectSkeleton.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            this.AzureKinectRGB.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.AzureKinectDepth.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.AzureKinectDepthCalibration.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            this.AzureKinectInfrared.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
+            this.AzureKinectIMU.IsChecked = this.KinectAzureRemoteStreamsConfigurationUI.OutputImu = Properties.Settings.Default.IMU;
             this.KinectAzureRemoteStreamsConfigurationUI.CameraFPS = (Microsoft.Azure.Kinect.Sensor.FPS)Properties.Settings.Default.FPS;
             this.KinectAzureRemoteStreamsConfigurationUI.ColorResolution = (Microsoft.Azure.Kinect.Sensor.ColorResolution)Properties.Settings.Default.videoResolution;
 
             // Load Kinect configuration
-            this.KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
-            this.KinectRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
-            this.KinectRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            this.KinectRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            this.KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
-            this.KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
-            this.KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
-            this.KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
-            this.KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
+            this.KinectAudio.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputAudio = Properties.Settings.Default.audio;
+            this.KinectSkeleton.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputBodies = Properties.Settings.Default.skeleton;
+            this.KinectRGB.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.KinectDepth.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.KinectDepthCalibration.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputCalibration = Properties.Settings.Default.depthCalibration;
+            this.KinectInfrared.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputInfrared = Properties.Settings.Default.infrared;
+            this.KinectLongExposureInfrared.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputLongExposureInfrared = Properties.Settings.Default.longExposureInfrared;
+            this.KinectColorToCameraMapping.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputColorToCameraMapping = Properties.Settings.Default.colorToCameraMapping;
+            this.KinectRGBD.IsChecked = this.KinectRemoteStreamsConfigurationUI.OutputRGBD = Properties.Settings.Default.rgbd;
 
             // Load Nuitrack configuration
-            this.NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
-            this.NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
-            this.NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
-            this.NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
-            this.NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
+            this.NuitrackSkeleton.IsChecked = this.NuitrackRemoteStreamsConfigurationUI.OutputSkeletonTracking = Properties.Settings.Default.skeleton;
+            this.NuitrackRGB.IsChecked = this.NuitrackRemoteStreamsConfigurationUI.OutputColor = Properties.Settings.Default.rgb;
+            this.NuitrackDepth.IsChecked = this.NuitrackRemoteStreamsConfigurationUI.OutputDepth = Properties.Settings.Default.depth;
+            this.NuitrackHand.IsChecked = this.NuitrackRemoteStreamsConfigurationUI.OutputHandTracking = Properties.Settings.Default.hands;
+            this.NuitrackGesture.IsChecked = this.NuitrackRemoteStreamsConfigurationUI.OutputGestureRecognizer = Properties.Settings.Default.gestures;
             this.NuitrackActivationKey.Text = this.NuitrackRemoteStreamsConfigurationUI.ActivationKey = Properties.Settings.Default.nuitrackKey;
             this.NuitrackDeviceSerialNumber.Text = this.NuitrackRemoteStreamsConfigurationUI.DeviceSerialNumber = Properties.Settings.Default.nuitrackDevice;
         }
