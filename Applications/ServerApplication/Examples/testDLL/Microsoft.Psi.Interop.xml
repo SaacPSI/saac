@@ -1,0 +1,1304 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Psi.Interop</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Psi.Interop.Format.CsvFormat">
+            <summary>
+            Format serializer/deserializer for CSV.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Format.CsvFormat.Instance">
+            <summary>
+            Gets singleton instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.SerializeMessage(System.Object,System.DateTime)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.DeserializeMessage(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.PersistHeader(System.Object,System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.PersistRecord(System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.PersistFooter(System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.CsvFormat.DeserializeRecords(System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Format.JsonFormat">
+            <summary>
+            Format serializer/deserializer for JSON.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Format.JsonFormat.Instance">
+            <summary>
+            Gets singleton instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.SerializeMessage(System.Object,System.DateTime)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.DeserializeMessage(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.PersistHeader(System.Object,System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.PersistRecord(System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.PersistFooter(System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.JsonFormat.DeserializeRecords(System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Format.MessagePackFormat">
+            <summary>
+            Format serializer/deserializer for MessagePack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Format.MessagePackFormat.Instance">
+            <summary>
+            Gets singleton instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.SerializeMessage(System.Object,System.DateTime)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.DeserializeMessage(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.PersistHeader(System.Object,System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.PersistRecord(System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.PersistFooter(System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Format.MessagePackFormat.DeserializeRecords(System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Operators">
+            <summary>
+            Rendezvous related operators.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRendezvousEndpoint``1(Microsoft.Psi.Interop.Transport.TcpWriter{``0},System.String,System.String)">
+            <summary>
+            Create a rendezvous endpoint from a <see cref="T:Microsoft.Psi.Interop.Transport.TcpWriter`1"/>.
+            </summary>
+            <typeparam name="T">Type of data stream.</typeparam>
+            <param name="writer"><see cref="T:Microsoft.Psi.Interop.Transport.TcpWriter`1"/> from which to create endpoint.</param>
+            <param name="address">Address with which to create endpoint.</param>
+            <param name="streamName">The name of the rendezvous stream.</param>
+            <returns>Rendezvous endpoint.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToTcpSource``1(Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint,Microsoft.Psi.Pipeline,Microsoft.Psi.Interop.Serialization.IFormatDeserializer,System.Action{``0},System.Boolean,System.String)">
+            <summary>
+            Create a <see cref="T:Microsoft.Psi.Interop.Transport.TcpSource`1"/> from a <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint"/>.
+            </summary>
+            <typeparam name="T">Type of data stream.</typeparam>
+            <param name="endpoint"><see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint"/> from which to create .</param>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="deserializer">The deserializer to use to deserialize messages.</param>
+            <param name="deallocator">An optional deallocator for the data.</param>
+            <param name="useSourceOriginatingTimes">An optional parameter indicating whether to use originating times received from the source over the network or to re-timestamp with the current pipeline time upon receiving.</param>
+            <param name="name">An optional name for the TCP source component.</param>
+            <returns><see cref="T:Microsoft.Psi.Interop.Transport.TcpSource`1"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRendezvousEndpoint(Microsoft.Psi.Interop.Transport.NetMQWriter)">
+            <summary>
+            Create a rendezvous endpoint from a <see cref="T:Microsoft.Psi.Interop.Transport.NetMQWriter"/>.
+            </summary>
+            <param name="writer"><see cref="T:Microsoft.Psi.Interop.Transport.NetMQWriter"/> from which to create endpoint.</param>
+            <returns>Rendezvous endpoint.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRendezvousEndpoint(Microsoft.Psi.Remoting.RemoteClockExporter,System.String)">
+            <summary>
+            Create a rendezvous endpoint from a <see cref="T:Microsoft.Psi.Remoting.RemoteClockExporter"/>.
+            </summary>
+            <param name="exporter"><see cref="T:Microsoft.Psi.Remoting.RemoteClockExporter"/> from which to create endpoint.</param>
+            <param name="host">Host address with which to create endpoint.</param>
+            <returns>Rendezvous endpoint.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRendezvousEndpoint(Microsoft.Psi.Remoting.RemotePipelineClockExporter,System.String)">
+            <summary>
+            Create a rendezvous endpoint from a <see cref="T:Microsoft.Psi.Remoting.RemotePipelineClockExporter"/>.
+            </summary>
+            <param name="exporter"><see cref="T:Microsoft.Psi.Remoting.RemotePipelineClockExporter"/> from which to create endpoint.</param>
+            <param name="host">Host address with which to create endpoint.</param>
+            <returns>Rendezvous endpoint.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToNetMQSource``1(Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint,Microsoft.Psi.Pipeline,System.String,Microsoft.Psi.Interop.Serialization.IFormatDeserializer,System.Boolean)">
+            <summary>
+            Create a <see cref="T:Microsoft.Psi.Interop.Transport.NetMQSource`1"/> from a <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint"/>.
+            </summary>
+            <typeparam name="T">Type of data stream.</typeparam>
+            <param name="endpoint"><see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint"/> from which to create .</param>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="topic">Topic name.</param>
+            <param name="deserializer">The deserializer to use to deserialize messages.</param>
+            <param name="useSourceOriginatingTimes">Flag indicating whether or not to post with originating times received over the socket. If false, we ignore them and instead use pipeline's current time.</param>
+            <returns><see cref="T:Microsoft.Psi.Interop.Transport.NetMQSource`1"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRendezvousEndpoint(Microsoft.Psi.Remoting.RemoteExporter,System.String)">
+            <summary>
+            Create a rendezvous endpoint from a <see cref="T:Microsoft.Psi.Remoting.RemoteExporter"/>.
+            </summary>
+            <param name="exporter"><see cref="T:Microsoft.Psi.Remoting.RemoteExporter"/> from which to create endpoint.</param>
+            <param name="host">Host name with which to create endpoint.</param>
+            <returns>Rendezvous endpoint.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRemoteImporter(Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint,Microsoft.Psi.Pipeline)">
+            <summary>
+            Create a <see cref="T:Microsoft.Psi.Remoting.RemoteImporter"/> from a <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint"/>.
+            </summary>
+            <param name="endpoint"><see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint"/> from which to create .</param>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <returns><see cref="T:Microsoft.Psi.Remoting.RemoteImporter"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRemoteClockImporter(Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint,Microsoft.Psi.Pipeline)">
+            <summary>
+            Create a <see cref="T:Microsoft.Psi.Remoting.RemoteClockImporter"/> from a <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint"/>.
+            </summary>
+            <param name="endpoint"><see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint"/> from which to create .</param>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <returns><see cref="T:Microsoft.Psi.Remoting.RemoteClockImporter"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.ToRemotePipelineClockImporter(Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint,Microsoft.Psi.Pipeline)">
+            <summary>
+            Create a <see cref="T:Microsoft.Psi.Remoting.RemotePipelineClockImporter"/> from a <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint"/>.
+            </summary>
+            <param name="endpoint"><see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint"/> from which to create .</param>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <returns><see cref="T:Microsoft.Psi.Remoting.RemoteClockImporter"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Operators.WriteToRendezvousProcess``1(Microsoft.Psi.IProducer{``0},System.String,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process,System.String,System.Int32,Microsoft.Psi.Interop.Serialization.IFormatSerializer,Microsoft.Psi.DeliveryPolicy)">
+            <summary>
+            Writes a stream to a specified rendezvous process.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="source">The source stream to write.</param>
+            <param name="streamName">The name under which to write the stream to the rendezvous process.</param>
+            <param name="rendezvousProcess">The rendezvous process.</param>
+            <param name="address">The address to write the stream to.</param>
+            <param name="port">The port to write the stream to.</param>
+            <param name="serializer">The serializer to use when writing the stream.</param>
+            <param name="deliveryPolicy">An optional delivery policy.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous">
+            <summary>
+            Component that maintains rendezvous information.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Psi.Interop.Rendezvous.Rendezvous.processes">
+            <summary>
+            A rendezvous may know about many processes, each with many endpoints, each with many streams.
+            </summary>
+        </member>
+        <member name="E:Microsoft.Psi.Interop.Rendezvous.Rendezvous.ProcessAdded">
+            <summary>
+            Event raised when processes are added.
+            </summary>
+            <remarks>Includes processes added before subscription.</remarks>
+        </member>
+        <member name="E:Microsoft.Psi.Interop.Rendezvous.Rendezvous.ProcessRemoved">
+            <summary>
+            Event raised when processes are removed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Processes">
+            <summary>
+            Gets the currently known processes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TryAddProcess(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Try to add a new process, if not already present.
+            </summary>
+            <param name="process">Process to add.</param>
+            <returns>A value indicating whether the process was added.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TryRemoveProcess(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Try to remove a process if present.
+            </summary>
+            <param name="process">Process to remove.</param>
+            <returns>A value indicating whether the process was removed.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TryRemoveProcess(System.String)">
+            <summary>
+            Try to remove a process if present.
+            </summary>
+            <param name="processName">Name of process to remove.</param>
+            <returns>A value indicating whether the process was removed.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TryGetProcess(System.String,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process@)">
+            <summary>
+            Try to get process by name.
+            </summary>
+            <param name="processName">Process name.</param>
+            <param name="process">Process or null if not found.</param>
+            <returns>A value indicating whether named process found.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream">
+            <summary>
+            Represents a remoted stream of data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream"/> class.
+            </summary>
+            <param name="streamName">Stream name.</param>
+            <param name="typeName">Type name of stream data.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream.#ctor(System.String,System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream"/> class.
+            </summary>
+            <param name="streamName">Stream name.</param>
+            <param name="type">Type of stream data.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream.StreamName">
+            <summary>
+            Gets the stream name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream.TypeName">
+            <summary>
+            Gets the type name of the stream data.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint">
+            <summary>
+            Represents an endpoint providing remoted data streams.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint.#ctor(System.Collections.Generic.IEnumerable{Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint"/> class.
+            </summary>
+            <param name="streams">Endpoint streams.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint"/> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint.Streams">
+            <summary>
+            Gets the streams.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint.AddStream(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream)">
+            <summary>
+            Add new stream.
+            </summary>
+            <param name="stream">Endpoint stream to add.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint">
+            <summary>
+            Represents a simple TCP source endpoint providing a single remoted data stream.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint.#ctor(System.String,System.Int32,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint"/> class.
+            </summary>
+            <param name="host">Host name used by the endpoint.</param>
+            <param name="port">Port number used by the endpoint.</param>
+            <param name="stream">Endpoint stream.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint.Host">
+            <summary>
+            Gets the endpoint address.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint.Port">
+            <summary>
+            Gets the endpoint port number.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint.Stream">
+            <summary>
+            Gets the stream (Tcp endpoints have only one).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint.AddStream(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint">
+            <summary>
+            Represents a NetMQ source endpoint providing remoted data streams.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint.#ctor(System.String,System.Collections.Generic.IEnumerable{Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint"/> class.
+            </summary>
+            <param name="address">Address used by the endpoint.</param>
+            <param name="streams">Endpoint streams.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint"/> class.
+            </summary>
+            <param name="address">Address used by the endpoint.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.NetMQSourceEndpoint.Address">
+            <summary>
+            Gets the endpoint address.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint">
+            <summary>
+            Represents a remote exporter endpoint providing remoted data streams.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint.#ctor(System.String,System.Int32,Microsoft.Psi.Remoting.TransportKind,System.Collections.Generic.IEnumerable{Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint"/> class.
+            </summary>
+            <param name="host">Host name used by the endpoint.</param>
+            <param name="port">Port used by the endpoint.</param>
+            <param name="transport">Tranport kind used by the endpoint.</param>
+            <param name="streams">Endpoint streams.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint.#ctor(System.String,System.Int32,Microsoft.Psi.Remoting.TransportKind)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint"/> class.
+            </summary>
+            <param name="host">Host name used by the endpoint.</param>
+            <param name="port">Port used by the endpoint.</param>
+            <param name="transport">Tranport kind used by the endpoint.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint.Host">
+            <summary>
+            Gets the endpoint host name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint.Port">
+            <summary>
+            Gets the endpoint port.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint.Transport">
+            <summary>
+            Gets the endpoint transport kind.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint">
+            <summary>
+            Represents a remote clock exporter endpoint providing clock information.
+            </summary>
+            <remarks>
+            Endpoint does not provide any streams. Clock information is exchanged directly.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint.#ctor(System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint"/> class.
+            </summary>
+            <param name="host">Host name used by the endpoint.</param>
+            <param name="port">Port used by the endpoint.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint.Host">
+            <summary>
+            Gets the endpoint host name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint.Port">
+            <summary>
+            Gets the endpoint port.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteClockExporterEndpoint.AddStream(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint">
+            <summary>
+            Represents a remote clock exporter endpoint providing clock information.
+            </summary>
+            <remarks>
+            Endpoint does not provide any streams. Clock information is exchanged directly.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint.#ctor(System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint"/> class.
+            </summary>
+            <param name="host">Host name used by the endpoint.</param>
+            <param name="port">Port used by the endpoint.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint.Host">
+            <summary>
+            Gets the endpoint host name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint.Port">
+            <summary>
+            Gets the endpoint port.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemotePipelineClockExporterEndpoint.AddStream(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Stream)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process">
+            <summary>
+            Represents an application process hosting endpoints.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.#ctor(System.String,System.Collections.Generic.IEnumerable{Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process"/> class.
+            </summary>
+            <param name="name">Unique name by which to refer to the process.</param>
+            <param name="endpoints">Process endpoints.</param>
+            <param name="version">Optional process version (allowing negotiation of client compatibility).</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process"/> class.
+            </summary>
+            <param name="name">Unique name by which to refer to the process.</param>
+            <param name="version">Optional process version (allowing negotiation of client compatibility).</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.Name">
+            <summary>
+            Gets the process name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.Version">
+            <summary>
+            Gets the process version.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.Endpoints">
+            <summary>
+            Gets the endpoints.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process.AddEndpoint(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Endpoint)">
+            <summary>
+            Add new endpoint.
+            </summary>
+            <param name="endpoint">Process endpoint to add.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.RendezvousClient">
+            <summary>
+            Client which connects to a <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousServer"/> and relays <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous"/> information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.#ctor(System.String,System.Int32,Microsoft.Psi.Interop.Rendezvous.Rendezvous)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousClient"/> class.
+            </summary>
+            <param name="serverAddress">TCP address to which to connect.</param>
+            <param name="port">Optional TCP port to which to connect.</param>
+            <param name="rendezvous">Optional rendezvous instance to relay.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.Connected">
+            <summary>
+            Gets wait handle for server connection being established.
+            </summary>
+            <remarks>This should be waited on prior to trusting the processes list.</remarks>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.IsActive">
+            <summary>
+            Gets a value indicating whether the client is active.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.ClientAddress">
+            <summary>
+            Gets the client address (available after connection established).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.Start">
+            <summary>
+            Start rendezvous client (blocking until connection is established).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.Stop">
+            <summary>
+            Stop rendezvous client.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousClient.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay">
+            <summary>
+            Base class for <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousClient"/> and <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousServer"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.#ctor(Microsoft.Psi.Interop.Rendezvous.Rendezvous)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay"/> class.
+            </summary>
+            <param name="rendezvous">Optional rendezvous instance to relay.</param>
+        </member>
+        <member name="E:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.Error">
+            <summary>
+            Event raised when errors occur.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.Rendezvous">
+            <summary>
+            Gets the underlying rendezvous.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.WriteAddProcess(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process,System.IO.BinaryWriter)">
+            <summary>
+            Write update to add process.
+            </summary>
+            <param name="process">Process to add.</param>
+            <param name="writer">Writer to which to write update.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.WriteRemoveProcess(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process,System.IO.BinaryWriter)">
+            <summary>
+            Write update to remove process.
+            </summary>
+            <param name="process">Process to remove.</param>
+            <param name="writer">Writer to which to write update.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.TryWriteDisconnect(System.IO.BinaryWriter)">
+            <summary>
+            Write disconnection signal..
+            </summary>
+            <param name="writer">Writer to which to write disconnection signal.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.OnError(System.Exception)">
+            <summary>
+            Raise error event.
+            </summary>
+            <param name="ex">Underlying exception.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.ReadProcessUpdate(System.IO.BinaryReader)">
+            <summary>
+            Read process update record.
+            </summary>
+            <param name="reader">Reader from which to read.</param>
+            <returns>A value indicating whether an update was read, otherwise false indicated disconnection.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousRelay.ReadProcess(System.IO.BinaryReader)">
+            <summary>
+            Read process.
+            </summary>
+            <param name="reader">Reader from which to deserialize.</param>
+            <returns>Process.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Rendezvous.RendezvousServer">
+            <summary>
+            Server which accepts one or more <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousClient"/> connections and relays <see cref="T:Microsoft.Psi.Interop.Rendezvous.Rendezvous"/> information.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.DefaultPort">
+            <summary>
+            Default TCP port on which to listen for clients.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.ProtocolVersion">
+            <summary>
+            Protocol version.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.#ctor(System.Int32,Microsoft.Psi.Interop.Rendezvous.Rendezvous)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Rendezvous.RendezvousServer"/> class.
+            </summary>
+            <param name="port">Optional TCP port on which to listen for clients.</param>
+            <param name="rendezvous">Optional rendezvous instance to relay.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.IsActive">
+            <summary>
+            Gets a value indicating whether the server is active.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.ServerAddress">
+            <summary>
+            Gets the server address (on which the most recent client connection was received).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.Start">
+            <summary>
+            Start rendezvous client (blocking until connection is established).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.Stop">
+            <summary>
+            Stop rendezvous client.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Rendezvous.RendezvousServer.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.Format`1">
+            <summary>
+            Helper class for making new formats (implementations of <see cref="T:Microsoft.Psi.Interop.Serialization.IFormatSerializer"/>/<see cref="T:Microsoft.Psi.Interop.Serialization.IFormatDeserializer"/>.
+            </summary>
+            <typeparam name="T">Type which is serialized/deserialized.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.#ctor(System.Func{`0,System.DateTime,System.ValueTuple{System.Byte[],System.Int32,System.Int32}},System.Func{System.Byte[],System.Int32,System.Int32,System.ValueTuple{`0,System.DateTime}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> class.
+            </summary>
+            <param name="serializeFunc">Serialization function.</param>
+            <param name="deserializeFunc">Deserialization function.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.#ctor(System.Action{`0,System.IO.BinaryWriter},System.Func{System.IO.BinaryReader,System.Byte[],System.Int32,System.Int32,`0})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> class.
+            </summary>
+            <param name="serializeAction">Action to serialize using <see cref="T:System.IO.BinaryWriter"/>.</param>
+            <param name="deserializeFunc">Function to deserialize using <see cref="T:System.IO.BinaryReader"/> (also given raw payload, offset, length).</param>
+            <returns>Serialization format.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.#ctor(System.Action{`0,System.IO.BinaryWriter},System.Func{System.IO.BinaryReader,`0})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> class.
+            </summary>
+            <param name="serializeAction">Action to serialize using <see cref="T:System.IO.BinaryWriter"/>.</param>
+            <param name="deserializeFunc">Function to deserialize using <see cref="T:System.IO.BinaryReader"/> (also given raw payload, offset, length).</param>
+            <returns>Serialization format.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.SerializeMessage(System.Object,System.DateTime)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.DeserializeMessage(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.Format`1.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.IFormatDeserializer">
+            <summary>
+            Format deserializer interface.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IFormatDeserializer.DeserializeMessage(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Deserialize single message and originating time stamp payload.
+            </summary>
+            <param name="payload">Payload bytes.</param>
+            <param name="index">Starting index of message data.</param>
+            <param name="count">Number of bytes constituting message data.</param>
+            <returns>Dynamic of primitive or IEnumerable/ExpandoObject of primitive as well as originating time stamp.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.IFormatSerializer">
+            <summary>
+            Format serializer interface.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IFormatSerializer.SerializeMessage(System.Object,System.DateTime)">
+            <summary>
+            Serialize single message with originating time stamp.
+            </summary>
+            <param name="message">Message of any type.</param>
+            <param name="originatingTime">Originating time of message.</param>
+            <returns>Serialized bytes, index and count.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.IInteropSerializable">
+            <summary>
+            Defines an interface for interop serializable objects.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IInteropSerializable.Write(System.IO.BinaryWriter)">
+            <summary>
+            Writes the object to a binary writer.
+            </summary>
+            <param name="writer">The binary writer.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IInteropSerializable.ReadFrom(System.IO.BinaryReader)">
+            <summary>
+            Reads the object from a binary reader.
+            </summary>
+            <param name="reader">The binary reader.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.InteropSerialization">
+            <summary>
+            Provides helper methods for interop serialization.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.Write``1(``0,System.IO.BinaryWriter)">
+            <summary>
+            Writes an interop serializable object to a specified writer.
+            </summary>
+            <typeparam name="T">The type of the object.</typeparam>
+            <param name="value">The object to write.</param>
+            <param name="writer">The writer to write the object to.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.Read``1(System.IO.BinaryReader)">
+            <summary>
+            Reads an interop serializable object from a specified reader.
+            </summary>
+            <typeparam name="T">The type of the object.</typeparam>
+            <param name="reader">The reader to read the object from.</param>
+            <returns>The deserialized object.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteNullable``1(System.Nullable{``0},System.IO.BinaryWriter,System.Action{``0})">
+            <summary>
+            Write <see cref="T:System.Nullable`1"/> to <see cref="T:System.IO.BinaryWriter"/> using an <see cref="T:System.Action`1"/> to write each element.
+            </summary>
+            <typeparam name="T">Type of nullable value.</typeparam>
+            <param name="value">Value to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeAction"><see cref="T:System.Action`1"/> used to write each element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteNullable``1(System.Nullable{``0},System.IO.BinaryWriter,System.Action{``0,System.IO.BinaryWriter})">
+            <summary>
+            Write <see cref="T:System.Nullable`1"/> to <see cref="T:System.IO.BinaryWriter"/> using an <see cref="T:System.Action`2"/> to write each element.
+            </summary>
+            <typeparam name="T">Type of nullable value.</typeparam>
+            <param name="value">Value to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeAction"><see cref="T:System.Action`2"/> used to write each element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadNullable``1(System.IO.BinaryReader,System.Func{``0})">
+            <summary>
+            Read <see cref="T:System.Nullable`1"/> from <see cref="T:System.IO.BinaryReader"/> using a <see cref="T:System.Func`1"/> to read each element.
+            </summary>
+            <typeparam name="T">Type of value.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readFunc"><see cref="T:System.Func`1"/> used to read each element.</param>
+            <returns><see cref="T:System.Collections.Generic.IEnumerable`1"/> of elements.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadNullable``1(System.IO.BinaryReader,System.Func{System.IO.BinaryReader,``0})">
+            <summary>
+            Read <see cref="T:System.Nullable`1"/> from <see cref="T:System.IO.BinaryReader"/> using a <see cref="T:System.Func`2"/> to read each element.
+            </summary>
+            <typeparam name="T">Type of value.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readFunc"><see cref="T:System.Func`2"/> used to read each element.</param>
+            <returns><see cref="T:System.Collections.Generic.IEnumerable`1"/> of elements.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteCollection``1(System.Collections.Generic.IEnumerable{``0},System.IO.BinaryWriter,System.Action{``0})">
+            <summary>
+            Write <see cref="T:System.Collections.Generic.IEnumerable`1"/> to <see cref="T:System.IO.BinaryWriter"/> using an <see cref="T:System.Action`1"/> to write each element.
+            </summary>
+            <typeparam name="T">Type of collection elements.</typeparam>
+            <param name="collection"><see cref="T:System.Collections.Generic.IEnumerable`1"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeAction"><see cref="T:System.Action`1"/> used to write each element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteCollection``1(System.Collections.Generic.IEnumerable{``0},System.IO.BinaryWriter,System.Action{``0,System.IO.BinaryWriter})">
+            <summary>
+            Write <see cref="T:System.Collections.Generic.IEnumerable`1"/> to <see cref="T:System.IO.BinaryWriter"/> using an <see cref="T:System.Action`2"/> to write each element.
+            </summary>
+            <typeparam name="T">Type of collection elements.</typeparam>
+            <param name="collection"><see cref="T:System.Collections.Generic.IEnumerable`1"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeAction"><see cref="T:System.Action`2"/> used to write each element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteCollection``1(System.Collections.Generic.IEnumerable{``0},System.IO.BinaryWriter)">
+            <summary>
+            Writes a collection of <see cref="T:Microsoft.Psi.Interop.Serialization.IInteropSerializable"/> objects.
+            </summary>
+            <typeparam name="T">The type of the objects.</typeparam>
+            <param name="collection">The collection to write.</param>
+            <param name="writer">The writer to write the collection to.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadCollection``1(System.IO.BinaryReader,System.Func{``0})">
+            <summary>
+            Read <see cref="T:System.Collections.Generic.IEnumerable`1"/> from <see cref="T:System.IO.BinaryReader"/> using a <see cref="T:System.Func`1"/> to read each element.
+            </summary>
+            <typeparam name="T">Type of collection elements.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readFunc"><see cref="T:System.Func`1"/> used to read each element.</param>
+            <returns><see cref="T:System.Collections.Generic.IEnumerable`1"/> of elements.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadCollection``1(System.IO.BinaryReader,System.Func{System.IO.BinaryReader,``0})">
+            <summary>
+            Read <see cref="T:System.Collections.Generic.IEnumerable`1"/> from <see cref="T:System.IO.BinaryReader"/> using a <see cref="T:System.Func`2"/> to read each element.
+            </summary>
+            <typeparam name="T">Type of collection elements.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readFunc"><see cref="T:System.Func`2"/> used to read each element.</param>
+            <returns><see cref="T:System.Collections.Generic.IEnumerable`1"/> of elements.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadCollection``1(System.IO.BinaryReader)">
+            <summary>
+            Reads a collection of <see cref="T:Microsoft.Psi.Interop.Serialization.IInteropSerializable"/> objects from a specified reader.
+            </summary>
+            <typeparam name="T">The type of the objects.</typeparam>
+            <param name="reader">The reader to read the collection from.</param>
+            <returns>The collection of objects.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteDictionary``2(System.Collections.Generic.Dictionary{``0,``1},System.IO.BinaryWriter,System.Action{``0},System.Action{``1})">
+            <summary>
+            Write <see cref="T:System.Collections.Generic.Dictionary`2"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="dictionary"><see cref="T:System.Collections.Generic.Dictionary`2"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeKeyAction"><see cref="T:System.Action`1"/> used to write each key element.</param>
+            <param name="writeValueAction"><see cref="T:System.Action`1"/> used to write each value element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteDictionary``2(System.Collections.Generic.Dictionary{``0,``1},System.IO.BinaryWriter,System.Action{``0,System.IO.BinaryWriter},System.Action{``1,System.IO.BinaryWriter})">
+            <summary>
+            Write <see cref="T:System.Collections.Generic.Dictionary`2"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="dictionary"><see cref="T:System.Collections.Generic.Dictionary`2"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeKeyAction"><see cref="T:System.Action`2"/> used to write each key element.</param>
+            <param name="writeValueAction"><see cref="T:System.Action`2"/> used to write each value element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteDictionary``2(System.Collections.Generic.Dictionary{``0,``1},System.IO.BinaryWriter,System.Action{``0})">
+            <summary>
+            Write <see cref="T:System.Collections.Generic.Dictionary`2"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="dictionary"><see cref="T:System.Collections.Generic.Dictionary`2"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+            <param name="writeKeyAction"><see cref="T:System.Action`1"/> used to write each key element.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadDictionary``2(System.IO.BinaryReader,System.Func{``0},System.Func{``1})">
+            <summary>
+            Read <see cref="T:System.Collections.Generic.Dictionary`2"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readKeyFunc"><see cref="T:System.Func`1"/> used to read each key element.</param>
+            <param name="readValueFunc"><see cref="T:System.Func`1"/> used to read each value element.</param>
+            <returns><see cref="T:System.Collections.Generic.Dictionary`2"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadDictionary``2(System.IO.BinaryReader,System.Func{System.IO.BinaryReader,``0},System.Func{System.IO.BinaryReader,``1})">
+            <summary>
+            Read <see cref="T:System.Collections.Generic.Dictionary`2"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readKeyFunc"><see cref="T:System.Func`2"/> used to read each key element.</param>
+            <param name="readValueFunc"><see cref="T:System.Func`2"/> used to read each value element.</param>
+            <returns><see cref="T:System.Collections.Generic.Dictionary`2"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadDictionary``2(System.IO.BinaryReader,System.Func{``0})">
+            <summary>
+            Read <see cref="T:System.Collections.Generic.Dictionary`2"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <typeparam name="TKey">Type of dictionary key elements.</typeparam>
+            <typeparam name="TValue">Type of dictionary value elements.</typeparam>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <param name="readKeyFunc"><see cref="T:System.Func`1"/> used to read each key element.</param>
+            <returns><see cref="T:System.Collections.Generic.Dictionary`2"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.Int32Format">
+            <summary>
+            Format for <see cref="T:System.Int32"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteInt32(System.Int32,System.IO.BinaryWriter)">
+            <summary>
+            Write <see cref="T:System.Int32"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="value">Value to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadInt32(System.IO.BinaryReader)">
+            <summary>
+            Read <see cref="T:System.Int32"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns><see cref="T:System.Int32"/> value.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.PipelineDiagnosticsFormat">
+            <summary>
+            Format for <see cref="T:Microsoft.Psi.Diagnostics.PipelineDiagnostics"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.DateTimeFormat">
+            <summary>
+            Format for <see cref="T:System.DateTime"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteDateTime(System.DateTime,System.IO.BinaryWriter)">
+            <summary>
+            Write <see cref="T:System.DateTime"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="dateTime"><see cref="T:System.DateTime"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadDateTime(System.IO.BinaryReader)">
+            <summary>
+            Read <see cref="T:System.DateTime"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns><see cref="T:System.DateTime"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.TimeSpanFormat">
+            <summary>
+            Format for <see cref="T:System.TimeSpan"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteTimeSpan(System.TimeSpan,System.IO.BinaryWriter)">
+            <summary>
+            Write <see cref="T:System.TimeSpan"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="timeSpan"><see cref="T:System.TimeSpan"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadTimeSpan(System.IO.BinaryReader)">
+            <summary>
+            Read <see cref="T:System.TimeSpan"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns><see cref="T:System.TimeSpan"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.BoolFormat">
+            <summary>
+            Format for <see cref="T:System.Boolean"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteBool(System.Boolean,System.IO.BinaryWriter)">
+            <summary>
+            Write <see cref="T:System.Boolean"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="boolean"><see cref="T:System.Boolean"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadBool(System.IO.BinaryReader)">
+            <summary>
+            Read <see cref="T:System.Boolean"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns><see cref="T:System.Boolean"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.GuidFormat">
+            <summary>
+            Format for <see cref="T:System.Guid"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteGuid(System.Guid,System.IO.BinaryWriter)">
+            <summary>
+            Write <see cref="T:System.Guid"/> to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="guid"><see cref="T:System.Guid"/> to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadGuid(System.IO.BinaryReader)">
+            <summary>
+            Read <see cref="T:System.Guid"/> from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns><see cref="T:System.Guid"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.StringFormat">
+            <summary>
+            Format for <see cref="T:System.String"/>.
+            </summary>
+            <returns><see cref="T:Microsoft.Psi.Interop.Serialization.Format`1"/> serializer/deserializer.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.WriteString(System.String,System.IO.BinaryWriter)">
+            <summary>
+            Write optional string (may be null) to <see cref="T:System.IO.BinaryWriter"/>.
+            </summary>
+            <param name="value">String value to write.</param>
+            <param name="writer"><see cref="T:System.IO.BinaryWriter"/> to which to write.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.ReadString(System.IO.BinaryReader)">
+            <summary>
+            Read optional string (may be null) from <see cref="T:System.IO.BinaryReader"/>.
+            </summary>
+            <param name="reader"><see cref="T:System.IO.BinaryReader"/> from which to read.</param>
+            <returns>Optional value (may be null).</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.InteropSerialization.GetFormat``1(System.Boolean)">
+            <summary>
+            Gets the serialization format for a interop serializable type.
+            </summary>
+            <typeparam name="T">The interop serializable type.</typeparam>
+            <param name="supportPolymorphic">Indicates whether the formatter should support polymorphic instances.</param>
+            <returns>The format.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.IPersistentFormatDeserializer">
+            <summary>
+            Persistent format deserializer interface.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IPersistentFormatDeserializer.DeserializeRecords(System.IO.Stream)">
+            <summary>
+            Deserialize stream of messages and originating time stamps.
+            </summary>
+            <param name="stream">Stream of serialized message data.</param>
+            <returns>Sequence of dynamic of primitive or IEnumerable/ExpandoObject of primitive as well as originating time stamp.</returns>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.IPersistentFormatSerializer">
+            <summary>
+            Persistent format serializer interface.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IPersistentFormatSerializer.PersistHeader(System.Object,System.IO.Stream)">
+            <summary>
+            Persist header data (if any).
+            </summary>
+            <remarks>This is called once at the start of each persisted partition/file.</remarks>
+            <param name="message">Message of any type.</param>
+            <param name="stream">Stream of serialized bytes along with delimiter or length-prefix.</param>
+            <returns>State object of any type; handed back on calls below, simplifying stateless implementation.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IPersistentFormatSerializer.PersistRecord(System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object)">
+            <summary>
+            Persist single serialized message with originating time stamp.
+            </summary>
+            <remarks>This is called once per message.</remarks>
+            <param name="message">Message of any type.</param>
+            <param name="originatingTime">Originating time of message.</param>
+            <param name="first">Flag indicating whether this is the first record; useful for delimiters in some formats.</param>
+            <param name="stream">Stream of serialized bytes along with delimiter or length-prefix.</param>
+            <param name="state">State object of any type; previously returned by header call above.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.IPersistentFormatSerializer.PersistFooter(System.IO.Stream,System.Object)">
+            <summary>
+            Persist footer data (if any).
+            </summary>
+            <remarks>This is called once upon termination of data stream.</remarks>
+            <param name="stream">Stream of serialized bytes along with delimiter or length-prefix.</param>
+            <param name="state">State object of any type; previously returned by header call above.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Serialization.PersistentFormat`1">
+            <summary>
+            Persistent format serializer/deserializer.
+            </summary>
+            <typeparam name="T">Type which is serialized/deserialized.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.PersistentFormat`1.#ctor(System.Func{System.Object,System.IO.Stream,System.Object},System.Action{System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object},System.Action{System.IO.Stream,System.Object},System.Func{System.IO.Stream,System.Collections.Generic.IEnumerable{System.ValueTuple{System.Object,System.DateTime}}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Serialization.PersistentFormat`1"/> class.
+            </summary>
+            <param name="persistHeader">Header persistence function.</param>
+            <param name="persistRecord">Record persistence function.</param>
+            <param name="persistFooter">Footer persistence function.</param>
+            <param name="deserializeRecords">Deserialization function.</param>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.PersistentFormat`1.PersistHeader(System.Object,System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.PersistentFormat`1.PersistRecord(System.Object,System.DateTime,System.Boolean,System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.PersistentFormat`1.PersistFooter(System.IO.Stream,System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Serialization.PersistentFormat`1.DeserializeRecords(System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.FileSource`1">
+            <summary>
+            Persisted file source component.
+            </summary>
+            <typeparam name="T">Message type.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.FileSource`1.#ctor(Microsoft.Psi.Pipeline,System.String,Microsoft.Psi.Interop.Serialization.IPersistentFormatDeserializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.FileSource`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="filename">File name to which to persist.</param>
+            <param name="deserializer">Format serializer with which messages are deserialized.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.FileWriter`1">
+            <summary>
+            File persistence component.
+            </summary>
+            <typeparam name="T">Message type.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.FileWriter`1.#ctor(Microsoft.Psi.Pipeline,System.String,Microsoft.Psi.Interop.Serialization.IPersistentFormatSerializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.FileWriter`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="filename">File name to which to persist.</param>
+            <param name="serializer">Format serializer with which messages are serialized.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.FileWriter`1.In">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.FileWriter`1.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.FileWriter`1.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.NetMQSource`1">
+            <summary>
+            NetMQ (ZeroMQ) subscriber component.
+            </summary>
+            <typeparam name="T">Message type.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQSource`1.#ctor(Microsoft.Psi.Pipeline,System.String,System.String,Microsoft.Psi.Interop.Serialization.IFormatDeserializer,System.Boolean,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.NetMQSource`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="topic">Topic name.</param>
+            <param name="address">Connection string.</param>
+            <param name="deserializer">Format deserializer with which messages are deserialized.</param>
+            <param name="useSourceOriginatingTimes">Flag indicating whether or not to post with originating times received over the socket. If false, we ignore them and instead use pipeline's current time.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.NetMQSource`1.Out">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQSource`1.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQSource`1.Start(System.Action{System.DateTime})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQSource`1.Stop(System.DateTime,System.Action)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQSource`1.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.NetMQWriter">
+            <summary>
+            NetMQ (ZeroMQ) publisher component.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQWriter.#ctor(Microsoft.Psi.Pipeline,System.String,Microsoft.Psi.Interop.Serialization.IFormatSerializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.NetMQWriter"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="address">Connection string.</param>
+            <param name="serializer">Format serializer with which messages are serialized.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.NetMQWriter.Address">
+            <summary>
+            Gets the connection address string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.NetMQWriter.Topics">
+            <summary>
+            Gets the topic names and types being published.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQWriter.AddTopic``1(System.String)">
+            <summary>
+            Add topic receiver.
+            </summary>
+            <param name="topic">Topic name.</param>
+            <typeparam name="T">Message type.</typeparam>
+            <returns>Receiver to which to pipe messages.</returns>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQWriter.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQWriter.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.NetMQWriter`1">
+            <summary>
+            NetMQ (ZeroMQ) publisher component.
+            </summary>
+            <typeparam name="T">Message type.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.NetMQWriter`1.#ctor(Microsoft.Psi.Pipeline,System.String,System.String,Microsoft.Psi.Interop.Serialization.IFormatSerializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.NetMQWriter`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="topic">Topic name.</param>
+            <param name="address">Connection string.</param>
+            <param name="serializer">Format serializer with which messages are serialized.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.NetMQWriter`1.In">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.TcpSource`1">
+            <summary>
+            Component that reads and deserializes messages from a remote server over TCP.
+            </summary>
+            <typeparam name="T">The type of the messages.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.#ctor(Microsoft.Psi.Pipeline,System.String,System.Int32,Microsoft.Psi.Interop.Serialization.IFormatDeserializer,System.Action{`0},System.Boolean,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.TcpSource`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="address">The address of the remote server.</param>
+            <param name="port">The port on which to connect.</param>
+            <param name="deserializer">The deserializer to use to deserialize messages.</param>
+            <param name="deallocator">An optional deallocator for the data.</param>
+            <param name="useSourceOriginatingTimes">An optional parameter indicating whether to use originating times from the source received over the network or to re-timestamp with the current pipeline time upon receiving.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.TcpSource`1.Out">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.Start(System.Action{System.DateTime})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.Stop(System.DateTime,System.Action)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpSource`1.ReadNextFrame(System.IO.BinaryReader)">
+            <summary>
+            Reads a data frame into the frame buffer. Will re-allocate the frame buffer if necessary.
+            </summary>
+            <param name="binaryReader">The binary reader.</param>
+        </member>
+        <member name="T:Microsoft.Psi.Interop.Transport.TcpWriter`1">
+            <summary>
+            Component that serializes and writes messages to a remote server over TCP.
+            </summary>
+            <typeparam name="T">The type of the messages.</typeparam>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpWriter`1.#ctor(Microsoft.Psi.Pipeline,System.Int32,Microsoft.Psi.Interop.Serialization.IFormatSerializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Psi.Interop.Transport.TcpWriter`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="port">The connection port.</param>
+            <param name="serializer">The serializer to use to serialize messages.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.TcpWriter`1.Port">
+            <summary>
+            Gets the connection port.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Psi.Interop.Transport.TcpWriter`1.In">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpWriter`1.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Psi.Interop.Transport.TcpWriter`1.ToString">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>
