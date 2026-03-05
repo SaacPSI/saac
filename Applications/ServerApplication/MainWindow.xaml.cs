@@ -672,23 +672,16 @@ namespace ServerApplication
                 return;
             }
 
-            switch (args[1])
+            if (!this.connectedApps.ContainsKey(name))
             {
-                case "Waiting":
-                case "Running":
-                    if (!this.connectedApps.ContainsKey(name))
-                    {
-                        this.connectedApps[name] = new ConnectedApp
-                        {
-                            Name = name,
-                        };
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.SpawnEllipseTextButtonsRow(name);
-                        }));
-                    }
-
-                    break;
+                this.connectedApps[name] = new ConnectedApp
+                {
+                    Name = name,
+                };
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.SpawnEllipseTextButtonsRow(name);
+                }));
             }
 
             switch (args[1])
@@ -715,11 +708,7 @@ namespace ServerApplication
                 case "Stopped":
                     if (this.connectedApps.ContainsKey(name))
                     {
-                        this.connectedApps.Remove(name);
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.RemoveDeviceRow(name);
-                        }));
+                        this.connectedApps[name].Status = ConnectedAppStatus.Stop;
                     }
 
                     break;
@@ -953,6 +942,7 @@ namespace ServerApplication
                         this.rowsByDeviceName[app.Name].BtnStart.IsEnabled = false;
                         this.rowsByDeviceName[app.Name].BtnStop.IsEnabled = true;
                         break;
+                    case ConnectedAppStatus.Stop:
                     case ConnectedAppStatus.Waiting:
                         app.StatusDot.Fill = Brushes.Orange;
                         this.rowsByDeviceName[app.Name].BtnStart.IsEnabled = true;

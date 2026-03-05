@@ -1127,7 +1127,12 @@ namespace WhisperRemoteApp
             {
                 this.GetMicrophonesConfiguration();
             }));
-            this.MicrophonesGrid.RowDefinitions.RemoveRange(2, this.MicrophonesGrid.RowDefinitions.Count - 3);
+
+            if (this.MicrophonesGrid.RowDefinitions.Count > 2)
+            {
+                this.MicrophonesGrid.RowDefinitions.RemoveRange(2, this.MicrophonesGrid.RowDefinitions.Count - 3);
+            }
+
             foreach (UIElement element in this.MicrophonesGrid.Children)
             {
                 if (element is Grid)
