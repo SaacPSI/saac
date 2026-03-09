@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,28 +10,16 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>   
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>   
     <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
     <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(AssemblyName)</BaseIntermediateOutputPath>
-    <ApplicationIcon>crown-5-256.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Update="Properties\Settings.settings">
@@ -42,24 +30,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <Content Include="crown-5-256.ico" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.19.100.1-beta-SAAC" />
-    <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Kinect.Windows" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Media.Windows.x64" Version="0.19.100.1-beta-SAAC" />
-    <PackageReference Include="Microsoft.Psi.Speech.Windows" Version="0.19.100.1-beta" />
+    <Compile Include="..\ServerApplication\IPsiStudioPipeline.cs" Link="IPsiStudioPipeline.cs" />
   </ItemGroup>
-	 <ItemGroup>
-    <ProjectReference Include="..\..\Components\AnnotationsComponents\AnnotationsComponents.csproj" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Data" Version="0.19.100.1-beta" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\Components\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\..\Components\PsiFormats\PsiFormats.csproj" />
+    <ProjectReference Include="..\..\Components\PipelineServices\PipelineServices.csproj" />
   </ItemGroup>
-	 <ItemGroup>
-	   <Reference Include="nuitrack.net">
-	     <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
-	   </Reference>
-	 </ItemGroup>
 </Project>
+

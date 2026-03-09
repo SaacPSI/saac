@@ -6,6 +6,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -1032,15 +1037,37 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void BtnBrowseExternalConfiguration_Click(object sender, RoutedEventArgs e)
         {
-            UiGenerator.FolderPicker openFileDialog = new UiGenerator.FolderPicker
+            // Try to open as a JSON file first
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "External configuration directory",
+                Title = "Select JSON configuration file",
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                CheckFileExists = true
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                this.ExternalConfigurationDirectory = openFileDialog.ResultName;
-                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
+                // User selected a JSON file
+                string selectedFile = openFileDialog.FileName;
+                if (selectedFile.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    ExternalConfigurationDirectory = selectedFile;
+                    BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                }
+            }
+            else
+            {
+                // User cancelled file dialog, offer folder picker instead
+                UiGenerator.FolderPicker folderDialog = new UiGenerator.FolderPicker
+                {
+                    Title = "Select configuration folder (or cancel to keep current)"
+                };
+
+                if (folderDialog.ShowDialog() == true)
+                {
+                    ExternalConfigurationDirectory = folderDialog.ResultName;
+                    BtnLoadConfig.IsEnabled = BtnSaveConfig.IsEnabled = true;
+                }
             }
 
             e.Handled = true;
@@ -1082,16 +1109,36 @@ namespace ServerApplication
 
         #region Browser
 
-        /// <summary>
-        /// Loads external configuration from JSON files in the specified directory.
-        /// </summary>
-        /// <param name="topicsFolder">The folder containing topic configuration files.</param>
-        private void LoadExternalConfiguration(string topicsFolder)
+        private void LoadExternalConfiguration(string path)
         {
-            // For each files inside the folder, load the json and store it in the dictionary
-            foreach (string jsonFile in Directory.GetFiles(topicsFolder, "*.json"))
+            // Clear existing topic configurations before loading new ones
+            // This ensures we don't accumulate topics from previous configurations
+            //configuration.TopicsTypes.Clear();
+            //configuration.Transformers.Clear();
+            //configuration.StreamToStore.Clear();
+            //AddLog("Cleared existing topic configurations");
+            
+            // Check if the path is a file or a directory
+            if (File.Exists(path) && path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                this.LoadTopicsAndAssembly(jsonFile, topicsFolder);
+                // It's a single JSON file - load just this file
+                string folder = System.IO.Path.GetDirectoryName(path);
+                if (string.IsNullOrEmpty(folder))
+                    folder = Directory.GetCurrentDirectory();
+                
+                LoadTopicsAndAssembly(path, folder);
+            }
+            else if (Directory.Exists(path))
+            {
+                // It's a directory - load all JSON files from the folder (original behavior)
+                foreach (string jsonFile in Directory.GetFiles(path, "*.json"))
+                {
+                    LoadTopicsAndAssembly(jsonFile, path);
+                }
+            }
+            else
+            {
+                AddLog($"The path {path} is neither a valid JSON file nor a directory");
             }
         }
 
@@ -1120,7 +1167,12 @@ namespace ServerApplication
         /// <param name="logMessage">The log message to add.</param>
         private void AddLog(string logMessage)
         {
-            Log += $"{logMessage}\n";
+            _logFlushTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(100)
+            };
+            _logFlushTimer.Tick += FlushLogQueue;
+            _logFlushTimer.Start();
         }
 
         /// <summary>
@@ -1188,45 +1240,96 @@ namespace ServerApplication
                 return false;
             }
 
-            // Check first if there is an assembly to load types from
-            string assemblyPath = $@"{folder}/{System.IO.Path.GetFileNameWithoutExtension(jsonFilePath)}/{System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(jsonFilePath), ".dll")}";
-            if (!File.Exists(jsonFilePath))
+            // Check if there is an assembly to load types from
+            string jsonFileName = System.IO.Path.GetFileNameWithoutExtension(jsonFilePath);
+            string assemblyPath = System.IO.Path.Combine(folder, jsonFileName, $"{jsonFileName}.dll");
+            
+            Assembly? loadedAssembly = null;
+            List<Type> exportedTypes = new List<Type>();
+            
+            if (File.Exists(assemblyPath))
             {
-                this.AddLog($"The file {assemblyPath} does not exist");
-                return false;
+                try
+                {
+                    loadedAssembly = Assembly.LoadFrom(assemblyPath);
+                    exportedTypes = loadedAssembly.GetExportedTypes().ToList();
+                    if (exportedTypes.Count == 0)
+                    {
+                        AddLog($"Warning: No types found in assembly {assemblyPath}");
+                    }
+                    else
+                    {
+                        AddLog($"Loaded assembly {assemblyPath} with {exportedTypes.Count} exported types");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"Warning: Failed to load assembly {assemblyPath}: {ex.Message}");
+                }
+            }
+            else
+            {
+                AddLog($"Warning: Assembly file {assemblyPath} does not exist. Will try to load formats from already loaded assemblies.");
             }
 
-            if (Assembly.LoadFrom(assemblyPath).GetExportedTypes().Length == 0)
-            {
-                this.AddLog($"No types found in assembly {assemblyPath}");
-                return false;
-            }
-
+            bool hasErrors = false;
             foreach (var item in items)
             {
                 var messageType = this.ResolveType(item.Type);
                 if (messageType == null)
                 {
-                    this.AddLog($"Failed to resolve format type for topic {item.Topic}");
+                    AddLog($"Failed to resolve type '{item.Type}' for topic {item.Topic}");
+                    hasErrors = true;
                     continue;
                 }
 
-                this.AddLog($"Topic {item.Topic} type is {messageType.ToString()}");
-
-                var formatType = this.ResolvePsiFormatType(item.ClassFormat, Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList());
+                Type? formatType = null;
+                
+                // First try to find format in the loaded assembly if it exists
+                if (loadedAssembly != null && exportedTypes.Count > 0)
+                {
+                    formatType = ResolvePsiFormatType(item.ClassFormat, exportedTypes);
+                }
+                
+                // If not found, try in all loaded assemblies
                 if (formatType == null)
                 {
-                    this.AddLog($"Failed to resolve format type for topic {item.Topic}");
+                    formatType = ResolvePsiFormatType(item.ClassFormat, AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(a => a.GetExportedTypes())
+                        .ToList());
+                }
+                
+                if (formatType == null)
+                {
+                    AddLog($"Failed to resolve format class '{item.ClassFormat}' for topic {item.Topic}");
+                    hasErrors = true;
                     continue;
                 }
-
-                var formatInstance = (IPsiFormat)this.CreateInstance(formatType);
-                this.AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
-                this.configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
-                this.configuration.StreamToStore.Add(item.Topic, item.StreamToStore);
+                
+                try
+                {
+                    var formatInstance = (IPsiFormat)CreateInstance(formatType);
+                    AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
+                    configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
+                    configuration.StreamToStore.Add(item.Topic, item.StreamToStore);
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"Failed to create format instance for topic {item.Topic}: {ex.Message}");
+                    hasErrors = true;
+                }
             }
 
-            return true;
+            if (hasErrors)
+            {
+                AddLog($"Some topics failed to load. Please ensure the DLL is built and contains the required format classes.");
+            }
+            else
+            {
+                AddLog($"Successfully loaded {items.Count} topic(s) from {jsonFilePath}");
+            }
+
+            return !hasErrors || items.Count > 0;
         }
 
         /// <summary>
@@ -1236,18 +1339,77 @@ namespace ServerApplication
         /// <returns>The resolved type, or null if not found.</returns>
         private Type? ResolveType(string typeName)
         {
+            // 1. Direct resolution
             var type = Type.GetType(typeName);
             if (type != null)
             {
                 return type;
             }
 
+            // 2. Search in already loaded assemblies
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 type = asm.GetType(typeName);
                 if (type != null)
                 {
                     return type;
+                }
+            }
+
+            // 3. Generic handling for System.ValueTuple`N[Arg1,Arg2,...]
+            if (typeName.StartsWith("System.ValueTuple`", StringComparison.Ordinal))
+            {
+                try
+                {
+                    int backtickIndex = typeName.IndexOf('`');
+                    int bracketIndex = typeName.IndexOf('[');
+                    if (backtickIndex < 0 || bracketIndex < 0 || bracketIndex <= backtickIndex)
+                        return null;
+
+                    string arityString = typeName.Substring(backtickIndex + 1, bracketIndex - backtickIndex - 1);
+                    if (!int.TryParse(arityString, out int arity))
+                        return null;
+
+                    // Extract inner arguments between [ and ]
+                    string argsPart = typeName.Substring(bracketIndex + 1, typeName.Length - bracketIndex - 2);
+                    // Our JSON uses simplified type names without assembly parts, so splitting on ',' is safe
+                    string[] argTypeNames = argsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                    .Select(s => s.Trim())
+                                                    .ToArray();
+                    if (argTypeNames.Length != arity)
+                        return null;
+
+                    var argTypes = new List<Type>();
+                    foreach (var argName in argTypeNames)
+                    {
+                        var argType = ResolveType(argName);
+                        if (argType is null)
+                            return null;
+                        argTypes.Add(argType);
+                    }
+
+                    Type genericDef = arity switch
+                    {
+                        1 => typeof(ValueTuple<>),
+                        2 => typeof(ValueTuple<,>),
+                        3 => typeof(ValueTuple<,,>),
+                        4 => typeof(ValueTuple<,,,>),
+                        5 => typeof(ValueTuple<,,,,>),
+                        6 => typeof(ValueTuple<,,,,,>),
+                        7 => typeof(ValueTuple<,,,,,,>),
+                        8 => typeof(ValueTuple<,,,,,,,>),
+                        _ => null!
+                    };
+
+                    if (genericDef == null)
+                        return null;
+
+                    return genericDef.MakeGenericType(argTypes.ToArray());
+                }
+                catch
+                {
+                    // Fall through to null if parsing/resolution fails
+                    return null;
                 }
             }
 
