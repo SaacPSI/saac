@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
@@ -16,6 +16,8 @@
     <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Msagl.WpfGraphControl" Version="0.19.100.1-beta" />
@@ -23,9 +25,18 @@
     <PackageReference Include="Microsoft.Psi.Visualization.Windows" Version="0.19.100.1-beta" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bodies\Bodies.csproj" />
-    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj" />
-    <ProjectReference Include="..\Groups\Groups.csproj" />
+    <ProjectReference Include="..\Bodies\Bodies.csproj">
+      <Private>true</Private>
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj">
+      <Private>true</Private>
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
+    <ProjectReference Include="..\Groups\Groups.csproj">
+      <Private>true</Private>
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -46,7 +57,22 @@
     </ItemGroup>
     <!-- Copier les assemblies du répertoire packages -->
     <Copy SourceFiles="@(AzureKinectDlls)" DestinationFolder="$(OutputDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <!-- Copier explicitement les DLLs des projets référencés -->
+    <ItemGroup>
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\Bodies.dll" />
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\Bodies.pdb" />
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\GlobalHelpers.dll" />
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\GlobalHelpers.pdb" />
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\Groups.dll" />
+      <ProjectReferenceDlls Include="$(SolutionDir)build\bin\**\Groups.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ProjectReferenceDlls)" DestinationFolder="$(OutputDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <!-- Copier toutes les dépendances transitives -->
+    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(OutputDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
     <!-- Log des fichiers copiés -->
     <Message Text="Copie des DLLs Azure Kinect vers $(OutputDir)" Importance="high" />
+    <Message Text="Copie des DLLs des projets Bodies, GlobalHelpers, Groups vers $(OutputDir)" Importance="high" />
+    <Message Text="Copie de @(ProjectReferenceDlls->Count()) fichiers de projets référencés" Importance="high" />
+    <Message Text="Copie de @(ReferenceCopyLocalPaths->Count()) dépendances transitives" Importance="high" />
   </Target>
 </Project>
