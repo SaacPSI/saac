@@ -1,5 +1,14 @@
 # Applications
 
+## ServerApplication
+### Summary
+Central server application for coordinating multiple ψ (Psi) applications in the SAAC framework. Provides a WPF-based graphical interface for managing network connections, monitoring connected devices/applications, recording data streams to datasets, and controlling remote applications through a command system. Implements `IPsiStudioPipeline` for integration with PsiStudio.
+See [ServerApplication README](ServerApplication/README.md) for detailed documentation.
+### Future works
+* Allowing **NamedPipes** protocol
+* Enhanced error handling and recovery
+* More granular control over stream recording
+
 ## ffmpegToStore
 ### Summary
 Tools to transfert a video file into a \\psi store including time synchronisation. This tool encode image into Jpeg format to reduce the size of the store and the audio transfert is optionnal.

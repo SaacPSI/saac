@@ -1,0 +1,290 @@
+[
+	{
+		"topic": "Vitesse Tapis",
+		"type": "System.Single",
+		"classFormat": "PsiFormatFloat",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "D1-Poubelle",
+		"type": "System.Int32",
+		"classFormat": "PsiFormatInteger",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "D2-Poubelle",
+		"type": "System.Int32",
+		"classFormat": "PsiFormatInteger",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Batteries",
+		"type": "SAAC.PsiFormats.PsiBatterie",
+		"classFormat": "PsiFormatBat",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Module status",
+		"type": "System.ValueTuple`2[System.Int32,System.String]",
+		"classFormat": "PsiFormatIntString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Area1",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Area2",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "E1-extincteur",
+		"type": "System.ValueTuple`2[System.Int32,System.Boolean]",
+		"classFormat": "PsiFormatIntBool",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "E2-extincteur",
+		"type": "System.ValueTuple`2[System.Int32,System.Boolean]",
+		"classFormat": "PsiFormatIntBool",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Gaze",
+		"type": "SAAC.PsiFormats.PsiGazeObjectEvent",
+		"classFormat": "PsiFormatGazeObjectEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Grab1",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Grab2",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Collision sol",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Collision tapis1",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Collision tapis2",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Collision batterie",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Levier",
+		"type": "System.Single",
+		"classFormat": "PsiFormatFloat",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M1-SelectModule",
+		"type": "System.String",
+		"classFormat": "PsiFormatString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M2-SelectModule",
+		"type": "System.String",
+		"classFormat": "PsiFormatString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "ERROR",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M1-Validation",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M2-Validation",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M1-ModuleOut",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M2-ModuleOut",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M1-ModuleOutZone",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "M2-ModuleOutZone",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Bouton urgence",
+		"type": "System.Boolean",
+		"classFormat": "PsiFormatBoolean",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Porte1 ouverture",
+		"type": "System.ValueTuple`2[System.Boolean,System.Numerics.Vector3]",
+		"classFormat": "PsiFormatBoolVector3",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Porte2 ouverture",
+		"type": "System.ValueTuple`2[System.Boolean,System.Numerics.Vector3]",
+		"classFormat": "PsiFormatBoolVector3",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "1-Head",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "1-LeftWrist",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "1-RightWrist",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "2-Head",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_2"
+	},
+	{
+		"topic": "2-LeftWrist",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_2"
+	},
+	{
+		"topic": "1-GazeHeadOrientation",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "1-EyeLeft",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "1-EyeRight",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_1"
+	},
+	{
+		"topic": "2-GazeHeadOrientation",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_2"
+	},
+	{
+		"topic": "2-EyeLeft",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_2"
+	},
+	{
+		"topic": "2-EyeRight",
+		"type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+		"classFormat": "PsiFormatTupleOfVector",
+		"streamToStore": "PositionRotation_2"
+	},
+	{
+		"topic": "TV",
+		"type": "SAAC.PsiFormats.PsiTV",
+		"classFormat": "PsiFormatTV",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "Ping",
+		"type": "System.String",
+		"classFormat": "PsiFormatString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "BatterySpawn",
+		"type": "SAAC.PsiFormats.PsiBatteryEvent",
+		"classFormat": "PsiFormatBatteryEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "BatteryRegulatedTime",
+		"type": "SAAC.PsiFormats.PsiBatteryEvent",
+		"classFormat": "PsiFormatBatteryEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "BatteryFire",
+		"type": "SAAC.PsiFormats.PsiBatteryEvent",
+		"classFormat": "PsiFormatBatteryEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "RemoveModule",
+		"type": "SAAC.PsiFormats.PsiBatteryModuleEvent",
+		"classFormat": "PsiFormatBatteryModuleEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "AddModule",
+		"type": "SAAC.PsiFormats.PsiBatteryModuleEvent",
+		"classFormat": "PsiFormatBatteryModuleEvent",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "BatteryFinish",
+		"type": "SAAC.PsiFormats.PsiBatteryFinish",
+		"classFormat": "PsiFormatBatteryFinish",
+		"streamToStore": "Events"
+	}
+]

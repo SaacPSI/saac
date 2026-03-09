@@ -40,6 +40,20 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
         try
         {
             Out = PsiManager.GetPipeline().CreateEmitter<T>(this, TopicName);
+
+            // Warn loudly if the exporter type is left as "Unknow" (default value).
+            // This usually means the component was not properly configured in Unity
+            // and the stream will be exported with the fallback settings.
+            if (ExportType == PsiPipelineManager.ExportType.Unknow)
+            {
+                string message =
+                    $"[PsiExporter WARNING] ExportType for topic '{TopicName}' on GameObject '{gameObject.name}' is set to 'Unknow'. " +
+                    "This is the default value and may indicate a misconfiguration. " +
+                    "Please set ExportType to 'LowFrequency', 'HighFrequency' or 'TCPWriter' in the inspector.";
+                Debug.LogError(message);
+                PsiManager.AddLog(message);
+            }
+
             switch (ExportType)
             {
 #if PSI_TCP_STREAMS
