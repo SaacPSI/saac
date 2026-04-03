@@ -219,6 +219,25 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectRemoteServices.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectAzureRemoteConsole", "Applications\KinectAzureRemoteConsole\KinectAzureRemoteConsole.csproj", "{BAC2C7DD-8166-7A6D-0F6A-7AD3890BE204}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unreal", "Unreal", "{2343D537-562A-4AE6-9425-44C2909829FD}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unreal\README.md = Components\Unreal\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A7B2FCCD-6291-4EC8-B51A-D3EC43808F87}"
+	ProjectSection(SolutionItems) = preProject
+		Components\Unreal\src\PsiStringComponent.cpp = Components\Unreal\src\PsiStringComponent.cpp
+		Components\Unreal\src\PsiStringComponent.h = Components\Unreal\src\PsiStringComponent.h
+		Components\Unreal\src\PsiVector3Component.cpp = Components\Unreal\src\PsiVector3Component.cpp
+		Components\Unreal\src\PsiVector3Component.h = Components\Unreal\src\PsiVector3Component.h
+		Components\Unreal\src\PsiWebsocketComponent.cpp = Components\Unreal\src\PsiWebsocketComponent.cpp
+		Components\Unreal\src\PsiWebsocketComponent.h = Components\Unreal\src\PsiWebsocketComponent.h
+		Components\Unreal\src\PsiWebsocketsManager.cpp = Components\Unreal\src\PsiWebsocketsManager.cpp
+		Components\Unreal\src\PsiWebsocketsManager.h = Components\Unreal\src\PsiWebsocketsManager.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{6BA59333-3D13-4943-B430-CBE0A5B8EC5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -968,6 +987,9 @@ Global
 		{3331CCF3-E987-467A-94F1-394F2BE1E5C8} = {2F646680-91A4-F107-74F4-9BF3126A0F16}
 		{A4BCABCB-7F3C-4EAE-A5BB-7C627AAC2503} = {2F646680-91A4-F107-74F4-9BF3126A0F16}
 		{BAC2C7DD-8166-7A6D-0F6A-7AD3890BE204} = {6E0AB730-7080-4E97-865C-A21250A4567F}
+		{2343D537-562A-4AE6-9425-44C2909829FD} = {D2F89990-8127-4341-A73F-9B035978187A}
+		{A7B2FCCD-6291-4EC8-B51A-D3EC43808F87} = {2343D537-562A-4AE6-9425-44C2909829FD}
+		{6BA59333-3D13-4943-B430-CBE0A5B8EC5B} = {2343D537-562A-4AE6-9425-44C2909829FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {61EF079C-10DE-4452-8C7E-BD9034A760E3}

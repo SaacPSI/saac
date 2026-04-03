@@ -566,10 +566,17 @@ namespace ServerApplication
                 return;
             }
 
+            if (this.server.CurrentSession == null)
+            {
+                this.server.CreateOrGetSessionFromMode("WebsocketSession");
+            }
+
             Pipeline pipeline = this.server.GetOrCreateSubpipeline($"{e.Item1}-{e.Item2}");
-            var source = this.websocketManager.ConnectWebsocketSource<string>(pipeline, this.configuration.TypesSerializers[this.configuration.TopicsTypes[e.Item2]].GetFormat(), e.Item1, e.Item2, false);
-            this.server.CreateConnectorAndStore(e.Item2, e.Item1, this.server.CurrentSession, pipeline, typeof(string), source);
+            Type type = this.configuration.TopicsTypes[e.Item2];
+            var source = typeof(Microsoft.Psi.Interop.Transport.WebSocketsManager).GetMethod("ConnectWebsocketSource").MakeGenericMethod(type).Invoke(this.websocketManager, [pipeline, this.configuration.TypesSerializers[type].GetFormat(), e.Item1, e.Item2, false, e.Item2]);
+            typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this.server, [e.Item2, e.Item1, this.server.CurrentSession, pipeline, type, source, true]);
             pipeline.RunAsync();
+            this.AddLog($"Websocket {e.Item2} connected");
         }
 
         /// <summary>
@@ -1190,16 +1197,15 @@ namespace ServerApplication
 
             // Check first if there is an assembly to load types from
             string assemblyPath = $@"{folder}/{System.IO.Path.GetFileNameWithoutExtension(jsonFilePath)}/{System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(jsonFilePath), ".dll")}";
-            if (!File.Exists(jsonFilePath))
+            List<Type> loadedTypes = new List<Type>();
+            if (File.Exists(assemblyPath))
             {
-                this.AddLog($"The file {assemblyPath} does not exist");
-                return false;
-            }
-
-            if (Assembly.LoadFrom(assemblyPath).GetExportedTypes().Length == 0)
-            {
-                this.AddLog($"No types found in assembly {assemblyPath}");
-                return false;
+                loadedTypes = Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList();
+                if (loadedTypes.Count == 0)
+                {
+                    this.AddLog($"No types found in assembly {assemblyPath}");
+                    return false;
+                }
             }
 
             foreach (var item in items)
@@ -1213,7 +1219,7 @@ namespace ServerApplication
 
                 this.AddLog($"Topic {item.Topic} type is {messageType.ToString()}");
 
-                var formatType = this.ResolvePsiFormatType(item.ClassFormat, Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList());
+                var formatType = this.ResolvePsiFormatType(item.ClassFormat, loadedTypes);
                 if (formatType == null)
                 {
                     this.AddLog($"Failed to resolve format type for topic {item.Topic}");
