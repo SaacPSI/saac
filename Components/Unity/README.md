@@ -13,7 +13,9 @@ It includes modifications of RemoteExorter to include multi clients streaming (s
 A Pull Request as been made in order for \psi to officially and fully supoort Unity & Android: [Compatibility with Unity & Android](https://github.com/microsoft/psi/pull/333)
 
 ## Unity Package
-The package contains dlls and scripts in 3 folders:
+The package contains only the dlls !  
+
+You must copy scripts from the 4 folders:
 In **Base** folder:
 * PsiExporter : base script to inherit from for exporter scripts.
 * PsiImporter : base script to inherit from for importer scripts.

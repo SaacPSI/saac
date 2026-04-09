@@ -12,10 +12,10 @@ namespace SAAC.LabStreamLayer
     /// A generic PSI component for Lab Streaming Layer (LSL) data streams.
     /// </summary>
     /// <typeparam name="T">The type of data in the LSL stream.</typeparam>
-    public class LabStreamLayerComponent<T> : ILabStreamLayerComponent, ISourceComponent, IProducer<List<T>>, IDisposable
+    public class LabStreamLayerComponent<T> : ILabStreamLayerComponent, ISourceComponent, IDisposable
     {
         private readonly StreamInlet input;
-        private readonly Pipeline pipeline;
+        private readonly Pipeline parent;
         private readonly int channelCount;
         private readonly int samplingDuration;
         private Thread? thread;
@@ -27,24 +27,28 @@ namespace SAAC.LabStreamLayer
         /// <param name="info">The LSL stream information.</param>
         /// <param name="producer">The LSL stream inlet.</param>
         /// <param name="maxBufferLength">Maximum buffer length for the stream.</param>
-        internal LabStreamLayerComponent(ref Pipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength)
+        internal LabStreamLayerComponent(Pipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength)
         {
             this.StreamInfo = info;
             this.input = producer;
-            this.pipeline = parent;
+            this.parent = parent;
             this.MaxBufferLength = maxBufferLength;
             this.Name = $"{info.name()}-{info.type()}";
-            this.Out = parent.CreateEmitter<List<T>>(this, $"{this.Name}-Out");
+            this.Out = new List<Emitter<T>>();
             this.IsRunning = false;
             this.thread = null;
             this.channelCount = this.StreamInfo.channel_count();
             this.samplingDuration = this.StreamInfo.nominal_srate() == 0.0 ? 100 : (int)(1000.0 / this.StreamInfo.nominal_srate());
+            for (int i = 1; i <= this.channelCount; i++)
+            {
+                this.Out.Add(parent.CreateEmitter<T>(this, $"{this.Name}-Out{i}"));
+            }
         }
 
         /// <summary>
-        /// Gets the emitter for the stream data output.
+        /// Gets the emitters for the stream data output.
         /// </summary>
-        public Emitter<List<T>> Out { get; private set; }
+        public List<Emitter<T>> Out { get; private set; }
 
         /// <summary>
         /// Gets the LSL stream information.
@@ -69,11 +73,17 @@ namespace SAAC.LabStreamLayer
         /// <inheritdoc/>
         public override string ToString() => this.Name;
 
+        /// <inheritdoc/>
+        public List<Emitter<TChannelType>> GetChannels<TChannelType>() => this.Out as List<Emitter<TChannelType>> ?? [];
+
         /// <summary>
         /// Gets the LSL stream information.
         /// </summary>
         /// <returns>The stream information object.</returns>
         public StreamInfo GetStreamInfo() => this.StreamInfo;
+
+        /// <inheritdoc/>
+        public Pipeline GetParent() => this.parent;
 
         /// <summary>
         /// Starts the component and begins receiving data from the LSL stream.
@@ -170,7 +180,7 @@ namespace SAAC.LabStreamLayer
         protected void UpdateData()
         {
             double clock = local_clock();
-            DateTime time = this.pipeline.GetCurrentTime();
+            DateTime time = this.parent.GetCurrentTime();
             while (this.IsRunning)
             {
                 dynamic buffer = this.CreateBuffer();
@@ -179,19 +189,16 @@ namespace SAAC.LabStreamLayer
                 double correction = this.input.time_correction(1);
                 for (int s = 0; s < num; s++)
                 {
-                    List<T> data = new List<T>();
-                    for (int c = 0; c < this.channelCount; c++)
-                    {
-                        data.Add(buffer[s, c]);
-                    }
-
                     double secondsSinceStart = correction + timestamps[s] - clock;
                     if (secondsSinceStart < 0)
                     {
                         continue; // skip samples from the past
                     }
 
-                    this.Out.Post(data, time.AddSeconds(secondsSinceStart));
+                    for (int c = 0; c < this.channelCount; c++)
+                    {
+                        this.Out[c].Post(buffer[s, c], time.AddSeconds(secondsSinceStart));
+                    }
                 }
 
                 Thread.Sleep(this.samplingDuration);

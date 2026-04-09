@@ -317,7 +317,16 @@ namespace Microsoft.Psi.Interop.Transport
             {
                 var wsContext = await context.AcceptWebSocketAsync(subProtocol: null);
                 WebSocket webSocket = wsContext.WebSocket;
-                string topic = context.Request.Url.AbsolutePath.Substring(4); // removing "/ws/"
+                string topic ;
+                if (context.Request.Url.AbsolutePath.Contains("/ws/"))
+                {
+                    topic = context.Request.Url.AbsolutePath.Remove(0, 4); // Removing "/ws/"
+                }
+                else
+                {
+                    topic = context.Request.Url.AbsolutePath.Remove(0, 1); // Removing "/"
+                }
+
                 if (this.RegisterWebSocket(this.GetNameForHost(context.Request.Url), topic, webSocket))
                 {
                     this.OnNewWebSocketConnectedHandler?.Invoke(this, (this.GetNameForHost(context.Request.Url), topic, context.Request.Url));

@@ -17,16 +17,8 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
+Build/
 bld/
-[Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -83,6 +75,7 @@ StyleCopReport.xml
 *.tli
 *.tlh
 *.tmp
+*.exp
 *.tmp_proj
 *_wpftmp.csproj
 *.log
@@ -348,3 +341,8 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# SAAC-specific: Backup files created by Setup-DevSymlinks.ps1
+*.backup
+
+/Interop/PlumeInterop/bin

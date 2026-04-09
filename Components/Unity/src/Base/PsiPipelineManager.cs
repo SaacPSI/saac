@@ -297,7 +297,7 @@ public class PsiPipelineManager : MonoBehaviour
     protected void CommandHandling(string processName, Message<(Command, string)> message)
     {
         var args = message.Data.Item2.Split(';');
-        if (args[0] != UsedProcessName && message.Data.Item2.Length != 0)
+        if (args[0] != UsedProcessName && args[0] != "*")
             return;
         Command command = (Command)message.Data.Item1;
         AddLog($"PsiPipelineManager Recieve Command {command} from {processName} @{message.OriginatingTime} with argument {message.Data.Item2} \n");

@@ -13,6 +13,8 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Psi;
 
+using static LSL.liblsl;
+
 // using SAAC.Helpers;
 // using static SAAC.PipelineServices.RendezVousPipeline;
 using Microsoft.Psi.Interop.Rendezvous;
@@ -593,32 +595,32 @@ namespace TestingConsole
             // Thread.Sleep(100);
             // testOllama();
 
-            RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
-            configuration.AutomaticPipelineRun = true;
-            configuration.Debug = false;
-            configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
-            configuration.DatasetName = "RendezVousPipeline.pds";
+            //RendezVousPipelineConfiguration configuration = new RendezVousPipelineConfiguration();
+            //configuration.AutomaticPipelineRun = true;
+            //configuration.Debug = false;
+            //configuration.DatasetPath = @"D:\Stores\RendezVousPipeline\"; // change if needed !
+            //configuration.DatasetName = "RendezVousPipeline.pds";
 
-            // configuration.RendezVousHost = "10.144.37.90";
-            configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
-            configuration.StoreMode = DatasetPipeline.StoreMode.Process;
-            configuration.CommandDelegate = Program.CommandDel;
+            //// configuration.RendezVousHost = "10.144.37.90";
+            //configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
+            //configuration.StoreMode = DatasetPipeline.StoreMode.Process;
+            //configuration.CommandDelegate = Program.CommandDel;
 
-            // Instantiate the class that manage the RendezVous system and the pipeline execution?
-            RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
+            //// Instantiate the class that manage the RendezVous system and the pipeline execution?
+            //RendezVousPipeline rdvPipeline = new RendezVousPipeline(configuration, "Server");
 
-            // rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
-            // List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
-            // SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
-            rdvPipeline.Start();
+            //// rdvPipeline.CreateOrGetSession("TestAnnotationsSession");
+            //// List<string> adresss = new List<string>() { "http://localhost:8080/ws/", "http://localhost:8080/" };
+            //// SAAC.AnnotationsComponents.HTTPAnnotationsComponent annot = new SAAC.AnnotationsComponents.HTTPAnnotationsComponent(rdvPipeline, adresss, @"C:\Users\adminuser\Documents\PsiStudio\AnnotationSchemas", @"D:\saac\Components\AnnotationsComponents\AnnotationFiles\annotation.html");
+            //rdvPipeline.Start();
 
-            int i = 0;
-            while (true)
-            {
-                Console.WriteLine("Press");
-                Console.ReadLine();
-                rdvPipeline.AddProcess(new Rendezvous.Process($"test{i++}"));
-            }
+            //int i = 0;
+            //while (true)
+            //{
+            //    Console.WriteLine("Press");
+            //    Console.ReadLine();
+            //    rdvPipeline.AddProcess(new Rendezvous.Process($"test{i++}"));
+            //}
 
             // annot.Start((e) => { });
 
@@ -635,24 +637,26 @@ namespace TestingConsole
             // websocketManager.Start((e) => { });
             // Console.ReadLine();
             // return;
-            // Random rnd = new Random();
-            //// create stream info and outlet
-            // StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
-            // StreamOutlet outlet = new StreamOutlet(info);
-            // float[] data = new float[8];
-            // Thread thread = new Thread(() =>
-            // {
-            //    Console.WriteLine("LSL Outlet started...");
-            //    while (true)
-            //    {
-            //        Thread.Sleep(1000);
-            //        // generate random data and send it
-            //        for (int k = 0; k < data.Length; k++)
-            //            data[k] = rnd.Next(-100, 100);
-            //        outlet.push_sample(data);
-            //        Console.WriteLine($"PTime : {DateTime.UtcNow}");
-            //    }
-            // });
+            Random rnd = new Random();
+            // create stream info and outlet
+            StreamInfo info = new StreamInfo("TestCSharp", "EEG", 8, 200, channel_format_t.cf_float32, "sddsfsdf");
+            StreamOutlet outlet = new StreamOutlet(info);
+            float[] data = new float[8];
+            Thread thread = new Thread(() =>
+            {
+                Console.WriteLine("LSL Outlet started...");
+                while (true)
+                {
+                    Thread.Sleep(1000);
+                    // generate random data and send it
+                    for (int k = 0; k < data.Length; k++)
+                        data[k] = rnd.Next(-100, 100);
+                    outlet.push_sample(data);
+                    Console.WriteLine($"PTime : {DateTime.UtcNow}");
+                }
+            });
+            thread.Start();
+            Console.ReadLine();
 
             // Pipeline p = Pipeline.Create();
             // LabStreamLayerManager manager = new LabStreamLayerManager(p, (log) => Console.WriteLine($"{log}\n"),500,100);

@@ -84,6 +84,11 @@ namespace SAAC.LabStreamLayer
         public void Dispose()
         {
             this.IsRunning = false;
+            foreach (var component in this.LabStreamComponents.Values)
+            {
+                component.GetParent().Dispose();
+            }
+
             this.thread?.Abort();
             this.resolver.Dispose();
         }
@@ -121,35 +126,36 @@ namespace SAAC.LabStreamLayer
         protected void CreateComponent(StreamInfo info)
         {
             StreamInlet inlet = new StreamInlet(info, this.maxBufferLength, postproc_flags: processing_options_t.proc_clocksync);
+            string key = $"{info.name()}-{info.type()}";
+            Pipeline pipeline = Pipeline.Create(key);
             dynamic? labStreamLayerComponent = null;
             switch (info.channel_format())
             {
                 case channel_format_t.cf_undefined:
                     return;
                 case channel_format_t.cf_string:
-                    labStreamLayerComponent = new LabStreamLayerComponent<string>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<string>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_double64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<double>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<double>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_float32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<float>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<float>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<long>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<long>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<int>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<int>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int16:
-                    labStreamLayerComponent = new LabStreamLayerComponent<short>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<short>(pipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int8:
-                    labStreamLayerComponent = new LabStreamLayerComponent<char>(ref this.pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<char>(pipeline, info, inlet, this.maxBufferLength);
                     break;
             }
 
-            string key = $"{info.name()}-{info.type()}";
             this.LabStreamComponents.Add(key, labStreamLayerComponent);
             this.log($"LabStreamLayerManager component {key} created.");
 

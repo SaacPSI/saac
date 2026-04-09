@@ -193,7 +193,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
-                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable Annotations" Name="LSLEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsLSLEnabled}" Checked="CkbActivateLSL" Unchecked="CkbActivateLSL"/>
+                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable LabStreamLayer" Name="LSLEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsLSLEnabled}" Checked="CkbActivateLSL" Unchecked="CkbActivateLSL"/>
 
                         </Grid>
                     </GroupBox>

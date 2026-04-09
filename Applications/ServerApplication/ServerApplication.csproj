@@ -56,6 +56,9 @@
     <ProjectReference Include="..\..\Components\PsiFormats\PsiFormats.csproj" />
   </ItemGroup>
 	 <ItemGroup>
+	   <Reference Include="nuitrack.net">
+	     <HintPath>..\..\Dependencies\Nuitrack\nuitrack.net.dll</HintPath>
+	   </Reference>
 	   <Reference Include="lsl_csharp">
 	     <HintPath>..\..\Components\LabStreamLayer\dep\lsl_csharp.dll</HintPath>
 	   </Reference>

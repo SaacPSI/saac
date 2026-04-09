@@ -46,7 +46,8 @@ namespace ServerApplication
         private string log = "Not Initialised\n";
         private SetupState setupState;
         private LogStatus internalLog;
-        private Microsoft.Psi.Interop.Transport.WebSocketsManager? websocketManager;
+        private Microsoft.Psi.Interop.Transport.WebSocketsManager? websocketManager = null;
+        LabStreamLayerManager? lslManager = null;
 
         /// <summary>
         /// Represents the connection status of a remote application.
@@ -314,8 +315,6 @@ namespace ServerApplication
             this.server = null;
             this.configuration = new RendezVousPipelineConfiguration();
 
-            this.configuration.Debug = true;
-
             this.LoadConfig();
             this.InitializeComponent();
             this.DataContext = this;
@@ -374,6 +373,7 @@ namespace ServerApplication
             this.AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
+            this.isDebug = this.Configuration.Debug = Properties.Settings.Default.Debug;
             this.UpdateAnnotationTab();
 
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = false;
@@ -493,7 +493,7 @@ namespace ServerApplication
             this.configuration.Diagnostics = DatasetPipeline.DiagnosticsMode.Off;
             this.configuration.AutomaticPipelineRun = true;
             this.configuration.CommandDelegate = this.CommandReceived;
-            this.configuration.Debug = true;
+            this.configuration.Debug = this.IsDebug;
             this.configuration.RecordIncomingProcess = true;
             this.configuration.CommandPort = 11610;
             this.configuration.ClockPort = 11621;
@@ -586,10 +586,17 @@ namespace ServerApplication
                 return;
             }
 
+            if (this.server.CurrentSession == null)
+            {
+                this.server.CreateOrGetSessionFromMode("WebsocketSession");
+            }
+
             Pipeline pipeline = this.server.GetOrCreateSubpipeline($"{e.Item1}-{e.Item2}");
-            var source = this.websocketManager.ConnectWebsocketSource<string>(pipeline, this.configuration.TypesSerializers[this.configuration.TopicsTypes[e.Item2]].GetFormat(), e.Item1, e.Item2, false);
-            this.server.CreateConnectorAndStore(e.Item2, e.Item1, this.server.CurrentSession, pipeline, typeof(string), source);
+            Type type = this.configuration.TopicsTypes[e.Item2];
+            var source = typeof(Microsoft.Psi.Interop.Transport.WebSocketsManager).GetMethod("ConnectWebsocketSource").MakeGenericMethod(type).Invoke(this.websocketManager, [pipeline, this.configuration.TypesSerializers[type].GetFormat(), e.Item1, e.Item2, false, e.Item2]);
+            typeof(ConnectorsAndStoresCreator).GetMethod("CreateConnectorAndStore").MakeGenericMethod(type).Invoke(this.server, [e.Item2, e.Item1, this.server.CurrentSession, pipeline, type, source, true]);
             pipeline.RunAsync();
+            this.AddLog($"Websocket {e.Item2} connected");
         }
 
         /// <summary>
@@ -597,9 +604,9 @@ namespace ServerApplication
         /// </summary>
         private void SetupLabStreamLayer()
         {
-            LabStreamLayerManager manager = new LabStreamLayerManager(this.pipeline, this.internalLog, 500, 100);
-            manager.NewStream += this.OnNewLSLStream;
-            manager.Start();
+            lslManager = new LabStreamLayerManager(Subpipeline.Create(this.pipeline, $"LSL"), this.internalLog, 500, 100);
+            lslManager.NewStream += this.OnNewLSLStream;
+            lslManager.Start();
         }
 
         /// <summary>
@@ -609,15 +616,24 @@ namespace ServerApplication
         /// <param name="key">The connection information.</param>
         private void OnNewLSLStream(object sender, string key)
         {
-            LabStreamLayerManager? manager = sender as LabStreamLayerManager;
-            if (manager is null)
+            if (this.lslManager is null)
             {
                 return;
             }
 
-            ILabStreamLayerComponent component = manager.LabStreamComponents[key];
+            if (this.server.CurrentSession == null)
+            {
+                this.server.CreateOrGetSessionFromMode("LSLSession");
+            }
+
+            ILabStreamLayerComponent component = this.lslManager.LabStreamComponents[key];
             dynamic labstreamlayerComponent = component;
-            this.server.CreateConnectorAndStore(component.GetStreamInfo().name(), component.GetStreamInfo().hostname(), this.server.CurrentSession, this.pipeline, labstreamlayerComponent.Out.Type, labstreamlayerComponent);
+            foreach (var emitter in labstreamlayerComponent.Out)
+            {
+                this.server.CreateConnectorAndStore(emitter.Name, component.GetStreamInfo().hostname(), this.server.CurrentSession, component.GetParent(), emitter.Type, emitter);
+            }
+
+            component.GetParent().RunAsync();
             this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()})");
         }
 
@@ -679,6 +695,23 @@ namespace ServerApplication
                 }
             }
 
+            // Stop annotations component
+            if (this.lslManager != null)
+            {
+                try
+                {
+                    // Assuming the component has a Stop or Dispose method
+                    this.AddLog("Stopping lsl components");
+                    this.lslManager.Dispose();
+                    this.lslManager = null;
+                }
+                catch (Exception ex)
+                {
+                    this.AddLog($"Error stopping annotations: {ex.Message}");
+                }
+            }
+
+
             this.server?.Dataset?.Save();
             this.server?.Dispose();
             this.StopStatusMonitoring();
@@ -721,23 +754,16 @@ namespace ServerApplication
                 return;
             }
 
-            switch (args[1])
+            if (!this.connectedApps.ContainsKey(name))
             {
-                case "Waiting":
-                case "Running":
-                    if (!this.connectedApps.ContainsKey(name))
-                    {
-                        this.connectedApps[name] = new ConnectedApp
-                        {
-                            Name = name,
-                        };
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.SpawnEllipseTextButtonsRow(name);
-                        }));
-                    }
-
-                    break;
+                this.connectedApps[name] = new ConnectedApp
+                {
+                    Name = name,
+                };
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.SpawnEllipseTextButtonsRow(name);
+                }));
             }
 
             switch (args[1])
@@ -764,11 +790,7 @@ namespace ServerApplication
                 case "Stopped":
                     if (this.connectedApps.ContainsKey(name))
                     {
-                        this.connectedApps.Remove(name);
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.RemoveDeviceRow(name);
-                        }));
+                        this.connectedApps[name].Status = ConnectedAppStatus.Stop;
                     }
 
                     break;
@@ -1002,6 +1024,7 @@ namespace ServerApplication
                         this.rowsByDeviceName[app.Name].BtnStart.IsEnabled = false;
                         this.rowsByDeviceName[app.Name].BtnStop.IsEnabled = true;
                         break;
+                    case ConnectedAppStatus.Stop:
                     case ConnectedAppStatus.Waiting:
                         app.StatusDot.Fill = Brushes.Orange;
                         this.rowsByDeviceName[app.Name].BtnStart.IsEnabled = true;
@@ -1260,16 +1283,15 @@ namespace ServerApplication
 
             // Check first if there is an assembly to load types from
             string assemblyPath = $@"{folder}/{System.IO.Path.GetFileNameWithoutExtension(jsonFilePath)}/{System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(jsonFilePath), ".dll")}";
-            if (!File.Exists(jsonFilePath))
+            List<Type> loadedTypes = new List<Type>();
+            if (File.Exists(assemblyPath))
             {
-                this.AddLog($"The file {assemblyPath} does not exist");
-                return false;
-            }
-
-            if (Assembly.LoadFrom(assemblyPath).GetExportedTypes().Length == 0)
-            {
-                this.AddLog($"No types found in assembly {assemblyPath}");
-                return false;
+                loadedTypes = Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList();
+                if (loadedTypes.Count == 0)
+                {
+                    this.AddLog($"No types found in assembly {assemblyPath}");
+                    return false;
+                }
             }
 
             foreach (var item in items)
@@ -1283,7 +1305,7 @@ namespace ServerApplication
 
                 this.AddLog($"Topic {item.Topic} type is {messageType.ToString()}");
 
-                var formatType = this.ResolvePsiFormatType(item.ClassFormat, Assembly.LoadFrom(assemblyPath).GetExportedTypes().ToList());
+                var formatType = this.ResolvePsiFormatType(item.ClassFormat, loadedTypes);
                 if (formatType == null)
                 {
                     this.AddLog($"Failed to resolve format type for topic {item.Topic}");

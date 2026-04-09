@@ -14,7 +14,7 @@ namespace SAAC.AttentionMeasures
         /// <summary>
         /// Gets the receiver for eye tracking data.
         /// </summary>
-        public Receiver<Dictionary<ETData, IEyeTracking>> In { get; private set; }
+        public Receiver<Dictionary<IEyeTracking.ETData, IEyeTracking>> In { get; private set; }
 
         /// <summary>
         /// Gets the receiver for the timer.
@@ -50,7 +50,7 @@ namespace SAAC.AttentionMeasures
             this.name = name;
             this.Configuration = configuration ?? new ObjectsRankerConfiguration();
             this.ObjectsRanking = new Dictionary<(int, string), double>();
-            this.In = pipeline.CreateReceiver<Dictionary<ETData, IEyeTracking>>(this, this.Receive, $"{name}-In");
+            this.In = pipeline.CreateReceiver<Dictionary<IEyeTracking.ETData, IEyeTracking>>(this, this.Receive, $"{name}-In");
             this.TimerIn = pipeline.CreateReceiver<TimeSpan>(this, this.ReceiveTimer, $"{name}-TimerIn");
             this.Out = pipeline.CreateEmitter<Dictionary<(int, string), double>>(this, $"{name}-Out");
             this.ObjectsRanking.Add((0, "NothingGazed"), 0);
@@ -64,16 +64,16 @@ namespace SAAC.AttentionMeasures
         /// </summary>
         /// <param name="input">The eye tracking data.</param>
         /// <param name="envelope">The message envelope.</param>
-        protected void Receive(Dictionary<ETData, IEyeTracking> input, Envelope envelope)
+        protected void Receive(Dictionary<IEyeTracking.ETData, IEyeTracking> input, Envelope envelope)
         {
             int gazedObjectID = 0;
             string gazedObjectName = "NothingGazed";
 
             // If an object is currently gazed, update the values of the ID and name
-            if (((EyeTrackingBool)input[ETData.IsGazingAtSomething]).Content)
+            if (((EyeTrackingBool)input[IEyeTracking.ETData.IsGazingAtSomething]).Content)
             {
-                gazedObjectID = ((EyeTrackingInt)input[ETData.GazedObjectID]).Content.DeepClone();
-                gazedObjectName = ((EyeTrackingString)input[ETData.GazedObjectName]).Content.DeepClone();
+                gazedObjectID = ((EyeTrackingInt)input[IEyeTracking.ETData.GazedObjectID]).Content.DeepClone();
+                gazedObjectName = ((EyeTrackingString)input[IEyeTracking.ETData.GazedObjectName]).Content.DeepClone();
 
                 // If the current gazed object has not been gazed yet, add it to the ranking
                 if (!this.ObjectsRanking.ContainsKey((gazedObjectID, gazedObjectName)))

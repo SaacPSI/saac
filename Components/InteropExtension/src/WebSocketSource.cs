@@ -49,7 +49,7 @@ namespace Microsoft.Psi.Interop.Transport
             }
             else
             {
-                this.bufferSize = bufferSize > 0 ? bufferSize : (Marshal.SizeOf(typeof(T)) + Marshal.SizeOf(typeof(DateTime))) * 2;
+                this.bufferSize = bufferSize > 0 ? bufferSize : (Marshal.SizeOf(typeof(T)) + 4) * 2;
             }
         }
 

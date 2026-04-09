@@ -10,12 +10,12 @@ namespace SAAC.AttentionMeasures
     /// <summary>
     /// Psi component for testing if consecutive eye tracking data messages are identical.
     /// </summary>
-    public class TestInput : ConsumerProducer<Dictionary<ETData, IEyeTracking>, bool>
+    public class TestInput : ConsumerProducer<Dictionary<IEyeTracking.ETData, IEyeTracking>, bool>
     {
         /// <summary>
         /// Last received eye tracking message.
         /// </summary>
-        private Dictionary<ETData, IEyeTracking> lastInput;
+        private Dictionary<IEyeTracking.ETData, IEyeTracking> lastInput;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestInput"/> class.
@@ -32,7 +32,7 @@ namespace SAAC.AttentionMeasures
         /// </summary>
         /// <param name="input">The input eye tracking data.</param>
         /// <param name="envelope">The message envelope.</param>
-        protected override void Receive(Dictionary<ETData, IEyeTracking> input, Envelope envelope)
+        protected override void Receive(Dictionary<IEyeTracking.ETData, IEyeTracking> input, Envelope envelope)
         {
             this.Out.Post(input == this.lastInput, envelope.OriginatingTime);
 

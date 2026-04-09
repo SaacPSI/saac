@@ -12,8 +12,33 @@ Four folders:
 - Dependencies containing third part librairies for interop wrappers.
 
 ## Installation
-* Clone the \psi repo [fork](https://github.com/SaacPSI/psi) and build the PsiStudio branch.
-* Psi nuget package will be output in builds/PsiPakages, add the folder in your nuget repository configuration.
+
+See the detailed [Installation Guide](https://github.com/SaacPSI/saac/wiki/Installation) in the wiki for complete setup instructions.
+
+**Quick setup:**
+* Clone the \psi repo [fork](https://github.com/SaacPSI/psi) and build the PsiStudio branch in **Release mode**.
+* Psi nuget packages will be output in `builds/PsiPackages`, add this folder to your nuget repository configuration.
+* Clone this repository and build the solution (target: x64).
+
+### Developer Setup (Optional)
+
+#### Symbolic Links for Shared Files
+
+Some files are shared across multiple applications (e.g., `UiGenerator.cs`). Developers can optionally use symbolic links for easier editing:
+
+```powershell
+# Run from repository root (requires Administrator or Developer Mode on Windows)
+.\scripts\Setup-DevSymlinks.ps1
+
+# To remove symlinks
+.\scripts\Setup-DevSymlinks.ps1 -Remove
+```
+
+**Note:** This is **optional**. The repository works perfectly fine without symlinks. Other contributors cloning the repository will get regular file copies automatically.
+
+**To enable Developer Mode on Windows 10/11** (to create symlinks without Administrator privileges):
+1. Open **Settings** → **Privacy & security** → **For developers**
+2. Turn on **Developer mode**
 
 ## Documents
 * [\psi in Unity](PsiInUnity.md)

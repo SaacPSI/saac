@@ -1,0 +1,50 @@
+[
+  {
+    "Topic": "ids",
+    "Type": "IDs",
+    "Class": "TestDll.IDs, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "generatorinteraction",
+    "Type": "GeneratorInteraction",
+    "Class": "TestDll.GeneratorInteraction, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "piecestatus",
+    "Type": "PieceStatus",
+    "Class": "TestDll.PieceStatus, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "geninteraction",
+    "Type": "GenInteraction",
+    "Class": "TestDll.GenInteraction, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "state",
+    "Type": "State",
+    "Class": "TestDll.State, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "location",
+    "Type": "Location",
+    "Class": "TestDll.Location, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "psiformatgeneratorinteraction",
+    "Type": "PsiFormatGeneratorInteraction",
+    "Class": "TestDll.PsiFormatGeneratorInteraction, TestDll",
+    "Transformer": null
+  },
+  {
+    "Topic": "psiformatpiecesstate",
+    "Type": "PsiFormatPiecesState",
+    "Class": "TestDll.PsiFormatPiecesState, TestDll",
+    "Transformer": null
+  }
+]
