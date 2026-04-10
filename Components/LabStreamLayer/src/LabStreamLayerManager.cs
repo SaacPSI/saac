@@ -127,32 +127,38 @@ namespace SAAC.LabStreamLayer
         {
             StreamInlet inlet = new StreamInlet(info, this.maxBufferLength, postproc_flags: processing_options_t.proc_clocksync);
             string key = $"{info.name()}-{info.type()}";
-            Pipeline pipeline = Pipeline.Create(key);
+            // Sleep for a short time to allow the pipeline to start without starting the subpipeline.
+            if ((this.pipeline.GetCurrentTime() - this.pipeline.StartTime) < TimeSpan.FromMilliseconds(200))
+            {
+                Thread.Sleep(this.updateSleepTime);
+            }
+
+            Subpipeline subpipeline = Subpipeline.Create(this.pipeline, key);
             dynamic? labStreamLayerComponent = null;
             switch (info.channel_format())
             {
                 case channel_format_t.cf_undefined:
                     return;
                 case channel_format_t.cf_string:
-                    labStreamLayerComponent = new LabStreamLayerComponent<string>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<string>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_double64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<double>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<double>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_float32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<float>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<float>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<long>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<long>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<int>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<int>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int16:
-                    labStreamLayerComponent = new LabStreamLayerComponent<short>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<short>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int8:
-                    labStreamLayerComponent = new LabStreamLayerComponent<char>(pipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<char>(subpipeline, info, inlet, this.maxBufferLength);
                     break;
             }
 

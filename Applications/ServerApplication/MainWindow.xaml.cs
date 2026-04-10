@@ -633,8 +633,7 @@ namespace ServerApplication
                 this.server.CreateConnectorAndStore(emitter.Name, component.GetStreamInfo().hostname(), this.server.CurrentSession, component.GetParent(), emitter.Type, emitter);
             }
 
-            component.GetParent().RunAsync();
-            this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()})");
+            component.GetParent().Start((e) => { this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()}) with {labstreamlayerComponent.Out.Count} channels."); });
         }
 
         /// <summary>

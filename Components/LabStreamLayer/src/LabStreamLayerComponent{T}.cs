@@ -15,7 +15,7 @@ namespace SAAC.LabStreamLayer
     public class LabStreamLayerComponent<T> : ILabStreamLayerComponent, ISourceComponent, IDisposable
     {
         private readonly StreamInlet input;
-        private readonly Pipeline parent;
+        private readonly Subpipeline parent;
         private readonly int channelCount;
         private readonly int samplingDuration;
         private Thread? thread;
@@ -27,7 +27,7 @@ namespace SAAC.LabStreamLayer
         /// <param name="info">The LSL stream information.</param>
         /// <param name="producer">The LSL stream inlet.</param>
         /// <param name="maxBufferLength">Maximum buffer length for the stream.</param>
-        internal LabStreamLayerComponent(Pipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength)
+        internal LabStreamLayerComponent(Subpipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength)
         {
             this.StreamInfo = info;
             this.input = producer;
@@ -83,7 +83,7 @@ namespace SAAC.LabStreamLayer
         public StreamInfo GetStreamInfo() => this.StreamInfo;
 
         /// <inheritdoc/>
-        public Pipeline GetParent() => this.parent;
+        public Subpipeline GetParent() => this.parent;
 
         /// <summary>
         /// Starts the component and begins receiving data from the LSL stream.

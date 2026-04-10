@@ -40,6 +40,6 @@ namespace SAAC.LabStreamLayer
         ///  Gets the pipeline associated with this component.
         /// </summary>
         /// <returns>The pipeline associated with this component.</returns>
-        Pipeline GetParent();
+        Subpipeline GetParent();
     }
 }
