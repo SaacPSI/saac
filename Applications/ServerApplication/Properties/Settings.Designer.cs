@@ -202,5 +202,17 @@ namespace ServerApplication.Properties {
                 this["ExternalConfigurationDirectory"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsLSLEnabled {
+            get {
+                return ((bool)(this["IsLSLEnabled"]));
+            }
+            set {
+                this["IsLSLEnabled"] = value;
+            }
+        }
     }
 }

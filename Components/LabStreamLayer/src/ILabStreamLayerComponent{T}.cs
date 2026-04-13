@@ -5,12 +5,20 @@
 namespace SAAC.LabStreamLayer
 {
     using static LSL.liblsl;
+    using Microsoft.Psi;
 
     /// <summary>
     /// Interface for Lab Streaming Layer (LSL) components.
     /// </summary>
     public interface ILabStreamLayerComponent
     {
+        /// <summary>
+        /// Gets the emitters for the device.
+        /// </summary>
+        /// <typeparam name="TChannelType">The type of data in the channel.</typeparam>
+        /// <returns>The the emitters for the device.</returns>
+        List<Emitter<TChannelType>> GetChannels<TChannelType>();
+
         /// <summary>
         /// Gets the stream information.
         /// </summary>
@@ -27,5 +35,11 @@ namespace SAAC.LabStreamLayer
         /// Disposes the component and releases resources.
         /// </summary>
         void Dispose();
+
+        /// <summary>
+        ///  Gets the pipeline associated with this component.
+        /// </summary>
+        /// <returns>The pipeline associated with this component.</returns>
+        Subpipeline GetParent();
     }
 }
