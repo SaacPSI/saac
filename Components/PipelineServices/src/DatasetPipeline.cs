@@ -97,6 +97,11 @@ namespace SAAC.PipelineServices
         protected bool IsPipelineRunning { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the pipeline can create subpipelines.
+        /// </summary>
+        protected bool IsAllowedToCreateSubPipeline { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the configuration for the dataset pipeline.
         /// </summary>
         public virtual DatasetPipelineConfiguration Configuration { get; set; }
@@ -404,6 +409,7 @@ namespace SAAC.PipelineServices
         {
             if (!this.Subpipelines.ContainsKey(name))
             {
+                this.WaitCreateSubPipeline();
                 this.Subpipelines.Add(name, Subpipeline.Create(this.Pipeline, name));
             }
 
@@ -435,6 +441,24 @@ namespace SAAC.PipelineServices
         protected virtual void PipelineRunAsync()
         {
             this.Pipeline.RunAsync();
+        }
+
+        /// <summary>
+        /// Check and waits if necessary to allow subpipeline creation after the main pipeline has started.
+        /// </summary>
+        protected void WaitCreateSubPipeline()
+        {
+            if (this.IsAllowedToCreateSubPipeline || this.Pipeline.StartTime == DateTime.MinValue)
+            {
+                return; // Pipeline has not started yet, allow subpipeline creation.
+            }
+
+            if ((this.Pipeline.GetCurrentTime() - this.Pipeline.StartTime) < TimeSpan.FromMilliseconds(200))
+            {
+                Thread.Sleep(200); // Sleep for a short time to allow the pipeline to start without starting the subpipeline.
+            }
+
+            this.IsAllowedToCreateSubPipeline = true;
         }
 
         /// <summary>

@@ -47,7 +47,7 @@ namespace ServerApplication
         private SetupState setupState;
         private LogStatus internalLog;
         private Microsoft.Psi.Interop.Transport.WebSocketsManager? websocketManager = null;
-        LabStreamLayerManager? lslManager = null;
+        private LabStreamLayerManager? lslManager = null;
 
         /// <summary>
         /// Represents the connection status of a remote application.

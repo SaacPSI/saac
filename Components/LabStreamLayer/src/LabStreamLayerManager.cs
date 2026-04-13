@@ -127,6 +127,7 @@ namespace SAAC.LabStreamLayer
         {
             StreamInlet inlet = new StreamInlet(info, this.maxBufferLength, postproc_flags: processing_options_t.proc_clocksync);
             string key = $"{info.name()}-{info.type()}";
+
             // Sleep for a short time to allow the pipeline to start without starting the subpipeline.
             if ((this.pipeline.GetCurrentTime() - this.pipeline.StartTime) < TimeSpan.FromMilliseconds(200))
             {
