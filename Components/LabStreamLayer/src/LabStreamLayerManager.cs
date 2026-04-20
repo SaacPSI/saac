@@ -4,6 +4,7 @@
 
 namespace SAAC.LabStreamLayer
 {
+    using System.IO;
     using Microsoft.Psi;
     using static LSL.liblsl;
 
@@ -19,6 +20,7 @@ namespace SAAC.LabStreamLayer
         private Pipeline pipeline;
         private Thread? thread;
         private double lslStratTime;
+        private Dictionary<string, string> sourceIdToDevice;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LabStreamLayerManager"/> class.
@@ -27,7 +29,7 @@ namespace SAAC.LabStreamLayer
         /// <param name="log">Optional logging delegate.</param>
         /// <param name="updateSleepTime">Time in milliseconds to sleep between stream discovery updates.</param>
         /// <param name="maxBufferLength">Maximum buffer length for LSL streams.</param>
-        public LabStreamLayerManager(Pipeline pipeline, LogStatus? log = null, int updateSleepTime = 500, int maxBufferLength = 512)
+        public LabStreamLayerManager(Pipeline pipeline, Dictionary<string, string>? deviceMapping = null, LogStatus? log = null, int updateSleepTime = 500, int maxBufferLength = 512)
         {
             this.pipeline = pipeline;
             this.maxBufferLength = maxBufferLength;
@@ -35,6 +37,7 @@ namespace SAAC.LabStreamLayer
             this.log = log ?? Console.WriteLine;
             this.resolver = new ContinuousResolver();
             this.LabStreamComponents = new Dictionary<string, ILabStreamLayerComponent>();
+            this.sourceIdToDevice = deviceMapping ?? new Dictionary<string, string>();
             this.thread = null;
         }
 
@@ -136,37 +139,37 @@ namespace SAAC.LabStreamLayer
 
             Subpipeline subpipeline = Subpipeline.Create(this.pipeline, key);
             dynamic? labStreamLayerComponent = null;
+            string deviceName = this.sourceIdToDevice.ContainsKey(info.source_id()) ? this.sourceIdToDevice[info.source_id()] : info.source_id();
             switch (info.channel_format())
             {
                 case channel_format_t.cf_undefined:
                     return;
                 case channel_format_t.cf_string:
-                    labStreamLayerComponent = new LabStreamLayerComponent<string>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<string>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_double64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<double>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<double>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_float32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<float>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<float>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int64:
-                    labStreamLayerComponent = new LabStreamLayerComponent<long>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<long>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int32:
-                    labStreamLayerComponent = new LabStreamLayerComponent<int>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<int>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int16:
-                    labStreamLayerComponent = new LabStreamLayerComponent<short>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<short>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
                 case channel_format_t.cf_int8:
-                    labStreamLayerComponent = new LabStreamLayerComponent<char>(subpipeline, info, inlet, this.maxBufferLength);
+                    labStreamLayerComponent = new LabStreamLayerComponent<char>(subpipeline, deviceName, info, inlet, this.maxBufferLength);
                     break;
             }
 
             this.LabStreamComponents.Add(key, labStreamLayerComponent);
             this.log($"LabStreamLayerManager component {key} created.");
 
-            // log($"Component info :\n{info.as_xml()}");
             this.NewStream?.Invoke(this, key);
         }
 

@@ -35,6 +35,7 @@ namespace ServerApplication
         private int rowIndex = 0;
         private List<Tuple<string, bool>> connectedProcesses = new List<Tuple<string, bool>>();
         private Dictionary<string, ConnectedApp> connectedApps = new Dictionary<string, ConnectedApp>();
+        private Dictionary<string, string> lslDeviceMapping = new Dictionary<string, string>();
         private string commandSource = "Server";
         private bool isDebug = false;
         private string externalConfigurationDirectory = string.Empty;
@@ -604,7 +605,7 @@ namespace ServerApplication
         /// </summary>
         private void SetupLabStreamLayer()
         {
-            lslManager = new LabStreamLayerManager(Subpipeline.Create(this.pipeline, $"LSL"), this.internalLog, 500, 100);
+            lslManager = new LabStreamLayerManager(Subpipeline.Create(this.pipeline, $"LSL"), this.lslDeviceMapping, this.internalLog, 500, 100);
             lslManager.NewStream += this.OnNewLSLStream;
             lslManager.Start();
         }
@@ -630,10 +631,10 @@ namespace ServerApplication
             dynamic labstreamlayerComponent = component;
             foreach (var emitter in labstreamlayerComponent.Out)
             {
-                this.server.CreateConnectorAndStore(emitter.Name, component.GetStreamInfo().hostname(), this.server.CurrentSession, component.GetParent(), emitter.Type, emitter);
+                this.server.CreateConnectorAndStore(emitter.Name, component.GetDeviceName(), this.server.CurrentSession, labstreamlayerComponent.GetParent(), emitter.Type, emitter);
             }
 
-            component.GetParent().Start((e) => { this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()}) with {labstreamlayerComponent.Out.Count} channels."); });
+            component.GetParent().Start((e) => { this.AddLog($"LabStreamLayer stream connected: {component.GetDeviceName()} ({component.GetStreamInfo().name()}) with {labstreamlayerComponent.Out.Count} channels."); });
         }
 
         /// <summary>
