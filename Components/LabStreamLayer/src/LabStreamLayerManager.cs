@@ -106,7 +106,7 @@ namespace SAAC.LabStreamLayer
                 IEnumerable<StreamInfo> results = this.resolver.results();
                 List<string> existing = this.LabStreamComponents.Join(results, k => k.Key, streamInfo => $"{streamInfo.name()}-{streamInfo.type()}", (name, info) => name.Key).ToList();
 
-                var componentsToRemove = this.LabStreamComponents.Where((d, i) => !existing.Contains(d.Key));
+                var componentsToRemove = this.LabStreamComponents.Where((d, i) => !existing.Contains(d.Key)).ToList();
                 foreach (var info in componentsToRemove)
                 {
                     this.RemoveComponent(info.Value.GetStreamInfo());
@@ -139,7 +139,7 @@ namespace SAAC.LabStreamLayer
 
             Subpipeline subpipeline = Subpipeline.Create(this.pipeline, key);
             dynamic? labStreamLayerComponent = null;
-            string deviceName = this.sourceIdToDevice.ContainsKey(info.source_id()) ? this.sourceIdToDevice[info.source_id()] : info.source_id();
+            string deviceName = this.FindDeviceName(info);
             switch (info.channel_format())
             {
                 case channel_format_t.cf_undefined:
@@ -189,6 +189,25 @@ namespace SAAC.LabStreamLayer
             this.LabStreamComponents.Remove(key);
             this.log($"LabStreamLayerManager component {key} removed.");
             this.RemovedStream?.Invoke(this, key);
+        }
+
+        /// <summary>
+        /// Returns the device name associated with the stream information, using the source ID or the name to device mapping if available.
+        /// </summary>
+        /// <param name="info">The stream information.</param>
+        /// <returns>The device name.</returns>
+        protected string FindDeviceName(StreamInfo info)
+        {
+            if (this.sourceIdToDevice.ContainsKey(info.source_id()))
+            {
+                return this.sourceIdToDevice[info.source_id()];
+            }
+            else if (this.sourceIdToDevice.ContainsValue(info.name()))
+            {
+                return info.name();
+            }
+
+            return info.source_id();
         }
     }
 }
