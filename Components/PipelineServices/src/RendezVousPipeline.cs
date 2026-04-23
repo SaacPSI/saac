@@ -726,7 +726,7 @@ namespace SAAC.PipelineServices
                             subCommandPipeline.Start((d) => { });
                             this.commandTcpSources.Add(tcpSource);
 
-                            // TriggerNewProcessEvent(process.Name);
+                            //TriggerNewProcessEvent(process.Name);
                             this.Log($"Subpipeline {process.Name} started.");
                             return;
                         }
@@ -842,7 +842,7 @@ namespace SAAC.PipelineServices
                 this.Log($"SubPipeline {process.Name} started.");
             }
 
-            // TriggerNewProcessEvent(process.Name);
+            TriggerNewProcessEvent(process.Name);
             // Dataset?.Save();
         }
 

@@ -2,12 +2,14 @@
 // This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
 // See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Psi;
@@ -17,6 +19,7 @@ using Newtonsoft.Json;
 using SAAC;
 using SAAC.LabStreamLayer;
 using SAAC.PipelineServices;
+using ServerApplication.Examples;
 
 namespace ServerApplication
 {
@@ -65,6 +68,72 @@ namespace ServerApplication
 
             /// <summary>Application encountered an error.</summary>
             Error,
+        }
+
+        /// <summary>
+        /// Sliding Windows class.
+        /// </summary>
+        public class SlidingWindow : INotifyPropertyChanged
+        {
+            private string name = string.Empty;
+            private double windowLengthSeconds;
+
+            /// <summary>
+            /// Gets or sets a value indicating whether ....
+            /// </summary>
+            public string Name
+            {
+                get => this.name;
+                set => this.SetProperty(ref this.name, value);
+            }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether ....
+            /// </summary>
+            public double WindowLengthSeconds
+            {
+                get => this.windowLengthSeconds;
+                set => this.SetProperty(ref this.windowLengthSeconds, value);
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+            {
+                if (!EqualityComparer<T>.Default.Equals(field, value))
+                {
+                    field = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+                }
+            }
+        }
+
+        public class RelayCommand : ICommand
+        {
+            private readonly Action<object?> execute;
+            private readonly Predicate<object?>? canExecute;
+
+            public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
+            {
+                this.execute = execute ?? throw new ArgumentNullException(nameof(execute));
+                this.canExecute = canExecute;
+            }
+
+            public event EventHandler? CanExecuteChanged
+            {
+                add { CommandManager.RequerySuggested += value; }
+                remove { CommandManager.RequerySuggested -= value; }
+            }
+
+            public bool CanExecute(object? parameter)
+            {
+                return this.canExecute == null || this.canExecute(parameter);
+            }
+
+            public void Execute(object? parameter)
+            {
+                this.execute(parameter);
+            }
         }
 
         /// <summary>
@@ -192,6 +261,15 @@ namespace ServerApplication
         }
 
         /// <summary>
+        /// Gets or sets the local dataset path.
+        /// </summary>
+        public string PipelineSessionName
+        {
+            get => this.pipelineName;
+            set => this.SetProperty(ref this.pipelineName, value);
+        }
+
+        /// <summary>
         /// Gets or sets the local dataset name.
         /// </summary>
         public string LocalDatasetName
@@ -281,6 +359,229 @@ namespace ServerApplication
             set => this.SetProperty(ref this.log, value);
         }
 
+        // General
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed conversational analysis.
+        /// </summary>
+        public bool IsConversationalEnabled
+        {
+            get => this.isConversationalEnabled;
+            set => this.SetProperty(ref this.isConversationalEnabled, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed visual analysis.
+        /// </summary>
+        public bool IsVisualEnabled
+        {
+            get => this.isVisualEnabled;
+            set => this.SetProperty(ref this.isVisualEnabled, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed physical analysis.
+        /// </summary>
+        public bool IsPhysicalEnabled
+        {
+            get => this.isPhysicalEnabled;
+            set => this.SetProperty(ref this.isPhysicalEnabled, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed spatial analysis.
+        /// </summary>
+        public bool IsSpatialEnabled
+        {
+            get => this.isSpatialEnabled;
+            set => this.SetProperty(ref this.isSpatialEnabled, value);
+        }
+
+        // Conversational
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute turn-taking with overlap (cross-talk) in conversational analysis.
+        /// </summary>
+        public bool TurnTakingWithOverlap
+        {
+            get => this.turnTakingWithOverlap;
+            set => this.SetProperty(ref this.turnTakingWithOverlap, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute turn-taking without overlap (cross-talk) in conversational analysis.
+        /// </summary>
+        public bool TurnTakingWithoutOverlap
+        {
+            get => this.turnTakingWithoutOverlap;
+            set => this.SetProperty(ref this.turnTakingWithoutOverlap, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute speech participation in conversational analysis.
+        /// </summary>
+        public bool SpeechParticipation
+        {
+            get => this.speechParticipation;
+            set => this.SetProperty(ref this.speechParticipation, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute speech equality in conversational analysis.
+        /// </summary>
+        public bool SpeechEquality
+        {
+            get => this.speechEquality;
+            set => this.SetProperty(ref this.speechEquality, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute silence in conversational analysis.
+        /// </summary>
+        public bool Silence
+        {
+            get => this.silence;
+            set => this.SetProperty(ref this.silence, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute cross-talk in conversational analysis.
+        /// </summary>
+        public bool CrossTalk
+        {
+            get => this.crossTalk;
+            set => this.SetProperty(ref this.crossTalk, value);
+        }
+
+        // Visual
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute JointVisualAttention in visual analysis.
+        /// </summary>
+        public bool JointVisualAttention
+        {
+            get => this.jointVisualAttention;
+            set => this.SetProperty(ref this.jointVisualAttention, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute MutualGaze in visual analysis.
+        /// </summary>
+        public bool MutualGaze
+        {
+            get => this.mutualGaze;
+            set => this.SetProperty(ref this.mutualGaze, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute GazeOnPeers in visual analysis.
+        /// </summary>
+        public bool GazeOnPeers
+        {
+            get => this.gazeOnPeers;
+            set => this.SetProperty(ref this.gazeOnPeers, value);
+        }
+
+
+        // Physical
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute TaskParticipation in physical analysis.
+        /// </summary>
+        public bool TaskParticipation
+        {
+            get => this.taskParticipation;
+            set => this.SetProperty(ref this.taskParticipation, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute TaskEquality in physical analysis.
+        /// </summary>
+        public bool TaskEquality
+        {
+            get => this.taskEquality;
+            set => this.SetProperty(ref this.taskEquality, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute PhysicalActivityLevel in physical analysis.
+        /// </summary>
+        public bool PhysicalActivityLevel
+        {
+            get => this.physicalActivityLevel;
+            set => this.SetProperty(ref this.physicalActivityLevel, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute PhysicalSynchronyScore in physical analysis.
+        /// </summary>
+        public bool PhysicalSynchronyScore
+        {
+            get => this.physicalSynchronyScore;
+            set => this.SetProperty(ref this.physicalSynchronyScore, value);
+        }
+
+        // Spatial
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute PhysicalSynchronyScore in spatial analysis.
+        /// </summary>
+        public bool PhysicalProximity
+        {
+            get => this.physicalProximity;
+            set => this.SetProperty(ref this.physicalProximity, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we compute PhysicalSynchronyScore in spatial analysis.
+        /// </summary>
+        public bool FacingFormation
+        {
+            get => this.facingFormation;
+            set => this.SetProperty(ref this.facingFormation, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed conversational analysis.
+        /// </summary>
+        public bool IsSlidingWindowEnabled
+        {
+            get => this.isSlidingWindowEnabled;
+            set => this.SetProperty(ref this.isSlidingWindowEnabled, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if we performed conversational analysis.
+        /// </summary>
+        public bool IsCollaborationProfileEnabled
+        {
+            get => this.isCollaborationProfileEnabled;
+            set => this.SetProperty(ref this.isCollaborationProfileEnabled, value);
+        }
+
+        public ObservableCollection<SlidingWindow> SlidingWindows { get; set; }
+
+        public ICommand AddWindowCommand { get; }
+
+        public ICommand RemoveWindowCommand { get; }
+
+        private void AddSlidingWindow()
+        {
+            this.SlidingWindows.Add(new SlidingWindow
+            {
+                Name = $"Window {this.SlidingWindows.Count + 1}",
+                WindowLengthSeconds = 20
+            });
+        }
+
+        private void RemoveSlidingWindow(SlidingWindow? window)
+        {
+            if (window != null)
+            {
+                this.SlidingWindows.Remove(window);
+            }
+        }
+
         /// <summary>
         /// Represents the initialization state of the pipeline.
         /// </summary>
@@ -292,6 +593,32 @@ namespace ServerApplication
             /// <summary>Pipeline has been initialized.</summary>
             PipelineInitialised,
         }
+
+        private RealTimeProcessingUseCase realTimeProcessingUseCase = new RealTimeProcessingUseCase();
+
+        private bool isConversationalEnabled = true;
+        private bool isVisualEnabled = true;
+        private bool isPhysicalEnabled = true;
+        private bool isSpatialEnabled = true;
+        private bool turnTakingWithOverlap;
+        private bool turnTakingWithoutOverlap;
+        private bool speechParticipation;
+        private bool speechEquality;
+        private bool silence;
+        private bool crossTalk;
+        private bool jointVisualAttention;
+        private bool mutualGaze;
+        private bool gazeOnPeers;
+        private bool taskParticipation;
+        private bool taskEquality;
+        private bool physicalActivityLevel;
+        private bool physicalSynchronyScore;
+        private bool physicalProximity;
+        private bool facingFormation;
+        private bool isSlidingWindowEnabled;
+        private bool isCollaborationProfileEnabled;
+        private string pipelineName;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow"/> class.
@@ -314,6 +641,11 @@ namespace ServerApplication
             this.setupState = SetupState.NotInitialised;
             this.server = null;
             this.configuration = new RendezVousPipelineConfiguration();
+            this.realTimeProcessingUseCase = new RealTimeProcessingUseCase();
+            this.SlidingWindows = new ObservableCollection<SlidingWindow>();
+
+            this.AddWindowCommand = new RelayCommand(_ => this.AddSlidingWindow());
+            this.RemoveWindowCommand = new RelayCommand(w => this.RemoveSlidingWindow(w as SlidingWindow));
 
             this.LoadConfig();
             this.InitializeComponent();
@@ -475,6 +807,123 @@ namespace ServerApplication
             this.SetupPipeline();
         }
 
+        private void BtnStartProcess(object sender, RoutedEventArgs e)
+        {
+            if (this.realTimeProcessingUseCase != null)
+            {
+                RealTimeProcessingUseCaseConfiguration config = new RealTimeProcessingUseCaseConfiguration()
+                {
+                    IsConversationalEnabled = this.IsConversationalEnabled,
+                    IsVisualEnabled = this.IsVisualEnabled,
+                    IsPhysicalEnabled = this.IsPhysicalEnabled,
+                    IsSpatialEnabled = this.IsSpatialEnabled,
+                    IsTurnTakingWithOverlap = this.TurnTakingWithOverlap,
+                    IsTurnTakingWithoutOverlap = this.TurnTakingWithoutOverlap,
+                    IsSpeechParticipation = this.SpeechParticipation,
+                    IsSpeechEquality = this.SpeechEquality,
+                    IsSilence = this.Silence,
+                    IsCrossTalk = this.CrossTalk,
+                    IsJointVisualAttention = this.JointVisualAttention,
+                    IsMutualGaze = this.MutualGaze,
+                    IsGazeOnPeers = this.GazeOnPeers,
+                    IsTaskParticipation = this.TaskParticipation,
+                    IsTaskEquality = this.TaskEquality,
+                    IsPhysicalActivityLevel = this.PhysicalActivityLevel,
+                    IsPhysicalSynchronyScore = this.PhysicalSynchronyScore,
+                    IsPhysicalProximity = this.PhysicalProximity,
+                    IsFacingFormation = this.FacingFormation,
+                    IsSlidingWindowEnabled = this.IsSlidingWindowEnabled,
+                    IsCollaborationProfileEnabled = this.IsCollaborationProfileEnabled,
+                };
+                this.realTimeProcessingUseCase.Configuration = config;
+                this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName);
+            }
+        }
+
+        /// <summary>
+        /// ...
+        /// </summary>
+        public void CheckAllProcessAreInitialized(object sender, (string, Dictionary<string, Dictionary<string, ConnectorInfo>>) e)
+        {
+            RendezVousPipeline server = sender as RendezVousPipeline;
+            switch (e.Item1)
+            {
+                case "PsiPipeline":
+                    if (!this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+                    {
+                        this.realTimeProcessingUseCase.IsPsiPipelineStarted = true;
+                    }
+                    else
+                    {
+                        this.realTimeProcessingUseCase.IsPsiPipelineStarted = false;
+                    }
+
+                    break;
+                case "UnityServer":
+                    if (!this.realTimeProcessingUseCase.IsServerInitialised && this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+                    {
+                        this.realTimeProcessingUseCase.IsServerInitialised = true;
+                    }
+                    else if (this.realTimeProcessingUseCase.IsServerInitialised && !this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+                    {
+                        this.realTimeProcessingUseCase.IsServerInitialised = false;
+                    }
+
+                    break;
+                case "VideoRemoteApp":
+                    if (!this.realTimeProcessingUseCase.IsVideoInitialised)
+                    {
+                        this.realTimeProcessingUseCase.IsVideoInitialised = true;
+                    }
+                    else
+                    {
+                        this.realTimeProcessingUseCase.IsVideoInitialised = false;
+                    }
+
+                    break;
+                case "WhisperStreaming":
+                    if (!this.realTimeProcessingUseCase.IsMicrophoneRecording)
+                    {
+                        this.realTimeProcessingUseCase.IsMicrophoneRecording = true;
+                    }
+                    else
+                    {
+                        this.realTimeProcessingUseCase.IsMicrophoneRecording = false;
+                    }
+
+                    break;
+                case "PipelineProcessInitialized":
+                    if (!this.realTimeProcessingUseCase.IsPipelineInitialised && this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+                    {
+                        this.realTimeProcessingUseCase.IsPipelineInitialised = true;
+                    }
+                    else if (this.realTimeProcessingUseCase.IsPipelineInitialised && !this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+                    {
+                        this.realTimeProcessingUseCase.IsPipelineInitialised = false;
+                    }
+
+                    break;
+                case "EndSession":
+                    this.realTimeProcessingUseCase.WriteCSV();
+
+                    foreach (var writer in this.realTimeProcessingUseCase.StreamsWriters)
+                    {
+                        if (!this.realTimeProcessingUseCase.WritersDisposed /*&& saac_Expe2._isServerInitialize*/)
+                        {
+                            this.realTimeProcessingUseCase.CloseAndDisposeWriter(writer);
+                        }
+                    }
+
+                    this.realTimeProcessingUseCase.WritersDisposed = true;
+                    Console.WriteLine("Writer are closed and Session is ended");
+                    break;
+                default:
+                    break;
+            }
+
+            Console.WriteLine($"PipelineStarded is {this.realTimeProcessingUseCase.IsPsiPipelineStarted}; ServerInitialised is {this.realTimeProcessingUseCase.IsServerInitialised}; VideoRemoteApp is {this.realTimeProcessingUseCase.IsVideoInitialised}; WhisperStreaming is {this.realTimeProcessingUseCase.IsMicrophoneRecording}");
+        }
+
         /// <summary>
         /// Sets up and initializes the pipeline with the current configuration.
         /// </summary>
@@ -510,6 +959,9 @@ namespace ServerApplication
                 return;
             }
 
+            this.server.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
+            this.server.CreateOrGetSessionFromMode(this.PipelineSessionName);
+
             this.pipeline = this.server.Pipeline;
             this.AddLog("Server initialisation started");
 
@@ -526,6 +978,7 @@ namespace ServerApplication
             this.StartStatusMonitoring();
             this.AllDevicesStackPanel.IsEnabled = true;
             this.setupState = SetupState.PipelineInitialised;
+            this.server?.TriggerNewProcessEvent("PsiPipeline");
         }
 
         /// <summary>
@@ -659,7 +1112,35 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
+            if (!this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+            {
+                return;
+            }
+
+            if (this.realTimeProcessingUseCase.SubPipeline != null)
+            {
+                this.realTimeProcessingUseCase.SubPipeline.Dispose();
+            }
+
+            this.server?.Dataset?.Save();
             this.Stop();
+
+            if (this.realTimeProcessingUseCase.IsServerInitialised)
+            {
+                this.server?.TriggerNewProcessEvent("UnityServer");
+            }
+
+            if (this.realTimeProcessingUseCase.IsVideoInitialised)
+            {
+                this.server?.TriggerNewProcessEvent("VideoRemoteApp");
+            }
+
+            if (this.realTimeProcessingUseCase.IsMicrophoneRecording)
+            {
+                this.server?.TriggerNewProcessEvent("WhisperStreaming");
+            }
+
+            this.server?.TriggerNewProcessEvent("EndSession");
         }
 
         /// <summary>
@@ -811,6 +1292,66 @@ namespace ServerApplication
             this.connectedApps[name].LastStatusReceivedTime = time;
             this.UpdateDotColor(this.connectedApps[name]);
         }
+
+        // Conversational
+        private void Conversational_Checked(object sender, RoutedEventArgs e) => this.SetConversational(true);
+
+        private void Conversational_Unchecked(object sender, RoutedEventArgs e) => this.SetConversational(false);
+
+        private void SetConversational(bool value)
+        {
+            this.cbTurnTakingWithoutOverlap.IsChecked = value;
+            this.cbTurnTakingWithOverlap.IsChecked = value;
+            this.cbSpeechParticipation.IsChecked = value;
+            this.cbSpeechEquality.IsChecked = value;
+            this.cbSilence.IsChecked = value;
+            this.cbCrossTalk.IsChecked = value;
+        }
+
+        // Visual
+        private void Visual_Checked(object sender, RoutedEventArgs e) => this.SetVisual(true);
+
+        private void Visual_Unchecked(object sender, RoutedEventArgs e) => this.SetVisual(false);
+
+        private void SetVisual(bool value)
+        {
+            this.cbJointVisualAttention.IsChecked = value;
+            this.cbMutualGaze.IsChecked = value;
+            this.cbGazeOnPeers.IsChecked = value;
+            //this.RefreshUI();
+        }
+
+        // Physical
+        private void Physical_Checked(object sender, RoutedEventArgs e) => this.SetPhysical(true);
+
+        private void Physical_Unchecked(object sender, RoutedEventArgs e) => this.SetPhysical(false);
+
+        private void SetPhysical(bool value)
+        {
+            this.cbTaskParticipation.IsChecked = value;
+            this.cbTaskEquality.IsChecked = value;
+            this.cbPhysicalActivityLevel.IsChecked = value;
+            this.cbPhysicalSynchronyScore.IsChecked = value;
+            //this.RefreshUI();
+        }
+
+        // Spatial
+        private void Spatial_Checked(object sender, RoutedEventArgs e) => this.SetSpatial(true);
+
+        private void Spatial_Unchecked(object sender, RoutedEventArgs e) => this.SetSpatial(false);
+
+        private void SetSpatial(bool value)
+        {
+            this.cbPhysicalProximity.IsChecked = value;
+            this.cbFacingFormation.IsChecked = value;
+            //this.RefreshUI();
+        }
+
+        /*private void RefreshUI()
+        {
+            this.DataContext = null;
+            this.DataContext = this;
+        }*/
 
         #region Status Monitoring Connected Applications
 

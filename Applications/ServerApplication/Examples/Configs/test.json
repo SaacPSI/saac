@@ -1,0 +1,307 @@
+[
+  {
+    "topic": "1-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "2-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "3-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "4-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "5-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "6-Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+
+  {
+    "topic": "1-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+  {
+    "topic": "2-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+  {
+    "topic": "3-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+  {
+    "topic": "4-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+  {
+    "topic": "5-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+  {
+    "topic": "6-LeftWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "LeftHands"
+  },
+
+  {
+    "topic": "1-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+  {
+    "topic": "2-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+  {
+    "topic": "3-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+  {
+    "topic": "4-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+  {
+    "topic": "5-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+  {
+    "topic": "6-RightWrist",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "RightHands"
+  },
+
+  {
+    "topic": "[BuildingBlock] Cube",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+
+  {
+    "topic": "[BuildingBlock] Sphere",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "[BuildingBlock] Sphere 2",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+
+  {
+    "topic": "NO_Example",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "NO_Example_2",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_1",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_2",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_3",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_4",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_5",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_6",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_Black_7",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_1",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_2",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_3",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_4",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_5",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_6",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "SM_Dice_White_7",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Objects"
+  },
+  {
+    "topic": "TaskEvent",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "1-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "2-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "3-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "4-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "5-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "6-GazeEventString",
+    "type": "System.String",
+    "classFormat": "PsiFormatString",
+    "streamToStore": "Gaze"
+  },
+  {
+    "topic": "1-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "2-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "3-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "4-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "5-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "DllFusion.src.PsiFormatPiecesState",
+    "streamToStore": "Task"
+  },
+  {
+    "topic": "6-Interactions",
+    "type": "TestDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
+    "streamToStore": "Task"
+  }
+]
