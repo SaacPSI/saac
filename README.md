@@ -43,7 +43,7 @@ Some files are shared across multiple applications (e.g., `UiGenerator.cs`). Dev
 ## Documents
 * [\psi in Unity](PsiInUnity.md)
 * [Remote Exporter Modification](RemoteExporterModification.md)
-* [PsiSutio modifications](PsiStudioModifications.md)
+* [PsiStudio modifications](PsiStudioModifications.md)
 
 ## Roadmap
 Developping generic applications
@@ -54,7 +54,7 @@ In production.
 ## Authors and acknowledgment
 - Cédric Dumas cedric.dumas@imt-atlantique.fr
 - Mathieu Chollet mathieu.chollet@imt-atlantique.fr
-- Alexandre Kabil alexandre.kabil@lisn.upsaclay.fr
+- Alexandre Kabil alexandre.kabil@gmail.fr
 - Aurélien Lechappé aurelien.lechappe@imt-atlantique.fr
 - Arnaud Allemang-Trivalle arnaud.allemang-trivalle@imt-atlantique.fr
 - Aurélien Milliat aurelien.milliat@gmail.com
