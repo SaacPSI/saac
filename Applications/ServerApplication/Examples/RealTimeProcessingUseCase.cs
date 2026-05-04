@@ -7,6 +7,7 @@
 using System.IO;
 using Microsoft.Psi;
 using Microsoft.Psi.Data;
+using Microsoft.Psi.Imaging;
 using SAAC.Components.CollaborationModules;
 using SAAC.PipelineServices;
 
@@ -182,26 +183,53 @@ namespace ServerApplication.Examples
         /// </summary>
         public Session? Session;
 
+        public RendezVousPipeline.StoreMode StoreMode;
+
         /// <summary>
         /// ...
         /// </summary>
-        public void StartPipelineCollaborationProcess(DatasetPipeline server, string pipelineSessionName)
+        public void StartPipelineCollaborationProcess(DatasetPipeline server, string pipelineSessionName, Session session)
         {
-            int numberOfConnectedUsers = 2;
+            int numberOfConnectedUsers = 3;
             GatherProducers gatherProducers = new GatherProducers();
 
             this.SubPipeline = new Subpipeline(server.Pipeline, "CollaborationProcess");
-            this.Session = server.GetSession($"RawData{pipelineSessionName}.000");
+            this.Session = session;
             server.Log("Starting pipeline collaboration process...");
 
-            gatherProducers.Audios = gatherProducers.GetAudioProducers(server, this.SubPipeline,"WhisperStreaming", "Audio_", numberOfConnectedUsers);
-            gatherProducers.Vads = gatherProducers.GetVadProducers(server, this.SubPipeline,"WhisperStreaming", "VAD_", numberOfConnectedUsers, true);
-            gatherProducers.Stts = gatherProducers.GetSTTProducers(server, this.SubPipeline,"WhisperStreaming", "STT_", numberOfConnectedUsers, true);
-            gatherProducers.HeadPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "Heads", "Head", "UnityServer-", numberOfConnectedUsers);
-            gatherProducers.LeftsHandPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "LeftHands", "LeftWrist", "UnityServer-", numberOfConnectedUsers);
-            gatherProducers.RightsHandPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "RightHands", "RightWrist", "UnityServer-", numberOfConnectedUsers);
-            gatherProducers.TaskLogs = gatherProducers.CreatePieceInteractionProducers(server, this.SubPipeline, "Task", "Interactions", numberOfConnectedUsers);
-            gatherProducers.LeftGazeEventsStrings = gatherProducers.CreateStringProducers(server, this.SubPipeline, "Gaze", "GazeEventString", numberOfConnectedUsers);
+            if (this.IsMicrophoneRecording)
+            {
+                gatherProducers.Audios = gatherProducers.GetAudioProducers(server, this.SubPipeline, "WhisperStreaming", "Audio_", numberOfConnectedUsers, this.StoreMode);
+                gatherProducers.Vads = gatherProducers.GetVadProducers(server, this.SubPipeline, "WhisperStreaming", "VAD_", numberOfConnectedUsers, this.StoreMode, true);
+                gatherProducers.Stts = gatherProducers.GetSTTProducers(server, this.SubPipeline, "WhisperStreaming", "STT_", numberOfConnectedUsers, this.StoreMode, true);
+            }
+
+            if (this.IsServerInitialised)
+            {
+                gatherProducers.HeadPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "Heads", "Head", "UnityServer-", numberOfConnectedUsers, this.StoreMode);
+                gatherProducers.LeftsHandPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "LeftHands", "LeftWrist", "UnityServer-", numberOfConnectedUsers, this.StoreMode);
+                gatherProducers.RightsHandPositionOrientationsUnity = gatherProducers.CreateTupleVector3Producers(server, this.SubPipeline, "RightHands", "RightWrist", "UnityServer-", numberOfConnectedUsers, this.StoreMode);
+
+                // gatherProducers.TaskLogs = gatherProducers.CreatePieceInteractionProducers(server, this.SubPipeline, "Task", "Interactions", numberOfConnectedUsers, this.StoreMode);
+
+                // gatherProducers.LeftGazeEventsStrings = gatherProducers.CreateStringProducers(server, this.SubPipeline, "Gaze", "GazeEventString", numberOfConnectedUsers);
+                // gatherProducers.LeftGazeEvents = gatherProducers.CreateGazeProducers(server, this.SubPipeline, "Gaze", "GazeEvent", numberOfConnectedUsers, this.StoreMode);
+            }
+
+            if (this.IsVideoInitialised)
+            {
+                gatherProducers.ServerVideo = server.Connectors["VideoRemoteApp-FullScreen"]["FullScreen"].CreateBridge<Shared<EncodedImage>>(this.SubPipeline);
+                server.CreateConnectorAndStore("Unity Server", "Video", this.Session, this.SubPipeline, typeof(Shared<EncodedImage>), gatherProducers.ServerVideo);
+            }
+
+            LOF lof = new LOF(this.SubPipeline, server, new LOFConfiguration() { NumberOfPeoples = numberOfConnectedUsers, SessionName = this.Session } );
+            for (int i = 0; i < numberOfConnectedUsers; i++)
+            {
+                gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(lof.GetHeadPositionOrientationReceiver(i));
+            }
+
+            /*if (isloader) subP.Start((e) => { });
+            else*/ this.SubPipeline.RunAsync();
 
             // gatherProducers.LeftGazeEvents = gatherProducers.CreateGazeProducers(server, this.SubPipeline, "Gaze", "GazeEvent", numberOfConnectedUsers);
 

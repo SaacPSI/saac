@@ -842,7 +842,8 @@ namespace SAAC.PipelineServices
                 this.Log($"SubPipeline {process.Name} started.");
             }
 
-            TriggerNewProcessEvent(process.Name);
+            this.TriggerNewProcessEvent(process.Name);
+
             // Dataset?.Save();
         }
 

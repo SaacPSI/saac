@@ -836,7 +836,9 @@ namespace ServerApplication
                     IsCollaborationProfileEnabled = this.IsCollaborationProfileEnabled,
                 };
                 this.realTimeProcessingUseCase.Configuration = config;
-                this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName);
+                this.realTimeProcessingUseCase.StoreMode = (RendezVousPipeline.StoreMode)this.StoreModeComboBox.SelectedIndex;
+                this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName, this.server.GetSession("RawDataPipelineProcess.000"));
+                this.server?.TriggerNewProcessEvent("PsiPipeline");
             }
         }
 
@@ -959,9 +961,11 @@ namespace ServerApplication
                 return;
             }
 
+            // this.PipelineSessionName = "CollaborationProcess";
             this.server.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
-            this.server.CreateOrGetSessionFromMode(this.PipelineSessionName);
+            this.server.CreateOrGetSessionFromMode("PipelineProcess");
 
+            // this.server.CreateOrGetSessionFromMode(this.PipelineSessionName);
             this.pipeline = this.server.Pipeline;
             this.AddLog("Server initialisation started");
 

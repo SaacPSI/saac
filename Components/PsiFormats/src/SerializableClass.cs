@@ -6,14 +6,14 @@ namespace SAAC.PsiFormats
     public class Class1
     {
     }
-    [System.Serializable]
+
     public class IDs
     {
         public int userID;
         public string objectID;
+        public DateTime originatingTime;
     }
 
-    [System.Serializable]
     public class ObjectGazeEvent : IDs
     {
         public string type;
@@ -21,29 +21,13 @@ namespace SAAC.PsiFormats
 
         public ObjectGazeEvent(string t, int id, string o, bool status)
         {
-            type = t;
-            userID = id;
-            objectID = o;
+            this.type = t;
+            this.userID = id;
+            this.objectID = o;
             this.status = status;
         }
     }
 
-    [System.Serializable]
-    public class AvatarGazeEvent : IDs
-    {
-        public string type;
-        public bool status;
-        public AvatarGazeEvent(string t, int gazerid, string gazedid, bool status)
-        {
-            type = t;
-            userID = gazerid;
-            objectID = gazedid;
-            this.status = status;
-        }
-    }
-
-    // Classe pour représenter l'état d'une pièce
-    [System.Serializable]
     public class ObjectInteraction : IDs
     {
         public State state;// État de la pièce
@@ -53,14 +37,32 @@ namespace SAAC.PsiFormats
         // Constructeur pour initialiser les valeurs
         public ObjectInteraction(int id, string objectid, State t, bool currentState, string loc)
         {
-            userID = id;
-            objectID = objectid;
-            state = t;
-            isActive = currentState;
-            currentLocation = loc;
+            this.userID = id;
+            this.objectID = objectid;
+            this.state = t;
+            this.isActive = currentState;
+            this.currentLocation = loc;
         }
     }
-    // Enumération des différents états possibles
+
+    public class PieceStatus : IDs
+    {
+        public State type;
+        public bool isActive;
+        public string lastZone;
+        public Location currentLocation;
+
+        public PieceStatus(int id, string objectid, State t, bool currentState, string lz, Location loc)
+        {
+            this.userID = id;
+            this.objectID = objectid;
+            this.type = t;
+            this.isActive = currentState;
+            this.lastZone = lz;
+            this.currentLocation = loc;
+        }
+    }
+
     public enum State
     {
         Spawn = 1,
@@ -72,7 +74,6 @@ namespace SAAC.PsiFormats
         Colored = 7,
         Uncolored = 8
     }
-    // Enumération des différentes localisations possibles
     public enum Location
     {
         Sol = 1,
@@ -81,27 +82,8 @@ namespace SAAC.PsiFormats
         CentraleTableZone = 4,
         IterationTable = 5,
         Hand = 6,
-        None = 7
-    }
-
-    // Classe pour représenter l'état d'une pièce
-    [System.Serializable]
-    public class PieceStatus : IDs
-    {
-        public State state;// État de la pièce
-        public bool isActive;// Indique si la pièce est active
-        public string lastZone;// Dernière zone où la pièce était
-        public Location currentLocation;// Localisation actuelle de la pièce
-
-        // Constructeur pour initialiser les valeurs
-        public PieceStatus(int id, string objectid, State t, bool currentState, string lz, Location loc)
-        {
-            userID = id;
-            objectID = objectid;
-            state = t;
-            isActive = currentState;
-            lastZone = lz;
-            currentLocation = loc;
-        }
+        Button = 7,
+        Outside = 8,
+        None = 9
     }
 }

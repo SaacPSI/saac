@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GlobalHelpers</name>
+    </assembly>
+    <members>
+        <member name="T:SAAC.GlobalHelpers.EEventType">
+            <summary>
+            Enumeration of event types for user interactions.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.EEventType.Hover">
+            <summary>
+            Hover interaction event.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.EEventType.Select">
+            <summary>
+            Select interaction event.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.EEventType.UI">
+            <summary>
+            User interface interaction event.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.EEventType.Focus">
+            <summary>
+            Focus interaction event.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.EEventType.Activate">
+            <summary>
+            Activate interaction event.
+            </summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.GazeEvent">
+            <summary>
+            Represents a gaze event with position and gaze status.
+            </summary>
+        </member>
+        <member name="M:SAAC.GlobalHelpers.GazeEvent.#ctor(SAAC.GlobalHelpers.EEventType,System.String,System.String,System.Numerics.Vector3,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.GlobalHelpers.GazeEvent"/> class.
+            </summary>
+            <param name="type">The type of event.</param>
+            <param name="userId">The user identifier.</param>
+            <param name="objectID">The object identifier.</param>
+            <param name="position">The 3D position of the gaze.</param>
+            <param name="isGazed">Whether the object is currently being gazed at.</param>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.GazeEvent.Type">
+            <summary>
+            Gets the event type.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.GazeEvent.Position">
+            <summary>
+            Gets the 3D position of the gaze.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.GazeEvent.IsGazed">
+            <summary>
+            Gets a value indicating whether the object is currently being gazed at.
+            </summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.GrabEvent">
+            <summary>
+            Represents a grab event with grab status.
+            </summary>
+        </member>
+        <member name="M:SAAC.GlobalHelpers.GrabEvent.#ctor(SAAC.GlobalHelpers.EEventType,System.String,System.String,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.GlobalHelpers.GrabEvent"/> class.
+            </summary>
+            <param name="type">The type of event.</param>
+            <param name="userId">The user identifier.</param>
+            <param name="objectID">The object identifier.</param>
+            <param name="isGrabbed">Whether the object is currently being grabbed.</param>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.GrabEvent.Type">
+            <summary>
+            Gets the event type.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.GrabEvent.IsGrabbed">
+            <summary>
+            Gets a value indicating whether the object is currently being grabbed.
+            </summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.IDs">
+            <summary>
+            Base class for identifiers containing user and object IDs.
+            </summary>
+        </member>
+        <member name="M:SAAC.GlobalHelpers.IDs.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.GlobalHelpers.IDs"/> class.
+            </summary>
+            <param name="userID">The user identifier.</param>
+            <param name="objectID">The object identifier.</param>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.IDs.UserID">
+            <summary>
+            Gets the user identifier.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.IDs.ObjectID">
+            <summary>
+            Gets the object identifier.
+            </summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.Hand">
+            <summary>
+            Represents a hand with joint tracking data following OpenXR definitions.
+            </summary>
+        </member>
+        <member name="M:SAAC.GlobalHelpers.Hand.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.GlobalHelpers.Hand"/> class.
+            </summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.Hand.EHandJointID">
+            <summary>
+            Enumeration of hand joint identifiers following OpenXR definitions.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.Invalid">
+            <summary>Invalid joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.Wrist">
+            <summary>Wrist joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.Palm">
+            <summary>Palm joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.ThumbMetacarpal">
+            <summary>Thumb metacarpal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.ThumbProximal">
+            <summary>Thumb proximal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.ThumbDistal">
+            <summary>Thumb distal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.ThumbTip">
+            <summary>Thumb tip.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.IndexMetacarpal">
+            <summary>Index metacarpal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.IndexProximal">
+            <summary>Index proximal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.IndexIntermediate">
+            <summary>Index intermediate joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.IndexDistal">
+            <summary>Index distal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.IndexTip">
+            <summary>Index finger tip.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.MiddleMetacarpal">
+            <summary>Middle metacarpal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.MiddleProximal">
+            <summary>Middle proximal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.MiddleIntermediate">
+            <summary>Middle intermediate joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.MiddleDistal">
+            <summary>Middle distal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.MiddleTip">
+            <summary>Middle finger tip.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.RingMetacarpal">
+            <summary>Ring metacarpal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.RingProximal">
+            <summary>Ring proximal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.RingIntermediate">
+            <summary>Ring intermediate joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.RingDistal">
+            <summary>Ring distal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.RingTip">
+            <summary>Ring finger tip.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.LittleMetacarpal">
+            <summary>Little metacarpal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.LittleProximal">
+            <summary>Little proximal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.LittleIntermediate">
+            <summary>Little intermediate joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.LittleDistal">
+            <summary>Little distal joint.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandJointID.LittleTip">
+            <summary>Little finger tip.</summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.Hand.EHandType">
+            <summary>
+            Enumeration of hand types.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandType.Left">
+            <summary>Left hand.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EHandType.Right">
+            <summary>Right hand.</summary>
+        </member>
+        <member name="T:SAAC.GlobalHelpers.Hand.EOrigin">
+            <summary>
+            Enumeration of hand tracking origins.
+            </summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EOrigin.OpenXR">
+            <summary>OpenXR tracking system.</summary>
+        </member>
+        <member name="F:SAAC.GlobalHelpers.Hand.EOrigin.Meta">
+            <summary>Meta Quest tracking system.</summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.Bones">
+            <summary>
+            Gets or sets the list of bone connections between hand joints.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.Type">
+            <summary>
+            Gets or sets the hand type (left or right).
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.Origin">
+            <summary>
+            Gets or sets the tracking system origin.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.HandJoints">
+            <summary>
+            Gets or sets the dictionary of hand joints with their 3D positions.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.RootPosition">
+            <summary>
+            Gets or sets the root position of the hand.
+            </summary>
+        </member>
+        <member name="P:SAAC.GlobalHelpers.Hand.RootOrientation">
+            <summary>
+            Gets or sets the root orientation of the hand.
+            </summary>
+        </member>
+        <member name="M:SAAC.GlobalHelpers.Hand.CreateHand(SAAC.GlobalHelpers.Hand.EHandType,SAAC.GlobalHelpers.Hand.EOrigin)">
+            <summary>
+            Creates a new hand with the specified type and origin.
+            </summary>
+            <param name="type">The hand type (left or right).</param>
+            <param name="origin">The tracking system origin.</param>
+            <returns>A new hand instance.</returns>
+        </member>
+        <member name="T:SAAC.LogStatus">
+            <summary>
+            Delegate for logging status messages.
+            </summary>
+            <param name="log">The log message.</param>
+        </member>
+    </members>
+</doc>

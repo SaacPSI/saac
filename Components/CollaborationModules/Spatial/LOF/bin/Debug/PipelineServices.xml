@@ -1,0 +1,1321 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PipelineServices</name>
+    </assembly>
+    <members>
+        <member name="T:SAAC.PipelineServices.ConnectorInfo">
+            <summary>
+            Contains information about a pipeline connector including source, session, store, and data type.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorInfo.SourceName">
+            <summary>
+            Gets the name of the source stream.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorInfo.SessionName">
+            <summary>
+            Gets the name of the session.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorInfo.StoreName">
+            <summary>
+            Gets the name of the store.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorInfo.DataType">
+            <summary>
+            Gets the data type of the connector.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorInfo.#ctor(System.String,System.String,System.String,System.Type,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.ConnectorInfo"/> class.
+            </summary>
+            <param name="sourceName">The source stream name.</param>
+            <param name="sessionName">The session name.</param>
+            <param name="storeName">The store name.</param>
+            <param name="dataType">The data type.</param>
+            <param name="source">The source object.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorInfo.CreateBridge``1(Microsoft.Psi.Pipeline)">
+            <summary>
+            Creates a bridge connector for the specified pipeline.
+            </summary>
+            <typeparam name="T">The type of data to bridge.</typeparam>
+            <param name="pipeline">The pipeline to create the bridge in.</param>
+            <returns>A dynamic bridge connector.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetPipeline">
+            <summary>
+            Represents a dataset pipeline that manages Microsoft Psi pipelines, datasets, sessions, and stores.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.Dataset">
+            <summary>
+            Gets the dataset associated with this pipeline.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.Pipeline">
+            <summary>
+            Gets the Microsoft Psi pipeline.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.Log">
+            <summary>
+            Gets or sets the logging delegate for status messages.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetPipeline.SessionNamingMode">
+            <summary>
+            Defines the naming mode for sessions.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.SessionNamingMode.Unique">
+            <summary>
+            Create a unique session name.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.SessionNamingMode.Increment">
+            <summary>
+            Increment the session name with a counter.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.SessionNamingMode.Overwrite">
+            <summary>
+            Overwrite existing session with the same name.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetPipeline.StoreMode">
+            <summary>
+            Defines the storage mode for pipeline data.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.StoreMode.Independant">
+            <summary>
+            Each store is independent.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.StoreMode.Process">
+            <summary>
+            Stores are organized by process.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.StoreMode.Dictionnary">
+            <summary>
+            Stores are organized by dictionary mapping.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetPipeline.DiagnosticsMode">
+            <summary>
+            Defines the diagnostics mode for the pipeline.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.DiagnosticsMode.Off">
+            <summary>
+            Diagnostics are disabled.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.DiagnosticsMode.Store">
+            <summary>
+            Diagnostics are stored.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipeline.DiagnosticsMode.Export">
+            <summary>
+            Diagnostics are exported.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.IsPipelineRunning">
+            <summary>
+            Gets or sets a value indicating whether the pipeline is running.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.IsAllowedToCreateSubPipeline">
+            <summary>
+            Gets or sets a value indicating whether the pipeline can create subpipelines.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.Configuration">
+            <summary>
+            Gets or sets the configuration for the dataset pipeline.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.Subpipelines">
+            <summary>
+            Gets the dictionary of subpipelines.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.OwningPipeline">
+            <summary>
+            Gets a value indicating whether this instance owns the pipeline.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetPipeline.CurrentSession">
+            <summary>
+            Gets or sets the current session.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.#ctor(Microsoft.Psi.Pipeline,SAAC.PipelineServices.DatasetPipelineConfiguration,System.String,SAAC.LogStatus,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.DatasetPipeline"/> class with a parent pipeline.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">Optional configuration.</param>
+            <param name="name">The pipeline name.</param>
+            <param name="log">Optional logging delegate.</param>
+            <param name="connectors">Optional connectors dictionary.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.#ctor(SAAC.PipelineServices.DatasetPipelineConfiguration,System.String,SAAC.LogStatus,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.DatasetPipeline"/> class.
+            </summary>
+            <param name="configuration">Optional configuration.</param>
+            <param name="name">The pipeline name.</param>
+            <param name="log">Optional logging delegate.</param>
+            <param name="connectors">Optional connectors dictionary.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.RunPipelineAndSubpipelines">
+            <summary>
+            Runs the pipeline and all subpipelines.
+            </summary>
+            <returns>True if the pipeline is running; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.Stop(System.Int32)">
+            <summary>
+            Stops the pipeline and saves the dataset.
+            </summary>
+            <param name="maxWaitingTime">Maximum waiting time in milliseconds.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.Reset(Microsoft.Psi.Pipeline)">
+            <summary>
+            Resets the pipeline to its initial state.
+            </summary>
+            <param name="pipeline">Optional pipeline to use instead of creating a new one.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.GetSession(System.String)">
+            <summary>
+            Gets a session by name from the dataset.
+            </summary>
+            <param name="sessionName">The session name to retrieve.</param>
+            <returns>The session if found; otherwise null.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.CreateOrGetSession(System.String)">
+            <summary>
+            Creates a new session or gets an existing one with the specified name.
+            </summary>
+            <param name="sessionName">The session name.</param>
+            <returns>The session if created or found; otherwise null.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.CreateIterativeSession(System.String)">
+            <summary>
+            Creates a new iterative session with an incremented name.
+            </summary>
+            <param name="sessionName">The base session name.</param>
+            <returns>The created session; otherwise null.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.CreateOrGetSessionFromMode(System.String)">
+            <summary>
+            Creates or gets a session based on the configured session naming mode.
+            </summary>
+            <param name="sessionName">Optional session name suffix.</param>
+            <returns>The session if created or found; otherwise null.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.GetStoreName(System.String,System.String,Microsoft.Psi.Data.Session)">
+            <summary>
+            Gets the store name for a stream based on the configured store mode.
+            </summary>
+            <param name="streamName">The stream name.</param>
+            <param name="processName">The process name.</param>
+            <param name="session">The session.</param>
+            <returns>A tuple containing the stream name and store name.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.GetOrCreateSubpipeline(System.String)">
+            <summary>
+            Gets an existing subpipeline or creates a new one with the specified name.
+            </summary>
+            <param name="name">The subpipeline name.</param>
+            <returns>The subpipeline.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.TriggerRun(System.Object,Microsoft.Psi.PipelineRunEventArgs)">
+            <summary>
+            Triggered when the pipeline starts running.
+            </summary>
+            <param name="sender">The event sender.</param>
+            <param name="e">The pipeline run event arguments.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.PipelineRunAsync">
+            <summary>
+            Runs the pipeline asynchronously.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.WaitCreateSubPipeline">
+            <summary>
+            Check and waits if necessary to allow subpipeline creation after the main pipeline has started.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetPipeline.Initialize(SAAC.PipelineServices.DatasetPipelineConfiguration,SAAC.LogStatus)">
+            <summary>
+            Initializes the dataset pipeline with configuration and logging.
+            </summary>
+            <param name="configuration">The configuration.</param>
+            <param name="log">The logging delegate.</param>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetPipelineConfiguration">
+            <summary>
+            Configuration settings for a dataset pipeline.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.Diagnostics">
+            <summary>
+            Gets or sets the diagnostics mode for the pipeline.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.Debug">
+            <summary>
+            Gets or sets a value indicating whether debug mode is enabled.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.AutomaticPipelineRun">
+            <summary>
+            Gets or sets a value indicating whether the pipeline should run automatically.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.SessionMode">
+            <summary>
+            Gets or sets the session naming mode.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.StoreMode">
+            <summary>
+            Gets or sets the store mode for pipeline data.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.DatasetPath">
+            <summary>
+            Gets or sets the file path to the dataset.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.DatasetName">
+            <summary>
+            Gets or sets the name of the dataset.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.SessionName">
+            <summary>
+            Gets or sets the name of the session.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetPipelineConfiguration.StreamToStore">
+            <summary>
+            Gets or sets the mapping between stream names and store names.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.IPsiFormat">
+            <summary>
+            Interface for PSI format providers that can serialize and deserialize data.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.IPsiFormat.GetFormat">
+            <summary>
+            Gets the format instance for serialization and deserialization.
+            </summary>
+            <returns>A dynamic format object.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatBoolean">
+            <summary>
+            Provides a wrapper for boolean serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatBoolean.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing boolean values.
+            </summary>
+            <returns>A format instance for boolean serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatBytes">
+            <summary>
+            Provides a wrapper for byte array serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatBytes.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing byte arrays.
+            </summary>
+            <returns>A format instance for byte array serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatChar">
+            <summary>
+            Provides a wrapper for character serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatChar.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing char values.
+            </summary>
+            <returns>A format instance for char serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatCommand">
+            <summary>
+            Provides a wrapper for Command serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatCommand.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Command tuples.
+            </summary>
+            <returns>A format instance for Command serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatDateTime">
+            <summary>
+            Provides a wrapper for DateTime serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatDateTime.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing DateTime values.
+            </summary>
+            <returns>A format instance for DateTime serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatGazeEvent">
+            <summary>
+            Provides a wrapper for GazeEvent serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatGazeEvent.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing GazeEvent objects.
+            </summary>
+            <returns>A format instance for GazeEvent serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatGrabEvent">
+            <summary>
+            Provides a wrapper for GrabEvent serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatGrabEvent.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing GrabEvent objects.
+            </summary>
+            <returns>A format instance for GrabEvent serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatHand">
+            <summary>
+            Provides a wrapper for Hand serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatHand.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Hand objects.
+            </summary>
+            <returns>A format instance for Hand serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatInteger">
+            <summary>
+            Provides a wrapper for integer serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatInteger.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing integer values.
+            </summary>
+            <returns>A format instance for integer serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatMatrix4x4">
+            <summary>
+            Provides a wrapper for Matrix4x4 serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatMatrix4x4.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Matrix4x4 objects.
+            </summary>
+            <returns>A format instance for Matrix4x4 serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatString">
+            <summary>
+            Provides a wrapper for string serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatString.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing string values.
+            </summary>
+            <returns>A format instance for string serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatTupleOfVector">
+            <summary>
+            Provides a wrapper for tuple of Vector3 serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatTupleOfVector.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing tuples of Vector3 objects.
+            </summary>
+            <returns>A format instance for tuple of Vector3 serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatVector3">
+            <summary>
+            Provides a wrapper for Vector3 serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatVector3.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Vector3 objects.
+            </summary>
+            <returns>A format instance for Vector3 serialization.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.ConnectorsAndStoresCreator">
+            <summary>
+            Abstract base class for creating connectors and stores in pipeline services.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorsAndStoresCreator.Stores">
+            <summary>
+            Gets or sets the dictionary of stores organized by session and store name.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorsAndStoresCreator.StorePath">
+            <summary>
+            Gets or sets the file path where stores are saved.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsAndStoresCreator.#ctor(System.String,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.ConnectorsAndStoresCreator"/> class.
+            </summary>
+            <param name="storePath">The path where stores will be saved.</param>
+            <param name="connectors">Optional dictionary of existing connectors.</param>
+            <param name="name">The name of the creator.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsAndStoresCreator.Dispose">
+            <summary>
+            Disposes resources used by this instance.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsAndStoresCreator.CreateConnectorAndStore``1(System.String,System.String,Microsoft.Psi.Data.Session,Microsoft.Psi.Pipeline,System.Type,Microsoft.Psi.IProducer{``0},System.Boolean)">
+            <summary>
+            Creates a connector and optionally a store for a stream.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="streamName">The name of the stream.</param>
+            <param name="storeName">The name of the store.</param>
+            <param name="session">The session to use.</param>
+            <param name="p">The pipeline.</param>
+            <param name="type">The data type.</param>
+            <param name="stream">The producer stream.</param>
+            <param name="storeSteam">Whether to store the stream.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsAndStoresCreator.CreateStore``1(Microsoft.Psi.Pipeline,Microsoft.Psi.Data.Session,System.String,System.String,Microsoft.Psi.IProducer{``0})">
+            <summary>
+            Creates a store for the specified stream.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="pipeline">The pipeline.</param>
+            <param name="session">The session.</param>
+            <param name="streamName">The stream name.</param>
+            <param name="storeName">The store name.</param>
+            <param name="source">The source producer.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsAndStoresCreator.GetOrCreateStore(Microsoft.Psi.Pipeline,Microsoft.Psi.Data.Session,System.String)">
+            <summary>
+            Gets an existing store or creates a new one if it doesn't exist.
+            </summary>
+            <param name="pipeline">The pipeline.</param>
+            <param name="session">The session.</param>
+            <param name="storeName">The store name.</param>
+            <returns>The PSI exporter store.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.ConnectorsManager">
+            <summary>
+            Abstract base class for managing pipeline connectors.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ConnectorsManager.Connectors">
+            <summary>
+            Gets the dictionary of connectors organized by store and stream name.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ConnectorsManager.NewEntry">
+            <summary>
+            Event handler for new connector entries.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ConnectorsManager.RemovedEntry">
+            <summary>
+            Event handler for removed connector entries.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ConnectorsManager.name">
+            <summary>
+            The name of this manager.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.#ctor(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.ConnectorsManager"/> class.
+            </summary>
+            <param name="connectors">Optional dictionary of existing connectors.</param>
+            <param name="name">The name of the manager.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.Dispose">
+            <summary>
+            Disposes resources used by this manager.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.CreateConnector``1(System.String,System.String,Microsoft.Psi.Data.Session,System.Type,Microsoft.Psi.IProducer{``0})">
+            <summary>
+            Creates a connector for the specified stream.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="streamName">The stream name.</param>
+            <param name="storeName">The store name.</param>
+            <param name="session">The session to use.</param>
+            <param name="type">The data type.</param>
+            <param name="stream">The producer stream.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.TriggerNewProcessEvent(System.String)">
+            <summary>
+            Triggers the new process event.
+            </summary>
+            <param name="name">The process name.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.TriggerRemoveProcessEvent(System.String)">
+            <summary>
+            Triggers the remove process event.
+            </summary>
+            <param name="name">The process name.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.AddNewProcessEvent(System.EventHandler{System.ValueTuple{System.String,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}}}})">
+            <summary>
+            Adds an event handler for new process events.
+            </summary>
+            <param name="handler">The event handler to add.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.AddRemoveProcessEvent(System.EventHandler{System.String})">
+            <summary>
+            Adds an event handler for remove process events.
+            </summary>
+            <param name="handler">The event handler to add.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ConnectorsManager.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:SAAC.PipelineServices.DatasetLoader">
+            <summary>
+            Loads datasets and creates connectors for stored data streams.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.DatasetLoader.Stores">
+            <summary>
+            Gets or sets the dictionary of PSI importers organized by session and store name.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.DatasetLoader.pipeline">
+            <summary>
+            The pipeline used for loading data.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetLoader.#ctor(Microsoft.Psi.Pipeline,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.DatasetLoader"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to use for loading.</param>
+            <param name="connectors">Optional dictionary of existing connectors.</param>
+            <param name="name">The name of the loader.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetLoader.Dispose">
+            <summary>
+            Disposes resources used by this loader.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetLoader.Load(System.String,System.String)">
+            <summary>
+            Loads a dataset from the specified path.
+            </summary>
+            <param name="dataset">The path to the dataset.</param>
+            <param name="sessionName">Optional session name to filter by.</param>
+            <returns>True if loading succeeded; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.DatasetLoader.Load(Microsoft.Psi.Data.Dataset,System.String)">
+            <summary>
+            Loads a dataset and creates connectors for all its streams.
+            </summary>
+            <param name="dataset">The dataset to load.</param>
+            <param name="sessionName">Optional session name to filter by.</param>
+            <returns>True if loading succeeded; otherwise false.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.Helpers.PipeToMessage`1">
+            <summary>
+            Class that transform pipeline data to message forwarded to the delegate given.
+            </summary>
+            <typeparam name="T">The type of the data to receive and transform to message.</typeparam>
+        </member>
+        <member name="P:SAAC.PipelineServices.Helpers.PipeToMessage`1.In">
+            <summary>
+            Gets template receiver.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.Helpers.PipeToMessage`1.Do">
+            <summary>
+            Delegate function that will be called at each received data.
+            </summary>
+            <param name="source">The source name of the message.</param>
+            <param name="message">The message created from the received data.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.Helpers.PipeToMessage`1.#ctor(Microsoft.Psi.Pipeline,SAAC.PipelineServices.Helpers.PipeToMessage{`0}.Do,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.Helpers.PipeToMessage`1"/> class.
+            </summary>
+            <param name="parent">The pipeline to use for loading.</param>
+            <param name="toDo">The delegate to trigger.</param>
+            <param name="sourceName">The source name of the message.</param>
+            <param name="name">The name of the loader.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.Helpers.PipeToMessage`1.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:SAAC.PipelineServices.TcpWriterMulti`1">
+            <summary>
+            Component that serializes and writes messages to a remote server over TCP.
+            </summary>
+            <typeparam name="T">The type of the messages.</typeparam>
+        </member>
+        <member name="M:SAAC.PipelineServices.TcpWriterMulti`1.#ctor(Microsoft.Psi.Pipeline,System.Int32,Microsoft.Psi.Interop.Serialization.IFormatSerializer,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.TcpWriterMulti`1"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to add the component to.</param>
+            <param name="port">The connection port.</param>
+            <param name="serializer">The serializer to use to serialize messages.</param>
+            <param name="name">An optional name for the component.</param>
+        </member>
+        <member name="P:SAAC.PipelineServices.TcpWriterMulti`1.Port">
+            <summary>
+            Gets the connection port.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.TcpWriterMulti`1.In">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.TcpWriterMulti`1.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.TcpWriterMulti`1.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.TcpWriterMulti`1.ToRendezvousEndpoint(System.String,System.String)">
+            <summary>
+            Generate a Rendezvous endpoint for this TCP writer, given an address and a stream name.
+            </summary>
+            <param name="address">The address used for the connection.</param>
+            <param name="streamName">The name of the stream.</param>
+            <returns>The endpoint for the rendezvous process.</returns>
+        </member>
+        <member name="T:SAAC.PipelineServices.IComplexTransformer">
+            <summary>
+            Interface for complex data transformers in pipeline services.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.IComplexTransformer.CreateConnections(System.String,System.String,Microsoft.Psi.Data.Session,Microsoft.Psi.Pipeline,System.Boolean,SAAC.PipelineServices.RendezVousPipeline)">
+            <summary>
+            Creates connections for the transformer's outputs.
+            Called inside rendezVousPipeline.CreateConnectorAndStore() for each output.
+            </summary>
+            <param name="name">The name of the connection.</param>
+            <param name="storeName">The name of the store.</param>
+            <param name="session">The session to use.</param>
+            <param name="p">The pipeline.</param>
+            <param name="storeSteam">Whether to store the stream.</param>
+            <param name="rendezVousPipeline">The rendezvous pipeline instance.</param>
+        </member>
+        <member name="T:SAAC.PipelineServices.RendezVousPipeline">
+            <summary>
+            Pipeline that supports rendezvous-based distributed communication.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.ClockSynchProcessName">
+            <summary>
+            Clock synchronization process name.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.DiagnosticsProcessName">
+            <summary>
+            Diagnostics process name.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.CommandProcessName">
+            <summary>
+            Command process name.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.#ctor(Microsoft.Psi.Pipeline,SAAC.PipelineServices.RendezVousPipelineConfiguration,System.String,System.String,SAAC.LogStatus,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.RendezVousPipeline"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">The configuration.</param>
+            <param name="name">The name.</param>
+            <param name="rendezVousServerAddress">The rendezvous server address.</param>
+            <param name="log">The log action.</param>
+            <param name="connectors">The connectors.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.#ctor(SAAC.PipelineServices.RendezVousPipelineConfiguration,System.String,System.String,SAAC.LogStatus,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.RendezVousPipeline"/> class.
+            </summary>
+            <param name="configuration">The configuration.</param>
+            <param name="name">The name.</param>
+            <param name="rendezVousServerAddress">The rendezvous server address.</param>
+            <param name="log">The log action.</param>
+            <param name="connectors">The connectors.</param>
+        </member>
+        <member name="T:SAAC.PipelineServices.RendezVousPipeline.Command">
+            <summary>
+            Command types.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Initialize">
+            <summary>
+            Initialize command.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Run">
+            <summary>
+            Run command.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Stop">
+            <summary>
+            Stop command.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Reset">
+            <summary>
+            Reset command.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Close">
+            <summary>
+            Close command.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.Command.Status">
+            <summary>
+            Status command.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.RendezVousPipeline.OnCommandReceive">
+            <summary>
+            Delegate for command receive events.
+            </summary>
+            <param name="process">The process name.</param>
+            <param name="command">The command and argument tuple.</param>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipeline.Configuration">
+            <summary>
+            Gets the configuration.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipeline.CommandEmitter">
+            <summary>
+            Gets the command emitter.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.processNames">
+            <summary>
+            The process names.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.isStarted">
+            <summary>
+            Whether the pipeline is started.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.rendezvousRelay">
+            <summary>
+            The rendezvous relay.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.rendezVous">
+            <summary>
+            The rendezvous object.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.commandPipeline">
+            <summary>
+            The command pipeline.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipeline.rendezvousProcessesToAddWhenActive">
+            <summary>
+            Processes to add when active.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Start(Microsoft.Psi.TimeInterval)">
+            <summary>
+            Starts the rendezvous pipeline with an optional time interval.
+            </summary>
+            <param name="interval">The optional time interval for the pipeline.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Start(System.Action{System.DateTime})">
+            <summary>
+            Starts the pipeline as a source component.
+            </summary>
+            <param name="notifyCompletionTime">Delegate to notify completion time.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Stop(System.Int32)">
+            <summary>
+            Stops the rendezvous pipeline.
+            </summary>
+            <param name="maxWaitingTime">Maximum time to wait for pipeline stop in milliseconds.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Stop(System.DateTime,System.Action)">
+            <summary>
+            Stops the pipeline as a source component.
+            </summary>
+            <param name="finalOriginatingTime">The final originating time.</param>
+            <param name="notifyCompleted">Delegate to notify completion.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Dispose">
+            <summary>
+            Disposes the rendezvous pipeline and releases all resources.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Reset(Microsoft.Psi.Pipeline)">
+            <summary>
+            Resets the rendezvous pipeline to its initial state.
+            </summary>
+            <param name="pipeline">Optional pipeline to reset to.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.SendCommand(SAAC.PipelineServices.RendezVousPipeline.Command,System.String,System.String)">
+            <summary>
+            Sends a command to a target process.
+            </summary>
+            <param name="command">The command to send.</param>
+            <param name="target">The target process name.</param>
+            <param name="arguments">Command arguments.</param>
+            <returns>True if the command was sent successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.AddSynchClockProcess(Microsoft.Psi.TimeInterval)">
+            <summary>
+            Adds a clock synchronization process to the rendezvous.
+            </summary>
+            <param name="interval">The time interval for clock synchronization.</param>
+            <returns>True if the process was added successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.AddConnectingProcess(System.String,System.EventHandler{Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process})">
+            <summary>
+            Adds a connecting process with an event handler.
+            </summary>
+            <param name="name">The process name.</param>
+            <param name="eventProcess">The event handler for process events.</param>
+            <returns>True if the process was added successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.AddProcess(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Adds a process to the rendezvous.
+            </summary>
+            <param name="newProcess">The process to add.</param>
+            <returns>True if the process was added successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.RemoveProcess(System.String)">
+            <summary>
+            Removes a process from the rendezvous.
+            </summary>
+            <param name="processName">The name of the process to remove.</param>
+            <returns>True if the process was removed successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateTCPEnpoint``1(Microsoft.Psi.Pipeline,System.Int32,Microsoft.Psi.IProducer{``0},System.String,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process@)">
+            <summary>
+            Generates a TCP endpoint for a producer stream.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="parent">The parent pipeline.</param>
+            <param name="port">The TCP port.</param>
+            <param name="producer">The producer stream.</param>
+            <param name="streamName">The stream name.</param>
+            <param name="process">The process to add the endpoint to.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateTCPProcessFromConnectors(System.String,System.Int32)">
+            <summary>
+            Generates a TCP process from connectors in the specified store.
+            </summary>
+            <param name="storeName">The store name.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>The next available port, or 0 if failed.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateTCPProcessFromConnectors(System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo},System.Int32)">
+            <summary>
+            Generates a TCP process from a dictionary of connectors.
+            </summary>
+            <param name="processName">The process name.</param>
+            <param name="connectors">The dictionary of connectors.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>The next available port, or 0 if failed.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateRemotesEnpoint(Microsoft.Psi.Pipeline,System.Int32,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo},Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process@,Microsoft.Psi.Remoting.TransportKind)">
+            <summary>
+            Generates remotes endpoints for a set of connectors with RemoteExporter for each streams.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="port">The TCP port.</param>
+            <param name="connectors">The dictionary of connectors.</param>
+            <param name="process">The process to add the endpoint to.</param>
+            <param name="transportKind">The transport kind for the remote endpoint.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateRemotesProcessFromConnectors(System.String,System.Int32)">
+            <summary>
+            Generates remotes process from connectors in the specified store with RemoteExporter for each streams.
+            </summary>
+            <param name="storeName">The store name.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>True if the process was generated successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateRemotesProcessFromConnectors(System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo},System.Int32)">
+            <summary>
+            Generates remotes process from a dictionary of connectors with RemoteExporter for each streams.
+            </summary>
+            <param name="processName">The process name.</param>
+            <param name="connectors">The dictionary of connectors.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>True if the process was generated successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateSingleRemoteEnpoint(Microsoft.Psi.Pipeline,System.Int32,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo},Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process@,Microsoft.Psi.Remoting.TransportKind)">
+            <summary>
+            Generates a remote endpoint for a set of connectors.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="port">The TCP port.</param>
+            <param name="connectors">The dictionary of connectors.</param>
+            <param name="process">The process to add the endpoint to.</param>
+            <param name="transportKind">The transport kind for the remote endpoint.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateSingleRemoteProcessFromConnectors(System.String,System.Int32)">
+            <summary>
+            Generates a remote process from connectors in the specified store.
+            </summary>
+            <param name="storeName">The store name.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>True if the process was generated successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.GenerateSingleRemoteProcessFromConnectors(System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo},System.Int32)">
+            <summary>
+            Generates a remote process from a dictionary of connectors.
+            </summary>
+            <param name="processName">The process name.</param>
+            <param name="connectors">The dictionary of connectors.</param>
+            <param name="startingPort">The starting TCP port.</param>
+            <returns>True if the process was generated successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.StartRendezVousRelay(Microsoft.Psi.TimeInterval,System.Boolean)">
+            <summary>
+            Starts the rendezvous relay and initializes all processes.
+            </summary>
+            <param name="interval">The time interval for the relay.</param>
+            <param name="createSynchClockProcess">Whether to create a clock synchronization process.</param>
+            <returns>True if the relay started successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.RendezvousProcessAdded(System.Object,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Handles the event when a process is added to the rendezvous.
+            </summary>
+            <param name="sender">The event sender.</param>
+            <param name="process">The process that was added.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.ProcessAddedClock(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Processes a clock synchronization process that was added to the rendezvous.
+            </summary>
+            <param name="process">The clock process that was added.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.ProcessAddedCommand(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Processes a command process that was added to the rendezvous.
+            </summary>
+            <param name="process">The command process that was added.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.ProcessAddedDiagnotics(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Processes a diagnostics process that was added to the rendezvous.
+            </summary>
+            <param name="process">The diagnostics process that was added.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.ProcessAddedData(Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Processes a data process that was added to the rendezvous.
+            </summary>
+            <param name="process">The data process that was added.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.RendezvousProcessRemoved(System.Object,Microsoft.Psi.Interop.Rendezvous.Rendezvous.Process)">
+            <summary>
+            Handles the event when a process is removed from the rendezvous.
+            </summary>
+            <param name="sender">The event sender.</param>
+            <param name="e">The process that was removed.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Connection``1(System.String,System.String,Microsoft.Psi.Data.Session,Microsoft.Psi.Interop.Rendezvous.Rendezvous.TcpSourceEndpoint,Microsoft.Psi.Pipeline,System.Boolean,Microsoft.Psi.Interop.Serialization.Format{``0},System.Type)">
+            <summary>
+            Creates a connection for a TCP source endpoint with optional data transformation.
+            </summary>
+            <typeparam name="T">The type of data in the stream.</typeparam>
+            <param name="streamName">The stream name.</param>
+            <param name="processName">The process name.</param>
+            <param name="session">The session to use.</param>
+            <param name="source">The TCP source endpoint.</param>
+            <param name="p">The pipeline.</param>
+            <param name="storeSteam">Whether to store the stream.</param>
+            <param name="deserializer">The deserializer for the data.</param>
+            <param name="transformerType">Optional transformer type to apply to the data.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Connection(System.String,System.String,Microsoft.Psi.Data.Session,Microsoft.Psi.Interop.Rendezvous.Rendezvous.RemoteExporterEndpoint,Microsoft.Psi.Pipeline,System.Boolean)">
+            <summary>
+            Creates a connection for a remote exporter endpoint.
+            </summary>
+            <param name="streamName">The stream name.</param>
+            <param name="processName">The process name.</param>
+            <param name="session">The session to use.</param>
+            <param name="source">The remote exporter endpoint.</param>
+            <param name="p">The pipeline.</param>
+            <param name="storeSteam">Whether to store the stream.</param>
+            <returns>True if the connection was created successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipeline.Initialize(SAAC.PipelineServices.RendezVousPipelineConfiguration,System.String,System.String,SAAC.LogStatus)">
+            <summary>
+            Initializes the rendezvous pipeline with the specified configuration.
+            </summary>
+            <param name="configuration">The pipeline configuration.</param>
+            <param name="name">The pipeline name.</param>
+            <param name="rendezVousServerAddress">Optional server address; if null, creates a server, otherwise connects as client.</param>
+            <param name="log">Optional logging delegate.</param>
+        </member>
+        <member name="T:SAAC.PipelineServices.RendezVousPipelineConfiguration">
+            <summary>
+            Configuration settings for a rendezvous-based distributed pipeline.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.RendezVousHost">
+            <summary>
+            Gets or sets the rendezvous server host address.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.RendezVousPort">
+            <summary>
+            Gets or sets the rendezvous server port.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.DiagnosticPort">
+            <summary>
+            Gets or sets the diagnostics port.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.CommandPort">
+            <summary>
+            Gets or sets the command port.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.ClockPort">
+            <summary>
+            Gets or sets the clock synchronization port.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.RendezVousPipelineConfiguration.RecordIncomingProcess">
+            <summary>
+            Gets or sets a value indicating whether to record incoming processes.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipelineConfiguration.TopicsTypes">
+            <summary>
+            Gets or sets the mapping of topic names to their data types.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipelineConfiguration.Transformers">
+            <summary>
+            Gets or sets the mapping of transformer names to their types.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipelineConfiguration.TypesSerializers">
+            <summary>
+            Gets or sets the mapping of data types to their serializers.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipelineConfiguration.NotStoredTopics">
+            <summary>
+            Gets or sets the list of topics that should not be stored.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.RendezVousPipelineConfiguration.CommandDelegate">
+            <summary>
+            Gets or sets the command delegate for processing commands.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipelineConfiguration.#ctor(System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.RendezVousPipelineConfiguration"/> class.
+            </summary>
+            <param name="addRegularSerializers">Whether to add default serializers for common types.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.RendezVousPipelineConfiguration.AddTopicFormatAndTransformer(System.String,System.Type,SAAC.PipelineServices.IPsiFormat,System.Type)">
+            <summary>
+            Adds a topic with its format and optional transformer.
+            </summary>
+            <param name="topic">The topic name.</param>
+            <param name="type">The data type.</param>
+            <param name="format">The serialization format.</param>
+            <param name="transformer">Optional transformer type.</param>
+        </member>
+        <member name="T:SAAC.PipelineServices.ReplayPipeline">
+            <summary>
+            Represents a replay pipeline that can replay data from a dataset.
+            </summary>
+        </member>
+        <member name="T:SAAC.PipelineServices.ReplayPipeline.ReplayType">
+            <summary>
+            Defines the type of replay operation.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipeline.ReplayType.FullSpeed">
+            <summary>
+            Replay at full speed without timing constraints.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipeline.ReplayType.RealTime">
+            <summary>
+            Replay in real-time according to original timestamps.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipeline.ReplayType.IntervalFullSpeed">
+            <summary>
+            Replay specific intervals at full speed.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipeline.ReplayType.IntervalRealTime">
+            <summary>
+            Replay specific intervals in real-time.
+            </summary>
+        </member>
+        <member name="P:SAAC.PipelineServices.ReplayPipeline.Configuration">
+            <summary>
+            Gets the replay pipeline configuration.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.#ctor(SAAC.PipelineServices.ReplayPipelineConfiguration,System.String,SAAC.LogStatus)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.ReplayPipeline"/> class.
+            </summary>
+            <param name="configuration">The replay pipeline configuration.</param>
+            <param name="name">The name of the pipeline.</param>
+            <param name="log">Optional logging delegate.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.#ctor(Microsoft.Psi.Pipeline,SAAC.PipelineServices.ReplayPipelineConfiguration,System.String,SAAC.LogStatus)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.PipelineServices.ReplayPipeline"/> class with a parent pipeline.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">The replay pipeline configuration.</param>
+            <param name="name">The name of the pipeline.</param>
+            <param name="log">Optional logging delegate.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.Start(System.Action{System.DateTime})">
+            <summary>
+            Starts the replay pipeline.
+            </summary>
+            <param name="notifyCompletionTime">Delegate to notify completion time.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.Stop(System.DateTime,System.Action)">
+            <summary>
+            Stops the replay pipeline.
+            </summary>
+            <param name="finalOriginatingTime">The final originating time.</param>
+            <param name="notifyCompleted">Delegate to notify completion.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.Dispose">
+            <summary>
+            Disposes the replay pipeline and releases resources.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.Reset(Microsoft.Psi.Pipeline)">
+            <summary>
+            Resets the replay pipeline to its initial state.
+            </summary>
+            <param name="pipeline">Optional pipeline to reset to.</param>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.AddNewProcessEvent(System.EventHandler{System.ValueTuple{System.String,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.Dictionary{System.String,SAAC.PipelineServices.ConnectorInfo}}}})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.AddRemoveProcessEvent(System.EventHandler{System.String})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.LoadDatasetAndConnectors(SAAC.PipelineServices.ConnectorsManager,System.String)">
+            <summary>
+            Loads the dataset and its connectors.
+            </summary>
+            <param name="manager">Optional connectors manager.</param>
+            <param name="sessionName">Optional session name to load.</param>
+            <returns>True if the dataset was loaded successfully; otherwise false.</returns>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.PipelineRunAsync">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.CreateStore``1(Microsoft.Psi.Pipeline,Microsoft.Psi.Data.Session,System.String,System.String,Microsoft.Psi.IProducer{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.PipelineServices.ReplayPipeline.GetStoreName(System.String,System.String,Microsoft.Psi.Data.Session)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SAAC.PipelineServices.ReplayPipelineConfiguration">
+            <summary>
+            Configuration settings for a replay pipeline.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipelineConfiguration.ReplayType">
+            <summary>
+            Gets or sets the type of replay operation.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipelineConfiguration.ReplayInterval">
+            <summary>
+            Gets or sets the time interval for replay.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipelineConfiguration.DatasetBackup">
+            <summary>
+            Gets or sets a value indicating whether to backup the dataset.
+            </summary>
+        </member>
+        <member name="F:SAAC.PipelineServices.ReplayPipelineConfiguration.ProgressReport">
+            <summary>
+            Gets or sets the progress reporter for replay operations.
+            </summary>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatPositionAndOrientation">
+            <summary>
+            Provides serialization format for position and orientation as a tuple of two Vector3 objects.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatPositionAndOrientation.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing position and orientation tuples.
+            </summary>
+            <returns>A format instance for position and orientation serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatPositionAndOrientation.WritePositionOrientation(System.Tuple{System.Numerics.Vector3,System.Numerics.Vector3},System.IO.BinaryWriter)">
+            <summary>
+            Writes a position and orientation tuple to a binary writer.
+            </summary>
+            <param name="point3D">The tuple containing position and orientation vectors.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatPositionAndOrientation.ReadPositionOrientation(System.IO.BinaryReader)">
+            <summary>
+            Reads a position and orientation tuple from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized tuple containing position and orientation vectors.</returns>
+        </member>
+    </members>
+</doc>

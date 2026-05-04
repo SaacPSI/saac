@@ -54,6 +54,7 @@
 	 <ItemGroup>
     <ProjectReference Include="..\..\Components\AnnotationsComponents\AnnotationsComponents.csproj" />
     <ProjectReference Include="..\..\Components\CollaborationModules\MetricsComputation\SlidingWindow\SlidingWindow.csproj" />
+    <ProjectReference Include="..\..\Components\CollaborationModules\Spatial\LOF\LOF.csproj" />
     <ProjectReference Include="..\..\Components\CollaborationModules\Spatial\PositionOrientationComputation\PositionOrientationComputation.csproj" />
     <ProjectReference Include="..\..\Components\GlobalHelpers\GlobalHelpers.csproj" />
     <ProjectReference Include="..\..\Components\LabStreamLayer\LabStreamLayer.csproj" />

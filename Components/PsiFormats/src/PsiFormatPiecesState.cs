@@ -1,25 +1,26 @@
+using System.IO;
+using Microsoft.Psi.Interop.Serialization;
+
 namespace SAAC.PsiFormats
 {
-    using Microsoft.Psi.Interop.Serialization;
-
     public class PsiFormatPiecesState
     {
-        public static Format<PieceStatus> GetFormat()
+        public Format<PieceStatus> GetFormat()
         {
             return new Format<PieceStatus>(WritePieceState, ReadPieceState);
         }
 
-        public static void WritePieceState(PieceStatus pieceStatus, BinaryWriter writer)
+        public void WritePieceState(PieceStatus pieceStatus, BinaryWriter writer)
         {
             writer.Write(pieceStatus.userID);
             writer.Write(pieceStatus.objectID);
-            writer.Write((int)pieceStatus.state);
+            writer.Write((int)pieceStatus.type);
             writer.Write(pieceStatus.isActive);
             writer.Write(pieceStatus.lastZone);
             writer.Write((int)pieceStatus.currentLocation);
         }
 
-        public static PieceStatus ReadPieceState(BinaryReader reader)
+        public PieceStatus ReadPieceState(BinaryReader reader)
         {
             int userID = reader.ReadInt32();
             string objectID = reader.ReadString();

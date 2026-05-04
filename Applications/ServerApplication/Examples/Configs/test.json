@@ -233,74 +233,74 @@
     "streamToStore": "Task"
   },
   {
-    "topic": "1-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "1-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
-    "topic": "2-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "2-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
-    "topic": "3-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "3-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
-    "topic": "4-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "4-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
-    "topic": "5-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "5-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
-    "topic": "6-GazeEventString",
-    "type": "System.String",
-    "classFormat": "PsiFormatString",
+    "topic": "6-GazeEvent",
+    "type": "FusionDll.ObjectGazeEvent",
+    "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "1-Interactions",
-    "type": "TestDll.PieceStatus",
+    "type": "FusionDll.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "2-Interactions",
-    "type": "TestDll.PieceStatus",
+    "type": "FusionDll.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "3-Interactions",
-    "type": "TestDll.PieceStatus",
+    "type": "FusionDll.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "4-Interactions",
-    "type": "TestDll.PieceStatus",
+    "type": "FusionDll.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "5-Interactions",
-    "type": "TestDll.PieceStatus",
-    "classFormat": "DllFusion.src.PsiFormatPiecesState",
+    "type": "FusionDll.PieceStatus",
+    "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "6-Interactions",
-    "type": "TestDll.PieceStatus",
+    "type": "FusionDll.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   }

@@ -1,0 +1,474 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Groups</name>
+    </assembly>
+    <members>
+        <member name="T:SAAC.Groups.EntryGroupsDetector">
+            <summary>
+            Component that detects entry groups by analyzing the stability of groups over time.
+            Once a group remains stable for a configured duration, it is considered as a formed entry group.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.EntryGroupsDetector.#ctor(Microsoft.Psi.Pipeline,SAAC.Groups.EntryGroupsDetectorConfiguration,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.EntryGroupsDetector"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">Optional configuration for the detector.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Groups.EntryGroupsDetector.Out">
+            <summary>
+            Gets the emitter of detected entry groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.EntryGroupsDetector.In">
+            <summary>
+            Gets the receiver that encapsulates the instant groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.EntryGroupsDetector.InRemovedBodies">
+            <summary>
+            Gets the receiver for removed body IDs.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.EntryGroupsDetector.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.Groups.EntryGroupsDetector.Process(System.Collections.Generic.Dictionary{System.UInt32,System.Collections.Generic.List{System.UInt32}},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes instant groups and determines which groups have been stable long enough to be considered entry groups.
+            </summary>
+            <param name="instantGroups">Dictionary of instant group detections.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="M:SAAC.Groups.EntryGroupsDetector.ProcessBodiesRemoving(System.Collections.Generic.List{System.UInt32},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes removal of bodies from tracking, cleaning up entry groups that become invalid.
+            </summary>
+            <param name="idsToRemove">List of body IDs to remove.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Groups.EntryGroupsDetectorConfiguration">
+            <summary>
+            Configuration for the entry groups detector.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.EntryGroupsDetectorConfiguration.GroupFormationDelay">
+            <summary>
+            Gets or sets the time duration a group must remain stable before being considered a formed entry group.
+            </summary>
+        </member>
+        <member name="T:SAAC.Groups.FlockGroupIntersection">
+            <summary>
+            Component that calculates intersection points and time ratios between flock groups based on their trajectories.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.FlockGroupIntersection.#ctor(Microsoft.Psi.Pipeline,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.FlockGroupIntersection"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Groups.FlockGroupIntersection.Out">
+            <summary>
+            Gets the emitter of group intersection ratios.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.FlockGroupIntersection.In">
+            <summary>
+            Gets the receiver for input flock groups.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.FlockGroupIntersection.Process(System.Collections.Generic.Dictionary{System.UInt32,SAAC.Groups.SimplifiedFlockGroup},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes flock groups and calculates trajectory intersections between pairs of groups.
+            </summary>
+            <param name="groups">Dictionary of flock groups.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Groups.EdgeWidthMode">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.EdgeWidthMode.GazeOrJVA">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.EdgeWidthMode.Synchrony">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.EdgeWidthMode.Proximity">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.EdgeWidthMode.SpeechEquality">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.IndividualPairCharacteristics">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.IndividualPairCharacteristics.PersonNodes">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.IndividualPairCharacteristics.PersonEdges">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.NodeSizeMode">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.NodeSizeMode.SpeakingTime">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.NodeSizeMode.MovementScore">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="F:SAAC.Groups.NodeSizeMode.TaskParticipation">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.PersonEdge">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.FromId_1">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.ToId_1">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.FromId_2">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.ToId_2">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.Proximity">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.Synchrony">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.GazeOnPeers12">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.GazeOnPeers21">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.JVAEvent">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.JVAIntensity">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.SpeechEquality">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonEdge.TaskEquality">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.PersonGroup">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonGroup.TaskingMost">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonGroup.TalkingMost">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonGroup.WatchedMost">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonGroup.LeadVA">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.PersonNode">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonNode.Id">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonNode.MovementScore">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonNode.SpeakingTime">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="P:SAAC.Groups.PersonNode.TaskParticipation">
+            <summary>Gets or sets épaisseur min. (px) des arêtes.</summary>
+        </member>
+        <member name="T:SAAC.Groups.GroupInfo">
+            <summary>
+            Internal class representing group information with timestamp.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.GroupInfo.#ctor(System.UInt32,System.DateTime,System.Collections.Generic.List{System.UInt32})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.GroupInfo"/> class.
+            </summary>
+            <param name="id">The group identifier.</param>
+            <param name="timestamp">The timestamp of the group.</param>
+            <param name="list">The list of body IDs in the group.</param>
+        </member>
+        <member name="P:SAAC.Groups.GroupInfo.Id">
+            <summary>
+            Gets the group identifier.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.GroupInfo.Timestamp">
+            <summary>
+            Gets the timestamp of the group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.GroupInfo.Bodies">
+            <summary>
+            Gets the list of body IDs in the group.
+            </summary>
+        </member>
+        <member name="T:SAAC.Groups.GroupsHelpers">
+            <summary>
+            Internal helper class providing utility functions for group operations.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.GroupsHelpers.CantorPairing(System.UInt32,System.UInt32)">
+            <summary>
+            Computes a unique identifier for a pair of numbers using Cantor pairing function.
+            </summary>
+            <param name="k1">The first number.</param>
+            <param name="k2">The second number.</param>
+            <returns>A unique identifier for the pair.</returns>
+        </member>
+        <member name="M:SAAC.Groups.GroupsHelpers.CantorParingSequence(System.Collections.Generic.List{System.UInt32})">
+            <summary>
+            Computes a unique identifier for a sequence of numbers using successive Cantor pairing.
+            </summary>
+            <param name="set">The list of numbers.</param>
+            <returns>A unique identifier for the sequence.</returns>
+        </member>
+        <member name="M:SAAC.Groups.GroupsHelpers.ReduceGroups(System.Collections.Generic.Dictionary{System.UInt32,System.Collections.Generic.List{System.UInt32}}@)">
+            <summary>
+            Reduces and merges groups by combining groups that share members.
+            </summary>
+            <param name="groups">The dictionary of groups to reduce.</param>
+        </member>
+        <member name="M:SAAC.Groups.GroupsHelpers.GenerateGroups(System.Collections.Generic.Dictionary{System.UInt32,System.Collections.Generic.List{System.UInt32}}@)">
+            <summary>
+            Generates unique group identifiers using Cantor pairing and reduces overlapping groups.
+            </summary>
+            <param name="groups">The dictionary of groups to process.</param>
+            <returns>A dictionary with unique Cantor-paired identifiers for each reduced group.</returns>
+        </member>
+        <member name="T:SAAC.Groups.InstantGroupsDetector">
+            <summary>
+            Component that detects groups instantly based on proximity (distance threshold between bodies).
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.InstantGroupsDetector.#ctor(Microsoft.Psi.Pipeline,SAAC.Groups.InstantGroupsDetectorConfiguration,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.InstantGroupsDetector"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">Optional configuration for the detector.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Groups.InstantGroupsDetector.Out">
+            <summary>
+            Gets the emitter of detected groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.InstantGroupsDetector.In">
+            <summary>
+            Gets the receiver that encapsulates the input positions.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.InstantGroupsDetector.Configuration">
+            <summary>
+            Gets the configuration for the detector.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.InstantGroupsDetector.Process(System.Collections.Generic.Dictionary{System.UInt32,MathNet.Spatial.Euclidean.Vector3D},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes body positions and detects groups based on distance threshold.
+            </summary>
+            <param name="skeletons">Dictionary of body positions.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="M:SAAC.Groups.InstantGroupsDetector.ReduceGroups(System.Collections.Generic.Dictionary{System.UInt32,System.Collections.Generic.List{System.UInt32}}@)">
+            <summary>
+            Reduces and merges overlapping groups by combining groups that share members.
+            </summary>
+            <param name="groups">The dictionary of groups to reduce.</param>
+        </member>
+        <member name="T:SAAC.Groups.InstantGroupsDetectorConfiguration">
+            <summary>
+            Configuration for the instant groups detector.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.InstantGroupsDetectorConfiguration.DistanceThreshold">
+            <summary>
+            Gets or sets the distance threshold between skeletons to constitute a group.
+            </summary>
+        </member>
+        <member name="T:SAAC.Groups.IntegratedGroupsDetector">
+            <summary>
+            Component that integrates instant group detections over time to produce stable group assignments.
+            Uses weighted scoring based on temporal consistency to determine group membership.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.IntegratedGroupsDetector.#ctor(Microsoft.Psi.Pipeline,SAAC.Groups.IntegratedGroupsDetectorConfiguration,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.IntegratedGroupsDetector"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">Optional configuration for the detector.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetector.Out">
+            <summary>
+            Gets the emitter of detected integrated groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetector.In">
+            <summary>
+            Gets the receiver that encapsulates the instant groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetector.InRemovedBodies">
+            <summary>
+            Gets the receiver for removed body IDs.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.IntegratedGroupsDetector.Process(System.Collections.Generic.Dictionary{System.UInt32,System.Collections.Generic.List{System.UInt32}},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes instant group detections and integrates them over time using weighted scoring.
+            </summary>
+            <param name="instantGroups">Dictionary of instant group detections.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="M:SAAC.Groups.IntegratedGroupsDetector.ProcessBodiesRemoving(System.Collections.Generic.List{System.UInt32},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes removal of bodies from tracking, cleaning up associated group data.
+            </summary>
+            <param name="idsToRemove">List of body IDs to remove.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Groups.IntegratedGroupsDetectorConfiguration">
+            <summary>
+            Configuration for the integrated groups detector.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetectorConfiguration.IncreaseWeightFactor">
+            <summary>
+            Gets or sets the weight increase factor when a body is found in a group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetectorConfiguration.DecreaseWeightFactor">
+            <summary>
+            Gets or sets the weight decrease factor when a body is not found in a group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.IntegratedGroupsDetectorConfiguration.IntersectionPercentage">
+            <summary>
+            Gets or sets the intersection percentage threshold for merging groups.
+            When two groups have an intersection percentage above this value, the smaller group is removed.
+            </summary>
+        </member>
+        <member name="T:SAAC.Groups.SimplifiedFlockGroup">
+            <summary>
+            Represents a simplified flock group with spatial and movement properties.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.SimplifiedFlockGroup.#ctor(System.UInt32,System.Collections.Generic.List{System.UInt32},MathNet.Spatial.Euclidean.Circle2D,MathNet.Spatial.Euclidean.Vector2D,System.Double)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.SimplifiedFlockGroup"/> class.
+            </summary>
+            <param name="id">The group identifier.</param>
+            <param name="constituants">The list of body IDs in the group.</param>
+            <param name="area">The circular area encompassing the group.</param>
+            <param name="direction">The average direction of movement.</param>
+            <param name="velocity">The average velocity of the group.</param>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroup.Id">
+            <summary>
+            Gets the group identifier.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroup.Constituants">
+            <summary>
+            Gets the list of body IDs that constitute the group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroup.Area">
+            <summary>
+            Gets the circular area encompassing the group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroup.Direction">
+            <summary>
+            Gets the average direction of movement.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroup.Velocity">
+            <summary>
+            Gets the average velocity of the group.
+            </summary>
+        </member>
+        <member name="T:SAAC.Groups.SimplifiedFlockGroupsDetector">
+            <summary>
+            Simplified model detection for detecting groups inspired by Flock agents (https://ieeexplore.ieee.org/abstract/document/1605401).
+            Uses a variant of Reynolds rules:
+            * Flock Centering: attempt to stay close to nearby flockmates (distance).
+            * Collision Avoidance: avoid collisions with nearby flockmates (same direction in movement).
+            * Velocity Matching: attempt to match velocity with nearby flockmates (velocity).
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.SimplifiedFlockGroupsDetector.#ctor(Microsoft.Psi.Pipeline,SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Groups.SimplifiedFlockGroupsDetector"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="configuration">Optional configuration for the detector.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetector.Out">
+            <summary>
+            Gets the emitter of detected groups.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetector.In">
+            <summary>
+            Gets the receiver that encapsulates the input dictionary of body positions.
+            </summary>
+        </member>
+        <member name="M:SAAC.Groups.SimplifiedFlockGroupsDetector.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration">
+            <summary>
+            Configuration for the simplified flock groups detector.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration.QueueMaxCount">
+            <summary>
+            Gets or sets the maximum size of the bodies queues for calculation.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration.DistanceWeight">
+            <summary>
+            Gets or sets the distance weight for the model to constitute a group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration.VelocityWeight">
+            <summary>
+            Gets or sets the velocity weight for the model to constitute a group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration.DirectionWeight">
+            <summary>
+            Gets or sets the direction weight for the model to constitute a group.
+            </summary>
+        </member>
+        <member name="P:SAAC.Groups.SimplifiedFlockGroupsDetectorConfiguration.ModelThreshold">
+            <summary>
+            Gets or sets the model value threshold to constitute a group.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -21,6 +21,7 @@ using SAAC.PipelineServices;
 using SAAC.PsiFormats;
 using ServerApplication.Examples.ComponentsClass.Enums;
 using ServerApplication.Examples.ComponentsClass.Structures;
+using static SAAC.PipelineServices.DatasetPipeline;
 
 namespace ServerApplication.Examples
 {
@@ -101,60 +102,111 @@ namespace ServerApplication.Examples
         }
 
         #region Get Producers
-        
 
-        public List<IProducer<bool>> GetVadProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, bool value)
+        public List<IProducer<bool>> GetVadProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, RendezVousPipeline.StoreMode storeMode, bool value)
         {
             var producers = new List<IProducer<bool>>();
             for (int i = 1; i < numberOfQuests + 1; i++)
             {
                 var connectorKey = $"{type}{i}";
 
-                if (value)
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[$"{store}"][connectorKey].CreateBridge<bool>(subP));
-                }
-                else
-                {
-                    producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<bool>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        if (value)
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<bool>(subP));
+                        }
+                        else
+                        {
+                            producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<bool>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (value)
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<bool>(subP));
+                        }
+                        else
+                        {
+                            producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<bool>(subP));
+                        }
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<IStreamingSpeechRecognitionResult>> GetSTTProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, bool value)
+        public List<IProducer<IStreamingSpeechRecognitionResult>> GetSTTProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, RendezVousPipeline.StoreMode storeMode, bool value)
         {
             var producers = new List<IProducer<IStreamingSpeechRecognitionResult>>();
             for (int i = 1; i < numberOfQuests + 1; i++)
             {
                 var connectorKey = $"{type}{i}";
-                if (value)
+
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[$"{store}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
-                }
-                else if (!value)
-                {
-                    producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        if (value)
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
+                        }
+                        else if (!value)
+                        {
+                            producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (value)
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
+                        }
+                        else if (!value)
+                        {
+                            producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<IStreamingSpeechRecognitionResult>(subP));
+                        }
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<AudioBuffer>>? GetAudioProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests)
+        public List<IProducer<AudioBuffer>> GetAudioProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<AudioBuffer>>();
             for (int i = 1; i < numberOfQuests + 1; i++)
             {
                 var connectorKey = $"{type}{i}";
-                if (server.Connectors.ContainsKey($"{store}{i}"))
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[$"{store}{i}"][connectorKey].CreateBridge<AudioBuffer>(subP));
-                }
-                else
-                {
-                    return null;
+                    case RendezVousPipeline.StoreMode.Independant:
+                        if (server.Connectors.ContainsKey($"{store}-{connectorKey}"))
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<AudioBuffer>(subP));
+                        }
+                        else
+                        {
+                            return null;
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (server.Connectors.ContainsKey($"{store}-{connectorKey}"))
+                        {
+                            producers.Add(server.Connectors[$"{store}-{connectorKey}"][connectorKey].CreateBridge<AudioBuffer>(subP));
+                        }
+                        else
+                        {
+                            return null;
+                        }
+
+                        break;
                 }
             }
 
@@ -162,76 +214,139 @@ namespace ServerApplication.Examples
         }
 
         // Create Producers
-        public List<IProducer<Tuple<Vector3, Vector3>>> CreateTupleVector3Producers(DatasetPipeline server, Pipeline subP, string store, string category, string type, int numberOfQuests)
+        public List<IProducer<Tuple<Vector3, Vector3>>> CreateTupleVector3Producers(DatasetPipeline server, Pipeline subP, string store, string category, string type, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<Tuple<Vector3, Vector3>>>();
             for (int i = 1; i <= numberOfQuests; i++)
             {
                 var connectorKey = $"{type}{i}-{category}";
-                if (server.Connectors.ContainsKey(store))
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[store][connectorKey].CreateBridge<Tuple<Vector3, Vector3>>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        var id = $"{i}-{category}";
+                        if (server.Connectors.ContainsKey($"{connectorKey}"))
+                        {
+                            producers.Add(server.Connectors[connectorKey][id].CreateBridge<Tuple<Vector3, Vector3>>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (server.Connectors.ContainsKey(store))
+                        {
+                            producers.Add(server.Connectors[store][connectorKey].CreateBridge<Tuple<Vector3, Vector3>>(subP));
+                        }
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<TimeIntervalAnnotationSet>> CreateTimeIntervalAnnotationProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests)
+        public List<IProducer<TimeIntervalAnnotationSet>> CreateTimeIntervalAnnotationProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<TimeIntervalAnnotationSet>>();
             for (int i = 1; i <= numberOfQuests; i++)
             {
-                var connectorKey = $"{category}_{i}";
-                if (server.Connectors.ContainsKey(store))
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[store][connectorKey].CreateBridge<TimeIntervalAnnotationSet>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        var connectorKey = $"{category}_{i}";
+                        if (server.Connectors.ContainsKey(store))
+                        {
+                            producers.Add(server.Connectors[store][connectorKey].CreateBridge<TimeIntervalAnnotationSet>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<PieceStatus>> CreatePieceInteractionProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests)
+        public List<IProducer<PieceStatus>> CreatePieceInteractionProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<PieceStatus>>();
             for (int i = 1; i <= numberOfQuests; i++)
             {
                 var connectorKey = $"UnityServer-{i}-{category}";
-                if (server.Connectors.ContainsKey(store))
+
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[store][connectorKey].CreateBridge<PieceStatus>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        var id = $"{i}-{category}";
+                        if (server.Connectors.ContainsKey(connectorKey))
+                        {
+                            producers.Add(server.Connectors[connectorKey][id].CreateBridge<PieceStatus>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (server.Connectors.ContainsKey(store))
+                        {
+                            producers.Add(server.Connectors[store][connectorKey].CreateBridge<PieceStatus>(subP));
+                        }
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<ObjectGazeEvent>> CreateGazeProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests)
+        public List<IProducer<ObjectGazeEvent>> CreateGazeProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<ObjectGazeEvent>>();
             for (int i = 1; i <= numberOfQuests; i++)
             {
                 var connectorKey = $"UnityServer-{i}-{category}";
-                if (server.Connectors.ContainsKey(store))
+
+                switch (storeMode)
                 {
-                    producers.Add(server.Connectors[store][connectorKey].CreateBridge<ObjectGazeEvent>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        var id = $"{i}-{category}";
+                        if (server.Connectors.ContainsKey(connectorKey))
+                        {
+                            producers.Add(server.Connectors[connectorKey][id].CreateBridge<ObjectGazeEvent>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+                        if (server.Connectors.ContainsKey(store))
+                        {
+                            producers.Add(server.Connectors[store][connectorKey].CreateBridge<ObjectGazeEvent>(subP));
+                        }
+
+                        break;
                 }
             }
 
             return producers;
         }
 
-        public List<IProducer<string>> CreateStringProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests)
+        public List<IProducer<string>> CreateStringProducers(DatasetPipeline server, Pipeline subP, string store, string category, int numberOfQuests, RendezVousPipeline.StoreMode storeMode)
         {
             var producers = new List<IProducer<string>>();
             for (int i = 1; i <= numberOfQuests; i++)
             {
-                var connectorKey = $"UnityServer-{i}-{category}";
-                if (server.Connectors.ContainsKey(store))
+                switch (storeMode)
                 {
-                    Console.WriteLine($"{store}_{connectorKey}");
-                    producers.Add(server.Connectors[store][connectorKey].CreateBridge<string>(subP));
+                    case RendezVousPipeline.StoreMode.Independant:
+                        var id = $"{i}-{category}";
+                        var connectorKey = $"UnityServer-{i}-{category}";
+                        if (server.Connectors.ContainsKey(connectorKey))
+                        {
+                            Console.WriteLine($"{store}_{connectorKey}");
+                            producers.Add(server.Connectors[connectorKey][id].CreateBridge<string>(subP));
+                        }
+
+                        break;
+                    case RendezVousPipeline.StoreMode.Dictionnary:
+
+                        break;
                 }
             }
 
