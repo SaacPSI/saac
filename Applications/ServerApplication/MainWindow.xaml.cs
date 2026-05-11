@@ -1127,7 +1127,7 @@ namespace ServerApplication
             }
 
             this.server?.Dataset?.Save();
-            this.Stop();
+            this.server?.Stop();
 
             if (this.realTimeProcessingUseCase.IsServerInitialised)
             {
