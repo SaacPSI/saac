@@ -721,7 +721,7 @@ namespace ServerApplication
         /// </summary>
         /// <param name="source">The command source.</param>
         /// <param name="message">The command message.</param>
-        private void CommandReceived(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private void CommandReceived(string source, Message<(Command, string)> message)
         {
             var args = message.Data.Item2.Split(';');
 
@@ -734,7 +734,7 @@ namespace ServerApplication
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Status:
+                case Command.Status:
                     this.CheckStatus(name, args, message.OriginatingTime);
                     break;
             }
@@ -839,7 +839,7 @@ namespace ServerApplication
             try
             {
                 // Status request
-                this.server.SendCommand(RendezVousPipeline.Command.Status, "*", string.Empty);
+                this.server.SendCommand(Command.Status, "*", string.Empty);
 
                 foreach (var app in this.connectedApps.Values)
                 {
@@ -909,7 +909,7 @@ namespace ServerApplication
             // Button 1 (right)
             var btnOk = UiGenerator.GenerateButton("Start", (s, e) =>
             {
-                this.server.SendCommand(RendezVousPipeline.Command.Run, name, string.Empty);
+                this.server.SendCommand(Command.Run, name, string.Empty);
             }, name: $"BtnOk_{this.rowIndex}");
             btnOk.Margin = new Thickness(0, 0, 15, 0);
             btnOk.IsEnabled = true;
@@ -917,7 +917,7 @@ namespace ServerApplication
             // Button 2 (right) - remove this row
             var btnRemove = UiGenerator.GenerateButton("Stop", (s, e) =>
             {
-                this.server.SendCommand(RendezVousPipeline.Command.Close, name, string.Empty);
+                this.server.SendCommand(Command.Close, name, string.Empty);
             }, name: $"BtnRemove_{this.rowIndex}");
             btnRemove.IsEnabled = false;
             btnRemove.Margin = new Thickness(0, 0, 15, 0);
@@ -1155,7 +1155,7 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void StartAllDevices(object sender, RoutedEventArgs e)
         {
-            this.server.SendCommand(RendezVousPipeline.Command.Run, "*", string.Empty);
+            this.server.SendCommand(Command.Run, "*", string.Empty);
             e.Handled = true;
         }
 
@@ -1166,7 +1166,7 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void StopAllDevices(object sender, RoutedEventArgs e)
         {
-            this.server.SendCommand(RendezVousPipeline.Command.Close, "*", string.Empty);
+            this.server.SendCommand(Command.Close, "*", string.Empty);
             e.Handled = true;
         }
 

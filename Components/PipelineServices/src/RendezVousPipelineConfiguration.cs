@@ -62,7 +62,7 @@ namespace SAAC.PipelineServices
         /// <summary>
         /// Gets or sets the command delegate for processing commands.
         /// </summary>
-        public Helpers.PipeToMessage<(RendezVousPipeline.Command, string)>.Do? CommandDelegate;
+        public Helpers.PipeToMessage<(Command, string)>.Do? CommandDelegate;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RendezVousPipelineConfiguration"/> class.

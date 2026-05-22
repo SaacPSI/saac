@@ -563,7 +563,7 @@ namespace TestingConsole
             }
         }
 
-        private static void CommandDel(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private static void CommandDel(string source, Message<(Command, string)> message)
         {
             Console.WriteLine($"Command by {source}: {message.Data.Item1} with args {message.Data.Item2} @{message.OriginatingTime}");
         }
