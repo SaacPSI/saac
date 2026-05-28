@@ -54,7 +54,7 @@
 		"streamToStore": "Events"
 	},
 	{
-		"topic": "Gaze",
+		"topic": "GazeEvent",
 		"type": "SAAC.PsiFormats.PsiGazeObjectEvent",
 		"classFormat": "PsiFormatGazeObjectEvent",
 		"streamToStore": "Events"
@@ -91,6 +91,12 @@
 	},
 	{
 		"topic": "Collision batterie",
+		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
+		"classFormat": "PsiFormatIntBoolString",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "VRInput",
 		"type": "System.ValueTuple`3[System.Int32,System.Boolean,System.String]",
 		"classFormat": "PsiFormatIntBoolString",
 		"streamToStore": "Events"
@@ -161,6 +167,19 @@
 		"classFormat": "PsiFormatBoolean",
 		"streamToStore": "Events"
 	},
+	{
+		"topic": "ModulePosition",
+		"type": "System.ValueTuple`2[System.Int32,System.Numerics.Vector3]",
+		"classFormat": "PsiFormatIntVector3",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "ObjectBound",
+		"type": "System.ValueTuple`3[System.String,System.Numerics.Vector3,System.Numerics.Vector3]",
+		"classFormat": "PsiFormatStringVector3Vector3",
+		"streamToStore": "Events"
+	},
+
 	{
 		"topic": "Porte1 ouverture",
 		"type": "System.ValueTuple`2[System.Boolean,System.Numerics.Vector3]",
@@ -285,6 +304,12 @@
 		"topic": "BatteryFinish",
 		"type": "SAAC.PsiFormats.PsiBatteryFinish",
 		"classFormat": "PsiFormatBatteryFinish",
+		"streamToStore": "Events"
+	},
+	{
+		"topic": "LeverBall",
+		"type": "System.Numerics.Vector3",
+		"classFormat": "PsiFormatVector3",
 		"streamToStore": "Events"
 	}
 ]
