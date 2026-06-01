@@ -1,0 +1,13 @@
+<Window x:Class="SAAC.PsiStudioHelloPlugin.HelloPipelinePluginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="clr-namespace:SaaCHelloWorld.Core;assembly=SaaCHelloWorld.Core"
+        Title="SAAC Hello Pipeline Plugin"
+        Width="520"
+        Height="260"
+        WindowStartupLocation="CenterOwner">
+  <Grid>
+    <core:HelloWorldView />
+  </Grid>
+</Window>
+
