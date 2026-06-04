@@ -15,7 +15,7 @@ public class PsiExporterDateTime : PsiExporter<System.DateTime>
     }
 
 
-#if PSI_TCP_SOURCE
+#if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<DateTime> GetSerializer()
     {
         return PsiFormatDateTime.GetFormat();
