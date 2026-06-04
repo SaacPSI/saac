@@ -238,7 +238,7 @@ public class PsiPipelineManager : MonoBehaviour
                     if (stream.StreamName == CommandProcessName)
                     {
                         var commandSubPipeline = Subpipeline.Create(commandPipeline, process.Name);
-                        var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, PsiFormatCommandString.GetFormat(), null, true, stream.StreamName);
+                        var tcpSource = source.ToTcpSource<(Command, string)>(commandSubPipeline, PsiFormatCommand.GetFormat(), null, true, stream.StreamName);
                         SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)> p2m = new SAAC.RendezVousPipelineServices.Helpers.PipeToMessage<(Command, string)>(commandSubPipeline, CommandHandling, process.Name);
                         Microsoft.Psi.Operators.PipeTo(tcpSource.Out, p2m.In);
                         commandSubPipeline.Start((d) => {});
