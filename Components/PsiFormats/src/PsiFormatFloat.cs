@@ -4,6 +4,7 @@
 
 namespace SAAC.PsiFormats
 {
+    using System.IO;
     using Microsoft.Psi.Interop.Serialization;
 
     /// <summary>

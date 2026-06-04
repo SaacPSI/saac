@@ -4,6 +4,8 @@
 
 namespace SAAC.GlobalHelpers
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// Represents a hand with joint tracking data following OpenXR definitions.
     /// </summary>
