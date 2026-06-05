@@ -146,18 +146,20 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Annotation and LSL" x:Name="AnnotationLSLTab">
-                <Grid Background="{StaticResource WindowBackgroundBrush}" Name="AnnotationGrid">
+                <Grid Background="{StaticResource WindowBackgroundBrush}" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="150"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <GroupBox Header="Annotation Settings" FontWeight="Bold" Grid.Row="0" Grid.Column="0">
-                        <Grid>
+                        <Grid Name="AnnotationGrid">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -184,21 +186,40 @@
                             <TextBox Grid.Row="3" Grid.Column="1" Name="AnnotationPortTextBox" TextWrapping="Wrap" Text="{Binding AnnotationPort}" Margin="5,10,5,5" VerticalAlignment="Center" TextChanged="AnnotationPortTextBox_TextChanged"/>
                         </Grid>
                     </GroupBox>
-                    
+
                     <GroupBox Header="LSL Settings" FontWeight="Bold" Grid.Row="1" Grid.Column="0">
-                        <Grid>
+                        <Grid Name="LSLGrid">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
-                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Enable LabStreamLayer" Name="LSLEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsLSLEnabled}" Checked="CkbActivateLSL" Unchecked="CkbActivateLSL"/>
-
+                            <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Enable LabStreamLayer" Name="LSLEnabledCheckBox" FontWeight="Bold" Margin="10,10,10,10" VerticalAlignment="Center" IsChecked="{Binding IsLSLEnabled}" Checked="CkbActivateLSL" Unchecked="CkbActivateLSL"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Device Source ID" FontWeight="Bold" Width="240"/>
+                            <Label Grid.Row="1" Grid.Column="1" Content="Device Name" FontWeight="Bold" Width="240"/>
+                            <ScrollViewer Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Visible" MaxHeight="120">
+                                <Grid Name="LslMappingGrid">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                </Grid>
+                            </ScrollViewer>
+                            <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Content="Add Mapping" Click="BtnAddLslMapping" MaxHeight="50"/>
                         </Grid>
                     </GroupBox>
-                    
-                    <GroupBox Header="Annotation Logs" FontWeight="Bold" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1">
+
+                    <Button Content="Load Configuration" Grid.Row="2" Grid.Column="0" Click="BtnLoadConfiguration" Name="BtnAnnotationLoadConfig" Margin="5,5,5,5"/>
+                    <Button Content="Save Configuration" Grid.Row="3" Grid.Column="0" Click="BtnSaveConfiguration" Name="BtnAnnotationSaveConfig" Margin="5,5,5,5"/>
+
+                    <GroupBox Header="Annotation Logs" FontWeight="Bold" Grid.Row="0" Grid.RowSpan="4" Grid.Column="1">
                         <TextBox x:Name="AnnotationLogs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True" Margin="10,0,6,6"/>
                     </GroupBox>
                 </Grid>

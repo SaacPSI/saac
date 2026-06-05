@@ -41,5 +41,11 @@ namespace SAAC.LabStreamLayer
         /// </summary>
         /// <returns>The pipeline associated with this component.</returns>
         Subpipeline GetParent();
+
+        /// <summary>
+        /// Gets the name of the device.
+        /// </summary>
+        /// <returns>The name of associated device.</returns>
+        string GetDeviceName();
     }
 }
