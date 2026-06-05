@@ -29,4 +29,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\Formats\Unity\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj" />
+  </ItemGroup>
 </Project>
