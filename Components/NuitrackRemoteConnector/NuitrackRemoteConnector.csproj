@@ -15,9 +15,6 @@
     <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Interop" Version="0.19.100.1-beta-SAAC" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Nuitrack\Nuitrack.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -930,15 +930,15 @@ namespace ServerApplication
 
                     break;
                 case "EndSession":
-                    this.realTimeProcessingUseCase.WriteCSV();
+                    /*this.realTimeProcessingUseCase.WriteCSV();
 
                     foreach (var writer in this.realTimeProcessingUseCase.StreamsWriters)
                     {
-                        if (!this.realTimeProcessingUseCase.WritersDisposed /*&& saac_Expe2._isServerInitialize*/)
+                        if (!this.realTimeProcessingUseCase.WritersDisposed *//*&& saac_Expe2._isServerInitialize*//*)
                         {
                             this.realTimeProcessingUseCase.CloseAndDisposeWriter(writer);
                         }
-                    }
+                    }*/
 
                     this.realTimeProcessingUseCase.WritersDisposed = true;
                     Console.WriteLine("Writer are closed and Session is ended");
@@ -987,8 +987,8 @@ namespace ServerApplication
 
             // this.PipelineSessionName = "CollaborationProcess";
             this.server.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
-            this.server.CreateOrGetSessionFromMode("PipelineProcess");
 
+            // this.server.CreateOrGetSessionFromMode("PipelineProcess");
             // this.server.CreateOrGetSessionFromMode(this.PipelineSessionName);
             this.pipeline = this.server.Pipeline;
             this.AddLog("Server initialisation started");

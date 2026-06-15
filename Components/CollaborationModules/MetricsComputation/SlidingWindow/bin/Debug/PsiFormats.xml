@@ -129,6 +129,11 @@
             <param name="reader">The binary reader to read from.</param>
             <returns>The deserialized GazeEvent.</returns>
         </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatGazeObjectEvent">
+            <summary>
+            Provides serialization format for SAAC.GlobalHelpers.GrabEvent type.
+            </summary>
+        </member>
         <member name="T:SAAC.PsiFormats.PsiFormatGrabEvent">
             <summary>
             Provides serialization format for SAAC.GlobalHelpers.GrabEvent type.

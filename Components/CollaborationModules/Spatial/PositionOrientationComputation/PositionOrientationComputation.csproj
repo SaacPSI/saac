@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-	    <Nullable>enable</Nullable>
+    <Nullable>enable</Nullable>
     <LangVersion>8.0</LangVersion>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -30,7 +30,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-	    <Nullable>enable</Nullable>
+    <Nullable>enable</Nullable>
     <LangVersion>8.0</LangVersion>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -63,9 +63,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Psi.Runtime">
-      <Version>0.19.100.1-beta-SAAC</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.Psi.Spatial.Euclidean">
       <Version>0.19.100.1-beta</Version>
     </PackageReference>
