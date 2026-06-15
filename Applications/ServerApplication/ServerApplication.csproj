@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -42,6 +42,9 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /Y &quot;$(SolutionDir)Components\LabStreamLayer\dep\lsl.dll&quot; &quot;$(OutDir)&quot;" />
+  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Audio.Windows" Version="0.19.100.1-beta-SAAC" />
     <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />

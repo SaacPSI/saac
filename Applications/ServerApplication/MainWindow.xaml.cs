@@ -38,6 +38,7 @@ namespace ServerApplication
         private int rowIndex = 0;
         private List<Tuple<string, bool>> connectedProcesses = new List<Tuple<string, bool>>();
         private Dictionary<string, ConnectedApp> connectedApps = new Dictionary<string, ConnectedApp>();
+        private Dictionary<string, string> lslDeviceMapping = new Dictionary<string, string>();
         private string commandSource = "Server";
         private bool isDebug = false;
         private string externalConfigurationDirectory = string.Empty;
@@ -663,7 +664,7 @@ namespace ServerApplication
         {
             // Initialize annotation tab state
             UiGenerator.SetTextBoxPreviewTextChecker<uint>(this.AnnotationPortTextBox, uint.TryParse);
-            this.UpdateAnnotationTab();
+            this.UpdateAnnotationGrid();
         }
 
         /// <summary>
@@ -687,6 +688,17 @@ namespace ServerApplication
             this.AnnotationSchemaDirectory = Properties.Settings.Default.AnnotationSchemasPath;
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
+
+            // LSL Device Mapping
+            string lslMappingJson = Properties.Settings.Default.LslDeviceMappingJson;
+            if (!string.IsNullOrEmpty(lslMappingJson))
+            {
+                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(lslMappingJson);
+                if (loaded != null)
+                {
+                    this.lslDeviceMapping = loaded;
+                }
+            }
         }
 
         /// <summary>
@@ -706,7 +718,15 @@ namespace ServerApplication
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
             this.isDebug = this.Configuration.Debug = Properties.Settings.Default.Debug;
-            this.UpdateAnnotationTab();
+            this.UpdateAnnotationGrid();
+
+            // LSL Device Mapping
+            this.LslMappingGrid.RowDefinitions.Clear();
+            this.LslMappingGrid.Children.Clear();
+            foreach (var kvp in this.lslDeviceMapping)
+            {
+                this.AddLslMapping(kvp.Key, kvp.Value);
+            }
 
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = false;
         }
@@ -735,6 +755,10 @@ namespace ServerApplication
             Properties.Settings.Default.AnnotationSchemasPath = this.AnnotationSchemaDirectory;
             Properties.Settings.Default.AnnotationHtmlPage = this.AnnotationWebPage;
             Properties.Settings.Default.AnnotationPort = this.AnnotationPort;
+
+            // LSL Device Mapping
+            this.GetLslMappingConfiguration();
+            Properties.Settings.Default.LslDeviceMappingJson = Newtonsoft.Json.JsonConvert.SerializeObject(this.lslDeviceMapping);
 
             Properties.Settings.Default.Save();
 
@@ -974,6 +998,7 @@ namespace ServerApplication
 
             if (this.isLSLEnabled)
             {
+                this.GetLslMappingConfiguration();
                 this.SetupLabStreamLayer();
             }
 
@@ -1061,7 +1086,7 @@ namespace ServerApplication
         /// </summary>
         private void SetupLabStreamLayer()
         {
-            lslManager = new LabStreamLayerManager(Subpipeline.Create(this.pipeline, $"LSL"), this.internalLog, 500, 100);
+            lslManager = new LabStreamLayerManager(Subpipeline.Create(this.pipeline, $"LSL"), this.lslDeviceMapping, this.internalLog, 500, 100);
             lslManager.NewStream += this.OnNewLSLStream;
             lslManager.Start();
         }
@@ -1087,10 +1112,10 @@ namespace ServerApplication
             dynamic labstreamlayerComponent = component;
             foreach (var emitter in labstreamlayerComponent.Out)
             {
-                this.server.CreateConnectorAndStore(emitter.Name, component.GetStreamInfo().hostname(), this.server.CurrentSession, component.GetParent(), emitter.Type, emitter);
+                this.server.CreateConnectorAndStore(emitter.Name, component.GetDeviceName(), this.server.CurrentSession, labstreamlayerComponent.GetParent(), emitter.Type, emitter);
             }
 
-            component.GetParent().Start((e) => { this.AddLog($"LabStreamLayer stream connected: {component.GetStreamInfo().hostname()} ({component.GetStreamInfo().name()}) with {labstreamlayerComponent.Out.Count} channels."); });
+            component.GetParent().Start((e) => { this.AddLog($"LabStreamLayer stream connected: {component.GetDeviceName()} ({component.GetStreamInfo().name()}) with {labstreamlayerComponent.Out.Count} channels."); });
         }
 
         /// <summary>
@@ -1610,7 +1635,7 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void CkbActivateAnnotation(object sender, RoutedEventArgs e)
         {
-            this.UpdateAnnotationTab();
+            this.UpdateAnnotationGrid();
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             e.Handled = true;
         }
@@ -1622,8 +1647,73 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void CkbActivateLSL(object sender, RoutedEventArgs e)
         {
+            this.UpdateLslGrid();
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Handles the add LSL mapping button click event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void BtnAddLslMapping(object sender, RoutedEventArgs e)
+        {
+            this.AddLslMapping();
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Adds a new row to the LSL mapping grid.
+        /// </summary>
+        /// <param name="lslName">The device mac.</param>
+        /// <param name="psiName">The device name.</param>
+        private void AddLslMapping(string lslName = "", string psiName = "")
+        {
+            UiGenerator.AddRowsDefinitionToGrid(this.LslMappingGrid, GridLength.Auto, 1);
+            int position = this.LslMappingGrid.RowDefinitions.Count - 1;
+
+            TextBox lslTextBox = UiGenerator.GeneratorTextBox($"LslKey_{position}", 240.0);
+            lslTextBox.Text = lslName;
+            lslTextBox.TextChanged += (s, e) =>
+            {
+                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
+            };
+
+            TextBox psiTextBox = UiGenerator.GeneratorTextBox($"LslValue_{position}", 240.0);
+            psiTextBox.Text = psiName;
+            psiTextBox.TextChanged += (s, e) =>
+            {
+                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
+            };
+
+            UiGenerator.SetElementInGrid(this.LslMappingGrid, lslTextBox, 0, position);
+            UiGenerator.SetElementInGrid(this.LslMappingGrid, psiTextBox, 1, position);
+            UiGenerator.SetElementInGrid(this.LslMappingGrid, UiGenerator.GenerateButton("Remove", (s, e) =>
+            {
+                UiGenerator.RemoveRowInGrid(this.LslMappingGrid, position);
+                this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = true;
+                ((RoutedEventArgs)e).Handled = true;
+            }), 2, position);
+        }
+
+        /// <summary>
+        /// Reads the LSL mapping grid and populates the lslDeviceMapping dictionary.
+        /// </summary>
+        private void GetLslMappingConfiguration()
+        {
+            this.lslDeviceMapping.Clear();
+            var lslBoxes = this.LslMappingGrid.Children.OfType<TextBox>().Where(tb => tb.Name.StartsWith("LslKey_")).ToList();
+            var psiBoxes = this.LslMappingGrid.Children.OfType<TextBox>().Where(tb => tb.Name.StartsWith("LslValue_")).ToList();
+            for (int i = 0; i < lslBoxes.Count && i < psiBoxes.Count; i++)
+            {
+                string key = lslBoxes[i].Text.Trim();
+                string value = psiBoxes[i].Text.Trim();
+                if (!string.IsNullOrEmpty(key))
+                {
+                    this.lslDeviceMapping[key] = value;
+                }
+            }
         }
 
         /// <summary>
@@ -1761,15 +1851,43 @@ namespace ServerApplication
         }
 
         /// <summary>
-        /// Updates the annotation tab UI elements based on the annotation enabled state.
+        /// Updates the annotation grid UI elements based on the annotation enabled state.
         /// </summary>
-        private void UpdateAnnotationTab()
+        private void UpdateAnnotationGrid()
         {
-            foreach (UIElement annotationUIElement in this.AnnotationGrid.Children)
+           this.UpdateGrid(this.AnnotationGrid, this.IsAnnotationEnabled);
+        }
+
+        /// <summary>
+        /// Updates the lsl grid UI elements based on the lsl enabled state.
+        /// </summary>
+        private void UpdateLslGrid()
+        {
+            this.UpdateGrid(this.LSLGrid, this.isLSLEnabled);
+        }
+
+        /// <summary>
+        /// Updates the grid UI elements based on the enabled state.
+        /// </summary>
+        private void UpdateGrid(Grid grid, bool isEnable)
+        {
+            foreach (UIElement uIElement in grid.Children)
             {
-                if (annotationUIElement is GroupBox groupBox)
+                if (uIElement is TextBox textBox)
                 {
-                    groupBox.IsEnabled = this.isAnnotationEnabled;
+                    textBox.IsEnabled = isEnable;
+                }
+                else if (uIElement is Button button)
+                {
+                    button.IsEnabled = isEnable;
+                }
+                else if (uIElement is Grid childGrid)
+                {
+                    this.UpdateGrid(childGrid, isEnable);
+                }
+                else if (uIElement is ScrollViewer scrollViewer)
+                {
+                    scrollViewer.IsEnabled = isEnable;
                 }
             }
         }

@@ -14,6 +14,7 @@ namespace SAAC.LabStreamLayer
     /// <typeparam name="T">The type of data in the LSL stream.</typeparam>
     public class LabStreamLayerComponent<T> : ILabStreamLayerComponent, ISourceComponent, IDisposable
     {
+        private readonly string deviceName;
         private readonly StreamInlet input;
         private readonly Subpipeline parent;
         private readonly int channelCount;
@@ -24,11 +25,13 @@ namespace SAAC.LabStreamLayer
         /// Initializes a new instance of the <see cref="LabStreamLayerComponent{T}"/> class.
         /// </summary>
         /// <param name="parent">The parent pipeline.</param>
+        /// <param name="deviceName">The name of the device associated with the stream.</param>
         /// <param name="info">The LSL stream information.</param>
         /// <param name="producer">The LSL stream inlet.</param>
         /// <param name="maxBufferLength">Maximum buffer length for the stream.</param>
-        internal LabStreamLayerComponent(Subpipeline parent, StreamInfo info, StreamInlet producer, int maxBufferLength)
+        internal LabStreamLayerComponent(Subpipeline parent, string deviceName, StreamInfo info, StreamInlet producer, int maxBufferLength)
         {
+            this.deviceName = deviceName;
             this.StreamInfo = info;
             this.input = producer;
             this.parent = parent;
@@ -39,9 +42,20 @@ namespace SAAC.LabStreamLayer
             this.thread = null;
             this.channelCount = this.StreamInfo.channel_count();
             this.samplingDuration = this.StreamInfo.nominal_srate() == 0.0 ? 100 : (int)(1000.0 / this.StreamInfo.nominal_srate());
-            for (int i = 1; i <= this.channelCount; i++)
+            if (this.channelCount <= 0)
             {
-                this.Out.Add(parent.CreateEmitter<T>(this, $"{this.Name}-Out{i}"));
+                throw new ArgumentException($"Stream {this.Name} has invalid channel count: {this.channelCount}");
+            }
+            else if (this.channelCount == 1)
+            {
+                this.Out.Add(parent.CreateEmitter<T>(this, $"{this.Name}-Out"));
+            }
+            else
+            {
+                for (int i = 1; i <= this.channelCount; i++)
+                {
+                    this.Out.Add(parent.CreateEmitter<T>(this, $"{this.Name}-Out{i}"));
+                }
             }
         }
 
@@ -72,6 +86,9 @@ namespace SAAC.LabStreamLayer
 
         /// <inheritdoc/>
         public override string ToString() => this.Name;
+
+        /// <inheritdoc/>
+        public string GetDeviceName() => this.deviceName;
 
         /// <inheritdoc/>
         public List<Emitter<TChannelType>> GetChannels<TChannelType>() => this.Out as List<Emitter<TChannelType>> ?? [];
@@ -197,11 +214,32 @@ namespace SAAC.LabStreamLayer
 
                     for (int c = 0; c < this.channelCount; c++)
                     {
-                        this.Out[c].Post(buffer[s, c], time.AddSeconds(secondsSinceStart));
+                        this.Post(this.Out[c], buffer[s, c], time.AddSeconds(secondsSinceStart));
+
+                        // this.Out[c].Post(buffer[s, c], time.AddSeconds(secondsSinceStart));
                     }
                 }
 
                 Thread.Sleep(this.samplingDuration);
+            }
+        }
+
+        private bool Post(Emitter<T> emitter, T value, DateTime originatingTime)
+        {
+            if (emitter.LastEnvelope.OriginatingTime.Equals(originatingTime))
+            {
+                return false; // skip duplicate samples with the same originating time
+            }
+
+            try
+            {
+                emitter.Post(value, originatingTime);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to post value to emitter {emitter.Name}: {ex.Message}");
+                return false;
             }
         }
     }

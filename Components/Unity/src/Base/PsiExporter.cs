@@ -16,8 +16,8 @@ public abstract class PsiExporter<T> : MonoBehaviour, IProducer<T>
     public PsiPipelineManager.ExportType ExportType = PsiPipelineManager.ExportType.Unknow;
 
     protected PsiPipelineManager PsiManager;
-    public Emitter<T> Out { get; private set; }
-    public bool IsInitialized { get; private set; } = false;
+    public Emitter<T> Out { get; protected set; }
+    public bool IsInitialized { get; protected set; } = false;
 
     protected float DataTime;
     protected DateTime Timestamp = DateTime.MinValue;

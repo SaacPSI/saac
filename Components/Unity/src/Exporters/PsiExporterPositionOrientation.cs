@@ -41,7 +41,7 @@ public class PsiExporterPositionOrientation : PsiExporter<Tuple<System.Numerics.
 #if PSI_TCP_STREAMS
     protected override Microsoft.Psi.Interop.Serialization.IFormatSerializer<Tuple<System.Numerics.Vector3, System.Numerics.Vector3>> GetSerializer()
     {
-        return PsiFormatPositionAndOrientation.GetFormat();
+        return PsiFormatTupleOfVector.GetFormat();
     }
 #endif
 }

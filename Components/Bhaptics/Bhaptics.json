@@ -1,0 +1,20 @@
+[
+  {
+    "topic": "Bhaptics_HapticPlay",
+    "type": "SAAC.Bhaptic.Helpers.HapticPlay",
+    "classFormat": "PsiFormatHapticPlay",
+    "streamToStore": "Bhaptic"
+  },
+  {
+    "topic": "Bhaptics_MotorPlay",
+    "type": "SAAC.Bhaptic.Helpers.MotorPlay",
+    "classFormat": "PsiFormatMotorPlay",
+    "streamToStore": "Bhaptic"
+  },
+  {
+    "topic": "Bhaptics_PauseResumeStop",
+    "type": "SAAC.Bhaptic.Helpers.PauseResumeStop",
+    "classFormat": "PsiFormatPauseResumeStop",
+    "streamToStore": "Bhaptic"
+  }
+]
