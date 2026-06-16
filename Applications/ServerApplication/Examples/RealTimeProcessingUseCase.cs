@@ -185,12 +185,92 @@ namespace ServerApplication.Examples
 
         public RendezVousPipeline.StoreMode StoreMode;
 
+        public string csvAdress = string.Empty; // Get the dataset Path instead
+        public int sessionNumber;
+        public TextWriter positionrotationAWriter;
+        public TextWriter positionrotationBWriter;
+        public TextWriter positionrotationCWriter;
+        public TextWriter taskInteractionEventWriter;
+
+        public string interactionEventHeadupEU = "utc_timestamp_ms,participant_id,color_id,interaction_type,interaction_state,object_id,area".Replace(',', ';');
+        public Dictionary<string, List<string>> stringsMessage = new Dictionary<string, List<string>>();
+        private bool isHeadup;
+
+        /// <summary>
+        /// ...
+        /// </summary>
+        public void WriteCSV()
+        {
+            this.positionrotationAWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-A_position_orientation.csv");
+            this.positionrotationBWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-B_position_orientation.csv");
+            this.positionrotationCWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-C_position_orientation.csv");
+            this.taskInteractionEventWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-interaction_event.csv");
+
+            if (!this.isHeadup)
+            {
+                /*this.positionrotationAWriter.WriteLine(this.headWristHeadupEU);
+                this.positionrotationBWriter.WriteLine(this.headWristHeadupEU);
+                this.positionrotationCWriter.WriteLine(this.headWristHeadupEU);*/
+                this.taskInteractionEventWriter.WriteLine(this.interactionEventHeadupEU);
+                this.isHeadup = true;
+            }
+
+            foreach (var list in this.stringsMessage)
+            {
+                switch (list.Key)
+                {
+                    case "I1":
+                        foreach (var value in list.Value)
+                        {
+                            this.taskInteractionEventWriter.WriteLine(value);
+                        }
+
+                        break;
+                    case "I2":
+                        foreach (var value in list.Value)
+                        {
+                            this.taskInteractionEventWriter.WriteLine(value);
+                        }
+
+                        break;
+                    case "I3":
+                        foreach (var value in list.Value)
+                        {
+                            this.taskInteractionEventWriter.WriteLine(value);
+                        }
+
+                        break;
+                    case "P1":
+                        foreach (var value in list.Value)
+                        {
+                            this.positionrotationAWriter.WriteLine(value);
+                        }
+
+                        break;
+                    case "P2":
+                        foreach (var value in list.Value)
+                        {
+                            this.positionrotationBWriter.WriteLine(value);
+                        }
+
+                        break;
+                    case "P3":
+                        foreach (var value in list.Value)
+                        {
+                            this.positionrotationCWriter.WriteLine(value);
+                        }
+
+                        break;
+                }
+            }
+        }
+
         /// <summary>
         /// ...
         /// </summary>
         public void StartPipelineCollaborationProcess(DatasetPipeline server, string pipelineSessionName, Session session)
         {
-            int numberOfConnectedUsers = 3;
+            int numberOfConnectedUsers = 4;
             GatherProducers gatherProducers = new GatherProducers();
 
             this.SubPipeline = new Subpipeline(server.Pipeline, "CollaborationProcess");
@@ -222,14 +302,53 @@ namespace ServerApplication.Examples
                 server.CreateConnectorAndStore("Unity Server", "Video", this.Session, this.SubPipeline, typeof(Shared<EncodedImage>), gatherProducers.ServerVideo);
             }
 
-            LOF lof = new LOF(this.SubPipeline, server, new LOFConfiguration() { NumberOfPeoples = numberOfConnectedUsers, SessionName = this.Session } );
+            // LofComputerConfig drives the grid and room geometry.
+            // Adjust RoomCenter / RoomRadius to match the physical room:
+            //   "big"   room → center (-22.5, 0), radius 26.5 m  (configurations.py)
+            //   "small" room → center (-13.5, 0), radius  2.5 m
+            var lofConfig = new LofComputerConfig
+            {
+                RoomCenter = new System.Numerics.Vector2(-22.5f, 0f),
+                RoomRadius = 26.5f,
+                FovDegrees = 104f,          // HMD horizontal FOV (φ)
+                RangeFalloff = 15f,           // range scale α
+                RangeExponent = 2f,            // range exponent β
+                Threshold = 0.9f,
+                GridResolution = 64,            // 64×64 grid, good real-time balance
+                StoreField = true,          // keep heatmap array for the visualiser
+                KfInitialCov = 1e-3,
+                KfTransitionCov = 3e-3,
+                KfObservationCov = 1e-1,
+                Dt = 1.0 / 30.0,    // expected frame rate
+            };
+
+            LOF lof = new LOF(
+                this.SubPipeline,
+                server,
+                numberOfConnectedUsers,
+                lofConfig,
+                this.Session // session used by PSI store connector
+            );
+
             for (int i = 0; i < numberOfConnectedUsers; i++)
             {
-                gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(lof.GetHeadPositionOrientationReceiver(i));
+                gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(lof.GetReceiver(i));
+                PositionOrientationPreProcessing posRot = new PositionOrientationPreProcessing(
+                    this.SubPipeline,
+                    server,
+                    new PositionOrientationConfiguration
+                    {
+                        userID = i,
+                        sessionNum = sessionNumber,
+                        csvAdress = this.csvAdress
+                    });
+                this.StreamsWriters.Add(posRot.positionrotationWriter);
+                gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(posRot.HeadPositionOrientationIn);
+                gatherProducers.LeftsHandPositionOrientationsUnity[i].PipeTo(posRot.LeftHandPositionOrientationIn);
+                gatherProducers.RightsHandPositionOrientationsUnity[i].PipeTo(posRot.RightHandPositionOrientationIn);
             }
 
-            /*if (isloader) subP.Start((e) => { });
-            else*/ this.SubPipeline.RunAsync();
+            this.SubPipeline.RunAsync();
 
             // gatherProducers.LeftGazeEvents = gatherProducers.CreateGazeProducers(server, this.SubPipeline, "Gaze", "GazeEvent", numberOfConnectedUsers);
 
@@ -238,14 +357,6 @@ namespace ServerApplication.Examples
             // 2. The PCM will have receivers and emitters that will be connected to other modules in the pipeline
             // 3. The PCM will process data in real-time as it is received from the emitters and send processed data to the receivers
             // 4. The PCM can also send status updates or logs to a monitoring module or UI
-        }
-
-        /// <summary>
-        /// ...
-        /// </summary>
-        public void WriteCSV()
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
