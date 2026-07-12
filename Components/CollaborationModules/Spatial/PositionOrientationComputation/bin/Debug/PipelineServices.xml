@@ -381,6 +381,17 @@
             </summary>
             <returns>A format instance for DateTime serialization.</returns>
         </member>
+        <member name="T:SAAC.PipelineServices.PsiFormatFloat">
+            <summary>
+            Provides a wrapper for float serialization format.
+            </summary>
+        </member>
+        <member name="M:SAAC.PipelineServices.PsiFormatFloat.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing float values.
+            </summary>
+            <returns>A format instance for integer serialization.</returns>
+        </member>
         <member name="T:SAAC.PipelineServices.PsiFormatGazeEvent">
             <summary>
             Provides a wrapper for GazeEvent serialization format.

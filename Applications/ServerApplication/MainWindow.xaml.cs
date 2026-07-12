@@ -32,6 +32,8 @@ namespace ServerApplication
 
         private RendezVousPipelineConfiguration configuration;
         private RendezVousPipeline server;
+        private ReplayPipeline replayServer;
+        private ReplayPipelineConfiguration replayConfiguration;
         private Pipeline pipeline;
         private Timer statusTimer;
         private bool statusCheckRunning;
@@ -46,6 +48,7 @@ namespace ServerApplication
         private bool isLSLEnabled = false;
         private string annotationSchemaDirectory = string.Empty;
         private string annotationWebPage = string.Empty;
+        private string sessionId = string.Empty;
         private uint annotationPort = 8080;
         private string log = "Not Initialised\n";
         private SetupState setupState;
@@ -277,6 +280,15 @@ namespace ServerApplication
         {
             get => this.configuration.DatasetName;
             set => this.SetProperty(ref this.configuration.DatasetName, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the sessionId.
+        /// </summary>
+        public string SessionID
+        {
+            get => this.sessionId;
+            set => this.SetProperty(ref this.sessionId, value);
         }
 
         /// <summary>
@@ -681,6 +693,7 @@ namespace ServerApplication
             this.isDebug = this.Configuration.Debug = Properties.Settings.Default.Debug;
             this.Configuration.AutomaticPipelineRun = Properties.Settings.Default.AutomaticPipelineRun;
             this.ExternalConfigurationDirectory = Properties.Settings.Default.ExternalConfigurationDirectory;
+            this.SessionID = Properties.Settings.Default.SessionID;
 
             // Annotation Tab
             this.IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
@@ -718,6 +731,7 @@ namespace ServerApplication
             this.AnnotationWebPage = Properties.Settings.Default.AnnotationHtmlPage;
             this.AnnotationPort = Properties.Settings.Default.AnnotationPort;
             this.isDebug = this.Configuration.Debug = Properties.Settings.Default.Debug;
+            this.SessionID = Properties.Settings.Default.SessionID;
             this.UpdateAnnotationGrid();
 
             // LSL Device Mapping
@@ -748,6 +762,7 @@ namespace ServerApplication
             Properties.Settings.Default.StoreMode = (int)this.StoreModeComboBox.SelectedIndex;
             Properties.Settings.Default.SessionMode = (int)this.SessionModeComboBox.SelectedIndex;
             Properties.Settings.Default.ExternalConfigurationDirectory = this.ExternalConfigurationDirectory;
+            Properties.Settings.Default.SessionID = this.SessionID;
 
             // Annotation Tab
             Properties.Settings.Default.IsAnnotationEnabled = this.IsAnnotationEnabled;
@@ -860,6 +875,7 @@ namespace ServerApplication
                     IsCollaborationProfileEnabled = this.IsCollaborationProfileEnabled,
                 };
                 this.realTimeProcessingUseCase.Configuration = config;
+                this.realTimeProcessingUseCase.sessionNumber = int.Parse(this.SessionID);
                 this.realTimeProcessingUseCase.StoreMode = (RendezVousPipeline.StoreMode)this.StoreModeComboBox.SelectedIndex;
                 this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName, this.server.GetSession("RawDataPipelineProcess.000"));
                 this.server?.TriggerNewProcessEvent("PsiPipeline");
@@ -1321,6 +1337,51 @@ namespace ServerApplication
             this.connectedApps[name].LastStatusReceivedTime = time;
             this.UpdateDotColor(this.connectedApps[name]);
         }
+
+        private void BtnStartPostProcessNameClick(object sender, RoutedEventArgs e)
+        {
+            if (this.setupState >= SetupState.PipelineInitialised)
+            {
+                return;
+            }
+
+            if (this.ExternalConfigurationDirectory.Length > 0)
+            {
+                this.LoadExternalConfiguration(this.ExternalConfigurationDirectory);
+            }
+
+            this.SetupPipelineConfiguration();
+            try
+            {
+                this.replayServer = new ReplayPipeline(this.replayConfiguration); // , "Server", (log) => { this.Log += $"{log}\n"; }
+            }
+            catch (Exception ex)
+            {
+                this.AddLog($"Error initializing server pipeline: {ex.Message}");
+                return;
+            }
+
+            this.replayServer.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
+
+            this.replayServer.LoadDatasetAndConnectors();
+            this.replayServer.RunPipelineAndSubpipelines();
+            this.AddLog("Server started");
+            this.setupState = SetupState.PipelineInitialised;
+            this.server?.TriggerNewProcessEvent("PsiPipeline");
+        }
+
+        private void SetupPipelineConfiguration()
+        {
+            this.replayConfiguration = new ReplayPipelineConfiguration();
+            this.replayConfiguration.ReplayType = ReplayPipeline.ReplayType.RealTime;
+            this.replayConfiguration.Debug = false;
+            //this.replayConfiguration.AutomaticPipelineRun = true;
+            this.replayConfiguration.StoreMode = RendezVousPipeline.StoreMode.Dictionnary;
+            this.replayConfiguration.SessionName = this.LocalSessionName; // Session name
+            this.replayConfiguration.DatasetPath = this.LocalDatasetPath;
+            this.replayConfiguration.DatasetName = this.LocalDatasetName; // Dataset name
+        }
+
 
         // Conversational
         private void Conversational_Checked(object sender, RoutedEventArgs e) => this.SetConversational(true);

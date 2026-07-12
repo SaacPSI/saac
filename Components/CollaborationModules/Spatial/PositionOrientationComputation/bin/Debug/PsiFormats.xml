@@ -104,6 +104,31 @@
             <param name="reader">The binary reader to read from.</param>
             <returns>The deserialized DateTime.</returns>
         </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatFloat">
+            <summary>
+            Provides serialization format for float type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing float values.
+            </summary>
+            <returns>A Format instance for float serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.WriteFloat(System.Single,System.IO.BinaryWriter)">
+            <summary>
+            Writes an float value to a binary writer.
+            </summary>
+            <param name="real">The float value to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.ReadFloat(System.IO.BinaryReader)">
+            <summary>
+            Reads an float value from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized float value.</returns>
+        </member>
         <member name="T:SAAC.PsiFormats.PsiFormatGazeEvent">
             <summary>
             Provides serialization format for SAAC.GlobalHelpers.GazeEvent type.

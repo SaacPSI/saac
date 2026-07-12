@@ -201,10 +201,10 @@ namespace ServerApplication.Examples
         /// </summary>
         public void WriteCSV()
         {
-            this.positionrotationAWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-A_position_orientation.csv");
-            this.positionrotationBWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-B_position_orientation.csv");
-            this.positionrotationCWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-C_position_orientation.csv");
-            this.taskInteractionEventWriter = new StreamWriter($@"{this.csvAdress}{sessionNumber}-interaction_event.csv");
+            this.positionrotationAWriter = new StreamWriter($@"{this.csvAdress}{this.sessionNumber}-A_position_orientation.csv");
+            this.positionrotationBWriter = new StreamWriter($@"{this.csvAdress}{this.sessionNumber}-B_position_orientation.csv");
+            this.positionrotationCWriter = new StreamWriter($@"{this.csvAdress}{this.sessionNumber}-C_position_orientation.csv");
+            this.taskInteractionEventWriter = new StreamWriter($@"{this.csvAdress}{this.sessionNumber}-interaction_event.csv");
 
             if (!this.isHeadup)
             {
@@ -270,7 +270,7 @@ namespace ServerApplication.Examples
         /// </summary>
         public void StartPipelineCollaborationProcess(DatasetPipeline server, string pipelineSessionName, Session session)
         {
-            int numberOfConnectedUsers = 4;
+            int numberOfConnectedUsers = 2;
             GatherProducers gatherProducers = new GatherProducers();
 
             this.SubPipeline = new Subpipeline(server.Pipeline, "CollaborationProcess");
@@ -306,7 +306,7 @@ namespace ServerApplication.Examples
             // Adjust RoomCenter / RoomRadius to match the physical room:
             //   "big"   room → center (-22.5, 0), radius 26.5 m  (configurations.py)
             //   "small" room → center (-13.5, 0), radius  2.5 m
-            var lofConfig = new LofComputerConfig
+            /*var lofConfig = new LofComputerConfig
             {
                 RoomCenter = new System.Numerics.Vector2(-22.5f, 0f),
                 RoomRadius = 26.5f,
@@ -328,18 +328,18 @@ namespace ServerApplication.Examples
                 numberOfConnectedUsers,
                 lofConfig,
                 this.Session // session used by PSI store connector
-            );
+            );*/
 
             for (int i = 0; i < numberOfConnectedUsers; i++)
             {
-                gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(lof.GetReceiver(i));
+                // gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(lof.GetReceiver(i));
                 PositionOrientationPreProcessing posRot = new PositionOrientationPreProcessing(
                     this.SubPipeline,
                     server,
                     new PositionOrientationConfiguration
                     {
                         userID = i,
-                        sessionNum = sessionNumber,
+                        sessionNum = this.sessionNumber,
                         csvAdress = this.csvAdress
                     });
                 this.StreamsWriters.Add(posRot.positionrotationWriter);

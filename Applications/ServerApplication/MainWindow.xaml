@@ -5,7 +5,7 @@
         Background="{StaticResource WindowBackgroundBrush}"
         Title="MainWindow" Height="480" Width="1015">
     <Window.Resources>
-        
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
     <UserControl>
         <TabControl Name="Tab">
@@ -129,6 +129,9 @@
                             <Label Grid.Row="8" Grid.Column="0" Content="Get Streams Logs :" FontWeight="Bold"/>
                             <CheckBox Grid.Row="8" Grid.Column="1" Name="DebugCheckbox" IsChecked="{Binding IsDebug}" Click="CkbDebug" Margin="0,10,0,0"/>
 
+                            <Label Grid.Row="8" Grid.Column="1" Content="Session ID :" FontWeight="Bold" Margin="27,4,4,3"/>
+                            <TextBox Grid.Row="8" Grid.Column="2" TextWrapping="Wrap" Text="{Binding Path = SessionID}" Margin="0,5,5,2"/>
+
                             <Label Grid.Row="9" Grid.Column="0" Content="Extra Configuration :" FontWeight="Bold" Margin="1,2,17,1"/>
                             <TextBox Grid.Row="9" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = ExternalConfigurationDirectory}" Name="ExternalConfigurationTextBox" Margin="0,5,0,3" Grid.Column="1"/>
                             <Button Grid.Row="9" Grid.Column="3" Content="Browse" Click="BtnBrowseExternalConfiguration_Click" Margin="0,4,2,3"/>
@@ -222,6 +225,151 @@
                     <GroupBox Header="Annotation Logs" FontWeight="Bold" Grid.Row="0" Grid.RowSpan="4" Grid.Column="1">
                         <TextBox x:Name="AnnotationLogs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True" Margin="10,0,6,6"/>
                     </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Process" x:Name="ProcessTab" Height="20" VerticalAlignment="Bottom">
+                <Grid Background="{StaticResource WindowBackgroundBrush}" Name="ProcessGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="475*"/>
+                        <ColumnDefinition Width="108*"/>
+                        <ColumnDefinition Width="265*"/>
+                        <ColumnDefinition Width="161*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <GroupBox Header="Collaboration Metrics" Padding="10" Margin="10,10,10,10" Grid.RowSpan="3">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="15,0,0,0">
+
+                                <!-- Conversational -->
+                                <CheckBox Content="Conversational" FontWeight="Bold" IsChecked="{Binding IsConversationalEnabled}" Checked="Conversational_Checked" Unchecked="Conversational_Unchecked"/>
+
+                                <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsConversationalEnabled}">
+                                    <CheckBox x:Name="cbTurnTakingWithoutOverlap" Content="Turn-taking without overlap" IsChecked="{Binding TurnTakingWithoutOverlap}"/>
+                                    <CheckBox x:Name="cbTurnTakingWithOverlap" Content="Turn-taking with overlap" IsChecked="{Binding TurnTakingWithOverlap}"/>
+                                    <CheckBox x:Name="cbSpeechParticipation" Content="Speech participation" IsChecked="{Binding SpeechParticipation}"/>
+                                    <CheckBox x:Name="cbSpeechEquality" Content="Speech equality" IsChecked="{Binding SpeechEquality}"/>
+                                    <CheckBox x:Name="cbSilence" Content="Silence" IsChecked="{Binding Silence}"/>
+                                    <CheckBox x:Name="cbCrossTalk" Content="Cross-talk" IsChecked="{Binding CrossTalk}"/>
+                                </StackPanel>
+
+                                <!-- Visual -->
+                                <CheckBox Content="Visual" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsVisualEnabled}" Checked="Visual_Checked" Unchecked="Visual_Unchecked"/>
+
+                                <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsVisualEnabled}">
+                                    <CheckBox x:Name="cbJointVisualAttention" Content="Joint Visual attention" IsChecked="{Binding JointVisualAttention}"/>
+                                    <CheckBox x:Name="cbMutualGaze" Content="Mutual gaze" IsChecked="{Binding MutualGaze}"/>
+                                    <CheckBox x:Name="cbGazeOnPeers" Content="Gaze on peers" IsChecked="{Binding GazeOnPeers}"/>
+                                </StackPanel>
+
+                                <!-- Physical -->
+                                <CheckBox Content="Physical" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsPhysicalEnabled}" Checked="Physical_Checked" Unchecked="Physical_Unchecked"/>
+
+                                <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsPhysicalEnabled}">
+                                    <CheckBox x:Name="cbTaskParticipation" Content="Task participation" IsChecked="{Binding TaskParticipation}"/>
+                                    <CheckBox x:Name="cbTaskEquality" Content="Task equality" IsChecked="{Binding TaskEquality}"/>
+                                    <CheckBox x:Name="cbPhysicalActivityLevel" Content="Physical activity level" IsChecked="{Binding PhysicalActivityLevel}"/>
+                                    <CheckBox x:Name="cbPhysicalSynchronyScore" Content="Physical synchrony score" IsChecked="{Binding PhysicalSynchronyScore}"/>
+                                </StackPanel>
+
+                                <!-- Spatial -->
+                                <CheckBox Content="Spatial" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsSpatialEnabled}" Checked="Spatial_Checked" Unchecked="Spatial_Unchecked"/>
+
+                                <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsSpatialEnabled}">
+                                    <CheckBox x:Name="cbPhysicalProximity" Content="Physical Proximity" IsChecked="{Binding PhysicalProximity}"/>
+                                    <CheckBox x:Name="cbFacingFormation" Content="Facing-Formation" IsChecked="{Binding FacingFormation}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </GroupBox>
+                    <GroupBox Header="Metrics Computation Settings" Padding="10" Margin="10,10,10,64" Grid.Column="1" Grid.ColumnSpan="3" Grid.RowSpan="2">
+                        <StackPanel>
+                            <!-- Collaboration Profile -->
+                            <CheckBox Content="Collaboration Profile Computation" Margin="0,0,0,5" IsChecked="{Binding IsCollaborationProfileEnabled}"/>
+
+                            <!-- Enable Sliding Windows -->
+                            <CheckBox Content="Sliding Windows Computation" IsChecked="{Binding IsSlidingWindowEnabled}"/>
+
+                            <Border Margin="0,2,0,0" Visibility="{Binding IsSlidingWindowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" MaxHeight="125" Height="138" RenderTransformOrigin="0.5,0.193">
+
+                                <StackPanel Margin="0,0,0,-12">
+                                    <!-- Sliding Window List (only visible if enabled) -->
+                                    <TextBlock Text="Sliding Windows" FontWeight="Bold" Margin="0,0,0,2"/>
+                                    <Button Content="Add Sliding Window" Command="{Binding AddWindowCommand}" Margin="0,5,0,5"/>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0" Height="76">
+                                        <ItemsControl ItemsSource="{Binding SlidingWindows}" Height="Auto">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                        <TextBlock Text="Window length (s)" VerticalAlignment="Center"/>
+                                                        <TextBox Width="60" Margin="5,0" Text="{Binding WindowLengthSeconds}"/>
+
+                                                        <Button Content="Remove" Command="{Binding DataContext.RemoveWindowCommand,
+                                RelativeSource={RelativeSource AncestorType=GroupBox}}" CommandParameter="{Binding}" Margin="10,0"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <!-- Add new window -->
+
+                                    </ScrollViewer>
+
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Post-processing" Name="LoadDatasetGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="11,87,11,109" Grid.ColumnSpan="3" Grid.RowSpan="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="97*"/>
+                                <ColumnDefinition Width="236*"/>
+                                <ColumnDefinition Width="167*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Dataset Path :" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="0,3,10,2"/>
+                            <TextBox TextWrapping="Wrap" Grid.Row="0" Grid.Column="1" Text="{Binding Path = LocalDatasetPath}" Name="DatasetLoadedTextBox" Margin="0,5,10,10">
+                                <TextBox.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleY="1"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </TextBox.RenderTransform>
+                            </TextBox>
+                            <Button Content="Browse" Grid.Row="0" Grid.Column="2" Click="BtnBrowseNameClick" Margin="0,5,7,10"/>
+                            <Label Content="Pipeline Name: " FontWeight="Bold" Grid.Row="1" Margin="0,3,0,2"/>
+                            <TextBox TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Text="{Binding Path = PipelineSessionName}" Name="PipelineNameTextBox" Margin="0,5,10,10">
+                                <TextBox.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleY="1"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </TextBox.RenderTransform>
+                            </TextBox>
+                            <Button Content="Start Post Processing" Grid.Row="1" Grid.Column="2" Click="BtnStartPostProcessNameClick" Margin="0,5,7,10"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Actions" Name="ActionsGroupBox" FontWeight="Bold" Grid.Row="2" Grid.Column="1"  Margin="10,41,10,13" Grid.ColumnSpan="3">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Button Content="Save configuration" Grid.Row="0" Name="SaveConfiguration" Click="BtnSaveConfiguration" Margin="0,12,0,11" Grid.RowSpan="2"/>
+                            <Button Content="Start Process" Grid.Row="1" Name="StartProcess" Click="BtnStartProcess" Margin="0,17,0,4" Grid.RowSpan="2"/>
+                        </Grid>
+                    </GroupBox>
+
                 </Grid>
             </TabItem>
 

@@ -35,6 +35,43 @@
     "classFormat": "PsiFormatTupleOfVector",
     "streamToStore": "Heads"
   },
+  {
+    "topic": "Orb_1_Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "Orb_1_LeftHand",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "Orb_1_RightHand",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+
+  {
+    "topic": "Orb_2_Head",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "Orb_2_LeftHand",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
+  {
+    "topic": "Orb_2_RightHand",
+    "type": "System.Tuple`2[[System.Numerics.Vector3, System.Numerics.Vectors],[System.Numerics.Vector3, System.Numerics.Vectors]]",
+    "classFormat": "PsiFormatTupleOfVector",
+    "streamToStore": "Heads"
+  },
 
   {
     "topic": "1-LeftWrist",
