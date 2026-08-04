@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3EC67D31-A815-4879-BBAE-F4D3AE86EAB2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SAAC.CollaborationIndices</RootNamespace>
+    <AssemblyName>SAAC.CollaborationIndices</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Adapters\SerializableClassAdapters.cs" />
+    <Compile Include="Core\EventCountIndexComponent.cs" />
+    <Compile Include="Core\IndexAdapters.cs" />
+    <Compile Include="Core\IndexComponentBase.cs" />
+    <Compile Include="Core\InteractionEvents.cs" />
+    <Compile Include="Core\MultiParticipantComponents.cs" />
+    <Compile Include="Core\Normalizers.cs" />
+    <Compile Include="Core\ParticipantIdMap.cs" />
+    <Compile Include="Core\ParticipantKeys.cs" />
+    <Compile Include="Fusion\CollaborationScoreComponent.cs" />
+    <Compile Include="Fusion\DominanceIdentityComponent.cs" />
+    <Compile Include="Fusion\EqualityIndexComponent.cs" />
+    <Compile Include="Fusion\InteractionGraphComponent.cs" />
+    <Compile Include="Fusion\PhaseGateAndExport.cs" />
+    <Compile Include="Fusion\TimeDecayIndexComponent.cs" />
+    <Compile Include="Gaze\AttentionLevelComponent.cs" />
+    <Compile Include="Gaze\GazeOnPeersComponent.cs" />
+    <Compile Include="Gaze\JointVisualAttentionComponent.cs" />
+    <Compile Include="Physical\IncrementalGridResampler.cs" />
+    <Compile Include="Physical\MultiParticipantSlidingBuffer.cs" />
+    <Compile Include="Physical\MultiParticipantSlidingWindowComponent.cs" />
+    <Compile Include="Physical\PhysicalActivityLevelComponent.cs" />
+    <Compile Include="Physical\PhysicalConfigurations.cs" />
+    <Compile Include="Physical\PhysicalSynchronyComponent.cs" />
+    <Compile Include="Physical\SynchronyMeasures.cs" />
+    <Compile Include="SlidingAverageComputation.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SlidingAverageComputationSet.cs" />
+    <Compile Include="Spatial\FFormationComponent.cs" />
+    <Compile Include="Spatial\TimeInAreaComponent.cs" />
+    <Compile Include="Task\TaskParticipationComponent.cs" />
+    <Compile Include="Verbal\TurnTakingComponent.cs" />
+    <Compile Include="Verbal\VerbalParticipationComponent.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Runtime">
+      <Version>0.19.100.1-beta-SAAC</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
