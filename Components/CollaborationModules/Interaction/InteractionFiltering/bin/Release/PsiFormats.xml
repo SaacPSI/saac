@@ -1,0 +1,338 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PsiFormats</name>
+    </assembly>
+    <members>
+        <member name="T:SAAC.PsiFormats.PsiFormatBoolean">
+            <summary>
+            Provides serialization format for bool type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBoolean.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing boolean values.
+            </summary>
+            <returns>A Format instance for boolean serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBoolean.WriteBoolean(System.Boolean,System.IO.BinaryWriter)">
+            <summary>
+            Writes a boolean value to a binary writer.
+            </summary>
+            <param name="boolean">The boolean value to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBoolean.ReadBoolean(System.IO.BinaryReader)">
+            <summary>
+            Reads a boolean value from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized boolean value.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatBytes">
+            <summary>
+            Provides serialization format for byte array type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBytes.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing byte arrays.
+            </summary>
+            <returns>A Format instance for byte array serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBytes.WriteBytes(System.Byte[],System.IO.BinaryWriter)">
+            <summary>
+            Writes a byte array to a binary writer.
+            </summary>
+            <param name="image">The byte array to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatBytes.ReadBytes(System.IO.BinaryReader)">
+            <summary>
+            Reads a byte array from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized byte array.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatChar">
+            <summary>
+            Provides serialization format for char type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatChar.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing char values.
+            </summary>
+            <returns>A Format instance for char serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatChar.WriteChar(System.Char,System.IO.BinaryWriter)">
+            <summary>
+            Writes a char value to a binary writer.
+            </summary>
+            <param name="character">The char value to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatChar.ReadChar(System.IO.BinaryReader)">
+            <summary>
+            Reads a char value from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized char value.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatDateTime">
+            <summary>
+            Provides serialization format for System.DateTime type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatDateTime.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing DateTime objects.
+            </summary>
+            <returns>A Format instance for DateTime serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatDateTime.WriteDateTime(System.DateTime,System.IO.BinaryWriter)">
+            <summary>
+            Writes a DateTime to a binary writer.
+            </summary>
+            <param name="dateTime">The DateTime to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatDateTime.ReadDateTime(System.IO.BinaryReader)">
+            <summary>
+            Reads a DateTime from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized DateTime.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatFloat">
+            <summary>
+            Provides serialization format for float type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing float values.
+            </summary>
+            <returns>A Format instance for float serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.WriteFloat(System.Single,System.IO.BinaryWriter)">
+            <summary>
+            Writes an float value to a binary writer.
+            </summary>
+            <param name="real">The float value to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatFloat.ReadFloat(System.IO.BinaryReader)">
+            <summary>
+            Reads an float value from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized float value.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatGazeEvent">
+            <summary>
+            Provides serialization format for SAAC.GlobalHelpers.GazeEvent type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGazeEvent.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing GazeEvent objects.
+            </summary>
+            <returns>A Format instance for GazeEvent serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGazeEvent.WriteGazeEvent(SAAC.GlobalHelpers.GazeEvent,System.IO.BinaryWriter)">
+            <summary>
+            Writes a GazeEvent to a binary writer.
+            </summary>
+            <param name="gazeEvent">The GazeEvent to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGazeEvent.ReadGazeEvent(System.IO.BinaryReader)">
+            <summary>
+            Reads a GazeEvent from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized GazeEvent.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatGazeObjectEvent">
+            <summary>
+            Provides serialization format for SAAC.GlobalHelpers.GrabEvent type.
+            </summary>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatGrabEvent">
+            <summary>
+            Provides serialization format for SAAC.GlobalHelpers.GrabEvent type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGrabEvent.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing GrabEvent objects.
+            </summary>
+            <returns>A Format instance for GrabEvent serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGrabEvent.WriteGrabEvent(SAAC.GlobalHelpers.GrabEvent,System.IO.BinaryWriter)">
+            <summary>
+            Writes a GrabEvent to a binary writer.
+            </summary>
+            <param name="grabEvent">The GrabEvent to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatGrabEvent.ReadGrabEvent(System.IO.BinaryReader)">
+            <summary>
+            Reads a GrabEvent from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized GrabEvent.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatHand">
+            <summary>
+            Provides serialization format for SAAC.GlobalHelpers.Hand type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatHand.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Hand objects.
+            </summary>
+            <returns>A Format instance for Hand serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatHand.WriteHand(SAAC.GlobalHelpers.Hand,System.IO.BinaryWriter)">
+            <summary>
+            Writes a Hand object to a binary writer.
+            </summary>
+            <param name="hand">The Hand object to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatHand.ReadHand(System.IO.BinaryReader)">
+            <summary>
+            Reads a Hand object from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized Hand object.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatInteger">
+            <summary>
+            Provides serialization format for int type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatInteger.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing integer values.
+            </summary>
+            <returns>A Format instance for integer serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatInteger.WriteInteger(System.Int32,System.IO.BinaryWriter)">
+            <summary>
+            Writes an integer value to a binary writer.
+            </summary>
+            <param name="integer">The integer value to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatInteger.ReadInteger(System.IO.BinaryReader)">
+            <summary>
+            Reads an integer value from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized integer value.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatMatrix4x4">
+            <summary>
+            Provides serialization format for System.Numerics.Matrix4x4 type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatMatrix4x4.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Matrix4x4 objects.
+            </summary>
+            <returns>A Format instance for Matrix4x4 serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatMatrix4x4.WriteMatrix4x4(System.Numerics.Matrix4x4,System.IO.BinaryWriter)">
+            <summary>
+            Writes a Matrix4x4 to a binary writer.
+            </summary>
+            <param name="matrix">The Matrix4x4 to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatMatrix4x4.ReadMatrix4x4(System.IO.BinaryReader)">
+            <summary>
+            Reads a Matrix4x4 from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized Matrix4x4.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatString">
+            <summary>
+            Provides serialization format for string type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatString.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing string values.
+            </summary>
+            <returns>A Format instance for string serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatString.WriteString(System.String,System.IO.BinaryWriter)">
+            <summary>
+            Writes a string to a binary writer.
+            </summary>
+            <param name="data">The string to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatString.ReadSring(System.IO.BinaryReader)">
+            <summary>
+            Reads a string from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized string.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatTupleOfVector">
+            <summary>
+            Provides serialization format for Tuple of two System.Numerics.Vector3 objects.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatTupleOfVector.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing tuples of Vector3 objects.
+            </summary>
+            <returns>A Format instance for tuple of Vector3 serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatTupleOfVector.WriteTupleOfVector(System.Tuple{System.Numerics.Vector3,System.Numerics.Vector3},System.IO.BinaryWriter)">
+            <summary>
+            Writes a tuple of two Vector3 objects to a binary writer.
+            </summary>
+            <param name="point3D">The tuple containing two Vector3 objects to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatTupleOfVector.ReadTupleOfVector(System.IO.BinaryReader)">
+            <summary>
+            Reads a tuple of two Vector3 objects from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized tuple containing two Vector3 objects.</returns>
+        </member>
+        <member name="T:SAAC.PsiFormats.PsiFormatVector3">
+            <summary>
+            Provides serialization format for System.Numerics.Vector3 type.
+            </summary>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatVector3.GetFormat">
+            <summary>
+            Gets the format for serializing and deserializing Vector3 objects.
+            </summary>
+            <returns>A Format instance for Vector3 serialization.</returns>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatVector3.WriteVector3(System.Numerics.Vector3,System.IO.BinaryWriter)">
+            <summary>
+            Writes a Vector3 to a binary writer.
+            </summary>
+            <param name="point3D">The Vector3 to write.</param>
+            <param name="writer">The binary writer to write to.</param>
+        </member>
+        <member name="M:SAAC.PsiFormats.PsiFormatVector3.ReadVector3(System.IO.BinaryReader)">
+            <summary>
+            Reads a Vector3 from a binary reader.
+            </summary>
+            <param name="reader">The binary reader to read from.</param>
+            <returns>The deserialized Vector3.</returns>
+        </member>
+    </members>
+</doc>

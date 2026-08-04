@@ -2,6 +2,8 @@
 // This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
 // See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
+using SAAC.PsiFormats;
+
 namespace SAAC.PipelineServices
 {
     /// <summary>
@@ -79,6 +81,7 @@ namespace SAAC.PipelineServices
                 this.TypesSerializers.Add(typeof(string), new PsiFormatString());
                 this.TypesSerializers.Add(typeof(byte[]), new PsiFormatBytes());
                 this.TypesSerializers.Add(typeof(Tuple<System.Numerics.Vector3, System.Numerics.Vector3>), new PsiFormatTupleOfVector());
+                this.TypesSerializers.Add(typeof(PieceStatus), new PsiFormatPiecesState());
                 this.TypesSerializers.Add(typeof(System.Numerics.Matrix4x4), new PsiFormatMatrix4x4());
             }
         }

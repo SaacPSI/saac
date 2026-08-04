@@ -110,7 +110,12 @@ namespace SAAC.PipelineServices
                     this.Connectors.Add(streamMetadata.StoreName, new Dictionary<string, ConnectorInfo>());
                 }
 
-                Type producedType = Type.GetType(streamMetadata.TypeName);
+                Type producedType = this.ResolveType(streamMetadata.TypeName);
+                if (producedType == null)
+                {
+                    return false;
+                }
+
                 this.Connectors[streamMetadata.StoreName].Add(streamMetadata.Name, new ConnectorInfo(streamMetadata.Name, session.Name, streamMetadata.StoreName, producedType, typeof(PsiImporter).GetMethod("OpenStream").MakeGenericMethod(producedType).Invoke(
                     store,
                     [streamMetadata.Name, null, null])));
@@ -122,6 +127,31 @@ namespace SAAC.PipelineServices
             }
 
             return true;
+        }
+
+        private readonly Dictionary<string, Type> TypeNameOverrides = new()
+        {
+            { "FusionDll.PieceStatus", typeof(SAAC.PsiFormats.PieceStatus) },
+
+            // { "FusionDll.ObjectGazeEvent", typeof(SAAC.PsiFormats.ObjectGazeEvent) },
+        };
+
+        private Type ResolveType(string persistedTypeName)
+        {
+            var t = Type.GetType(persistedTypeName);
+            if (t != null)
+            {
+                return t;
+            }
+
+            var fullName = persistedTypeName.Split(',')[0].Trim();   // "FusionDll.PieceStatus"
+            if (this.TypeNameOverrides.TryGetValue(fullName, out var mapped))
+            {
+                return mapped;
+            }
+
+            Console.WriteLine($"DatasetLoader : type non résolu '{persistedTypeName}'");
+            return null;
         }
     }
 }

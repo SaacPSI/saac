@@ -1,0 +1,303 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Helpers</name>
+    </assembly>
+    <members>
+        <member name="T:SAAC.Helpers.BytesStreamToImage">
+            <summary>
+            Component that converts a byte array stream to a shared image.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.BytesStreamToImage.#ctor(Microsoft.Psi.Pipeline,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.BytesStreamToImage"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Helpers.BytesStreamToImage.In">
+            <summary>
+            Gets the receiver for input byte arrays.
+            </summary>
+        </member>
+        <member name="P:SAAC.Helpers.BytesStreamToImage.Out">
+            <summary>
+            Gets the emitter for output shared images.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.BytesStreamToImage.Process(System.Byte[],Microsoft.Psi.Envelope)">
+            <summary>
+            Processes a byte array, decoding it to a shared image.
+            </summary>
+            <param name="data">The byte array containing the encoded image.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Helpers.ImageCropper">
+            <summary>
+            Component that crops a shared image stream to a specified rectangular area.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.ImageCropper.#ctor(Microsoft.Psi.Pipeline,System.Drawing.Rectangle,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.ImageCropper"/> class.
+            </summary>
+            <param name="pipeline">The pipeline to attach the component to.</param>
+            <param name="area">The rectangular area to crop from the original image.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Helpers.ImageCropper.In">
+            <summary>
+            Gets the receiver for incoming images.
+            </summary>
+        </member>
+        <member name="P:SAAC.Helpers.ImageCropper.Out">
+            <summary>
+            Gets the emitter for cropped images.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.ImageCropper.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.Helpers.ImageCropper.Process(Microsoft.Psi.Shared{Microsoft.Psi.Imaging.Image},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes an incoming image by cropping it to the specified area.
+            </summary>
+            <param name="image">The incoming image to crop.</param>
+            <param name="envelope">The envelope containing metadata about the image.</param>
+        </member>
+        <member name="T:SAAC.Helpers.ImageDecoder">
+            <summary>
+            Component that decodes encoded images.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.ImageDecoder.#ctor(Microsoft.Psi.Pipeline,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.ImageDecoder"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Helpers.ImageDecoder.In">
+            <summary>
+            Gets the encoded image receiver.
+            </summary>
+        </member>
+        <member name="P:SAAC.Helpers.ImageDecoder.Out">
+            <summary>
+            Gets the decoded image emitter.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.ImageDecoder.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:SAAC.Helpers.ImageDecoder.Process(Microsoft.Psi.Shared{Microsoft.Psi.Imaging.EncodedImage},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes an encoded image, decoding it to an Image.
+            </summary>
+            <param name="data">The encoded image.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Helpers.MatrixToCoordinateSystem">
+            <summary>
+            Component that converts a Matrix4x4 to a MathNet CoordinateSystem.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.MatrixToCoordinateSystem.#ctor(Microsoft.Psi.Pipeline,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.MatrixToCoordinateSystem"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="P:SAAC.Helpers.MatrixToCoordinateSystem.In">
+            <summary>
+            Gets the receiver for input Matrix4x4.
+            </summary>
+        </member>
+        <member name="P:SAAC.Helpers.MatrixToCoordinateSystem.Out">
+            <summary>
+            Gets the emitter for output CoordinateSystem.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.MatrixToCoordinateSystem.Process(System.Numerics.Matrix4x4,Microsoft.Psi.Envelope)">
+            <summary>
+            Processes a Matrix4x4, converting it to a CoordinateSystem.
+            </summary>
+            <param name="data">The input Matrix4x4.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Helpers.PipeToMessage`1">
+            <summary>
+            Component that transforms pipeline data to messages forwarded to a delegate.
+            </summary>
+            <typeparam name="T">The type of the messages.</typeparam>
+        </member>
+        <member name="M:SAAC.Helpers.PipeToMessage`1.#ctor(Microsoft.Psi.Pipeline,SAAC.Helpers.PipeToMessage{`0}.Do,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.PipeToMessage`1"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="toDo">The delegate function to call for each received message.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="T:SAAC.Helpers.PipeToMessage`1.Do">
+            <summary>
+            Delegate function that will be called for each received message.
+            </summary>
+            <param name="message">The message containing data and envelope information.</param>
+        </member>
+        <member name="P:SAAC.Helpers.PipeToMessage`1.In">
+            <summary>
+            Gets the receiver for input data.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.PipeToMessage`1.Process(`0,Microsoft.Psi.Envelope)">
+            <summary>
+            Processes received data, creating a Message and forwarding it to the delegate.
+            </summary>
+            <param name="data">The received data.</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:SAAC.Helpers.PositionAndQuaternionTo">
+            <summary>
+            Static utility class for converting position and quaternion to Matrix4x4 or CoordinateSystem.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.PositionAndQuaternionTo.Matrix4x4(MathNet.Spatial.Euclidean.Point3D,MathNet.Spatial.Euclidean.Quaternion)">
+            <summary>
+            Converts a position and quaternion to a 4x4 transformation matrix.
+            </summary>
+            <param name="position">The 3D position.</param>
+            <param name="q">The rotation quaternion.</param>
+            <returns>A 4x4 transformation matrix.</returns>
+        </member>
+        <member name="M:SAAC.Helpers.PositionAndQuaternionTo.CoordinateSystem(MathNet.Spatial.Euclidean.Point3D,MathNet.Spatial.Euclidean.Quaternion)">
+            <summary>
+            Converts a position and quaternion to a coordinate system.
+            </summary>
+            <param name="position">The 3D position.</param>
+            <param name="q">The rotation quaternion.</param>
+            <returns>A coordinate system.</returns>
+        </member>
+        <member name="T:SAAC.Helpers.TupleOfVectorToRay">
+            <summary>
+            Component that converts a tuple of two Vector3 (position and euler angles) into a Ray3D.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.TupleOfVectorToRay.#ctor(Microsoft.Psi.Pipeline,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SAAC.Helpers.TupleOfVectorToRay"/> class.
+            </summary>
+            <param name="parent">The parent pipeline.</param>
+            <param name="name">The name of the component.</param>
+        </member>
+        <member name="M:SAAC.Helpers.TupleOfVectorToRay.EulerAnglesToForwardVector(System.Numerics.Vector3)">
+            <summary>
+            Converts Euler angles to a forward unit vector.
+            </summary>
+            <param name="eulerAngles">The euler angles in degrees (pitch, yaw, roll).</param>
+            <returns>A normalized forward vector.</returns>
+        </member>
+        <member name="M:SAAC.Helpers.TupleOfVectorToRay.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="P:SAAC.Helpers.TupleOfVectorToRay.In">
+            <summary>
+            Gets the receiver for input tuples of position and euler angles.
+            </summary>
+        </member>
+        <member name="P:SAAC.Helpers.TupleOfVectorToRay.Out">
+            <summary>
+            Gets the emitter for output Ray3D.
+            </summary>
+        </member>
+        <member name="M:SAAC.Helpers.TupleOfVectorToRay.Process(System.Tuple{System.Numerics.Vector3,System.Numerics.Vector3},Microsoft.Psi.Envelope)">
+            <summary>
+            Processes a tuple of position and euler angles, converting it to a Ray3D.
+            </summary>
+            <param name="data">Tuple containing position (Item1) and euler angles (Item2).</param>
+            <param name="envelope">The message envelope.</param>
+        </member>
+        <member name="T:Helpers.SingleElementsToVector`2">
+            <summary>
+            A \psi component that merges N individual streams of type <typeparamref name="Tin"/> into a single
+            stream of type <typeparamref name="Tout"/> by accumulating one message per receiver and emitting
+            the combined result when all inputs share the same <see cref="F:Microsoft.Psi.Envelope.OriginatingTime"/>.
+            </summary>
+            <typeparam name="Tin">The type of each individual input element.</typeparam>
+            <typeparam name="Tout">The type of the combined output vector.</typeparam>
+            <remarks>
+            Use <see cref="T:Helpers.SingleElementsToVectorCombiner"/> to obtain predefined combiner delegates for
+            common numeric vector types (<see cref="T:System.Numerics.Vector2"/>, <see cref="T:System.Numerics.Vector3"/>, <see cref="T:System.Numerics.Vector4"/>,
+            <see cref="T:MathNet.Spatial.Euclidean.Point3D"/>, <see cref="T:MathNet.Spatial.Euclidean.Vector3D"/>).
+            </remarks>
+        </member>
+        <member name="M:Helpers.SingleElementsToVector`2.#ctor(Microsoft.Psi.Pipeline,System.Int32,System.Func{System.Collections.Generic.List{`0},`1},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Helpers.SingleElementsToVector`2"/> class.
+            </summary>
+            <param name="pipeline">The \psi pipeline this component belongs to.</param>
+            <param name="count">The number of individual input receivers to create.</param>
+            <param name="combiner">
+            A function that converts an ordered list of <paramref name="count"/> <typeparamref name="Tin"/>
+            elements (indexed 0 to count-1) into the output <typeparamref name="Tout"/> value.
+            </param>
+            <param name="name">An optional display name for this component.</param>
+        </member>
+        <member name="P:Helpers.SingleElementsToVector`2.Out">
+            <summary>Gets the output emitter that posts the combined <typeparamref name="Tout"/> vector.</summary>
+        </member>
+        <member name="P:Helpers.SingleElementsToVector`2.In">
+            <summary>
+            Gets the list of input receivers. Use <c>In[i]</c> to pipe the i-th source stream into this component.
+            </summary>
+        </member>
+        <member name="M:Helpers.SingleElementsToVector`2.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:Helpers.SingleElementsToVector`2.Process(`0,System.Int32,Microsoft.Psi.Envelope)">
+            <summary>
+            Stores the received element at the given index for the message's originating time.
+            Emits a combined output when all <see cref="F:Helpers.SingleElementsToVector`2.count"/> elements for that time have arrived.
+            </summary>
+            <param name="element">The received element.</param>
+            <param name="index">The receiver index (0-based).</param>
+            <param name="envelope">The \psi message envelope carrying timing information.</param>
+        </member>
+        <member name="T:Helpers.SingleElementsToVectorCombiner">
+            <summary>
+            Provides predefined <see cref="T:System.Func`1"/> combiners for use with
+            <see cref="T:Helpers.SingleElementsToVector`2"/> targeting common numeric vector types.
+            </summary>
+            <remarks>
+            All combiners assume the input list elements are ordered by receiver index (X=0, Y=1, Z=2, W=3).
+            </remarks>
+        </member>
+        <member name="F:Helpers.SingleElementsToVectorCombiner.ToVector2">
+            <summary>
+            Combines 2 <see cref="T:System.Single"/> values into a <see cref="T:System.Numerics.Vector2"/> (X, Y).
+            </summary>
+        </member>
+        <member name="F:Helpers.SingleElementsToVectorCombiner.ToVector3">
+            <summary>
+            Combines 3 <see cref="T:System.Single"/> values into a <see cref="T:System.Numerics.Vector3"/> (X, Y, Z).
+            </summary>
+        </member>
+        <member name="F:Helpers.SingleElementsToVectorCombiner.ToVector4">
+            <summary>
+            Combines 4 <see cref="T:System.Single"/> values into a <see cref="T:System.Numerics.Vector4"/> (X, Y, Z, W).
+            </summary>
+        </member>
+        <member name="F:Helpers.SingleElementsToVectorCombiner.ToPoint3D">
+            <summary>
+            Combines 3 <see cref="T:System.Double"/> values into a <see cref="T:MathNet.Spatial.Euclidean.Point3D"/> (X, Y, Z).
+            </summary>
+        </member>
+        <member name="F:Helpers.SingleElementsToVectorCombiner.ToVector3D">
+            <summary>
+            Combines 3 <see cref="T:System.Double"/> values into a <see cref="T:MathNet.Spatial.Euclidean.Vector3D"/> (X, Y, Z).
+            </summary>
+        </member>
+    </members>
+</doc>
