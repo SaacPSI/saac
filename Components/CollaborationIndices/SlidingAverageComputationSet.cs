@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Psi;
+using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
@@ -39,6 +40,7 @@ namespace SAAC.CollaborationIndices
         /// <param name="namePrefix">Prefix of the component names.</param>
         public SlidingAverageComputationSet(
             Pipeline pipeline,
+            DatasetPipeline server,
             SlidingAverageConfiguration template,
             IEnumerable<KeyValuePair<TimeSpan, TextWriter>> windows,
             string namePrefix = "SlidingAverage")
@@ -60,7 +62,7 @@ namespace SAAC.CollaborationIndices
                 configuration.UseInternalClock = false;
 
                 string name = $"{namePrefix}_{(int)window.Key.TotalSeconds}s";
-                this.instances[window.Key] = new SlidingAverageComputation(pipeline, configuration, name);
+                this.instances[window.Key] = new SlidingAverageComputation(pipeline, server, configuration, name);
             }
         }
 

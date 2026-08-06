@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Psi;
+using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
@@ -168,6 +169,16 @@ namespace SAAC.CollaborationIndices
 
         public bool UseSpatialIndices { get; set; } = true;
 
+        public bool UseVerbalIndices { get; set; } = true;
+
+        public bool UsePhysicalIndices { get; set; } = true;
+
+        public bool UseVisualIndices { get; set; } = true;
+
+        public bool ComputeCollaborationScores { get; set; } = true;
+
+        public bool GenerateGraph { get; set; } = true;
+
         /// <summary>
         /// If true, the instance creates its own clock generators. Set it to false when several
         /// instances run side by side, and drive ClockIn and AttentionClockIn from a single
@@ -191,7 +202,12 @@ namespace SAAC.CollaborationIndices
             IndicesWriter = this.IndicesWriter,
             UseTaskIndices = this.UseTaskIndices,
             UseSpatialIndices = this.UseSpatialIndices,
+            UseVerbalIndices = this.UseVerbalIndices,
+            UseVisualIndices = this.UseVisualIndices,
+            UsePhysicalIndices = this.UsePhysicalIndices,
             UseInternalClock = this.UseInternalClock,
+            ComputeCollaborationScores = this.ComputeCollaborationScores,
+            GenerateGraph = this.GenerateGraph,
         };
     }
 
@@ -212,11 +228,10 @@ namespace SAAC.CollaborationIndices
         private readonly Pipeline pipeline;
         private readonly SlidingAverageConfiguration configuration;
 
-        public SlidingAverageComputation(Pipeline pipeline, SlidingAverageConfiguration configuration, string name = nameof(SlidingAverageComputation))
+        public SlidingAverageComputation(Pipeline pipeline, DatasetPipeline server , SlidingAverageConfiguration configuration, string name = nameof(SlidingAverageComputation))
         {
             this.pipeline = pipeline;
             this.configuration = configuration;
-
             var participants = configuration.ParticipantIds;
             var calibration = configuration.Calibration;
 
@@ -233,75 +248,81 @@ namespace SAAC.CollaborationIndices
             }
 
             // ---------- Physical ----------
-            this.ActivityLevel = new PhysicalActivityLevelComponent(pipeline, new PhysicalActivityLevelConfiguration
+            this.ActivityLevel = new PhysicalActivityLevelComponent(pipeline, server, new PhysicalActivityLevelConfiguration
             {
                 ParticipantIds = participants,
                 BodyParts = configuration.ActivityBodyParts,
                 WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
+                ComputationInterval = TimeSpan.Zero,
                 AdditionalWindows = new List<TimeSpan> { TimeSpan.FromSeconds(5) },
-                ComputeOnDataReception = false,
+                ComputeOnDataReception = true,
             }, $"{name}-ActivityLevel");
 
-            this.Synchrony = new PhysicalSynchronyComponent(pipeline, new PhysicalSynchronyConfiguration
+            this.Synchrony = new PhysicalSynchronyComponent(pipeline, server, new PhysicalSynchronyConfiguration
             {
                 ParticipantIds = participants,
                 BodyParts = configuration.SynchronyBodyParts,
                 WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
+                ComputationInterval = TimeSpan.Zero,
                 ComputeSubsets = participants.Count >= 3,
                 SubsetSize = 3,
-                ComputeOnDataReception = false,
+                ComputeOnDataReception = true,
             }, $"{name}-Synchrony");
 
             // ---------- Verbal ----------
-            this.VerbalParticipation = new VerbalParticipationComponent(pipeline, new VerbalParticipationConfiguration
+            if (configuration.UseVerbalIndices)
             {
-                ParticipantIds = participants,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
-            }, $"{name}-VerbalParticipation");
+                this.VerbalParticipation = new VerbalParticipationComponent(pipeline, new VerbalParticipationConfiguration
+                {
+                    ParticipantIds = participants,
+                    WindowDuration = configuration.WindowDuration,
+                    ComputationInterval = configuration.ComputationInterval,
+                }, $"{name}-VerbalParticipation");
 
-            this.SpeechEquality = new EqualityIndexComponent(pipeline, new EqualityIndexConfiguration
-            {
-                ParticipantIds = participants,
-                WindowDuration = configuration.WindowDuration,
-                SubsetSize = participants.Count >= 3 ? 3 : 0,
-            }, $"{name}-SpeechEquality");
+                this.SpeechEquality = new EqualityIndexComponent(pipeline, new EqualityIndexConfiguration
+                {
+                    ParticipantIds = participants,
+                    WindowDuration = configuration.WindowDuration,
+                    SubsetSize = participants.Count >= 3 ? 3 : 0,
+                }, $"{name}-SpeechEquality");
 
-            this.TurnTaking = new TurnTakingComponent(pipeline, new TurnTakingConfiguration
-            {
-                ParticipantIds = participants,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
-                CategoryNormalizers = new Dictionary<string, IIndexNormalizer>
+                this.TurnTaking = new TurnTakingComponent(pipeline, new TurnTakingConfiguration
+                {
+                    ParticipantIds = participants,
+                    WindowDuration = configuration.WindowDuration,
+                    ComputationInterval = configuration.ComputationInterval,
+                    CategoryNormalizers = new Dictionary<string, IIndexNormalizer>
                 {
                     { IndexCategories.TurnTakingWithOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithOverlap) },
                     { IndexCategories.TurnTakingWithoutOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithoutOverlap) },
                 },
-                PairNormalizers = new Dictionary<string, IIndexNormalizer>
+                    PairNormalizers = new Dictionary<string, IIndexNormalizer>
                 {
                     { IndexCategories.TurnTakingWithoutOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithoutOverlapPair) },
                 },
-            }, $"{name}-TurnTaking");
+                }, $"{name}-TurnTaking");
+            }
 
             // ---------- Gaze ----------
-            this.JointVisualAttention = new JointVisualAttentionComponent(pipeline, new JointVisualAttentionConfiguration
+            if (configuration.UseVisualIndices)
             {
-                ParticipantIds = participants,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
-                GroupNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttention),
-                PairNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttentionPair),
-            }, $"{name}-JVA");
+                this.JointVisualAttention = new JointVisualAttentionComponent(pipeline, new JointVisualAttentionConfiguration
+                {
+                    ParticipantIds = participants,
+                    WindowDuration = configuration.WindowDuration,
+                    ComputationInterval = configuration.ComputationInterval,
+                    GroupNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttention),
+                    PairNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttentionPair),
+                }, $"{name}-JVA");
 
-            this.GazeOnPeers = new GazeOnPeersComponent(pipeline, new GazeOnPeersConfiguration
-            {
-                ParticipantIds = participants,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = configuration.ComputationInterval,
-                GroupNormalizer = calibration.NormalizerFor(IndexNames.GazeOnPeers),
-            }, $"{name}-GazeOnPeers");
+                this.GazeOnPeers = new GazeOnPeersComponent(pipeline, new GazeOnPeersConfiguration
+                {
+                    ParticipantIds = participants,
+                    WindowDuration = configuration.WindowDuration,
+                    ComputationInterval = configuration.ComputationInterval,
+                    GroupNormalizer = calibration.NormalizerFor(IndexNames.GazeOnPeers),
+                }, $"{name}-GazeOnPeers");
+            }
 
             this.AttentionLevel = new AttentionLevelComponent(pipeline, new AttentionLevelConfiguration
             {
@@ -363,20 +384,33 @@ namespace SAAC.CollaborationIndices
             }
 
             // ---------- Dominance ----------
-            this.TalkingMost = this.CreateDominance($"{name}-TalkingMost", participants);
-            this.TaskingMost = this.CreateDominance($"{name}-TaskingMost", participants);
+            if (configuration.UseVerbalIndices)
+            {
+                this.TalkingMost = this.CreateDominance($"{name}-TalkingMost", participants);
+            } // Speech Equality
+
+            if (configuration.UseTaskIndices)
+            {
+                this.TaskingMost = this.CreateDominance($"{name}-TaskingMost", participants);
+            } // Task Equality
 
             // ---------- Fusion ----------
-            this.CollaborationScore = new CollaborationScoreComponent(pipeline, new CollaborationScoreConfiguration
+            if (configuration.ComputeCollaborationScores)
             {
-                ParticipantIds = participants,
-                Dimensions = DefaultDimensions(),
-            }, $"{name}-CollaborationScore");
+                this.CollaborationScore = new CollaborationScoreComponent(pipeline, new CollaborationScoreConfiguration
+                {
+                    ParticipantIds = participants,
+                    Dimensions = DefaultDimensions(),
+                }, $"{name}-CollaborationScore");
+            } // Collaboration Scores
 
-            this.Graph = new InteractionGraphComponent(pipeline, new InteractionGraphConfiguration
+            if (configuration.GenerateGraph)
             {
-                ParticipantIds = participants,
-            }, $"{name}-Graph");
+                this.Graph = new InteractionGraphComponent(pipeline, new InteractionGraphConfiguration
+                {
+                    ParticipantIds = participants,
+                }, $"{name}-Graph");
+            } // Generate Graph
 
             if (configuration.IndicesWriter != null)
             {
@@ -451,20 +485,42 @@ namespace SAAC.CollaborationIndices
         private void ConnectInternals()
         {
             // The gate paces every windowed component.
-            this.Gate.Out.PipeTo(this.ActivityLevel.TickIn);
-            this.Gate.Out.PipeTo(this.Synchrony.TickIn);
-            this.Gate.Out.PipeTo(this.VerbalParticipation.TickIn);
-            this.Gate.Out.PipeTo(this.TurnTaking.TickIn);
-            this.Gate.Out.PipeTo(this.JointVisualAttention.TickIn);
-            this.Gate.Out.PipeTo(this.GazeOnPeers.TickIn);
-            this.TaskParticipation?.TickIn.PipeFrom(this.Gate.Out);
-            this.TimeInArea?.TickIn.PipeFrom(this.Gate.Out);
-            this.FFormation?.TickIn.PipeFrom(this.Gate.Out);
-            this.Proximity?.TickIn.PipeFrom(this.Gate.Out);
+            if (this.configuration.UsePhysicalIndices)
+            {
+                this.Gate.Out.PipeTo(this.ActivityLevel.TickIn);
+                this.Gate.Out.PipeTo(this.Synchrony.TickIn);
+            }
+
+            if (this.configuration.UseVerbalIndices)
+            {
+                this.Gate.Out.PipeTo(this.VerbalParticipation.TickIn);
+                this.Gate.Out.PipeTo(this.TurnTaking.TickIn);
+            }
+
+            if (this.configuration.UseVisualIndices)
+            {
+                this.Gate.Out.PipeTo(this.JointVisualAttention.TickIn);
+                this.Gate.Out.PipeTo(this.GazeOnPeers.TickIn);
+            }
+
+            if (this.TaskParticipation != null)
+            {
+                this.TaskParticipation?.TickIn.PipeFrom(this.Gate.Out);
+            }
+
+            if (this.configuration.UseSpatialIndices)
+            {
+                this.TimeInArea?.TickIn.PipeFrom(this.Gate.Out);
+                this.FFormation?.TickIn.PipeFrom(this.Gate.Out);
+                this.Proximity?.TickIn.PipeFrom(this.Gate.Out);
+            }
 
             // Equality and dominance derive from the participation distributions.
-            this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.SpeechEquality.In);
-            this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.TalkingMost.In);
+            if (this.configuration.UseVerbalIndices)
+            {
+                this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.SpeechEquality.In);
+                this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.TalkingMost.In);
+            }
 
             if (this.TaskParticipation != null)
             {
@@ -473,19 +529,30 @@ namespace SAAC.CollaborationIndices
             }
 
             // Fusion of the group level indices.
-            this.ActivityLevel.GroupActivityLevelOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Movement));
-            this.Synchrony.GroupSynchronyOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Synchrony));
-            this.VerbalParticipation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.VerbalParticipation));
-            this.JointVisualAttention.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.JointVisualAttention));
-            this.GazeOnPeers.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.GazeOnPeers));
-            this.TurnTaking.GetGroupEmitter(IndexCategories.TurnTakingWithoutOverlap).PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.TurnTakingWithoutOverlap));
+            if (this.configuration.UsePhysicalIndices)
+            {
+                this.ActivityLevel.GroupActivityLevelOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Movement));
+                this.Synchrony.GroupSynchronyOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Synchrony));
+            }
 
-            // An equality index only makes sense when the group is active enough; the
-            // validity flag excludes it from its dimension instead of biasing the score.
-            this.SpeechEquality.Out
-                .Select(gini => 1.0 - gini)
-                .PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.SpeechEquality));
-            this.VerbalParticipation.EqualityUsableOut.PipeTo(this.CollaborationScore.GetValidityInput(IndexNames.SpeechEquality));
+            if (this.configuration.UseVerbalIndices)
+            {
+                this.VerbalParticipation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.VerbalParticipation));
+                this.TurnTaking.GetGroupEmitter(IndexCategories.TurnTakingWithoutOverlap).PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.TurnTakingWithoutOverlap));
+            }
+
+            if (this.configuration.UseVerbalIndices)
+            {
+                this.JointVisualAttention.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.JointVisualAttention));
+                this.GazeOnPeers.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.GazeOnPeers));
+
+                // An equality index only makes sense when the group is active enough; the
+                // validity flag excludes it from its dimension instead of biasing the score.
+                this.SpeechEquality.Out
+                    .Select(gini => 1.0 - gini)
+                    .PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.SpeechEquality));
+                this.VerbalParticipation.EqualityUsableOut.PipeTo(this.CollaborationScore.GetValidityInput(IndexNames.SpeechEquality));
+            }
 
             if (this.TaskParticipation != null)
             {
@@ -500,45 +567,59 @@ namespace SAAC.CollaborationIndices
                 this.FFormation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Formation));
             }
 
-            // Interaction graph.
-            this.ActivityLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.Movement));
-            this.VerbalParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.VerbalParticipation));
-            this.AttentionLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.AttentionLevel));
-            this.Synchrony.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Synchrony));
-            this.SpeechEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.SpeechEquality));
-            this.JointVisualAttention.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.JointVisualAttention));
-            this.GazeOnPeers.DirectedPairOut.PipeTo(this.Graph.GetDirectedEdgeMetricInput(IndexNames.GazeOnPeers));
-            this.CollaborationScore.Out.PipeTo(this.Graph.GetGroupMetricInput(IndexNames.CollaborationScore));
-
-            if (this.TaskParticipation != null)
+            if (this.configuration.GenerateGraph)
             {
-                this.TaskParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.TaskParticipation));
-                this.TaskEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.TaskEquality));
-            }
+                this.ActivityLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.Movement));
+                this.VerbalParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.VerbalParticipation));
+                this.AttentionLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.AttentionLevel));
+                this.Synchrony.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Synchrony));
+                this.SpeechEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.SpeechEquality));
+                this.JointVisualAttention.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.JointVisualAttention));
+                this.GazeOnPeers.DirectedPairOut.PipeTo(this.Graph.GetDirectedEdgeMetricInput(IndexNames.GazeOnPeers));
+                this.CollaborationScore.Out.PipeTo(this.Graph.GetGroupMetricInput(IndexNames.CollaborationScore));
 
-            if (this.Proximity != null)
-            {
-                this.Proximity.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Proximity));
-            }
+                if (this.TaskParticipation != null)
+                {
+                    this.TaskParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.TaskParticipation));
+                    this.TaskEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.TaskEquality));
+                }
 
-            // Export.
+                if (this.Proximity != null)
+                {
+                    this.Proximity.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Proximity));
+                }
+            } // Interaction graph
+
             if (this.Export != null)
             {
                 this.Gate.Out.PipeTo(this.Export.TickIn);
-                this.ActivityLevel.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.Movement));
-                this.VerbalParticipation.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.VerbalParticipation));
-                this.Synchrony.Out.PipeTo(this.Export.GetPairColumnsInput(IndexNames.Synchrony));
-                this.SpeechEquality.Out.PipeTo(this.Export.GetColumnInput(IndexNames.SpeechEquality));
-                this.JointVisualAttention.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.JointVisualAttention));
-                this.GazeOnPeers.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.GazeOnPeers));
-                this.CollaborationScore.Out.PipeTo(this.Export.GetColumnInput(IndexNames.CollaborationScore));
+                if (this.configuration.UsePhysicalIndices)
+                {
+                    this.ActivityLevel.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.Movement));
+                    this.Synchrony.Out.PipeTo(this.Export.GetPairColumnsInput(IndexNames.Synchrony));
+                }
+
+                if (this.configuration.UseVerbalIndices)
+                {
+                    this.VerbalParticipation.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.VerbalParticipation));
+                    this.SpeechEquality.Out.PipeTo(this.Export.GetColumnInput(IndexNames.SpeechEquality));
+                }
+
+                if (this.configuration.UseVisualIndices)
+                {
+                    this.JointVisualAttention.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.JointVisualAttention));
+                    this.GazeOnPeers.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.GazeOnPeers));
+                }
+
+                if (this.configuration.ComputeCollaborationScores)
+                    this.CollaborationScore.Out.PipeTo(this.Export.GetColumnInput(IndexNames.CollaborationScore));
 
                 if (this.TaskParticipation != null)
                 {
                     this.TaskParticipation.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.TaskParticipation));
                     this.TaskEquality.Out.PipeTo(this.Export.GetColumnInput(IndexNames.TaskEquality));
                 }
-            }
+            } // Export
         }
 
         /// <summary>

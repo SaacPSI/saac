@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Protocols.WSTrust;
+using System.Numerics;
 using Microsoft.Psi;
+using Microsoft.Psi.Data;
+using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
@@ -22,18 +26,22 @@ namespace SAAC.CollaborationIndices
     public class PhysicalActivityLevelComponent : MultiParticipantSlidingWindowComponent<PhysicalActivityLevelConfiguration>,
                                                   IProducer<Dictionary<uint, double>>
     {
-        private readonly Dictionary<uint, Emitter<double>> participantEmitters = new Dictionary<uint, Emitter<double>>();
-        private readonly Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>> windowEmitters = new Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>>();
+        private Dictionary<uint, Emitter<double>> participantsActivityLevelOut = new Dictionary<uint, Emitter<double>>();
+        private Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>> windowEmitters = new Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>>();
 
-        public PhysicalActivityLevelComponent(Pipeline pipeline, PhysicalActivityLevelConfiguration configuration, string name = nameof(PhysicalActivityLevelComponent))
+        public PhysicalActivityLevelComponent(Pipeline pipeline, DatasetPipeline server, PhysicalActivityLevelConfiguration configuration, string name = nameof(PhysicalActivityLevelComponent))
             : base(pipeline, configuration, name)
         {
+            this.SessionName = server.GetSession("RawDataPipelineProcess.000");
+
             this.Out = pipeline.CreateEmitter<Dictionary<uint, double>>(this, $"{name}-ActivityLevels");
             this.GroupActivityLevelOut = pipeline.CreateEmitter<double>(this, $"{name}-GroupActivityLevel");
+            server.CreateConnectorAndStore($"{name}-GroupActivityLevel", "LiveVisualization", this.SessionName, pipeline, this.GroupActivityLevelOut.Type, this.GroupActivityLevelOut, true);
 
             foreach (uint participantId in configuration.ParticipantIds)
             {
-                this.participantEmitters[participantId] = pipeline.CreateEmitter<double>(this, $"{name}-ActivityLevel-{participantId}");
+                this.participantsActivityLevelOut[participantId] = pipeline.CreateEmitter<double>(this, $"{name}-ActivityLevel-{participantId}");
+                server.CreateConnectorAndStore($"{name}-ActivityLevel-{participantId}", "LiveVisualization", this.SessionName, pipeline, this.participantsActivityLevelOut[participantId].Type, this.participantsActivityLevelOut[participantId], true);
             }
 
             if (configuration.AdditionalWindows != null)
@@ -47,6 +55,8 @@ namespace SAAC.CollaborationIndices
                 }
             }
         }
+
+        public Session SessionName;
 
         /// <summary>
         /// Activity level of every participant, on the main window.
@@ -63,7 +73,7 @@ namespace SAAC.CollaborationIndices
         /// </summary>
         public Emitter<double> GetActivityLevelEmitter(uint participantId)
         {
-            if (!this.participantEmitters.TryGetValue(participantId, out var emitter))
+            if (!this.participantsActivityLevelOut.TryGetValue(participantId, out var emitter))
             {
                 throw new ArgumentException($"Participant {participantId} is not declared in the configuration of {this.name}.", nameof(participantId));
             }
@@ -151,7 +161,7 @@ namespace SAAC.CollaborationIndices
             var levels = this.ComputeAll(this.configuration.WindowDuration, originatingTime);
 
             this.Out.Post(levels, originatingTime);
-            foreach (var entry in this.participantEmitters)
+            foreach (var entry in this.participantsActivityLevelOut)
             {
                 entry.Value.Post(levels[entry.Key], originatingTime);
             }

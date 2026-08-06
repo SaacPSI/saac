@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Psi;
-using SerializableClass;
+using SAAC.PsiFormats;
 
 namespace SAAC.CollaborationIndices
 {
@@ -90,41 +90,6 @@ namespace SAAC.CollaborationIndices
         }
 
         // ------------------------------------------------------------------
-        // Generator interactions: Tuple<int, Queue<GeneratorInteraction>>
-        // ------------------------------------------------------------------
-
-        public static IProducer<IEnumerable<InteractionEvent>> ToGeneratorEvents(
-            this IProducer<Tuple<int, Queue<GeneratorInteraction>>> source,
-            ParticipantIdMap idMap = null,
-            DeliveryPolicy<Tuple<int, Queue<GeneratorInteraction>>> deliveryPolicy = null)
-        {
-            ParticipantIdMap map = idMap ?? ParticipantIdMap.ZeroBased;
-            return source.Select(
-                tuple =>
-                {
-                    var events = new List<InteractionEvent>();
-                    if (tuple?.Item2 == null)
-                    {
-                        return (IEnumerable<InteractionEvent>)events;
-                    }
-
-                    foreach (GeneratorInteraction interaction in tuple.Item2)
-                    {
-                        events.Add(new InteractionEvent(
-                            interaction.originatingTime,
-                            IndexCategories.GeneratorInteraction,
-                            map.ToParticipantId(interaction.userID),
-                            null,
-                            1.0,
-                            $"generator{interaction.generatorID}:{interaction.interactionType}"));
-                    }
-
-                    return (IEnumerable<InteractionEvent>)events;
-                },
-                deliveryPolicy);
-        }
-
-        // ------------------------------------------------------------------
         // Turn taking: Dictionary<int, Queue<TTData>>
         // ------------------------------------------------------------------
 
@@ -161,10 +126,10 @@ namespace SAAC.CollaborationIndices
                             events.Add(new InteractionEvent(
                                 turn.originatingTime,
                                 category,
-                                map.ToParticipantId(turn.currentSpeaker),
-                                turn.lastSpeaker >= 0 ? map.ToParticipantId(turn.lastSpeaker) : (uint?)null,
+                                map.ToParticipantId(turn.CurrentSpeaker),
+                                turn.LastSpeaker >= 0 ? map.ToParticipantId(turn.LastSpeaker) : (uint?)null,
                                 1.0,
-                                turn.type ?? string.Empty));
+                                turn.Type ?? string.Empty));
                         }
                     }
 
@@ -206,7 +171,7 @@ namespace SAAC.CollaborationIndices
                                 IndexCategories.Silence,
                                 map.ToParticipantId(entry.Key),
                                 null,
-                                silence.duration));
+                                silence.Duration));
                         }
                     }
 
@@ -335,7 +300,7 @@ namespace SAAC.CollaborationIndices
 
                         foreach (TimeData gaze in entry.Value)
                         {
-                            events.Add(new InteractionEvent(gaze.endOriginatingTime, IndexCategories.GazeOnPeer, gazer, gazed));
+                            events.Add(new InteractionEvent(gaze.EndOriginatingTime, IndexCategories.GazeOnPeer, gazer, gazed));
                         }
                     }
 
@@ -373,8 +338,8 @@ namespace SAAC.CollaborationIndices
                         foreach (TimeData gaze in entry.Value)
                         {
                             intervals.Add(new InteractionInterval(
-                                gaze.startOriginatingTime,
-                                gaze.endOriginatingTime,
+                                gaze.StartOriginatingTime,
+                                gaze.EndOriginatingTime,
                                 IndexCategories.GazeOnPeer,
                                 gazer,
                                 gazed,
@@ -457,10 +422,10 @@ namespace SAAC.CollaborationIndices
 
                         foreach (TimeData presence in entry.Value)
                         {
-                            bool isClosed = string.Equals(presence.text, "Out", StringComparison.OrdinalIgnoreCase);
+                            bool isClosed = string.Equals(presence.Text, "Out", StringComparison.OrdinalIgnoreCase);
                             intervals.Add(new InteractionInterval(
-                                presence.startOriginatingTime,
-                                isClosed ? presence.endOriginatingTime : DateTime.MaxValue,
+                                presence.StartOriginatingTime,
+                                isClosed ? presence.EndOriginatingTime : DateTime.MaxValue,
                                 IndexCategories.InArea,
                                 participantId,
                                 null,
@@ -505,12 +470,12 @@ namespace SAAC.CollaborationIndices
                         foreach (SpeakingTimeIDData speech in entry.Value)
                         {
                             intervals.Add(new InteractionInterval(
-                                speech.startOriginatingTime,
-                                speech.endOriginatingTime,
+                                speech.StartOriginatingTime,
+                                speech.EndOriginatingTime,
                                 IndexCategories.Speaking,
                                 map.ToParticipantId(speech.ID),
                                 null,
-                                speech.text ?? string.Empty));
+                                speech.Text ?? string.Empty));
                         }
                     }
 
@@ -588,9 +553,9 @@ namespace SAAC.CollaborationIndices
             this IProducer<PositionData> source,
             DeliveryPolicy<PositionData> deliveryPolicy = null)
         {
-            IProducer<Vector3> head = source.Select(p => ParseVector(p.headPos), deliveryPolicy);
-            IProducer<Vector3> left = source.Select(p => ParseVector(p.lHandPos), deliveryPolicy);
-            IProducer<Vector3> right = source.Select(p => ParseVector(p.rHandPos), deliveryPolicy);
+            IProducer<Vector3> head = source.Select(p => ParseVector(p.HeadPos), deliveryPolicy);
+            IProducer<Vector3> left = source.Select(p => ParseVector(p.LHandPos), deliveryPolicy);
+            IProducer<Vector3> right = source.Select(p => ParseVector(p.RHandPos), deliveryPolicy);
             return (head, left, right);
         }
 
@@ -616,17 +581,6 @@ namespace SAAC.CollaborationIndices
         // ------------------------------------------------------------------
         // Phases and gaze on avatars
         // ------------------------------------------------------------------
-
-        /// <summary>
-        /// Start of a phase: in the existing protocol a PuzzleStatus with no piece left marks
-        /// the beginning of the next puzzle.
-        /// </summary>
-        public static IProducer<bool> ToPhaseStart(this IProducer<PuzzleStatus> source, DeliveryPolicy<PuzzleStatus> deliveryPolicy = null)
-            => source.Where(status => status != null && status.currentPiecesNumber == 0, deliveryPolicy).Select(_ => true);
-
-        /// <summary>End of a phase: a PuzzleStatus with remaining pieces closes the current puzzle.</summary>
-        public static IProducer<bool> ToPhaseEnd(this IProducer<PuzzleStatus> source, DeliveryPolicy<PuzzleStatus> deliveryPolicy = null)
-            => source.Where(status => status != null && status.currentPiecesNumber != 0, deliveryPolicy).Select(_ => true);
 
         /// <summary>Boolean attention state of one participant, for AttentionLevelComponent.</summary>
         public static IProducer<bool> ToAttentionState(

@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Protocols.WSTrust;
 using System.Numerics;
 using Microsoft.Psi;
+using Microsoft.Psi.Data;
+using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
@@ -33,7 +36,7 @@ namespace SAAC.CollaborationIndices
         private readonly Dictionary<ParticipantPair, Emitter<double>> pairEmitters = new Dictionary<ParticipantPair, Emitter<double>>();
         private readonly IncrementalGridResampler resampler;
 
-        public PhysicalSynchronyComponent(Pipeline pipeline, PhysicalSynchronyConfiguration configuration, string name = nameof(PhysicalSynchronyComponent))
+        public PhysicalSynchronyComponent(Pipeline pipeline, DatasetPipeline server, PhysicalSynchronyConfiguration configuration, string name = nameof(PhysicalSynchronyComponent))
             : base(pipeline, configuration, name)
         {
             this.resampler = new IncrementalGridResampler(
@@ -43,15 +46,19 @@ namespace SAAC.CollaborationIndices
                 configuration.SamplingInterval,
                 configuration.MaxDelta);
 
+            this.SessionName = server.GetSession("RawDataPipelineProcess.000");
+
             this.Out = pipeline.CreateEmitter<Dictionary<ParticipantPair, double>>(this, $"{name}-PairSynchrony");
             this.PairCorrelationsOut = pipeline.CreateEmitter<Dictionary<ParticipantPair, double>>(this, $"{name}-PairCorrelation");
             this.SubsetSynchronyOut = pipeline.CreateEmitter<Dictionary<ParticipantSubset, double>>(this, $"{name}-SubsetSynchrony");
             this.GroupSynchronyOut = pipeline.CreateEmitter<double>(this, $"{name}-GroupSynchrony");
+            server.CreateConnectorAndStore($"{name}-GroupSynchrony", "LiveVisualization", this.SessionName, pipeline, this.GroupSynchronyOut.Type, this.GroupSynchronyOut, true);
 
             foreach (ParticipantPair pair in Combinatorics.Pairs(configuration.ParticipantIds))
             {
                 this.pairs.Add(pair);
                 this.pairEmitters[pair] = pipeline.CreateEmitter<double>(this, $"{name}-Synchrony-{pair}");
+                server.CreateConnectorAndStore($"{name}-Synchrony-{pair}", "LiveVisualization", this.SessionName, pipeline, this.pairEmitters[pair].Type, this.pairEmitters[pair], true);
             }
 
             if (configuration.ComputeSubsets && configuration.SubsetSize >= 3 && configuration.SubsetSize <= configuration.ParticipantIds.Count)
@@ -59,6 +66,8 @@ namespace SAAC.CollaborationIndices
                 this.subsets.AddRange(Combinatorics.Subsets(configuration.ParticipantIds, configuration.SubsetSize));
             }
         }
+
+        public Session SessionName;
 
         /// <summary>
         /// Normalized synchrony of every pair.

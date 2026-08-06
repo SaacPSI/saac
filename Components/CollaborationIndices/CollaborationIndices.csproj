@@ -76,13 +76,49 @@
     <Compile Include="Spatial\FFormationComponent.cs" />
     <Compile Include="Spatial\TimeInAreaComponent.cs" />
     <Compile Include="Task\TaskParticipationComponent.cs" />
+    <Compile Include="Verbal\SpeechProcessingComponent.cs" />
     <Compile Include="Verbal\TurnTakingComponent.cs" />
+    <Compile Include="Verbal\VadWhisperComponent.cs" />
     <Compile Include="Verbal\VerbalParticipationComponent.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Psi.Data">
+      <Version>0.19.100.1-beta</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.Psi.Runtime">
       <Version>0.19.100.1-beta-SAAC</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Psi.Speech.Windows">
+      <Version>0.19.100.1-beta</Version>
+    </PackageReference>
+    <PackageReference Include="Whisper.net">
+      <Version>1.8.1</Version>
+    </PackageReference>
+    <PackageReference Include="Whisper.net.Runtime">
+      <Version>1.8.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj">
+      <Project>{be76e9ce-2c9a-0ab3-2391-e6ea151c5cfb}</Project>
+      <Name>GlobalHelpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Helpers\Helpers.csproj">
+      <Project>{8675a25f-bfba-72db-db02-545d0c394994}</Project>
+      <Name>Helpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj">
+      <Project>{C44CB9D8-7ACA-BBE9-F91A-3E55EC538783}</Project>
+      <Name>PipelineServices</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PsiFormats\PsiFormats.csproj">
+      <Project>{92fc3405-d625-15a4-5138-a68a1adb5b3d}</Project>
+      <Name>PsiFormats</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Whisper\Whisper.csproj">
+      <Project>{596cbac8-50bc-59d7-c91b-648303f78514}</Project>
+      <Name>Whisper</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
