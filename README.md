@@ -45,6 +45,9 @@ Some files are shared across multiple applications (e.g., `UiGenerator.cs`). Dev
 * [Remote Exporter Modification](RemoteExporterModification.md)
 * [PsiStudio modifications](PsiStudioModifications.md)
 
+## Discord
+[Server](https://discord.gg/nMAn72V6a)
+
 ## Roadmap
 Developping generic applications
 
