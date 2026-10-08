@@ -27,6 +27,7 @@ This page provides an overview of all components available in the SAAC framework
 
 ### 👥 Social & Group Analysis
 - [Groups](Groups-Component.md) - Group dynamics and flock behavior detection
+- [CollaborationIndices](CollaborationIndices-Component.md) - Collaboration indicators on a sliding window, and collaboration score
 
 ### 🗣️ Speech & Audio Processing
 - [Whisper](Whisper-Component.md) - OpenAI Whisper speech-to-text
