@@ -98,6 +98,7 @@ namespace SAAC.PipelineServices
                 if (!this.Stores[session.Name].ContainsKey(streamMetadata.StoreName))
                 {
                     store = PsiStore.Open(this.pipeline, streamMetadata.StoreName, streamMetadata.StorePath);
+                    this.RegisterOverriddenTypes(store, partition);
                     this.Stores[session.Name].Add(streamMetadata.StoreName, store);
                 }
                 else
@@ -134,7 +135,58 @@ namespace SAAC.PipelineServices
             { "FusionDll.PieceStatus", typeof(SAAC.PsiFormats.PieceStatus) },
 
             // { "FusionDll.ObjectGazeEvent", typeof(SAAC.PsiFormats.ObjectGazeEvent) },
+
+            // The raw streams of the sessions recorded with the SerializableClass assembly,
+            // read with the PsiFormats types that have the same fields. The types they
+            // contain are listed too: a store keeps the name of each of them.
+            { "SerializableClass.PieceStatus", typeof(SAAC.PsiFormats.PieceStatus) },
+            { "SerializableClass.ObjectGazeEvent", typeof(SAAC.PsiFormats.ObjectGazeEvent) },
+            { "SerializableClass.IDs", typeof(SAAC.PsiFormats.IDs) },
+            { "SerializableClass.State", typeof(SAAC.PsiFormats.State) },
+            { "SerializableClass.Location", typeof(SAAC.PsiFormats.Location) },
         };
+
+        // Namespaces whose overridden names are also mapped inside the stores that use them.
+        private readonly HashSet<string> NamespacesMappedInStores = new() { "SerializableClass" };
+
+        /// <summary>
+        /// A store keeps the assembly qualified name of its types. Before any stream of the
+        /// store is opened, the recorded names that have an override are mapped onto the
+        /// replacing types, so that the messages are read as these types.
+        /// </summary>
+        private void RegisterOverriddenTypes(PsiImporter store, IPartition partition)
+        {
+            foreach (string persistedTypeName in partition.AvailableStreams.Select(stream => stream.TypeName).Distinct())
+            {
+                // "SerializableClass.PieceStatus" and ", SerializableClass, Version=1.0.0.0, ..."
+                int separator = persistedTypeName.IndexOf(',');
+                if (separator < 0 || Type.GetType(persistedTypeName) != null)
+                {
+                    continue;
+                }
+
+                string fullName = persistedTypeName.Substring(0, separator).Trim();
+                string assembly = persistedTypeName.Substring(separator);
+                int lastDot = fullName.LastIndexOf('.');
+                if (lastDot < 0 || !this.TypeNameOverrides.ContainsKey(fullName) || !this.NamespacesMappedInStores.Contains(fullName.Substring(0, lastDot)))
+                {
+                    continue;
+                }
+
+                string prefix = fullName.Substring(0, lastDot + 1);
+                foreach (var entry in this.TypeNameOverrides.Where(entry => entry.Key.StartsWith(prefix)))
+                {
+                    try
+                    {
+                        store.Serializers.Register(entry.Value, entry.Key + assembly);
+                    }
+                    catch (Exception)
+                    {
+                        // Already mapped for this store by another stream.
+                    }
+                }
+            }
+        }
 
         private Type ResolveType(string persistedTypeName)
         {
