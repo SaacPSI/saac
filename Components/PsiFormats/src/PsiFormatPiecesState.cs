@@ -5,12 +5,12 @@ namespace SAAC.PsiFormats
 {
     public class PsiFormatPiecesState
     {
-        public Format<PieceStatus> GetFormat()
+        public static Format<PieceStatus> GetFormat()
         {
             return new Format<PieceStatus>(WritePieceState, ReadPieceState);
         }
 
-        public void WritePieceState(PieceStatus pieceStatus, BinaryWriter writer)
+        public static void WritePieceState(PieceStatus pieceStatus, BinaryWriter writer)
         {
             writer.Write(pieceStatus.userID);
             writer.Write(pieceStatus.objectID);
@@ -20,7 +20,7 @@ namespace SAAC.PsiFormats
             writer.Write((int)pieceStatus.currentLocation);
         }
 
-        public PieceStatus ReadPieceState(BinaryReader reader)
+        public static PieceStatus ReadPieceState(BinaryReader reader)
         {
             int userID = reader.ReadInt32();
             string objectID = reader.ReadString();
