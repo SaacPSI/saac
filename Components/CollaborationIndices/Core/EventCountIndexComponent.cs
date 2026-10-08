@@ -145,6 +145,13 @@ namespace SAAC.CollaborationIndices
             return totals;
         }
 
+        /// <summary>
+        /// Raw group value, before normalization. By default the aggregation of the individual
+        /// values; overridden when the group is not a function of them (distinct episodes).
+        /// </summary>
+        protected virtual double ComputeGroupRaw(Dictionary<uint, double> individualRaw, DateTime currentTime)
+            => Aggregate(individualRaw.Values, this.configuration.GroupAggregation);
+
         /// <summary>Hook called after the standard outputs have been posted.</summary>
         protected virtual void OnComputed(Dictionary<uint, double> individualRaw, DateTime originatingTime)
         {
@@ -186,7 +193,7 @@ namespace SAAC.CollaborationIndices
 
             if (this.configuration.Levels.HasFlag(IndexLevel.Group))
             {
-                double aggregated = Aggregate(individualRaw.Values, this.configuration.GroupAggregation);
+                double aggregated = this.ComputeGroupRaw(individualRaw, originatingTime);
                 this.GroupOut.Post(this.configuration.GroupOrDefault.Normalize(aggregated), originatingTime);
             }
 

@@ -1,630 +1,206 @@
+// <copyright file="SlidingAverageComputation.cs" company="SAAC">
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Psi;
-using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
     /// <summary>
-    /// Calibration of an index: the reference value (typically the P95 measured on a corpus)
-    /// that should map to ReferenceScore once normalized.
-    /// Replaces the alpha1..alpha12bis fields and the DefineAlpha switch of the legacy class.
-    /// </summary>
-    public class IndexCalibration
-    {
-        public Dictionary<string, double> ReferenceValues { get; set; } = new Dictionary<string, double>();
-
-        public double ReferenceScore { get; set; } = 0.95;
-
-        public IIndexNormalizer NormalizerFor(string indexName)
-        {
-            if (this.ReferenceValues != null && this.ReferenceValues.TryGetValue(indexName, out double reference) && reference > 0)
-            {
-                return ExponentialSaturationNormalizer.FromReference(reference, this.ReferenceScore);
-            }
-
-            return new IdentityNormalizer();
-        }
-
-        /// <summary>
-        /// Calibration measured on the 27 session corpus, for a 30 s window.
-        /// The keys are the index names used by SlidingAverageComputation.
-        /// </summary>
-        public static IndexCalibration Threshold20Seconds() => new IndexCalibration
-        {
-            ReferenceValues = new Dictionary<string, double>
-            {
-                { IndexNames.JointVisualAttention, 8 },
-                { IndexNames.JointVisualAttentionPair, 5 },
-                { IndexNames.GazeOnPeers, 7 },
-                { IndexNames.TaskParticipation, 18 },
-                { IndexNames.Formation, 4 },
-                { IndexNames.Movement, 0.041 },
-                { IndexNames.VerbalParticipation, 20 },
-                { IndexNames.TurnTakingWithOverlap, 2 },
-                { IndexNames.TurnTakingWithoutOverlap, 4 },
-                { IndexNames.TurnTakingWithoutOverlapPair, 3 },
-            },
-        };
-
-        public static IndexCalibration Threshold30Seconds() => new IndexCalibration
-        {
-            ReferenceValues = new Dictionary<string, double>
-            {
-                { IndexNames.JointVisualAttention, 11 },
-                { IndexNames.JointVisualAttentionPair, 8 },
-                { IndexNames.GazeOnPeers, 10 },
-                { IndexNames.TaskParticipation, 27 },
-                { IndexNames.Formation, 5 },
-                { IndexNames.Movement, 0.041 },
-                { IndexNames.VerbalParticipation, 30 },
-                { IndexNames.TurnTakingWithOverlap, 2 },
-                { IndexNames.TurnTakingWithoutOverlap, 5 },
-                { IndexNames.TurnTakingWithoutOverlapPair, 4 },
-            },
-        };
-
-        public static IndexCalibration Threshold45Seconds() => new IndexCalibration
-        {
-            ReferenceValues = new Dictionary<string, double>
-            {
-                { IndexNames.JointVisualAttention, 18 },
-                { IndexNames.JointVisualAttentionPair, 11 },
-                { IndexNames.GazeOnPeers, 14 },
-                { IndexNames.TaskParticipation, 32 },
-                { IndexNames.Formation, 8 },
-                { IndexNames.Movement, 0.037 },
-                { IndexNames.VerbalParticipation, 45 },
-                { IndexNames.TurnTakingWithOverlap, 3 },
-                { IndexNames.TurnTakingWithoutOverlap, 5 },
-                { IndexNames.TurnTakingWithoutOverlapPair, 3 },
-            },
-        };
-
-        /// <summary>
-        /// Calibration matching a window duration. The calibration and the window must always
-        /// be chosen together: a P95 measured on 20 s means nothing on a 45 s window, and using
-        /// the wrong one silently compresses or stretches every normalized score.
-        /// Windows without a measured calibration fall back to the closest one.
-        /// </summary>
-        public static IndexCalibration ForWindow(TimeSpan window)
-        {
-            int seconds = (int)Math.Round(window.TotalSeconds);
-            switch (seconds)
-            {
-                case 20:
-                    return Threshold20Seconds();
-                case 30:
-                    return Threshold30Seconds();
-                case 45:
-                    return Threshold45Seconds();
-                default:
-                    return seconds < 25 ? Threshold20Seconds() : (seconds < 35 ? Threshold30Seconds() : Threshold45Seconds());
-            }
-        }
-    }
-
-    /// <summary>Names of the indices, shared by the calibration, the fusion and the export.</summary>
-    public static class IndexNames
-    {
-        public const string Movement = "Movement";
-        public const string Synchrony = "Synchrony";
-        public const string VerbalParticipation = "VerbalParticipation";
-        public const string SpeechEquality = "SpeechEquality";
-        public const string TaskParticipation = "TaskParticipation";
-        public const string TaskEquality = "TaskEquality";
-        public const string TurnTakingWithOverlap = "TurnTakingWithOverlap";
-        public const string TurnTakingWithoutOverlap = "TurnTakingWithoutOverlap";
-        public const string TurnTakingWithoutOverlapPair = "TurnTakingWithoutOverlapPair";
-        public const string Overlap = "Overlap";
-        public const string JointVisualAttention = "JointVisualAttention";
-        public const string JointVisualAttentionPair = "JointVisualAttentionPair";
-        public const string GazeOnPeers = "GazeOnPeers";
-        public const string Formation = "Formation";
-        public const string Proximity = "Proximity";
-        public const string TimeInArea = "TimeInArea";
-        public const string AttentionLevel = "AttentionLevel";
-        public const string CollaborationScore = "CollaborationScore";
-    }
-
-    /// <summary>
-    /// Configuration of the whole indicator pipeline. One object replaces the dozen of
-    /// scattered fields of SlidingAverageSpeechConfiguration.
-    /// </summary>
-    public class SlidingAverageConfiguration
-    {
-        /// <summary>Participants of the session. Any number, contiguous or not.</summary>
-        public List<uint> ParticipantIds { get; set; } = new List<uint> { 0, 1, 2 };
-
-        /// <summary>Sliding window of every index (the legacy threshold, in milliseconds).</summary>
-        public TimeSpan WindowDuration { get; set; } = TimeSpan.FromSeconds(30);
-
-        /// <summary>Publication period of the indices.</summary>
-        public TimeSpan ComputationInterval { get; set; } = TimeSpan.FromSeconds(1);
-
-        /// <summary>Period of the fast clock used by the attention accumulator.</summary>
-        public TimeSpan AttentionInterval { get; set; } = TimeSpan.FromMilliseconds(50);
-
-        public IndexCalibration Calibration { get; set; } = IndexCalibration.Threshold20Seconds();
-
-        /// <summary>Areas of the environment tracked by the spatial indices.</summary>
-        public List<string> Areas { get; set; } = new List<string>();
-
-        /// <summary>Areas whose group occupancy is aggregated (planning area).</summary>
-        public List<string> PlanningAreas { get; set; } = new List<string>();
-
-        /// <summary>Body parts used by the activity level.</summary>
-        public List<string> ActivityBodyParts { get; set; } = new List<string> { BodyPartNames.Head, BodyPartNames.LeftHand, BodyPartNames.RightHand };
-
-        /// <summary>Body parts used by the synchrony.</summary>
-        public List<string> SynchronyBodyParts { get; set; } = new List<string> { BodyPartNames.Head };
-
-        /// <summary>Destination of the CSV export. Null disables it.</summary>
-        public TextWriter IndicesWriter { get; set; }
-
-        /// <summary>Enables the components that are only relevant for a scripted task.</summary>
-        public bool UseTaskIndices { get; set; } = true;
-
-        public bool UseSpatialIndices { get; set; } = true;
-
-        public bool UseVerbalIndices { get; set; } = true;
-
-        public bool UsePhysicalIndices { get; set; } = true;
-
-        public bool UseVisualIndices { get; set; } = true;
-
-        public bool ComputeCollaborationScores { get; set; } = true;
-
-        public bool GenerateGraph { get; set; } = true;
-
-        /// <summary>
-        /// If true, the instance creates its own clock generators. Set it to false when several
-        /// instances run side by side, and drive ClockIn and AttentionClockIn from a single
-        /// shared generator: two generators of the same period produce two slightly different
-        /// tick sequences, which would make the instances impossible to compare row by row.
-        /// </summary>
-        public bool UseInternalClock { get; set; } = true;
-
-        /// <summary>Deep enough copy to give another instance an independent configuration.</summary>
-        public SlidingAverageConfiguration Clone() => new SlidingAverageConfiguration
-        {
-            ParticipantIds = new List<uint>(this.ParticipantIds),
-            WindowDuration = this.WindowDuration,
-            ComputationInterval = this.ComputationInterval,
-            AttentionInterval = this.AttentionInterval,
-            Calibration = this.Calibration,
-            Areas = new List<string>(this.Areas),
-            PlanningAreas = new List<string>(this.PlanningAreas),
-            ActivityBodyParts = new List<string>(this.ActivityBodyParts),
-            SynchronyBodyParts = new List<string>(this.SynchronyBodyParts),
-            IndicesWriter = this.IndicesWriter,
-            UseTaskIndices = this.UseTaskIndices,
-            UseSpatialIndices = this.UseSpatialIndices,
-            UseVerbalIndices = this.UseVerbalIndices,
-            UseVisualIndices = this.UseVisualIndices,
-            UsePhysicalIndices = this.UsePhysicalIndices,
-            UseInternalClock = this.UseInternalClock,
-            ComputeCollaborationScores = this.ComputeCollaborationScores,
-            GenerateGraph = this.GenerateGraph,
-        };
-    }
-
-    /// <summary>
-    /// Orchestrator of the collaboration indices. It is not a computing class any more: it
-    /// instantiates the indicator components, connects them to each other and exposes their
-    /// outputs. All the computation lives in the components, which are independently testable
-    /// and reusable in another study.
+    /// A set of collaboration indices computed on a sliding window, as built by
+    /// <see cref="CollaborationIndicesBuilder"/>.
     ///
-    /// What used to be one class of about three thousand lines, tied to three participants,
-    /// is now roughly two hundred lines of wiring over a dozen generic components.
+    /// This class knows no indicator in particular. It creates the phase gate, asks each
+    /// declared indicator to build itself, and wires the score, the graph and the export from
+    /// what the indicators declared. Which indices exist, what they need and what they publish
+    /// is decided by the builder and by the indicators, never here.
     ///
-    /// Connect the raw streams with the adapters of IndexAdapters, then connect the phase
-    /// boundaries; everything else is internal.
+    /// Once built: connect the raw streams to the inputs of the indicators
+    /// (<c>Get(Indicators.Movement).Component.GetPositionInput(...)</c>), a clock to
+    /// <see cref="ClockIn"/> unless the builder was given one, and the phase boundaries to
+    /// <see cref="Gate"/> if phases are required.
     /// </summary>
-    public class SlidingAverageComputation
+    public partial class SlidingAverageComputation
     {
         private readonly Pipeline pipeline;
-        private readonly SlidingAverageConfiguration configuration;
+        private readonly IndicesBuildState state;
 
-        public SlidingAverageComputation(Pipeline pipeline, DatasetPipeline server , SlidingAverageConfiguration configuration, string name = nameof(SlidingAverageComputation))
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SlidingAverageComputation"/> class.
+        /// </summary>
+        /// <param name="blueprint">Declaration coming from the builder.</param>
+        internal SlidingAverageComputation(CollaborationIndicesBlueprint blueprint)
         {
-            this.pipeline = pipeline;
-            this.configuration = configuration;
-            var participants = configuration.ParticipantIds;
-            var calibration = configuration.Calibration;
+            List<string> errors = blueprint.Validate(out List<ICollaborationIndicator> indicators);
+            if (errors.Count > 0)
+            {
+                throw new CollaborationIndicesConfigurationException(errors);
+            }
+
+            this.pipeline = blueprint.Pipeline;
+            this.Name = blueprint.Name;
+            this.WindowDuration = blueprint.WindowDuration;
+            this.ComputationInterval = blueprint.ComputationInterval;
+
+            this.state = new IndicesBuildState(
+                blueprint.Pipeline,
+                blueprint.Name,
+                new List<uint>(blueprint.ParticipantIds),
+                blueprint.ComputationInterval,
+                blueprint.EffectiveCalibration,
+                blueprint.Store,
+                indicators);
 
             // ---------- Clock and phase gating ----------
-            this.Gate = new PhaseGateComponent(pipeline, new PhaseGateConfiguration
-            {
-                WarmUpDuration = configuration.WindowDuration,
-                TickInterval = configuration.ComputationInterval,
-            }, $"{name}-Gate");
+            // The gate stays closed until the longest window is filled with data of the phase.
+            TimeSpan warmUp = indicators.Select(indicator => indicator.Options.WindowDuration ?? blueprint.WindowDuration).Max();
 
-            if (configuration.UseInternalClock)
-            {
-                Generators.Repeat(pipeline, true, configuration.ComputationInterval).PipeTo(this.Gate.ClockIn);
-            }
-
-            // ---------- Physical ----------
-            this.ActivityLevel = new PhysicalActivityLevelComponent(pipeline, server, new PhysicalActivityLevelConfiguration
-            {
-                ParticipantIds = participants,
-                BodyParts = configuration.ActivityBodyParts,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = TimeSpan.Zero,
-                AdditionalWindows = new List<TimeSpan> { TimeSpan.FromSeconds(5) },
-                ComputeOnDataReception = true,
-            }, $"{name}-ActivityLevel");
-
-            this.Synchrony = new PhysicalSynchronyComponent(pipeline, server, new PhysicalSynchronyConfiguration
-            {
-                ParticipantIds = participants,
-                BodyParts = configuration.SynchronyBodyParts,
-                WindowDuration = configuration.WindowDuration,
-                ComputationInterval = TimeSpan.Zero,
-                ComputeSubsets = participants.Count >= 3,
-                SubsetSize = 3,
-                ComputeOnDataReception = true,
-            }, $"{name}-Synchrony");
-
-            // ---------- Verbal ----------
-            if (configuration.UseVerbalIndices)
-            {
-                this.VerbalParticipation = new VerbalParticipationComponent(pipeline, new VerbalParticipationConfiguration
+            this.Gate = new PhaseGateComponent(
+                this.pipeline,
+                new PhaseGateConfiguration
                 {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                }, $"{name}-VerbalParticipation");
-
-                this.SpeechEquality = new EqualityIndexComponent(pipeline, new EqualityIndexConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    SubsetSize = participants.Count >= 3 ? 3 : 0,
-                }, $"{name}-SpeechEquality");
-
-                this.TurnTaking = new TurnTakingComponent(pipeline, new TurnTakingConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                    CategoryNormalizers = new Dictionary<string, IIndexNormalizer>
-                {
-                    { IndexCategories.TurnTakingWithOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithOverlap) },
-                    { IndexCategories.TurnTakingWithoutOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithoutOverlap) },
+                    WarmUpDuration = warmUp,
+                    TickInterval = blueprint.ComputationInterval,
+                    RequirePhase = blueprint.RequirePhase,
+                    LogTransitions = blueprint.LogGateTransitions,
                 },
-                    PairNormalizers = new Dictionary<string, IIndexNormalizer>
-                {
-                    { IndexCategories.TurnTakingWithoutOverlap, calibration.NormalizerFor(IndexNames.TurnTakingWithoutOverlapPair) },
-                },
-                }, $"{name}-TurnTaking");
+                $"{this.Name}-Gate");
+
+            this.state.Gate = this.Gate;
+
+            IProducer<bool>? clock = blueprint.ClockStream
+                ?? blueprint.ClockFactory?.Invoke(blueprint.ComputationInterval)
+                ?? (blueprint.UseInternalClock ? Generators.Repeat(this.pipeline, true, blueprint.ComputationInterval) : null);
+            clock?.PipeTo(this.Gate.ClockIn);
+
+            // ---------- Indicators ----------
+            // Each one creates its components and declares its clock and its outputs.
+            foreach (ICollaborationIndicator indicator in indicators)
+            {
+                TimeSpan window = indicator.Options.WindowDuration ?? blueprint.WindowDuration;
+                indicator.Build(new IndicatorBuildContext(this.state, indicator, window));
             }
 
-            // ---------- Gaze ----------
-            if (configuration.UseVisualIndices)
-            {
-                this.JointVisualAttention = new JointVisualAttentionComponent(pipeline, new JointVisualAttentionConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                    GroupNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttention),
-                    PairNormalizer = calibration.NormalizerFor(IndexNames.JointVisualAttentionPair),
-                }, $"{name}-JVA");
+            // ---------- One snapshot per tick ----------
+            // The score, the graph and the export all read the indices of a tick from the same
+            // message, so they cannot disagree on which value belongs to which tick.
+            this.Snapshots = new IndexSnapshotAssembler(
+                this.pipeline,
+                new IndexSnapshotAssemblerConfiguration { MaximumPendingTicks = blueprint.MaximumPendingTicks },
+                $"{this.Name}-Snapshot");
 
-                this.GazeOnPeers = new GazeOnPeersComponent(pipeline, new GazeOnPeersConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                    GroupNormalizer = calibration.NormalizerFor(IndexNames.GazeOnPeers),
-                }, $"{name}-GazeOnPeers");
-            }
+            this.Gate.Out.PipeTo(this.Snapshots.TickIn);
+            this.ConnectOutputs();
 
-            this.AttentionLevel = new AttentionLevelComponent(pipeline, new AttentionLevelConfiguration
-            {
-                ParticipantIds = participants,
-                Step = configuration.AttentionInterval,
-            }, $"{name}-AttentionLevel");
-
-            if (configuration.UseInternalClock)
-            {
-                Generators.Repeat(pipeline, true, configuration.AttentionInterval).PipeTo(this.AttentionLevel.TickIn);
-            }
-
-            // ---------- Task ----------
-            if (configuration.UseTaskIndices)
-            {
-                this.TaskParticipation = new TaskParticipationComponent(pipeline, new TaskParticipationConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                    GroupNormalizer = calibration.NormalizerFor(IndexNames.TaskParticipation),
-                }, $"{name}-TaskParticipation");
-
-                this.TaskEquality = new EqualityIndexComponent(pipeline, new EqualityIndexConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    SubsetSize = participants.Count >= 3 ? 3 : 0,
-                }, $"{name}-TaskEquality");
-            }
-
-            // ---------- Spatial ----------
-            if (configuration.UseSpatialIndices)
-            {
-                this.TimeInArea = new TimeInAreaComponent(pipeline, new TimeInAreaConfiguration
-                {
-                    ParticipantIds = participants,
-                    Areas = configuration.Areas,
-                    GroupAggregatedAreas = configuration.PlanningAreas,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                }, $"{name}-TimeInArea");
-
-                this.FFormation = new FFormationComponent(pipeline, new FFormationConfiguration
-                {
-                    ParticipantIds = participants,
-                    WindowDuration = configuration.WindowDuration,
-                    ComputationInterval = configuration.ComputationInterval,
-                    GroupNormalizer = calibration.NormalizerFor(IndexNames.Formation),
-                    PairNormalizer = calibration.NormalizerFor(IndexNames.Formation),
-                    SubsetSize = participants.Count >= 3 ? 3 : 0,
-                }, $"{name}-FFormation");
-
-                this.Proximity = new ProximityComponent(pipeline, new ProximityConfiguration
-                {
-                    ParticipantIds = participants,
-                    ComputationInterval = configuration.ComputationInterval,
-                }, $"{name}-Proximity");
-            }
-
-            // ---------- Dominance ----------
-            if (configuration.UseVerbalIndices)
-            {
-                this.TalkingMost = this.CreateDominance($"{name}-TalkingMost", participants);
-            } // Speech Equality
-
-            if (configuration.UseTaskIndices)
-            {
-                this.TaskingMost = this.CreateDominance($"{name}-TaskingMost", participants);
-            } // Task Equality
+            IProducer<IndexSnapshot> snapshots = this.Snapshots;
 
             // ---------- Fusion ----------
-            if (configuration.ComputeCollaborationScores)
+            if (blueprint.ComputeScore)
             {
-                this.CollaborationScore = new CollaborationScoreComponent(pipeline, new CollaborationScoreConfiguration
+                var scoreConfiguration = new CollaborationScoreConfiguration
                 {
-                    ParticipantIds = participants,
-                    Dimensions = DefaultDimensions(),
-                }, $"{name}-CollaborationScore");
-            } // Collaboration Scores
+                    ParticipantIds = new List<uint>(blueprint.ParticipantIds),
+                    Dimensions = blueprint.EffectiveDimensions,
+                };
 
-            if (configuration.GenerateGraph)
-            {
-                this.Graph = new InteractionGraphComponent(pipeline, new InteractionGraphConfiguration
-                {
-                    ParticipantIds = participants,
-                }, $"{name}-Graph");
-            } // Generate Graph
+                blueprint.ConfigureScore?.Invoke(scoreConfiguration);
 
-            if (configuration.IndicesWriter != null)
-            {
-                this.Export = new IndexExportComponent(pipeline, new IndexExportConfiguration
-                {
-                    Writer = configuration.IndicesWriter,
-                    Columns = DefaultExportColumns(participants),
-                }, $"{name}-Export");
+                this.CollaborationScore = new CollaborationScoreComponent(this.pipeline, scoreConfiguration, $"{this.Name}-CollaborationScore");
+                snapshots.PipeTo(this.CollaborationScore.SnapshotIn);
+                snapshots = this.CollaborationScore.SnapshotOut;
             }
 
-            this.ConnectInternals();
+            if (blueprint.GenerateGraph)
+            {
+                var graphConfiguration = new InteractionGraphConfiguration
+                {
+                    ParticipantIds = new List<uint>(blueprint.ParticipantIds),
+                    NodeMetrics = NamesFor(this.Outputs.Individuals, IndexUsage.Graph),
+                    EdgeMetrics = NamesFor(this.Outputs.Pairs, IndexUsage.Graph),
+                    DirectedEdgeMetrics = NamesFor(this.Outputs.DirectedPairs, IndexUsage.Graph),
+                    GroupMetrics = NamesFor(this.Outputs.Groups, IndexUsage.Graph).Concat(new[] { IndexNames.CollaborationScore }).ToList(),
+                };
+
+                blueprint.ConfigureGraph?.Invoke(graphConfiguration);
+
+                this.Graph = new InteractionGraphComponent(this.pipeline, graphConfiguration, $"{this.Name}-Graph");
+                snapshots.PipeTo(this.Graph.SnapshotIn);
+            }
+
+            if (blueprint.Export)
+            {
+                TextWriter writer = blueprint.ExportWriter ?? this.OpenExportFile(blueprint.ExportPath!);
+
+                var exportConfiguration = new IndexExportConfiguration
+                {
+                    Writer = writer,
+                    Columns = blueprint.ExportColumns ?? this.DefaultExportColumns(blueprint.ComputeScore ? blueprint.EffectiveDimensions : null),
+                };
+
+                blueprint.ConfigureExport?.Invoke(exportConfiguration);
+
+                this.Export = new IndexExportComponent(this.pipeline, exportConfiguration, $"{this.Name}-Export");
+                snapshots.PipeTo(this.Export.SnapshotIn);
+            }
+
+            this.SnapshotOut = snapshots;
         }
 
-        // ---------- Components, exposed so that raw streams can be connected ----------
+        /// <summary>Gets the name of the instance, prefix of every component and stream name.</summary>
+        public string Name { get; }
+
+        /// <summary>Gets the window of this instance, useful to label its outputs and its store.</summary>
+        public TimeSpan WindowDuration { get; }
+
+        /// <summary>Gets the publication period of the indices.</summary>
+        public TimeSpan ComputationInterval { get; }
+
+        /// <summary>Gets the participants of the session.</summary>
+        public IReadOnlyList<uint> ParticipantIds => this.state.ParticipantIds;
+
+        /// <summary>Gets the phase gate: connect the phase boundaries to its PhaseStartIn and PhaseEndIn.</summary>
         public PhaseGateComponent Gate { get; }
 
-        /// <summary>Clock of the windowed indices. Connect it when UseInternalClock is false.</summary>
+        /// <summary>Gets the clock of the windowed indices. Connect it unless the builder was given a clock.</summary>
         public Receiver<bool> ClockIn => this.Gate.ClockIn;
 
-        /// <summary>Clock of the attention accumulator. Connect it when UseInternalClock is false.</summary>
-        public Receiver<bool> AttentionClockIn => this.AttentionLevel.TickIn;
+        /// <summary>Gets the indicators of the instance, each one after those it depends on.</summary>
+        public IReadOnlyList<ICollaborationIndicator> Indicators => this.state.Indicators;
 
-        /// <summary>Window of this instance, useful to label its outputs and its store.</summary>
-        public TimeSpan WindowDuration => this.configuration.WindowDuration;
+        /// <summary>Gets every output declared by the indicators, by level and by name.</summary>
+        public IndicatorOutputs Outputs => this.state.Outputs;
 
-        public PhysicalActivityLevelComponent ActivityLevel { get; }
-
-        public PhysicalSynchronyComponent Synchrony { get; }
-
-        public VerbalParticipationComponent VerbalParticipation { get; }
-
-        public EqualityIndexComponent SpeechEquality { get; }
-
-        public TurnTakingComponent TurnTaking { get; }
-
-        public JointVisualAttentionComponent JointVisualAttention { get; }
-
-        public GazeOnPeersComponent GazeOnPeers { get; }
-
-        public AttentionLevelComponent AttentionLevel { get; }
-
-        public TaskParticipationComponent TaskParticipation { get; }
-
-        public EqualityIndexComponent TaskEquality { get; }
-
-        public TimeInAreaComponent TimeInArea { get; }
-
-        public FFormationComponent FFormation { get; }
-
-        public ProximityComponent Proximity { get; }
-
-        public DominanceIdentityComponent TalkingMost { get; }
-
-        public DominanceIdentityComponent TaskingMost { get; }
-
-        public CollaborationScoreComponent CollaborationScore { get; }
-
-        public InteractionGraphComponent Graph { get; }
-
-        public IndexExportComponent Export { get; }
-
-        /// <summary>Complete state of the interaction at every tick.</summary>
-        public IProducer<InteractionGraph> Out => this.Graph;
-
-        private DominanceIdentityComponent CreateDominance(string name, List<uint> participants)
-            => new DominanceIdentityComponent(this.pipeline, new DominanceIdentityConfiguration { ParticipantIds = participants }, name);
+        /// <summary>Gets the component gathering the indices of each tick.</summary>
+        public IndexSnapshotAssembler Snapshots { get; }
 
         /// <summary>
-        /// Wiring between the components. This is the only place where the dependencies
-        /// between the indices are expressed.
+        /// Gets every index of each tick in a single message, completed with the collaboration
+        /// score when it is computed. The simplest stream to consume downstream.
         /// </summary>
-        private void ConnectInternals()
-        {
-            // The gate paces every windowed component.
-            if (this.configuration.UsePhysicalIndices)
-            {
-                this.Gate.Out.PipeTo(this.ActivityLevel.TickIn);
-                this.Gate.Out.PipeTo(this.Synchrony.TickIn);
-            }
+        public IProducer<IndexSnapshot> SnapshotOut { get; }
 
-            if (this.configuration.UseVerbalIndices)
-            {
-                this.Gate.Out.PipeTo(this.VerbalParticipation.TickIn);
-                this.Gate.Out.PipeTo(this.TurnTaking.TickIn);
-            }
+        /// <summary>Gets the collaboration score, or null when the builder did not ask for it.</summary>
+        public CollaborationScoreComponent? CollaborationScore { get; }
 
-            if (this.configuration.UseVisualIndices)
-            {
-                this.Gate.Out.PipeTo(this.JointVisualAttention.TickIn);
-                this.Gate.Out.PipeTo(this.GazeOnPeers.TickIn);
-            }
+        /// <summary>Gets the interaction graph, or null when the builder did not ask for it.</summary>
+        public InteractionGraphComponent? Graph { get; }
 
-            if (this.TaskParticipation != null)
-            {
-                this.TaskParticipation?.TickIn.PipeFrom(this.Gate.Out);
-            }
+        /// <summary>Gets the CSV export, or null when the builder did not ask for it.</summary>
+        public IndexExportComponent? Export { get; }
 
-            if (this.configuration.UseSpatialIndices)
-            {
-                this.TimeInArea?.TickIn.PipeFrom(this.Gate.Out);
-                this.FFormation?.TickIn.PipeFrom(this.Gate.Out);
-                this.Proximity?.TickIn.PipeFrom(this.Gate.Out);
-            }
-
-            // Equality and dominance derive from the participation distributions.
-            if (this.configuration.UseVerbalIndices)
-            {
-                this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.SpeechEquality.In);
-                this.VerbalParticipation.SpeakingTimesOut.PipeTo(this.TalkingMost.In);
-            }
-
-            if (this.TaskParticipation != null)
-            {
-                this.TaskParticipation.RawIndividualOut.PipeTo(this.TaskEquality.In);
-                this.TaskParticipation.RawIndividualOut.PipeTo(this.TaskingMost.In);
-            }
-
-            // Fusion of the group level indices.
-            if (this.configuration.UsePhysicalIndices)
-            {
-                this.ActivityLevel.GroupActivityLevelOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Movement));
-                this.Synchrony.GroupSynchronyOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Synchrony));
-            }
-
-            if (this.configuration.UseVerbalIndices)
-            {
-                this.VerbalParticipation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.VerbalParticipation));
-                this.TurnTaking.GetGroupEmitter(IndexCategories.TurnTakingWithoutOverlap).PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.TurnTakingWithoutOverlap));
-            }
-
-            if (this.configuration.UseVerbalIndices)
-            {
-                this.JointVisualAttention.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.JointVisualAttention));
-                this.GazeOnPeers.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.GazeOnPeers));
-
-                // An equality index only makes sense when the group is active enough; the
-                // validity flag excludes it from its dimension instead of biasing the score.
-                this.SpeechEquality.Out
-                    .Select(gini => 1.0 - gini)
-                    .PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.SpeechEquality));
-                this.VerbalParticipation.EqualityUsableOut.PipeTo(this.CollaborationScore.GetValidityInput(IndexNames.SpeechEquality));
-            }
-
-            if (this.TaskParticipation != null)
-            {
-                this.TaskParticipation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.TaskParticipation));
-                this.TaskEquality.Out
-                    .Select(gini => 1.0 - gini)
-                    .PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.TaskEquality));
-            }
-
-            if (this.FFormation != null)
-            {
-                this.FFormation.GroupOut.PipeTo(this.CollaborationScore.GetIndexInput(IndexNames.Formation));
-            }
-
-            if (this.configuration.GenerateGraph)
-            {
-                this.ActivityLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.Movement));
-                this.VerbalParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.VerbalParticipation));
-                this.AttentionLevel.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.AttentionLevel));
-                this.Synchrony.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Synchrony));
-                this.SpeechEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.SpeechEquality));
-                this.JointVisualAttention.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.JointVisualAttention));
-                this.GazeOnPeers.DirectedPairOut.PipeTo(this.Graph.GetDirectedEdgeMetricInput(IndexNames.GazeOnPeers));
-                this.CollaborationScore.Out.PipeTo(this.Graph.GetGroupMetricInput(IndexNames.CollaborationScore));
-
-                if (this.TaskParticipation != null)
-                {
-                    this.TaskParticipation.Out.PipeTo(this.Graph.GetNodeMetricInput(IndexNames.TaskParticipation));
-                    this.TaskEquality.PairOut.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.TaskEquality));
-                }
-
-                if (this.Proximity != null)
-                {
-                    this.Proximity.Out.PipeTo(this.Graph.GetEdgeMetricInput(IndexNames.Proximity));
-                }
-            } // Interaction graph
-
-            if (this.Export != null)
-            {
-                this.Gate.Out.PipeTo(this.Export.TickIn);
-                if (this.configuration.UsePhysicalIndices)
-                {
-                    this.ActivityLevel.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.Movement));
-                    this.Synchrony.Out.PipeTo(this.Export.GetPairColumnsInput(IndexNames.Synchrony));
-                }
-
-                if (this.configuration.UseVerbalIndices)
-                {
-                    this.VerbalParticipation.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.VerbalParticipation));
-                    this.SpeechEquality.Out.PipeTo(this.Export.GetColumnInput(IndexNames.SpeechEquality));
-                }
-
-                if (this.configuration.UseVisualIndices)
-                {
-                    this.JointVisualAttention.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.JointVisualAttention));
-                    this.GazeOnPeers.GroupOut.PipeTo(this.Export.GetColumnInput(IndexNames.GazeOnPeers));
-                }
-
-                if (this.configuration.ComputeCollaborationScores)
-                    this.CollaborationScore.Out.PipeTo(this.Export.GetColumnInput(IndexNames.CollaborationScore));
-
-                if (this.TaskParticipation != null)
-                {
-                    this.TaskParticipation.Out.PipeTo(this.Export.GetParticipantColumnsInput(IndexNames.TaskParticipation));
-                    this.TaskEquality.Out.PipeTo(this.Export.GetColumnInput(IndexNames.TaskEquality));
-                }
-            } // Export
-        }
+        /// <summary>Gets the complete state of the interaction at every tick, or null without a graph.</summary>
+        public IProducer<InteractionGraph>? Out => this.Graph;
 
         /// <summary>
-        /// Dimensions of the legacy collaboration model. Redefine them in the configuration
-        /// to test another decomposition without touching any component.
+        /// Dimensions of the legacy collaboration model. Pass others to
+        /// <see cref="CollaborationIndicesBuilder.WithCollaborationScore"/> to test another
+        /// decomposition without touching any component.
         /// </summary>
         public static List<ScoreDimension> DefaultDimensions() => new List<ScoreDimension>
         {
@@ -656,37 +232,169 @@ namespace SAAC.CollaborationIndices
             },
         };
 
-        private static List<string> DefaultExportColumns(List<uint> participants)
+        /// <summary>Whether an indicator is part of the instance.</summary>
+        /// <param name="name">Name of the indicator.</param>
+        /// <returns>True when it is.</returns>
+        public bool Contains(string name) => this.state.Indicators.Any(indicator => indicator.Name == name);
+
+        /// <summary>
+        /// An indicator of the instance, from its catalogue entry:
+        /// <c>Get(Indicators.Movement).Component</c>.
+        /// </summary>
+        /// <typeparam name="TIndicator">Class of the indicator.</typeparam>
+        /// <typeparam name="TOptions">Options of the indicator.</typeparam>
+        /// <param name="type">Entry of <see cref="Indicators"/>, or a kind you registered.</param>
+        /// <returns>The indicator.</returns>
+        /// <exception cref="InvalidOperationException">The indicator is not part of the instance.</exception>
+        public TIndicator Get<TIndicator, TOptions>(IndicatorType<TIndicator, TOptions> type)
+            where TIndicator : CollaborationIndicator<TOptions>
+            where TOptions : IndicatorOptions, new()
+            => this.state.Get<TIndicator>((type ?? throw new ArgumentNullException(nameof(type))).Name);
+
+        /// <summary>An indicator of the instance, by class and, if several share it, by name.</summary>
+        /// <typeparam name="TIndicator">Class of the indicator.</typeparam>
+        /// <param name="name">Name of the indicator, needed when it was renamed or when several of that class exist.</param>
+        /// <returns>The indicator.</returns>
+        /// <exception cref="InvalidOperationException">The indicator is not part of the instance.</exception>
+        public TIndicator Get<TIndicator>(string? name = null)
+            where TIndicator : class, ICollaborationIndicator
+            => this.state.Get<TIndicator>(name);
+
+        /// <summary>Same as Get, but returns null instead of throwing when the indicator is absent.</summary>
+        /// <typeparam name="TIndicator">Class of the indicator.</typeparam>
+        /// <param name="name">Name of the indicator, needed when it was renamed or when several of that class exist.</param>
+        /// <returns>The indicator, or null.</returns>
+        public TIndicator? Find<TIndicator>(string? name = null)
+            where TIndicator : class, ICollaborationIndicator
+            => this.state.Find<TIndicator>(name);
+
+        private static List<string> NamesFor<T>(IEnumerable<IndexOutput<T>> outputs, IndexUsage usage)
+            => outputs.Where(output => output.Usage.HasFlag(usage)).Select(output => output.Name).ToList();
+
+        /// <summary>
+        /// Hands every declared output to the snapshot assembler, with the completion stream of
+        /// the indicator it comes from when it has one.
+        /// </summary>
+        private void ConnectOutputs()
+        {
+            var pulseIds = new Dictionary<IndicatorPulse, int>();
+
+            int? PulseIdOf(IndicatorPulse pulse)
+            {
+                IndicatorPulse root = pulse.Root;
+                if (root.Processed == null)
+                {
+                    // Not paced by the clock of the indices: the snapshot carries its latest value.
+                    return null;
+                }
+
+                if (!pulseIds.TryGetValue(root, out int id))
+                {
+                    id = this.Snapshots.AddPulse(root.Processed);
+                    pulseIds[root] = id;
+                }
+
+                return id;
+            }
+
+            foreach (var output in this.Outputs.Groups)
+            {
+                this.Snapshots.AddGroup(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+
+            foreach (var output in this.Outputs.Individuals)
+            {
+                this.Snapshots.AddIndividual(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+
+            foreach (var output in this.Outputs.Pairs)
+            {
+                this.Snapshots.AddPair(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+
+            foreach (var output in this.Outputs.DirectedPairs)
+            {
+                this.Snapshots.AddDirectedPair(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+
+            foreach (var output in this.Outputs.ScoreInputs)
+            {
+                this.Snapshots.AddScoreInput(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+
+            foreach (var output in this.Outputs.Validities)
+            {
+                this.Snapshots.AddValidity(output.Name, output.Stream, PulseIdOf(output.Pulse));
+            }
+        }
+
+        /// <summary>
+        /// Columns of the export when none are given: every output declared for export, in the
+        /// order of the indicators, then the dimension scores and the global score.
+        /// </summary>
+        private List<string> DefaultExportColumns(List<ScoreDimension>? dimensions)
         {
             var columns = new List<string>();
-            foreach (uint participantId in participants)
+
+            foreach (ICollaborationIndicator indicator in this.state.Indicators)
             {
-                columns.Add($"{IndexNames.Movement}_{participantId}");
-                columns.Add($"{IndexNames.VerbalParticipation}_{participantId}");
-                columns.Add($"{IndexNames.TaskParticipation}_{participantId}");
+                string name = indicator.Name;
+
+                columns.AddRange(this.Outputs.Groups
+                    .Where(output => output.IndicatorName == name && output.Usage.HasFlag(IndexUsage.Export))
+                    .Select(output => output.Name));
+
+                foreach (var output in this.Outputs.Individuals.Where(o => o.IndicatorName == name && o.Usage.HasFlag(IndexUsage.Export)))
+                {
+                    columns.AddRange(this.ParticipantIds.Select(id => IndexExportComponent.ParticipantColumn(output.Name, id)));
+                }
+
+                foreach (var output in this.Outputs.Pairs.Where(o => o.IndicatorName == name && o.Usage.HasFlag(IndexUsage.Export)))
+                {
+                    columns.AddRange(Combinatorics.Pairs(this.ParticipantIds).Select(pair => IndexExportComponent.PairColumn(output.Name, pair)));
+                }
+
+                foreach (var output in this.Outputs.DirectedPairs.Where(o => o.IndicatorName == name && o.Usage.HasFlag(IndexUsage.Export)))
+                {
+                    foreach (uint from in this.ParticipantIds)
+                    {
+                        foreach (uint to in this.ParticipantIds)
+                        {
+                            if (from != to)
+                            {
+                                columns.Add(IndexExportComponent.DirectedPairColumn(output.Name, new DirectedParticipantPair(from, to)));
+                            }
+                        }
+                    }
+                }
             }
 
-            foreach (ParticipantPair pair in Combinatorics.Pairs(participants))
+            if (dimensions != null)
             {
-                columns.Add($"{IndexNames.Synchrony}_{pair}");
+                // A dimension none of whose indices is computed would be an empty column.
+                var scoreInputs = new HashSet<string>(this.Outputs.ScoreInputs.Select(output => output.Name));
+                columns.AddRange(dimensions
+                    .Where(dimension => dimension.IndexNames != null && dimension.IndexNames.Any(scoreInputs.Contains))
+                    .Select(dimension => dimension.Name));
+                columns.Add(IndexNames.CollaborationScore);
             }
 
-            columns.AddRange(new[]
-            {
-                IndexNames.SpeechEquality,
-                IndexNames.TaskEquality,
-                IndexNames.JointVisualAttention,
-                IndexNames.GazeOnPeers,
-                IndexNames.CollaborationScore,
-            });
-
-            return columns;
+            return columns.Distinct().ToList();
         }
-    }
 
-    internal static class ReceiverExtensions
-    {
-        /// <summary>Reversed PipeTo, so that a null component can be skipped with ?.</summary>
-        public static void PipeFrom<T>(this Receiver<T> receiver, IProducer<T> source) => source.PipeTo(receiver);
+        private TextWriter OpenExportFile(string path)
+        {
+            string? directory = Path.GetDirectoryName(Path.GetFullPath(path));
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var writer = new StreamWriter(path);
+
+            // The file was opened here, so it is closed here, once the last row is written.
+            this.pipeline.PipelineCompleted += (_, __) => writer.Dispose();
+            return writer;
+        }
     }
 }

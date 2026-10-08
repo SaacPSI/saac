@@ -140,6 +140,7 @@ namespace SAAC.CollaborationIndices
         where TConfiguration : IndexComponentConfiguration
     {
         private DateTime lastComputationTime = DateTime.MinValue;
+        private DateTime lastTickTime = DateTime.MinValue;
 
         protected readonly Pipeline pipeline;
         protected readonly TConfiguration configuration;
@@ -161,8 +162,9 @@ namespace SAAC.CollaborationIndices
             this.configuration = configuration;
             this.name = name;
 
-            this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.TryCompute(envelope.OriginatingTime), $"{name}-Tick");
+            this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.ReceiveTick(envelope.OriginatingTime), $"{name}-Tick");
             this.EnableIn = pipeline.CreateReceiver<bool>(this, (enabled, _) => this.configuration.Enabled = enabled, $"{name}-Enable");
+            this.TickProcessedOut = pipeline.CreateEmitter<bool>(this, $"{name}-TickProcessed");
         }
 
         /// <summary>Clock input: publishes the index at the rate of the connected generator.</summary>
@@ -170,6 +172,20 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Gating input, driven by the phase gate component.</summary>
         public Receiver<bool> EnableIn { get; }
+
+        /// <summary>
+        /// One message per tick received on TickIn, posted once the tick has been handled:
+        /// true when the index was published for that tick, false when it was skipped
+        /// (disabled, throttled, not enough data). It tells a consumer that merges several
+        /// indices whether a value is still to come for a given tick, see IndexSnapshotAssembler.
+        /// </summary>
+        public Emitter<bool> TickProcessedOut { get; }
+
+        /// <summary>
+        /// Set to true before Compute is called. A Compute that returns without posting its
+        /// outputs must set it back to false, so that TickProcessedOut stays truthful.
+        /// </summary>
+        protected bool HasPublished { get; set; }
 
         public TConfiguration Configuration => this.configuration;
 
@@ -201,33 +217,48 @@ namespace SAAC.CollaborationIndices
             }
         }
 
-        protected void TryCompute(DateTime originatingTime)
+        /// <summary>Computes the index if the guards allow it.</summary>
+        /// <returns>True when the index was published for this time.</returns>
+        protected bool TryCompute(DateTime originatingTime)
         {
             this.Prune(originatingTime - this.configuration.BufferRetention);
 
             if (!this.configuration.Enabled)
             {
-                return;
+                return false;
             }
 
             // \psi requires strictly increasing originating times on an emitter.
             if (originatingTime <= this.lastComputationTime)
             {
-                return;
+                return false;
             }
 
             if (originatingTime - this.lastComputationTime < this.configuration.ComputationInterval)
             {
-                return;
+                return false;
             }
 
             if (!this.CanCompute(originatingTime))
             {
-                return;
+                return false;
             }
 
             this.lastComputationTime = originatingTime;
+            this.HasPublished = true;
             this.Compute(originatingTime);
+            return this.HasPublished;
+        }
+
+        private void ReceiveTick(DateTime originatingTime)
+        {
+            bool published = this.TryCompute(originatingTime);
+
+            if (originatingTime > this.lastTickTime)
+            {
+                this.lastTickTime = originatingTime;
+                this.TickProcessedOut.Post(published, originatingTime);
+            }
         }
 
         /// <summary>Applies the configured normalizer.</summary>

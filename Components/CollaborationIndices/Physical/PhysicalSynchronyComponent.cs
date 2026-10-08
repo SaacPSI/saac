@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Protocols.WSTrust;
 using System.Numerics;
 using Microsoft.Psi;
 using Microsoft.Psi.Data;
@@ -36,7 +35,23 @@ namespace SAAC.CollaborationIndices
         private readonly Dictionary<ParticipantPair, Emitter<double>> pairEmitters = new Dictionary<ParticipantPair, Emitter<double>>();
         private readonly IncrementalGridResampler resampler;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PhysicalSynchronyComponent"/> class,
+        /// storing its group and pair streams through the dataset pipeline.
+        /// </summary>
         public PhysicalSynchronyComponent(Pipeline pipeline, DatasetPipeline server, PhysicalSynchronyConfiguration configuration, string name = nameof(PhysicalSynchronyComponent))
+            : this(pipeline, configuration, name, server == null ? null : new IndexStore(server))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PhysicalSynchronyComponent"/> class.
+        /// </summary>
+        /// <param name="pipeline">Pipeline hosting the component.</param>
+        /// <param name="configuration">Configuration of the indicator.</param>
+        /// <param name="name">Name of the component, prefix of its streams.</param>
+        /// <param name="store">Destination of the group and pair streams. Null stores nothing.</param>
+        public PhysicalSynchronyComponent(Pipeline pipeline, PhysicalSynchronyConfiguration configuration, string name = nameof(PhysicalSynchronyComponent), IndexStore? store = null)
             : base(pipeline, configuration, name)
         {
             this.resampler = new IncrementalGridResampler(
@@ -46,19 +61,19 @@ namespace SAAC.CollaborationIndices
                 configuration.SamplingInterval,
                 configuration.MaxDelta);
 
-            this.SessionName = server.GetSession("RawDataPipelineProcess.000");
+            this.SessionName = store?.Session;
 
             this.Out = pipeline.CreateEmitter<Dictionary<ParticipantPair, double>>(this, $"{name}-PairSynchrony");
             this.PairCorrelationsOut = pipeline.CreateEmitter<Dictionary<ParticipantPair, double>>(this, $"{name}-PairCorrelation");
             this.SubsetSynchronyOut = pipeline.CreateEmitter<Dictionary<ParticipantSubset, double>>(this, $"{name}-SubsetSynchrony");
             this.GroupSynchronyOut = pipeline.CreateEmitter<double>(this, $"{name}-GroupSynchrony");
-            server.CreateConnectorAndStore($"{name}-GroupSynchrony", "LiveVisualization", this.SessionName, pipeline, this.GroupSynchronyOut.Type, this.GroupSynchronyOut, true);
+            store?.Write(pipeline, $"{name}-GroupSynchrony", this.GroupSynchronyOut);
 
             foreach (ParticipantPair pair in Combinatorics.Pairs(configuration.ParticipantIds))
             {
                 this.pairs.Add(pair);
                 this.pairEmitters[pair] = pipeline.CreateEmitter<double>(this, $"{name}-Synchrony-{pair}");
-                server.CreateConnectorAndStore($"{name}-Synchrony-{pair}", "LiveVisualization", this.SessionName, pipeline, this.pairEmitters[pair].Type, this.pairEmitters[pair], true);
+                store?.Write(pipeline, $"{name}-Synchrony-{pair}", this.pairEmitters[pair]);
             }
 
             if (configuration.ComputeSubsets && configuration.SubsetSize >= 3 && configuration.SubsetSize <= configuration.ParticipantIds.Count)
@@ -67,7 +82,7 @@ namespace SAAC.CollaborationIndices
             }
         }
 
-        public Session SessionName;
+        public Session? SessionName;
 
         /// <summary>
         /// Normalized synchrony of every pair.
@@ -139,6 +154,7 @@ namespace SAAC.CollaborationIndices
                 commonGridPoints = IntersectKeys(movementSeries.Values);
                 if (commonGridPoints.Count < this.configuration.MinimumSampleCount && this.configuration.WarmUp == WarmUpBehavior.WaitForEnoughData)
                 {
+                    this.HasPublished = false;
                     return;
                 }
             }

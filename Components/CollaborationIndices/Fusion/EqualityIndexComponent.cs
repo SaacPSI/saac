@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Psi;
+using SAAC.PipelineServices;
 
 namespace SAAC.CollaborationIndices
 {
@@ -53,7 +54,23 @@ namespace SAAC.CollaborationIndices
         private readonly List<ParticipantSubset> subsets = new List<ParticipantSubset>();
         private Dictionary<uint, double> lastValues = new Dictionary<uint, double>();
 
-        public EqualityIndexComponent(Pipeline pipeline, EqualityIndexConfiguration configuration, string name = nameof(EqualityIndexComponent))
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EqualityIndexComponent"/> class,
+        /// storing its group stream through the dataset pipeline.
+        /// </summary>
+        public EqualityIndexComponent(Pipeline pipeline, DatasetPipeline server, EqualityIndexConfiguration configuration, string name = nameof(EqualityIndexComponent))
+            : this(pipeline, configuration, name, server == null ? null : new IndexStore(server))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EqualityIndexComponent"/> class.
+        /// </summary>
+        /// <param name="pipeline">Pipeline hosting the component.</param>
+        /// <param name="configuration">Configuration of the indicator.</param>
+        /// <param name="name">Name of the component, prefix of its streams.</param>
+        /// <param name="store">Destination of the group stream. Null stores nothing.</param>
+        public EqualityIndexComponent(Pipeline pipeline, EqualityIndexConfiguration configuration, string name = nameof(EqualityIndexComponent), IndexStore? store = null)
             : base(pipeline, configuration, name)
         {
             this.In = pipeline.CreateReceiver<Dictionary<uint, double>>(this, this.Receive, $"{name}-In");
@@ -61,6 +78,7 @@ namespace SAAC.CollaborationIndices
             this.PairOut = pipeline.CreateEmitter<Dictionary<ParticipantPair, double>>(this, $"{name}-Pair");
             this.SubsetOut = pipeline.CreateEmitter<Dictionary<ParticipantSubset, double>>(this, $"{name}-Subset");
             this.PairEmitters = new KeyedEmitters<ParticipantPair>(pipeline, this, configuration.Pairs(), $"{name}-Pair");
+            store?.Write(pipeline, $"{name}-Group", this.Out);
 
             if (configuration.SubsetSize >= 3 && configuration.SubsetSize <= configuration.ParticipantIds.Count)
             {
@@ -83,6 +101,7 @@ namespace SAAC.CollaborationIndices
             var values = this.lastValues;
             if (values.Count == 0)
             {
+                this.HasPublished = false;
                 return;
             }
 
@@ -131,7 +150,9 @@ namespace SAAC.CollaborationIndices
                 return;
             }
 
-            this.lastValues = values;
+            // Copy: \psi recycles the received dictionary once the handler returns, and the
+            // values are read again when the component is driven by TickIn.
+            this.lastValues = new Dictionary<uint, double>(values);
             this.TryCompute(envelope.OriginatingTime);
         }
     }

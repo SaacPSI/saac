@@ -5,10 +5,15 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using MathNet.Numerics.LinearAlgebra.Factorization;
 using Microsoft.Psi;
 using Microsoft.Psi.Audio;
 using SAAC.PsiFormats;
@@ -130,6 +135,14 @@ namespace SAAC.CollaborationIndices.Verbal
 
         /// <summary>Tolerance applied around the declared phase boundaries.</summary>
         public TimeSpan PhaseMargin { get; set; } = TimeSpan.FromSeconds(5);
+
+        public int sessionNum = 0;
+
+        public string csvAdress = string.Empty;
+
+        public int userID;
+
+        public string condition = string.Empty;
     }
 
     public class SpeechProcessing
@@ -137,6 +150,7 @@ namespace SAAC.CollaborationIndices.Verbal
         private readonly Pipeline pipeline;
         private readonly SpeechProcessingConfiguration config;
 
+        public List<Queue<SpeakingTimeIDData>> speakingTimeList = new List<Queue<SpeakingTimeIDData>>();
         private readonly Dictionary<int, ParticipantSpeechState> states = new Dictionary<int, ParticipantSpeechState>();
         private readonly Dictionary<int, Receiver<AudioBuffer>> audioReceivers = new Dictionary<int, Receiver<AudioBuffer>>();
         private readonly Dictionary<int, Receiver<float>> logReceivers = new Dictionary<int, Receiver<float>>();
@@ -157,10 +171,23 @@ namespace SAAC.CollaborationIndices.Verbal
 
         public DateTime lastMessage;
 
+        private string VADHeadupEU;
+        public StreamWriter vadWriter;
+        private bool isHeadup = false;
+
         public SpeechProcessing(Pipeline pipeline, SpeechProcessingConfiguration configuration = null)
         {
             this.pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             this.config = configuration ?? new SpeechProcessingConfiguration();
+
+            if (this.config.ParticipantIds.Count == 2)
+            {
+                this.VADHeadupEU = $"utc_timestamp_ms,session,condition,IsSpeaking_1,IsSpeaking_2".Replace(',', ';');
+            }
+            else if (this.config.ParticipantIds.Count == 3)
+            {
+                this.VADHeadupEU = $"utc_timestamp_ms,session,condition,IsSpeaking_1,IsSpeaking_2,IsSpeaking_3".Replace(',', ';');
+            }
 
             // Multiplexed inputs: one receiver each, whatever the number of participants,
             // because the participant id travels inside the message.
@@ -193,6 +220,15 @@ namespace SAAC.CollaborationIndices.Verbal
                 this.GetTToutReceiver(participantId);
                 this.GetOvReceiver(participantId);
                 this.GetSpeakingQueueEmitter(participantId);
+                this.speakingTimeList.Add(new Queue<SpeakingTimeIDData>());
+            }
+
+            this.vadWriter = new StreamWriter($@"{this.config.csvAdress}\{this.config.sessionNum}_{this.config.condition}_VADs.csv");
+
+            if (!this.isHeadup)
+            {
+                this.vadWriter.WriteLine(this.VADHeadupEU);
+                this.isHeadup = true;
             }
 
             pipeline.PipelineRun += (_, __) => this.topologyFrozen = true;
@@ -376,7 +412,34 @@ namespace SAAC.CollaborationIndices.Verbal
         }
 
         private void ProcessVad(int participantId, bool value, Envelope envelope)
-            => this.GetOrCreateState(participantId).LastVad = (envelope.OriginatingTime, value);
+        {
+            this.GetOrCreateState(participantId).LastVad = (envelope.OriginatingTime, value);
+            this.VADCSVWriter(participantId, envelope);
+        }
+
+        private void VADCSVWriter(int participantId, Envelope envelope)
+        {
+            string message = string.Empty;
+            if (this.config.ParticipantIds.Count == 2)
+            {
+                if (participantId == 0 && this.GetOrCreateState(1) != null)
+                {
+                    message = $"{envelope.OriginatingTime.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString().Replace(',', '.')};{this.config.sessionNum};{this.config.condition};{this.GetOrCreateState(0).LastVad.Value};{this.GetOrCreateState(1).LastVad.Value}".Replace(',', '.');
+                }
+            }
+            else if (this.config.ParticipantIds.Count == 3)
+            {
+                if (participantId == 0 && this.GetOrCreateState(1) != null && this.GetOrCreateState(2) != null)
+                {
+                    message = $"{envelope.OriginatingTime.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString().Replace(',', '.')};{this.config.sessionNum};{this.config.condition};{this.GetOrCreateState(0).LastVad.Value};{this.GetOrCreateState(1).LastVad.Value};{this.GetOrCreateState(2).LastVad.Value}".Replace(',', '.');
+                }
+            }
+
+            if (message != string.Empty)
+            {
+                this.vadWriter.WriteLine(message);
+            }
+        }
 
         private void ProcessAudio(int participantId, AudioBuffer buffer, Envelope envelope)
         {
@@ -395,6 +458,8 @@ namespace SAAC.CollaborationIndices.Verbal
             int participantId = message.Item1;
             ParticipantSpeechState state = this.GetOrCreateState(participantId);
 
+            this.speakingTimeList[message.Item1] = message.Item2;
+
             state.SpeakingQueue = message.Item2;
             this.speakingTimeDictQueue[participantId] = message.Item2;
 
@@ -409,6 +474,14 @@ namespace SAAC.CollaborationIndices.Verbal
             if (last != null && !string.IsNullOrEmpty(last.Text))
             {
                 this.textEntries.Add((envelope.OriginatingTime, participantId, last.Text));
+                if (participantId == 0)
+                {
+                    // Console.WriteLine($"\n{ConsoleColors.Magenta}{participantId + 1}_{envelope.OriginatingTime}_{last.Text}{ConsoleColors.Reset}\n");
+                }
+                else if (participantId == 1)
+                {
+                    // Console.WriteLine($"\n{ConsoleColors.Cyan}{participantId + 1}_{envelope.OriginatingTime}_{last.Text}{ConsoleColors.Reset}\n");
+                }
             }
         }
 

@@ -48,26 +48,31 @@ namespace SAAC.CollaborationIndices
 
         public Emitter<Dictionary<ParticipantPair, double>> LeadVisualAttentionByPairOut { get; }
 
-        protected override void Compute(DateTime originatingTime)
+        /// <summary>
+        /// Number of distinct episodes of the window. This used to be posted on GroupOut a
+        /// second time after the standard group value, with the same originating time, which
+        /// \psi rejects: the component threw on its first computation.
+        /// </summary>
+        protected override double ComputeGroupRaw(Dictionary<uint, double> individualRaw, DateTime currentTime)
         {
-            base.Compute(originatingTime);
-
-            if (this.configuration.CountEventsOnceAtGroupLevel && this.configuration.Levels.HasFlag(IndexLevel.Group))
+            if (!this.configuration.CountEventsOnceAtGroupLevel)
             {
-                double distinctEvents = 0;
-                DateTime start = this.WindowStart(originatingTime);
-                foreach (string category in this.configuration.Categories)
-                {
-                    foreach (uint participantId in this.configuration.ParticipantIds)
-                    {
-                        distinctEvents += this.events.CountWithin(participantId, category, start, originatingTime);
-                    }
-                }
-
-                // Each event is stored once, under its initiator, so the sum is already the
-                // number of episodes; the normalizer is applied as for the other levels.
-                this.GroupOut.Post(this.configuration.GroupOrDefault.Normalize(distinctEvents), originatingTime);
+                return base.ComputeGroupRaw(individualRaw, currentTime);
             }
+
+            double distinctEvents = 0;
+            DateTime start = this.WindowStart(currentTime);
+            foreach (string category in this.configuration.Categories)
+            {
+                foreach (uint participantId in this.configuration.ParticipantIds)
+                {
+                    distinctEvents += this.events.CountWithin(participantId, category, start, currentTime);
+                }
+            }
+
+            // Each event is stored once, under its initiator, so the sum is already the
+            // number of episodes; the normalizer is applied as for the other levels.
+            return distinctEvents;
         }
 
         protected override void OnComputed(Dictionary<uint, double> individualRaw, DateTime originatingTime)

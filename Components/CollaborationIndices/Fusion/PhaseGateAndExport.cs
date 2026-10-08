@@ -21,6 +21,10 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Period of the tick published while the gate is open.</summary>
         public TimeSpan TickInterval { get; set; } = TimeSpan.FromSeconds(1);
+
+        public bool RequirePhase { get; set; } = true;
+
+        public bool LogTransitions { get; set; } = false;
     }
 
     /// <summary>
@@ -46,6 +50,7 @@ namespace SAAC.CollaborationIndices
         private bool phaseRunning;
         private int phaseId = -1;
         private bool lastEnabled;
+        private bool clockSeen;
 
         public PhaseGateComponent(Pipeline pipeline, PhaseGateConfiguration configuration, string name = nameof(PhaseGateComponent))
         {
@@ -75,6 +80,11 @@ namespace SAAC.CollaborationIndices
 
         private void ReceivePhaseStart(bool value, Envelope envelope)
         {
+            if (this.configuration.LogTransitions)
+            {
+                Console.WriteLine($"\n[{this.name}] phase start at {envelope.OriginatingTime:HH:mm:ss.fff}, warm-up {this.configuration.WarmUpDuration.TotalSeconds:0}s");
+            }
+
             this.phaseStart = envelope.OriginatingTime;
             this.phaseRunning = true;
             this.phaseId++;
@@ -91,6 +101,26 @@ namespace SAAC.CollaborationIndices
 
         private void ReceiveClock(bool value, Envelope envelope)
         {
+            if (!this.clockSeen)
+            {
+                this.clockSeen = true;
+
+                // No phase structure required: the first tick opens the session and starts the
+                // warm-up, so the indices run even when nothing is wired to PhaseStartIn.
+                if (!this.configuration.RequirePhase && !this.phaseRunning)
+                {
+                    this.phaseStart = envelope.OriginatingTime;
+                    this.phaseRunning = true;
+                    this.phaseId++;
+                    this.PhaseIdOut.Post(this.phaseId, envelope.OriginatingTime);
+                }
+
+                if (this.configuration.LogTransitions)
+                {
+                    Console.WriteLine($"\n[{this.name}] first clock tick at {envelope.OriginatingTime:HH:mm:ss.fff}, phase running: {this.phaseRunning}");
+                }
+            }
+
             bool enabled = this.phaseRunning
                 && this.phaseStart != DateTime.MaxValue
                 && (envelope.OriginatingTime - this.phaseStart) >= this.configuration.WarmUpDuration;
@@ -99,6 +129,11 @@ namespace SAAC.CollaborationIndices
             {
                 this.EnabledOut.Post(enabled, envelope.OriginatingTime);
                 this.lastEnabled = enabled;
+
+                if (this.configuration.LogTransitions)
+                {
+                    Console.WriteLine($"\n[{this.name}] gate {(enabled ? "OPEN" : "CLOSED")} at {envelope.OriginatingTime:HH:mm:ss.fff}");
+                }
             }
 
             if (enabled)
@@ -155,9 +190,30 @@ namespace SAAC.CollaborationIndices
             this.configuration = configuration;
             this.name = name;
             this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.WriteRow(envelope.OriginatingTime), $"{name}-Tick");
+            this.SnapshotIn = pipeline.CreateReceiver<IndexSnapshot>(this, this.ReceiveSnapshot, $"{name}-SnapshotIn");
         }
 
         public Receiver<bool> TickIn { get; }
+
+        /// <summary>Columns of the export, in order, without the leading timestamp.</summary>
+        public IReadOnlyList<string> Columns => this.configuration.Columns;
+
+        /// <summary>
+        /// All the indices of one tick at once: one row is written per snapshot, with values
+        /// that all describe the tick of the row. Do not connect TickIn as well. Driven by
+        /// TickIn and fed column by column, a row holds whatever has arrived when the tick is
+        /// delivered, which is usually the values of the previous tick.
+        /// </summary>
+        public Receiver<IndexSnapshot> SnapshotIn { get; }
+
+        /// <summary>Name of the column of one participant.</summary>
+        public static string ParticipantColumn(string columnPrefix, uint participantId) => $"{columnPrefix}_{participantId}";
+
+        /// <summary>Name of the column of one pair.</summary>
+        public static string PairColumn(string columnPrefix, ParticipantPair pair) => $"{columnPrefix}_{pair}";
+
+        /// <summary>Name of the column of one ordered pair.</summary>
+        public static string DirectedPairColumn(string columnPrefix, DirectedParticipantPair pair) => $"{columnPrefix}_{pair}";
 
         /// <summary>Receiver feeding one numeric column.</summary>
         public Receiver<double> GetColumnInput(string columnName)
@@ -214,6 +270,47 @@ namespace SAAC.CollaborationIndices
                     this.configuration.Columns.Add(columnName);
                 }
             }
+        }
+
+        private string Format(double value) => value.ToString(this.configuration.Format, CultureInfo.InvariantCulture);
+
+        private void ReceiveSnapshot(IndexSnapshot snapshot, Envelope envelope)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            foreach (var entry in snapshot.Group)
+            {
+                this.values[entry.Key] = this.Format(entry.Value);
+            }
+
+            foreach (var index in snapshot.Individual)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[ParticipantColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            foreach (var index in snapshot.Pair)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[PairColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            foreach (var index in snapshot.DirectedPair)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[DirectedPairColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            this.WriteRow(envelope.OriginatingTime);
         }
 
         private void WriteRow(DateTime originatingTime)

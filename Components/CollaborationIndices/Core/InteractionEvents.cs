@@ -41,6 +41,14 @@ namespace SAAC.CollaborationIndices
             this.Label = label ?? string.Empty;
         }
 
+        /// <summary>
+        /// Independent copy. Mandatory before storing a received message: \psi returns the
+        /// payload of a reference type to its recycling pool once the handler returns, so a
+        /// stored reference is silently overwritten by a later message.
+        /// </summary>
+        public InteractionEvent Clone() => new InteractionEvent(
+            this.OriginatingTime, this.Category, this.ParticipantId, this.TargetId, this.Intensity, this.Label);
+
         public override string ToString()
             => $"{this.Category}@{this.OriginatingTime:HH:mm:ss.fff} {this.ParticipantId}" + (this.TargetId.HasValue ? $"->{this.TargetId}" : string.Empty);
     }
@@ -76,6 +84,13 @@ namespace SAAC.CollaborationIndices
             this.TargetId = targetId;
             this.Label = label ?? string.Empty;
         }
+
+        /// <summary>
+        /// Independent copy. See InteractionEvent.Clone: a received message must never be
+        /// stored by reference.
+        /// </summary>
+        public InteractionInterval Clone() => new InteractionInterval(
+            this.StartTime, this.EndTime, this.Category, this.ParticipantId, this.TargetId, this.Label);
 
         /// <summary>
         /// Duration of the part of the interval that falls inside [windowStart, windowEnd].
@@ -117,6 +132,8 @@ namespace SAAC.CollaborationIndices
             {
                 return;
             }
+
+            interactionEvent = interactionEvent.Clone();
 
             if (!this.byParticipant.TryGetValue(interactionEvent.ParticipantId, out var categories))
             {
@@ -252,15 +269,20 @@ namespace SAAC.CollaborationIndices
                 categories[interval.Category] = intervals;
             }
 
-            // An open interval is replaced by its closed version when it is received again.
-            int existing = intervals.FindIndex(i => i.StartTime == interval.StartTime && i.TargetId == interval.TargetId && i.Label == interval.Label);
+            // Copy before storing: the caller's instance belongs to \psi's recycling pool and
+            // will be overwritten by the next message otherwise.
+            InteractionInterval stored = interval.Clone();
+
+            // An interval is identified by its start; receiving it again (a queue republishing
+            // its whole history, or an open interval later closed) replaces it in place.
+            int existing = intervals.FindIndex(i => i.StartTime == stored.StartTime && i.TargetId == stored.TargetId);
             if (existing >= 0)
             {
-                intervals[existing] = interval;
+                intervals[existing] = stored;
                 return;
             }
 
-            intervals.Add(interval);
+            intervals.Add(stored);
         }
 
         /// <summary>

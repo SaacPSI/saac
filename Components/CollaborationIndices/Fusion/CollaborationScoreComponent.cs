@@ -81,16 +81,21 @@ namespace SAAC.CollaborationIndices
         private readonly Dictionary<string, bool> validity = new Dictionary<string, bool>();
         private readonly KeyedEmitters<string> dimensionEmitters;
 
+        private double? lastGlobal;
+        private Dictionary<string, double> lastDimensionScores = new Dictionary<string, double>();
+
         public CollaborationScoreComponent(Pipeline pipeline, CollaborationScoreConfiguration configuration, string name = nameof(CollaborationScoreComponent))
             : base(pipeline, configuration, name)
         {
             this.IndexIn = pipeline.CreateReceiver<Tuple<string, double>>(this, this.ReceiveIndex, $"{name}-IndexIn");
             this.IndicesIn = pipeline.CreateReceiver<Dictionary<string, double>>(this, this.ReceiveIndices, $"{name}-IndicesIn");
             this.ValidityIn = pipeline.CreateReceiver<Tuple<string, bool>>(this, this.ReceiveValidity, $"{name}-ValidityIn");
+            this.SnapshotIn = pipeline.CreateReceiver<IndexSnapshot>(this, this.ReceiveSnapshot, $"{name}-SnapshotIn");
 
             this.Out = pipeline.CreateEmitter<double>(this, $"{name}-Global");
             this.DimensionsOut = pipeline.CreateEmitter<Dictionary<string, double>>(this, $"{name}-Dimensions");
             this.NormalizedIndicesOut = pipeline.CreateEmitter<Dictionary<string, double>>(this, $"{name}-Indices");
+            this.SnapshotOut = pipeline.CreateEmitter<IndexSnapshot>(this, $"{name}-Snapshot");
             this.dimensionEmitters = new KeyedEmitters<string>(pipeline, this, configuration.Dimensions.Select(d => d.Name), $"{name}-Dimension");
         }
 
@@ -99,6 +104,20 @@ namespace SAAC.CollaborationIndices
         public Receiver<Dictionary<string, double>> IndicesIn { get; }
 
         public Receiver<Tuple<string, bool>> ValidityIn { get; }
+
+        /// <summary>
+        /// All the indices of one tick at once. This is the input to prefer: fed one index at
+        /// a time (GetIndexInput), the score is computed as soon as the first index of a tick
+        /// arrives, with the previous value of the others.
+        /// </summary>
+        public Receiver<IndexSnapshot> SnapshotIn { get; }
+
+        /// <summary>
+        /// The snapshot received on SnapshotIn, completed with the global score (under
+        /// IndexNames.CollaborationScore) and the dimension scores in its Group values, so
+        /// that a graph or an export chained behind stays aligned on the same tick.
+        /// </summary>
+        public Emitter<IndexSnapshot> SnapshotOut { get; }
 
         public Emitter<double> Out { get; }
 
@@ -137,6 +156,7 @@ namespace SAAC.CollaborationIndices
         {
             if (this.indices.Count == 0)
             {
+                this.HasPublished = false;
                 return;
             }
 
@@ -188,8 +208,44 @@ namespace SAAC.CollaborationIndices
                 global = used.Count > 0 ? used.Average() : 0;
             }
 
+            this.lastGlobal = global;
+            this.lastDimensionScores = dimensionScores;
+
             this.Out.Post(global, originatingTime);
             this.NormalizedIndicesOut.Post(new Dictionary<string, double>(this.indices), originatingTime);
+        }
+
+        private void ReceiveSnapshot(IndexSnapshot snapshot, Envelope envelope)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            foreach (var entry in snapshot.ScoreInputs)
+            {
+                this.indices[entry.Key] = entry.Value;
+            }
+
+            foreach (var entry in snapshot.Validity)
+            {
+                this.validity[entry.Key] = entry.Value;
+            }
+
+            bool computed = this.TryCompute(envelope.OriginatingTime);
+
+            // A copy: the received snapshot goes back to \psi once this handler returns.
+            IndexSnapshot completed = snapshot.Clone();
+            if (computed && this.lastGlobal.HasValue)
+            {
+                completed.Group[IndexNames.CollaborationScore] = this.lastGlobal.Value;
+                foreach (var entry in this.lastDimensionScores)
+                {
+                    completed.Group[entry.Key] = entry.Value;
+                }
+            }
+
+            this.SnapshotOut.Post(completed, envelope.OriginatingTime);
         }
 
         private bool IsUsable(ScoreDimension dimension, string indexName, out double value)

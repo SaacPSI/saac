@@ -45,41 +45,98 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Adapters\CorrectedOrbSource.cs" />
+    <Compile Include="Adapters\LegacyStoreTypes.cs" />
     <Compile Include="Adapters\SerializableClassAdapters.cs" />
+    <Compile Include="Builder\CollaborationIndicesBlueprint.cs" />
+    <Compile Include="Builder\CollaborationIndicesBuilder.cs" />
+    <Compile Include="Builder\CollaborationIndicesConfiguration.cs" />
+    <Compile Include="Builder\CollaborationIndicesConfigurationException.cs" />
+    <Compile Include="Builder\CollaborationSessionConfiguration.cs" />
+    <Compile Include="Core\CollaborationIndicator.cs" />
+    <Compile Include="Core\DetectionCategories.cs" />
     <Compile Include="Core\EventCountIndexComponent.cs" />
+    <Compile Include="Core\ICollaborationIndicator.cs" />
     <Compile Include="Core\IndexAdapters.cs" />
+    <Compile Include="Core\IndexCalibration.cs" />
     <Compile Include="Core\IndexComponentBase.cs" />
+    <Compile Include="Core\IndexNames.cs" />
+    <Compile Include="Core\IndexStore.cs" />
+    <Compile Include="Core\IndicatorBuildContext.cs" />
+    <Compile Include="Core\IndicatorOptions.cs" />
+    <Compile Include="Core\IndicatorOutputs.cs" />
+    <Compile Include="Core\IndicatorRegistry.cs" />
+    <Compile Include="Core\IndicatorType.cs" />
     <Compile Include="Core\InteractionEvents.cs" />
     <Compile Include="Core\MultiParticipantComponents.cs" />
     <Compile Include="Core\Normalizers.cs" />
     <Compile Include="Core\ParticipantIdMap.cs" />
     <Compile Include="Core\ParticipantKeys.cs" />
     <Compile Include="Fusion\CollaborationScoreComponent.cs" />
+    <Compile Include="Fusion\DataClock.cs" />
     <Compile Include="Fusion\DominanceIdentityComponent.cs" />
+    <Compile Include="Fusion\DominanceIndicator.cs" />
     <Compile Include="Fusion\EqualityIndexComponent.cs" />
+    <Compile Include="Fusion\EqualityIndicator.cs" />
+    <Compile Include="Fusion\IndexSnapshot.cs" />
+    <Compile Include="Fusion\IndexSnapshotAssembler.cs" />
     <Compile Include="Fusion\InteractionGraphComponent.cs" />
     <Compile Include="Fusion\PhaseGateAndExport.cs" />
     <Compile Include="Fusion\TimeDecayIndexComponent.cs" />
     <Compile Include="Gaze\AttentionLevelComponent.cs" />
+    <Compile Include="Gaze\GazeEpisodeDetector.cs" />
+    <Compile Include="Gaze\GazeIndicators.cs" />
     <Compile Include="Gaze\GazeOnPeersComponent.cs" />
     <Compile Include="Gaze\JointVisualAttentionComponent.cs" />
+    <Compile Include="Gaze\JointVisualAttentionDetector.cs" />
+    <Compile Include="Gaze\MutualGazeDetector.cs" />
+    <Compile Include="Gaze\MutualGazeIndicator.cs" />
+    <Compile Include="Indicators.cs" />
+    <Compile Include="Legacy\LegacyIndices.cs" />
+    <Compile Include="Legacy\SlidingAverageComputation.Legacy.cs" />
+    <Compile Include="Legacy\SlidingAverageConfiguration.cs" />
     <Compile Include="Physical\IncrementalGridResampler.cs" />
     <Compile Include="Physical\MultiParticipantSlidingBuffer.cs" />
     <Compile Include="Physical\MultiParticipantSlidingWindowComponent.cs" />
+    <Compile Include="Physical\PhysicalActivityIndicator.cs" />
     <Compile Include="Physical\PhysicalActivityLevelComponent.cs" />
     <Compile Include="Physical\PhysicalConfigurations.cs" />
     <Compile Include="Physical\PhysicalSynchronyComponent.cs" />
+    <Compile Include="Physical\PhysicalSynchronyIndicator.cs" />
     <Compile Include="Physical\SynchronyMeasures.cs" />
-    <Compile Include="SlidingAverageComputation.cs" />
+    <Compile Include="Profiles\CollaborationProfileRules.cs" />
+    <Compile Include="Profiles\CollaborationProfilesComponent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SlidingAverageComputation.cs" />
     <Compile Include="SlidingAverageComputationSet.cs" />
+    <Compile Include="Spatial\AreaPresenceDetector.cs" />
     <Compile Include="Spatial\FFormationComponent.cs" />
+    <Compile Include="Spatial\FFormationDetector.cs" />
+    <Compile Include="Spatial\PositionOrientationPreProcessing.cs" />
+    <Compile Include="Spatial\SpatialIndicators.cs" />
     <Compile Include="Spatial\TimeInAreaComponent.cs" />
+    <Compile Include="Task\InteractionFilter.cs" />
+    <Compile Include="Task\TaskActionDetector.cs" />
     <Compile Include="Task\TaskParticipationComponent.cs" />
+    <Compile Include="Task\TaskParticipationIndicator.cs" />
+    <Compile Include="Task\TaskPhaseDetector.cs" />
+    <Compile Include="Verbal\EmitterMap.cs" />
+    <Compile Include="Verbal\GroupVadComponent.cs" />
+    <Compile Include="Verbal\MonotonicPoster.cs" />
+    <Compile Include="Verbal\SimultaneousSpeechComponent.cs" />
+    <Compile Include="Verbal\AudioStreamAssignment.cs" />
+    <Compile Include="Verbal\SimultaneousSpeechIndicators.cs" />
+    <Compile Include="Verbal\SpeechFromAudio.cs" />
+    <Compile Include="Verbal\SpeechHistoryComponent.cs" />
     <Compile Include="Verbal\SpeechProcessingComponent.cs" />
+    <Compile Include="Verbal\SubTaskVerbalMetrics.cs" />
     <Compile Include="Verbal\TurnTakingComponent.cs" />
+    <Compile Include="Verbal\TurnTakingDetector.cs" />
+    <Compile Include="Verbal\TurnTakingIndicator.cs" />
     <Compile Include="Verbal\VadWhisperComponent.cs" />
+    <Compile Include="Verbal\VerbalizationDetectorComponent.cs" />
     <Compile Include="Verbal\VerbalParticipationComponent.cs" />
+    <Compile Include="Verbal\VerbalParticipationIndicator.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Psi.Data">
@@ -90,6 +147,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Psi.Speech.Windows">
       <Version>0.19.100.1-beta</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="Whisper.net">
       <Version>1.8.1</Version>

@@ -1,0 +1,28 @@
+{
+  "Name": "Indices",
+  "ParticipantIds": [ 0, 1, 2 ],
+  "WindowDuration": "00:00:20",
+  "ComputationInterval": "00:00:01",
+  "RequirePhase": false,
+  "Indicators": [
+    {
+      "Type": "Movement",
+      "Options": {
+        "BodyParts": [ "Head", "LeftHand", "RightHand" ],
+        "AdditionalWindows": [ "00:00:05" ]
+      }
+    },
+    {
+      "Type": "Synchrony",
+      "Options": {
+        "BodyParts": [ "Head" ],
+        "SubsetSize": 3
+      }
+    },
+    { "Type": "VerbalParticipation" },
+    { "Type": "SpeechEquality" },
+    { "Type": "TalkingMost" }
+  ],
+  "ComputeCollaborationScores": true,
+  "GenerateGraph": false
+}

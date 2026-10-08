@@ -1,3 +1,9 @@
+// <copyright file="SlidingAverageComputationSet.cs" company="SAAC">
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +14,8 @@ using SAAC.PipelineServices;
 namespace SAAC.CollaborationIndices
 {
     /// <summary>
-    /// Several windows of the same indices, computed side by side.
+    /// Several windows of the same indices, computed side by side. Build it with
+    /// <see cref="CollaborationIndicesBuilder.BuildSet(TimeSpan[])"/>.
     ///
     /// The study runs the indices on 20 s, 30 s and 45 s windows at the same time. The legacy
     /// code did that by declaring three SlidingAverageSpeech instances, three configurations,
@@ -16,11 +23,10 @@ namespace SAAC.CollaborationIndices
     /// at every connection point. This class holds the instances in a dictionary keyed by window,
     /// so the dispatch becomes an indexer and adding a fourth window costs one line.
     ///
-    /// Three things this class enforces, each of which is a silent bug when done by hand:
+    /// Three things the builder enforces for a set, each of which is a silent bug when done by hand:
     ///  1. a distinct component name per instance, otherwise the emitter names collide and the
     ///     stores of the second instance overwrite those of the first;
-    ///  2. an independent configuration object per instance, because Enabled is written at
-    ///     runtime by the phase gate;
+    ///  2. an independent declaration per instance;
     ///  3. a calibration matching the window, because a P95 measured on 20 s does not apply
     ///     to a 45 s window.
     /// </summary>
@@ -29,15 +35,17 @@ namespace SAAC.CollaborationIndices
         private readonly Dictionary<TimeSpan, SlidingAverageComputation> instances = new Dictionary<TimeSpan, SlidingAverageComputation>();
 
         /// <summary>
-        /// Creates one instance per window.
+        /// Creates one instance per window, from a configuration by families of indices.
         /// </summary>
         /// <param name="pipeline">Pipeline or subpipeline hosting the components.</param>
+        /// <param name="server">Dataset pipeline storing the streams. Null stores nothing.</param>
         /// <param name="template">
         /// Configuration shared by every instance. It is cloned, and its WindowDuration and
         /// Calibration are overridden per window; the template value of those two is ignored.
         /// </param>
         /// <param name="windows">Window durations and the writer of each one.</param>
         /// <param name="namePrefix">Prefix of the component names.</param>
+        [Obsolete("Declare the indices with CollaborationIndicesBuilder and call BuildSet. See the README of the component for the migration.")]
         public SlidingAverageComputationSet(
             Pipeline pipeline,
             DatasetPipeline server,
@@ -66,6 +74,19 @@ namespace SAAC.CollaborationIndices
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SlidingAverageComputationSet"/> class
+        /// from instances that are already built.
+        /// </summary>
+        /// <param name="instances">The instance of each window.</param>
+        internal SlidingAverageComputationSet(IEnumerable<KeyValuePair<TimeSpan, SlidingAverageComputation>> instances)
+        {
+            foreach (var instance in instances)
+            {
+                this.instances[instance.Key] = instance.Value;
+            }
+        }
+
         /// <summary>Instance of one window.</summary>
         public SlidingAverageComputation this[TimeSpan window]
         {
@@ -89,17 +110,28 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>
         /// Connects the shared clocks. The \psi Timers produce a TimeSpan, the components expect
-        /// a tick, hence the conversion.
+        /// a tick, hence the conversion. The attention clock only goes to the instances that
+        /// have an attention level indicator.
         /// </summary>
-        public void ConnectClocks(IProducer<TimeSpan> indexClock, IProducer<TimeSpan> attentionClock = null)
+        public void ConnectClocks(IProducer<TimeSpan> indexClock, IProducer<TimeSpan>? attentionClock = null)
         {
-            IProducer<bool> tick = indexClock.Select(_ => true);
-            IProducer<bool> attentionTick = attentionClock?.Select(_ => true);
+            this.ConnectClocks(indexClock.Select(_ => true), attentionClock?.Select(_ => true));
+        }
 
+        /// <summary>
+        /// Connects the shared clocks from tick streams, as <see cref="DataClock.FromStream"/> gives.
+        /// </summary>
+        public void ConnectClocks(IProducer<bool> indexClock, IProducer<bool>? attentionClock = null)
+        {
             foreach (SlidingAverageComputation instance in this.All)
             {
-                tick.PipeTo(instance.ClockIn);
-                attentionTick?.PipeTo(instance.AttentionClockIn);
+                indexClock.PipeTo(instance.ClockIn);
+
+                Receiver<bool>? attentionClockIn = instance.AttentionClockIn;
+                if (attentionClock != null && attentionClockIn != null)
+                {
+                    attentionClock.PipeTo(attentionClockIn);
+                }
             }
         }
 

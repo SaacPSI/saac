@@ -61,6 +61,18 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Also publish a flat text version of the graph, as the legacy gramStringOut did.</summary>
         public bool PublishTextVersion { get; set; } = true;
+
+        /// <summary>Per participant indices read from a snapshot. Null keeps them all.</summary>
+        public List<string>? NodeMetrics { get; set; } = null;
+
+        /// <summary>Per pair indices read from a snapshot. Null keeps them all.</summary>
+        public List<string>? EdgeMetrics { get; set; } = null;
+
+        /// <summary>Per ordered pair indices read from a snapshot. Null keeps them all.</summary>
+        public List<string>? DirectedEdgeMetrics { get; set; } = null;
+
+        /// <summary>Group level indices read from a snapshot. Null keeps them all.</summary>
+        public List<string>? GroupMetrics { get; set; } = null;
     }
 
     /// <summary>
@@ -91,6 +103,7 @@ namespace SAAC.CollaborationIndices
         {
             this.Out = pipeline.CreateEmitter<InteractionGraph>(this, $"{name}-Graph");
             this.TextOut = pipeline.CreateEmitter<string>(this, $"{name}-GraphText");
+            this.SnapshotIn = pipeline.CreateReceiver<IndexSnapshot>(this, this.ReceiveSnapshot, $"{name}-SnapshotIn");
 
             foreach (uint participantId in configuration.ParticipantIds)
             {
@@ -108,6 +121,13 @@ namespace SAAC.CollaborationIndices
         public Emitter<InteractionGraph> Out { get; }
 
         public Emitter<string> TextOut { get; }
+
+        /// <summary>
+        /// All the indices of one tick at once: one graph is published per snapshot, with
+        /// metrics that all describe the same tick. Fed metric by metric (GetNodeMetricInput
+        /// and the like), a graph is published on every message with whatever has arrived.
+        /// </summary>
+        public Receiver<IndexSnapshot> SnapshotIn { get; }
 
         /// <summary>Feeds one metric of every node from a per participant stream.</summary>
         public Receiver<Dictionary<uint, double>> GetNodeMetricInput(string metricName)
@@ -221,6 +241,76 @@ namespace SAAC.CollaborationIndices
             {
                 this.TextOut.Post(Describe(graph), originatingTime);
             }
+        }
+
+        private static bool Accepts(List<string>? filter, string metricName) => filter == null || filter.Contains(metricName);
+
+        private void ReceiveSnapshot(IndexSnapshot snapshot, Envelope envelope)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            foreach (var metric in snapshot.Individual)
+            {
+                if (!Accepts(this.configuration.NodeMetrics, metric.Key))
+                {
+                    continue;
+                }
+
+                foreach (var entry in metric.Value)
+                {
+                    if (this.nodeMetrics.TryGetValue(entry.Key, out var metrics))
+                    {
+                        metrics[metric.Key] = entry.Value;
+                    }
+                }
+            }
+
+            foreach (var metric in snapshot.Pair)
+            {
+                if (!Accepts(this.configuration.EdgeMetrics, metric.Key))
+                {
+                    continue;
+                }
+
+                foreach (var entry in metric.Value)
+                {
+                    if (this.edgeMetrics.TryGetValue(entry.Key, out var metrics))
+                    {
+                        metrics[metric.Key] = entry.Value;
+                    }
+                }
+            }
+
+            foreach (var metric in snapshot.DirectedPair)
+            {
+                if (!Accepts(this.configuration.DirectedEdgeMetrics, metric.Key))
+                {
+                    continue;
+                }
+
+                foreach (var entry in metric.Value)
+                {
+                    ParticipantPair pair = entry.Key.AsUndirected();
+                    var target = entry.Key.From == pair.A ? this.forwardMetrics : this.backwardMetrics;
+                    if (target.TryGetValue(pair, out var metrics))
+                    {
+                        metrics[metric.Key] = entry.Value;
+                    }
+                }
+            }
+
+            foreach (var metric in snapshot.Group)
+            {
+                if (Accepts(this.configuration.GroupMetrics, metric.Key))
+                {
+                    this.groupMetrics[metric.Key] = metric.Value;
+                }
+            }
+
+            this.TryCompute(envelope.OriginatingTime);
         }
 
         private static string Describe(InteractionGraph graph)

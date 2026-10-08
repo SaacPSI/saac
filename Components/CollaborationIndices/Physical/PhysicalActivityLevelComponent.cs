@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Protocols.WSTrust;
 using System.Numerics;
 using Microsoft.Psi;
 using Microsoft.Psi.Data;
@@ -29,19 +28,35 @@ namespace SAAC.CollaborationIndices
         private Dictionary<uint, Emitter<double>> participantsActivityLevelOut = new Dictionary<uint, Emitter<double>>();
         private Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>> windowEmitters = new Dictionary<TimeSpan, Emitter<Dictionary<uint, double>>>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PhysicalActivityLevelComponent"/> class,
+        /// storing its group and individual streams through the dataset pipeline.
+        /// </summary>
         public PhysicalActivityLevelComponent(Pipeline pipeline, DatasetPipeline server, PhysicalActivityLevelConfiguration configuration, string name = nameof(PhysicalActivityLevelComponent))
+            : this(pipeline, configuration, name, server == null ? null : new IndexStore(server))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PhysicalActivityLevelComponent"/> class.
+        /// </summary>
+        /// <param name="pipeline">Pipeline hosting the component.</param>
+        /// <param name="configuration">Configuration of the indicator.</param>
+        /// <param name="name">Name of the component, prefix of its streams.</param>
+        /// <param name="store">Destination of the group and individual streams. Null stores nothing.</param>
+        public PhysicalActivityLevelComponent(Pipeline pipeline, PhysicalActivityLevelConfiguration configuration, string name = nameof(PhysicalActivityLevelComponent), IndexStore? store = null)
             : base(pipeline, configuration, name)
         {
-            this.SessionName = server.GetSession("RawDataPipelineProcess.000");
+            this.SessionName = store?.Session;
 
             this.Out = pipeline.CreateEmitter<Dictionary<uint, double>>(this, $"{name}-ActivityLevels");
             this.GroupActivityLevelOut = pipeline.CreateEmitter<double>(this, $"{name}-GroupActivityLevel");
-            server.CreateConnectorAndStore($"{name}-GroupActivityLevel", "LiveVisualization", this.SessionName, pipeline, this.GroupActivityLevelOut.Type, this.GroupActivityLevelOut, true);
+            store?.Write(pipeline, $"{name}-GroupActivityLevel", this.GroupActivityLevelOut);
 
             foreach (uint participantId in configuration.ParticipantIds)
             {
                 this.participantsActivityLevelOut[participantId] = pipeline.CreateEmitter<double>(this, $"{name}-ActivityLevel-{participantId}");
-                server.CreateConnectorAndStore($"{name}-ActivityLevel-{participantId}", "LiveVisualization", this.SessionName, pipeline, this.participantsActivityLevelOut[participantId].Type, this.participantsActivityLevelOut[participantId], true);
+                store?.Write(pipeline, $"{name}-ActivityLevel-{participantId}", this.participantsActivityLevelOut[participantId]);
             }
 
             if (configuration.AdditionalWindows != null)
@@ -56,7 +71,7 @@ namespace SAAC.CollaborationIndices
             }
         }
 
-        public Session SessionName;
+        public Session? SessionName;
 
         /// <summary>
         /// Activity level of every participant, on the main window.
@@ -116,7 +131,7 @@ namespace SAAC.CollaborationIndices
                 {
                     movement = this.configuration.Unit == MovementUnit.DisplacementPerSecond
                         ? (elapsedSeconds > double.Epsilon ? distance / elapsedSeconds : 0)
-                        : distance / stepCount;
+                        : (stepCount > 0 ? distance / stepCount : 0);
                 }
 
                 weightedSum += weight * movement;

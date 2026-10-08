@@ -25,6 +25,7 @@ namespace SAAC.CollaborationIndices
             = new Dictionary<uint, Receiver<Dictionary<string, Vector3>>>();
 
         private DateTime lastComputationTime = DateTime.MinValue;
+        private DateTime lastTickTime = DateTime.MinValue;
 
         protected readonly Pipeline pipeline;
         protected readonly TConfiguration configuration;
@@ -73,7 +74,8 @@ namespace SAAC.CollaborationIndices
                     $"{name}-InBody-{participant}");
             }
 
-            this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.TryCompute(envelope.OriginatingTime), $"{name}-Tick");
+            this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.ReceiveTick(envelope.OriginatingTime), $"{name}-Tick");
+            this.TickProcessedOut = pipeline.CreateEmitter<bool>(this, $"{name}-TickProcessed");
         }
 
         /// <summary>
@@ -81,6 +83,19 @@ namespace SAAC.CollaborationIndices
         /// typically with configuration.ComputeOnDataReception set to false.
         /// </summary>
         public Receiver<bool> TickIn { get; }
+
+        /// <summary>
+        /// One message per tick received on TickIn, posted once the tick has been handled:
+        /// true when the index was published for that tick, false when it was skipped.
+        /// Same contract as IndexComponentBase.TickProcessedOut.
+        /// </summary>
+        public Emitter<bool> TickProcessedOut { get; }
+
+        /// <summary>
+        /// Set to true before Compute is called. A Compute that returns without posting its
+        /// outputs must set it back to false, so that TickProcessedOut stays truthful.
+        /// </summary>
+        protected bool HasPublished { get; set; }
 
         public TConfiguration Configuration => this.configuration;
 
@@ -128,28 +143,43 @@ namespace SAAC.CollaborationIndices
         /// </summary>
         protected virtual bool CanCompute(DateTime originatingTime) => true;
 
-        protected void TryCompute(DateTime originatingTime)
+        /// <summary>Computes the indicator if the guards allow it.</summary>
+        /// <returns>True when the indicator was published for this time.</returns>
+        protected bool TryCompute(DateTime originatingTime)
         {
             this.buffer.Prune(originatingTime - this.configuration.BufferRetention);
 
             // Strictly increasing originating times are mandatory for \psi emitters.
             if (originatingTime <= this.lastComputationTime)
             {
-                return;
+                return false;
             }
 
             if (originatingTime - this.lastComputationTime < this.configuration.ComputationInterval)
             {
-                return;
+                return false;
             }
 
             if (!this.CanCompute(originatingTime))
             {
-                return;
+                return false;
             }
 
             this.lastComputationTime = originatingTime;
+            this.HasPublished = true;
             this.Compute(originatingTime);
+            return this.HasPublished;
+        }
+
+        private void ReceiveTick(DateTime originatingTime)
+        {
+            bool published = this.TryCompute(originatingTime);
+
+            if (originatingTime > this.lastTickTime)
+            {
+                this.lastTickTime = originatingTime;
+                this.TickProcessedOut.Post(published, originatingTime);
+            }
         }
 
         private void OnPosition(uint participantId, string bodyPart, Vector3 position, Envelope envelope)

@@ -70,6 +70,7 @@ namespace SAAC.CollaborationIndices
         {
             if (this.lastValues.Count == 0)
             {
+                this.HasPublished = false;
                 return;
             }
 
@@ -105,7 +106,8 @@ namespace SAAC.CollaborationIndices
                 return;
             }
 
-            this.lastValues = values;
+            // Copy: \psi recycles the received dictionary once the handler returns.
+            this.lastValues = new Dictionary<uint, double>(values);
             this.TryCompute(envelope.OriginatingTime);
         }
     }

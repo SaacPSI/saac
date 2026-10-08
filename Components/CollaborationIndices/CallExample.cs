@@ -22,6 +22,12 @@ using Whisper.net.Ggml;
 
 namespace SAAC.CollaborationIndices
 {
+    /// <summary>
+    /// Excerpt of a real processing pipeline, kept as a reference of how the indices are
+    /// declared and wired among the other streams of a session. It is not compiled: it relies
+    /// on members of the application it comes from. For a complete program that runs as it
+    /// is, see Applications/CollaborationIndicesExample.
+    /// </summary>
     public class CallExample
     {
         public void StartProcess(DatasetPipeline server, string pipelineSessionName, Session session)
@@ -57,24 +63,30 @@ namespace SAAC.CollaborationIndices
             };
             SpeechProcessing speechProcessing = new SpeechProcessing(SubPipeline, speechConfiguration);
 
-            var template = new SlidingAverageConfiguration();
-            template.UseTaskIndices = false;
-            template.UseSpatialIndices = false;
-            template.UseVerbalIndices = false;
-            template.UseVisualIndices = false;
-            template.UsePhysicalIndices = true;
-            template.ComputeCollaborationScores = true;
-            template.GenerateGraph = false;
-            template.UseInternalClock = false;
-            template.ParticipantIds = Pids;
+            // The indices are declared one by one: add a line to compute another one, remove a
+            // line to stop computing it. Nothing else has to change, in particular not the library.
+            var indicesBuilder = new CollaborationIndicesBuilder(SubPipeline)
+                .WithName("SlidingAverage")
+                .WithParticipants(Pids)
 
-            var indicesSet = new SlidingAverageComputationSet(SubPipeline, server, template, new Dictionary<TimeSpan, TextWriter>
+                // Keeps the streams the components have always stored, in the same session and store.
+                .WithStore(server)
+
+                .AddIndicator(Indicators.Movement, options => options.AdditionalWindows = new List<TimeSpan> { TimeSpan.FromSeconds(5) })
+                .AddIndicator(Indicators.Synchrony)
+                /*.AddIndicator(Indicators.VerbalParticipation)
+                .AddIndicator(Indicators.SpeechEquality)
+                .AddIndicator(Indicators.TurnTaking)*/
+                .WithCollaborationScore();
+
+            // One instance per window, each one with its writer and the calibration of its window.
+            var indicesSet = indicesBuilder.BuildSet(new Dictionary<TimeSpan, TextWriter>
             {
-                { TimeSpan.FromSeconds(2), IndexesWriter },
-                { TimeSpan.FromSeconds(20), Indexes2Writer },
+                { TimeSpan.FromSeconds(2), Indexes2Writer },
+                { TimeSpan.FromSeconds(20), IndexesWriter },
                 /*{ TimeSpan.FromSeconds(30), Indexes30Writer },
                 { TimeSpan.FromSeconds(45), Indexes45Writer },*/
-        });
+            });
 
             StreamsWriters.Add(IndexesWriter);
             StreamsWriters.Add(Indexes2Writer);
@@ -187,12 +199,17 @@ namespace SAAC.CollaborationIndices
                 // gatherProducers.LeftHandsPositions[i].PipeTo(slidingAverage.CheckReceiverPositionUsers(i, "Left"));
                 // gatherProducers.RightHandsPositions[i].PipeTo(slidingAverage.CheckReceiverPositionUsers(i, "Right"));
 
+                // The source streams go to the inputs of the components, reached through the
+                // catalogue entry of their indicator. They are shared by every window.
                 indicesSet.ForEach(sa =>
                 {
-                    gatherProducers.HeadPositions[i].ToPositions(i).PipeTo(sa.ActivityLevel.GetPositionInput((uint)i, BodyPartNames.Head));
-                    gatherProducers.LeftHandsPositions[i].ToPositions(i).PipeTo(sa.ActivityLevel.GetPositionInput((uint)i, BodyPartNames.LeftHand));
-                    gatherProducers.RightHandsPositions[i].ToPositions(i).PipeTo(sa.ActivityLevel.GetPositionInput((uint)i, BodyPartNames.RightHand));
-                    gatherProducers.HeadPositions[i].ToPositions(i).PipeTo(sa.Synchrony.GetPositionInput((uint)i, BodyPartNames.Head));
+                    PhysicalActivityLevelComponent movement = sa.Get(Indicators.Movement).Component;
+                    PhysicalSynchronyComponent synchrony = sa.Get(Indicators.Synchrony).Component;
+
+                    gatherProducers.HeadPositions[i].ToPositions(i).PipeTo(movement.GetPositionInput((uint)i, BodyPartNames.Head));
+                    gatherProducers.LeftHandsPositions[i].ToPositions(i).PipeTo(movement.GetPositionInput((uint)i, BodyPartNames.LeftHand));
+                    gatherProducers.RightHandsPositions[i].ToPositions(i).PipeTo(movement.GetPositionInput((uint)i, BodyPartNames.RightHand));
+                    gatherProducers.HeadPositions[i].ToPositions(i).PipeTo(synchrony.GetPositionInput((uint)i, BodyPartNames.Head));
                 });
 
                 RecordOrbDataRossExperiment(server, gatherProducers, i);

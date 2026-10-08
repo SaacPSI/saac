@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Protocols.WSTrust;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,13 +28,19 @@ namespace SAAC.CollaborationIndices.Verbal
     {
         public int ParticipantId { get; set; } = 0;
 
+        public bool GeneratePsiStore { get; set; } = false;
+
+        public PsiExporter audioStore;
+
+        public bool AudioFileReprocessing = false;
     }
 
     public class VadWhisper
     {
         VadWhisperConfiguration vadWhisperConfiguration;
 
-        public IProducer<bool> SetupVad(Pipeline subpipeline, DatasetPipeline server, VadWhisperConfiguration configuration, IProducer<AudioBuffer> audio, int id, SpeechProcessing process)
+        /// <param name="process">The legacy speech processing, which logs the energy and the voice activity. Null when it is not used.</param>
+        public IProducer<bool> SetupVad(Pipeline subpipeline, DatasetPipeline server, VadWhisperConfiguration configuration, IProducer<AudioBuffer> audio, int id, SpeechProcessing? process)
         {
             this.vadWhisperConfiguration = configuration;
             var sessionName = server.GetSession("RawDataPipelineProcess.000");
@@ -44,7 +51,7 @@ namespace SAAC.CollaborationIndices.Verbal
                 Language = "en-Gb",
                 Grammars = null,
                 BufferLengthInMs = 1000,
-                VoiceActivityStartOffsetMs = -250,
+                VoiceActivityStartOffsetMs = 0,
                 VoiceActivityEndOffsetMs = -250,
                 InputFormat = WaveFormat.Create16kHz1Channel16BitPcm(),
                 InitialSilenceTimeoutMs = 0,
@@ -59,8 +66,11 @@ namespace SAAC.CollaborationIndices.Verbal
             var audioFeatures = new AcousticFeaturesExtractor(subpipeline);
             DateTime time = DateTime.MinValue;
 
-            /*audio.PipeTo(audioFeatures.In);
-            audioFeatures.LogEnergy.PipeTo(process.CheckLogReceiver(id));
+            audio.PipeTo(audioFeatures.In);
+            if (process != null)
+            {
+                audioFeatures.LogEnergy.PipeTo(process.CheckLogReceiver(id));
+            }
 
             // Create a voice-activity stream by thresholding the log energy
             var vadWithHistory = audioFeatures.LogEnergy
@@ -83,14 +93,28 @@ namespace SAAC.CollaborationIndices.Verbal
                 }
 
                 );
-            vadWithHistory.PipeTo(process.CheckVadReceiver(id));
 
-            var value = vad.Join(vadWithHistory, DeliveryPolicy.LatestMessage);*/
+            // vadWithHistory.PipeTo(process.CheckVadReceiver(id));
+            // var value = vad.Join(vadWithHistory, DeliveryPolicy.LatestMessage);
 
-            server.CreateConnectorAndStore($"VAD_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(bool), vad.Out, true);
+            if (this.vadWhisperConfiguration.GeneratePsiStore)
+            {
+                server.CreateConnectorAndStore($"VAD_LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(bool), vadWithHistory.Out, true);
+                server.CreateConnectorAndStore($"VAD_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(bool), vad.Out, true);
+                server.CreateConnectorAndStore($"LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(float), audioFeatures.LogEnergy.Out, true);
+            }
+            else if (this.vadWhisperConfiguration.AudioFileReprocessing)
+            {
+                vadWithHistory.Out.Write($"VAD_LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", this.vadWhisperConfiguration.audioStore);
+                vad.Out.Write($"VAD_{this.vadWhisperConfiguration.ParticipantId + 1}", this.vadWhisperConfiguration.audioStore);
+                audioFeatures.LogEnergy.Out.Write($"LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", this.vadWhisperConfiguration.audioStore);
+            }
 
-            // server.CreateConnectorAndStore($"VAD_LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(bool), vadWithHistory.Out, true);
-            server.CreateConnectorAndStore($"LOG_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, typeof(float), audioFeatures.LogEnergy.Out, true);
+            if (process != null)
+            {
+                vad.PipeTo(process.CheckVadReceiver(id));
+            }
+
             return vad;
         }
 
@@ -105,16 +129,17 @@ namespace SAAC.CollaborationIndices.Verbal
             var finalWhisperResults = whisper.FinalOut.Where(result => result.IsFinal).Do((m, e) =>
             {
                 e.CreationTime = e.OriginatingTime;
-                Console.WriteLine($"{id}_{m?.ToString()}");
+                // Console.WriteLine($"{id}_{m?.ToString()}");
             });
-            server.CreateConnectorAndStore($"STT_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, finalWhisperResults.GetType(), finalWhisperResults.Out, true);
 
-            /*exporter.Write(whisper.PartialOut.Where(presult =>!presult.IsFinal)
-                .Do((m, e) =>
-                {
-                    e.CreationTime = e.OriginatingTime;
-
-                }), $"STT_Partial_{id}");*/
+            if (this.vadWhisperConfiguration.GeneratePsiStore)
+            {
+                server.CreateConnectorAndStore($"STT_{this.vadWhisperConfiguration.ParticipantId + 1}", "LiveVisualization", sessionName, subpipeline, finalWhisperResults.GetType(), finalWhisperResults.Out, true);
+            }
+            else if (this.vadWhisperConfiguration.AudioFileReprocessing)
+            {
+                finalWhisperResults.Out.Write($"STT_{this.vadWhisperConfiguration.ParticipantId + 1}", this.vadWhisperConfiguration.audioStore);
+            }
 
             return finalWhisperResults;
         }
