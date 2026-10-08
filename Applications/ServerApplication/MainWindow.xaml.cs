@@ -17,6 +17,7 @@ using Microsoft.Psi.Data;
 using Microsoft.Psi.PsiStudio.PipelinePlugin;
 using Newtonsoft.Json;
 using SAAC;
+using SAAC.CollaborationIndices;
 using SAAC.LabStreamLayer;
 using SAAC.PipelineServices;
 using ServerApplication.Examples;
@@ -110,6 +111,29 @@ namespace ServerApplication
                     this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
                 }
             }
+        }
+
+        /// <summary>
+        /// A frame of the positions, as the interface lists it.
+        /// </summary>
+        public class DataFrameChoice
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="DataFrameChoice"/> class.
+            /// </summary>
+            /// <param name="frame">The frame.</param>
+            /// <param name="label">Its name in the interface and in the log.</param>
+            public DataFrameChoice(DataFrame frame, string label)
+            {
+                this.Frame = frame;
+                this.Label = label;
+            }
+
+            /// <summary>Gets the frame.</summary>
+            public DataFrame Frame { get; }
+
+            /// <summary>Gets its name in the interface and in the log.</summary>
+            public string Label { get; }
         }
 
         public class RelayCommand : ICommand
@@ -572,6 +596,64 @@ namespace ServerApplication
             set => this.SetProperty(ref this.isCollaborationProfileEnabled, value);
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the collaboration score and its dimensions are computed.
+        /// </summary>
+        public bool IsCollaborationScoreEnabled
+        {
+            get => this.isCollaborationScoreEnabled;
+            set => this.SetProperty(ref this.isCollaborationScoreEnabled, value);
+        }
+
+        /// <summary>
+        /// Gets the frames the positions of a session may be expressed in, each one with the
+        /// axis that is vertical in it.
+        /// </summary>
+        public IReadOnlyList<DataFrameChoice> DataFrames { get; } = new[]
+        {
+            new DataFrameChoice(DataFrame.Unity, "Unity (Y up, left-handed)"),
+            new DataFrameChoice(DataFrame.Standard, "Standard (Z up, right-handed)"),
+        };
+
+        /// <summary>
+        /// Gets or sets the frame of the positions of the session: Unity (Y up) or standard (Z up).
+        /// </summary>
+        public DataFrame SelectedDataFrame
+        {
+            get => this.selectedDataFrame;
+            set => this.SetProperty(ref this.selectedDataFrame, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the number of participants whose collaboration is analysed.
+        /// </summary>
+        public int ParticipantCount
+        {
+            get => this.participantCount;
+            set => this.SetProperty(ref this.participantCount, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the audio stream of each participant, by id or by name, in the order of
+        /// the participants, separated by ";". Only read when the session has no voice activity
+        /// or transcription stream and they are computed from the audio. Empty: the audio
+        /// streams of the session, whatever their names, in the order of their ids.
+        /// </summary>
+        public string AudioStreamNames
+        {
+            get => this.audioStreamNames;
+            set => this.SetProperty(ref this.audioStreamNames, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the folder of the Whisper models, read when the transcription is computed from the audio.
+        /// </summary>
+        public string WhisperModelDirectory
+        {
+            get => this.whisperModelDirectory;
+            set => this.SetProperty(ref this.whisperModelDirectory, value);
+        }
+
         public ObservableCollection<SlidingWindow> SlidingWindows { get; set; }
 
         public ICommand AddWindowCommand { get; }
@@ -630,6 +712,11 @@ namespace ServerApplication
         private bool facingFormation;
         private bool isSlidingWindowEnabled;
         private bool isCollaborationProfileEnabled;
+        private bool isCollaborationScoreEnabled;
+        private DataFrame selectedDataFrame = DataFrame.Unity;
+        private int participantCount = 2;
+        private string audioStreamNames = string.Empty;
+        private string whisperModelDirectory = string.Empty;
         private string pipelineName;
 
 
@@ -694,6 +781,8 @@ namespace ServerApplication
             this.Configuration.AutomaticPipelineRun = Properties.Settings.Default.AutomaticPipelineRun;
             this.ExternalConfigurationDirectory = Properties.Settings.Default.ExternalConfigurationDirectory;
             this.SessionID = Properties.Settings.Default.SessionID;
+            this.AudioStreamNames = Properties.Settings.Default.AudioStreamNames;
+            this.WhisperModelDirectory = Properties.Settings.Default.WhisperModelDirectory;
 
             // Annotation Tab
             this.IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
@@ -763,6 +852,8 @@ namespace ServerApplication
             Properties.Settings.Default.SessionMode = (int)this.SessionModeComboBox.SelectedIndex;
             Properties.Settings.Default.ExternalConfigurationDirectory = this.ExternalConfigurationDirectory;
             Properties.Settings.Default.SessionID = this.SessionID;
+            Properties.Settings.Default.AudioStreamNames = this.AudioStreamNames;
+            Properties.Settings.Default.WhisperModelDirectory = this.WhisperModelDirectory;
 
             // Annotation Tab
             Properties.Settings.Default.IsAnnotationEnabled = this.IsAnnotationEnabled;
@@ -848,6 +939,12 @@ namespace ServerApplication
 
         private void BtnStartProcess(object sender, RoutedEventArgs e)
         {
+            if (this.server == null)
+            {
+                this.AddLog("Start the server before the process: there is no stream to process yet.");
+                return;
+            }
+
             if (this.realTimeProcessingUseCase != null)
             {
                 RealTimeProcessingUseCaseConfiguration config = new RealTimeProcessingUseCaseConfiguration()
@@ -875,11 +972,256 @@ namespace ServerApplication
                     IsCollaborationProfileEnabled = this.IsCollaborationProfileEnabled,
                 };
                 this.realTimeProcessingUseCase.Configuration = config;
-                this.realTimeProcessingUseCase.sessionNumber = int.Parse(this.SessionID);
                 this.realTimeProcessingUseCase.StoreMode = (RendezVousPipeline.StoreMode)this.StoreModeComboBox.SelectedIndex;
+                if (!this.PrepareCollaborationProcess())
+                {
+                    return;
+                }
+
                 this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName, this.server.GetSession("RawDataPipelineProcess.000"));
                 this.server?.TriggerNewProcessEvent("PsiPipeline");
             }
+        }
+
+        /// <summary>
+        /// Gives the process what the "Process" tab selects, for a live session and for the
+        /// replay of a dataset alike: the collaboration indices to compute and the folder of
+        /// the results.
+        /// </summary>
+        /// <returns>False when the selection cannot be computed; the reason is in the log.</returns>
+        private bool PrepareCollaborationProcess()
+        {
+            int.TryParse(this.SessionID, out int sessionNumber);
+            string outputFolder = System.IO.Path.Combine(this.LocalDatasetPath ?? string.Empty, "CollaborationIndices", $"{sessionNumber}_{DateTime.Now:yyyyMMdd_HHmmss}");
+
+            CollaborationSessionConfiguration? collaboration = this.BuildCollaborationConfiguration(outputFolder);
+            if (collaboration != null)
+            {
+                string[] problems = collaboration.Validate().ToArray();
+                if (problems.Length > 0)
+                {
+                    this.AddLog($"Collaboration indices: the selection cannot be computed.\n{string.Join("\n", problems)}");
+                    return false;
+                }
+            }
+
+            try
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+            catch (Exception ex)
+            {
+                this.AddLog($"The folder of the results cannot be created ({outputFolder}): {ex.Message}");
+                return false;
+            }
+
+            this.AddLog($"Process: session {sessionNumber}, results in {outputFolder}");
+            this.realTimeProcessingUseCase.Log = this.LogFromAnyThread;
+            this.realTimeProcessingUseCase.sessionNumber = sessionNumber;
+            this.realTimeProcessingUseCase.csvAdress = outputFolder;
+            this.realTimeProcessingUseCase.NumberOfParticipants = this.ParticipantCount;
+
+            // Read when the session has no voice activity or transcription stream: they are then computed from the audio.
+            this.realTimeProcessingUseCase.AudioStreamNames = (this.AudioStreamNames ?? string.Empty)
+                .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(name => name.Trim())
+                .Where(name => name.Length > 0)
+                .ToList();
+            this.realTimeProcessingUseCase.WhisperSettings.WhisperModelDirectory = (this.WhisperModelDirectory ?? string.Empty).Trim();
+            this.realTimeProcessingUseCase.CollaborationConfiguration = collaboration;
+            return true;
+        }
+
+        /// <summary>
+        /// Adds a line to the log from any thread. From a thread of the pipeline it does not
+        /// wait for the interface, which may itself be waiting for that pipeline to stop.
+        /// </summary>
+        /// <param name="message">The line.</param>
+        private void LogFromAnyThread(string message)
+        {
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+            {
+                this.AddLog(message);
+            }
+            else
+            {
+                dispatcher.BeginInvoke(new Action(() => this.AddLog(message)));
+            }
+        }
+
+        /// <summary>
+        /// What the collaboration indices compute, read from the "Process" tab: one indicator
+        /// per checked metric, one instance per sliding window, the score and the profiles
+        /// when asked. It is the configuration the console applications read from a file
+        /// (<see cref="CollaborationSessionConfiguration"/>); the process saves it next to
+        /// the results.
+        /// </summary>
+        /// <param name="outputFolder">The folder of the results.</param>
+        /// <returns>The configuration; null when no metric is checked or when there is no sliding window.</returns>
+        private CollaborationSessionConfiguration? BuildCollaborationConfiguration(string outputFolder)
+        {
+            // Every index is computed over a sliding window: without one, none is.
+            List<TimeSpan> windows = this.SelectedWindows();
+            if (windows.Count == 0)
+            {
+                this.AddLog(this.IsSlidingWindowEnabled
+                    ? "Collaboration indices: the list of sliding windows is empty, no index, score or profile is computed."
+                    : "Collaboration indices: \"Sliding Windows Computation\" is unchecked, no index, score or profile is computed.");
+                return null;
+            }
+
+            var collaboration = new CollaborationSessionConfiguration
+            {
+                DatasetPath = this.LocalDatasetPath ?? string.Empty,
+                OutputFolder = outputFolder,
+                ParticipantIds = Enumerable.Range(0, Math.Max(0, this.ParticipantCount)).Select(i => (uint)i).ToList(),
+                Windows = windows,
+                ComputeProfiles = this.IsCollaborationProfileEnabled,
+                ComputeCollaborationScores = this.IsCollaborationScoreEnabled,
+            };
+
+            // The frame of the positions comes from the interface. The head streams of the
+            // Unity server are those of the avatars, whose look direction is the local +Y axis
+            // of the head: it is the direction PositionOrientationPreProcessing computes.
+            collaboration.Detectors.Frame = this.SelectedDataFrame;
+            collaboration.Detectors.HeadForwardAxis = "+Y";
+
+            // The profiles read a fixed set of indicators: computed without one of them, they
+            // would read 0 for it. Asking for the profiles asks for these indicators, with
+            // their default options.
+            if (this.IsCollaborationProfileEnabled)
+            {
+                foreach (string indicator in CollaborationSessionConfiguration.ProfileIndicators)
+                {
+                    collaboration.Add(indicator);
+                }
+            }
+
+            // Conversational. The two kinds of turn taking are categories of one indicator.
+            if (this.IsConversationalEnabled)
+            {
+                var categories = new List<string>();
+                if (this.TurnTakingWithOverlap)
+                {
+                    categories.Add(IndexCategories.TurnTakingWithOverlap);
+                }
+
+                if (this.TurnTakingWithoutOverlap)
+                {
+                    categories.Add(IndexCategories.TurnTakingWithoutOverlap);
+                }
+
+                // Already declared by the profiles, the indicator keeps every category.
+                if (categories.Count > 0 && !collaboration.Has(IndexNames.TurnTaking))
+                {
+                    collaboration.Add(IndexNames.TurnTaking, new Dictionary<string, object> { { "Categories", categories } });
+                }
+
+                this.AddIndicator(collaboration, this.SpeechParticipation, IndexNames.VerbalParticipation);
+                this.AddIndicator(collaboration, this.SpeechEquality, IndexNames.SpeechEquality);
+                this.AddIndicator(collaboration, this.Silence, IndexNames.Silence);
+                this.AddIndicator(collaboration, this.CrossTalk, IndexNames.CrossTalk);
+            }
+
+            // Visual.
+            if (this.IsVisualEnabled)
+            {
+                this.AddIndicator(collaboration, this.JointVisualAttention, IndexNames.JointVisualAttention);
+                this.AddIndicator(collaboration, this.GazeOnPeers, IndexNames.GazeOnPeers);
+                this.AddIndicator(collaboration, this.MutualGaze, IndexNames.MutualGaze);
+            }
+
+            // Physical.
+            if (this.IsPhysicalEnabled)
+            {
+                this.AddIndicator(collaboration, this.TaskParticipation, IndexNames.TaskParticipation);
+                this.AddIndicator(collaboration, this.TaskEquality, IndexNames.TaskEquality);
+                this.AddIndicator(collaboration, this.PhysicalActivityLevel, IndexNames.Movement);
+                this.AddIndicator(collaboration, this.PhysicalSynchronyScore, IndexNames.Synchrony);
+            }
+
+            // Spatial.
+            if (this.IsSpatialEnabled)
+            {
+                this.AddIndicator(collaboration, this.PhysicalProximity, IndexNames.Proximity);
+                this.AddIndicator(collaboration, this.FacingFormation, IndexNames.Formation);
+            }
+
+            if (collaboration.Indicators.Count == 0)
+            {
+                this.AddLog("Collaboration indices: no metric is checked, none is computed.");
+                return null;
+            }
+
+            this.AddLog($"Collaboration indices: selected {string.Join(", ", collaboration.Indicators.Select(indicator => indicator.Type))}.");
+            this.AddLog($"Collaboration indices: {collaboration.ParticipantIds.Count} participants; windows of {string.Join(", ", windows.Select(window => $"{window.TotalSeconds:0.###} s"))}; data frame {this.DataFrames.First(choice => choice.Frame == this.SelectedDataFrame).Label}; "
+                + $"score {(this.IsCollaborationScoreEnabled ? "asked" : "not asked")}; profiles {(this.IsCollaborationProfileEnabled ? "asked" : "not asked")}.");
+
+            if (this.IsCollaborationProfileEnabled)
+            {
+                this.AddLog($"Collaboration profiles: the indicators they read are part of the selection ({string.Join(", ", CollaborationSessionConfiguration.ProfileIndicators)}).");
+            }
+
+            if (this.IsCollaborationScoreEnabled)
+            {
+                this.ReportPartialScore(collaboration);
+            }
+
+            return collaboration;
+        }
+
+        /// <summary>
+        /// The score is computed on the indices of the selected metrics: a dimension is the
+        /// mean of those of its indices that are computed, and is left out when none is.
+        /// Says which indices of the score are not selected.
+        /// </summary>
+        private void ReportPartialScore(CollaborationSessionConfiguration collaboration)
+        {
+            var computed = new HashSet<string>(collaboration.Indicators.Select(indicator => indicator.Type));
+
+            // Each category of the turn taking is an index of its own.
+            IndicatorConfiguration? turnTaking = collaboration.Indicators.FirstOrDefault(indicator => indicator.Type == IndexNames.TurnTaking);
+            if (turnTaking != null)
+            {
+                object? categories = null;
+                turnTaking.Options?.TryGetValue("Categories", out categories);
+                computed.UnionWith(categories as IEnumerable<string> ?? new[] { IndexCategories.TurnTakingWithOverlap, IndexCategories.TurnTakingWithoutOverlap, IndexCategories.Overlap });
+            }
+
+            List<string> missing = SlidingAverageComputation.DefaultDimensions()
+                .SelectMany(dimension => dimension.IndexNames)
+                .Where(index => !computed.Contains(index))
+                .ToList();
+            if (missing.Count > 0)
+            {
+                this.AddLog($"Collaboration score: computed without {string.Join(", ", missing)}, which are not selected.");
+            }
+        }
+
+        private void AddIndicator(CollaborationSessionConfiguration collaboration, bool isChecked, string indicator)
+        {
+            if (isChecked)
+            {
+                // An indicator computed from another one brings it along (speech equality needs speech participation).
+                collaboration.Add(indicator);
+            }
+        }
+
+        /// <summary>
+        /// The windows of the "Sliding Windows" list; none when the list is disabled or empty.
+        /// </summary>
+        private List<TimeSpan> SelectedWindows()
+        {
+            var windows = new List<TimeSpan>();
+            if (this.IsSlidingWindowEnabled)
+            {
+                // A length that is not a number becomes 0, which the validation reports.
+                windows.AddRange(this.SlidingWindows.Select(window =>
+                    TimeSpan.FromSeconds(double.IsNaN(window.WindowLengthSeconds) || double.IsInfinity(window.WindowLengthSeconds) ? 0 : window.WindowLengthSeconds)));
+            }
+
+            return windows;
         }
 
         /// <summary>
@@ -956,7 +1298,7 @@ namespace ServerApplication
                         }
                     }*/
 
-                    this.realTimeProcessingUseCase.WritersDisposed = true;
+                    this.realTimeProcessingUseCase.CloseWriters();
                     Console.WriteLine("Writer are closed and Session is ended");
                     break;
                 default:
@@ -1159,16 +1501,28 @@ namespace ServerApplication
         {
             if (!this.realTimeProcessingUseCase.IsPsiPipelineStarted)
             {
+                this.AddLog("Stop: no pipeline is running.");
                 return;
             }
 
+            this.AddLog("Stop: stopping the pipeline.");
+
+            // A replay stopped here has not read its dataset to the end: what it stores is marked as partial.
+            this.realTimeProcessingUseCase.StopRequested = true;
             if (this.realTimeProcessingUseCase.SubPipeline != null)
             {
                 this.realTimeProcessingUseCase.SubPipeline.Dispose();
             }
 
+            // A replay stops with its pipeline.
+            this.replayServer?.Pipeline?.Dispose();
+
             this.server?.Dataset?.Save();
             this.server?.Stop();
+            this.AddLog("Stop: pipeline stopped.");
+
+            // The process has stopped: its result files can be closed.
+            this.realTimeProcessingUseCase.CloseWriters();
 
             if (this.realTimeProcessingUseCase.IsServerInitialised)
             {
@@ -1237,8 +1591,13 @@ namespace ServerApplication
             }
 
 
+            this.realTimeProcessingUseCase.StopRequested = true;
             this.server?.Dataset?.Save();
             this.server?.Dispose();
+            this.replayServer?.Pipeline?.Dispose();
+
+            // The pipelines have stopped: the result files of the process can be closed.
+            this.realTimeProcessingUseCase.CloseWriters();
             this.StopStatusMonitoring();
         }
 
@@ -1342,12 +1701,26 @@ namespace ServerApplication
         {
             if (this.setupState >= SetupState.PipelineInitialised)
             {
+                this.AddLog("Post processing: not started, a pipeline was already started from this window.");
                 return;
             }
 
             if (this.ExternalConfigurationDirectory.Length > 0)
             {
                 this.LoadExternalConfiguration(this.ExternalConfigurationDirectory);
+            }
+
+            // The replay would create an empty dataset under a name that does not exist, and replay nothing.
+            string datasetFolder = this.LocalDatasetPath ?? string.Empty;
+            string datasetFile = System.IO.Path.Combine(datasetFolder, this.LocalDatasetName ?? string.Empty);
+            if (!File.Exists(datasetFile))
+            {
+                string[] found = Directory.Exists(datasetFolder)
+                    ? Directory.GetFiles(datasetFolder, "*.pds").Select(file => System.IO.Path.GetFileName(file)).ToArray()
+                    : Array.Empty<string>();
+                this.AddLog($"Post processing: not started, there is no dataset file \"{this.LocalDatasetName}\" in {datasetFolder}. "
+                    + (found.Length > 0 ? $"Dataset files found there: {string.Join(", ", found)}." : "No dataset file (.pds) was found there."));
+                return;
             }
 
             this.SetupPipelineConfiguration();
@@ -1363,11 +1736,109 @@ namespace ServerApplication
 
             this.replayServer.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
 
+            this.AddLog($"Post processing: dataset {this.LocalDatasetName} of {this.LocalDatasetPath}, replayed at its original pace.");
             this.replayServer.LoadDatasetAndConnectors();
+            this.LogLoadedDataset();
+
+            // The process of the "Process" tab, on the streams of the dataset. It is created
+            // before the replay starts, and starts with it.
+            bool processPrepared = this.PrepareCollaborationProcess();
+            if (!processPrepared)
+            {
+                this.AddLog("Post processing: the dataset is replayed without the collaboration process.");
+            }
+
+            if (processPrepared)
+            {
+                try
+                {
+                    this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.replayServer, this.PipelineSessionName, null, replay: true);
+                }
+                catch (Exception ex)
+                {
+                    this.AddLog($"Error starting the collaboration process: {ex.Message}");
+                    this.realTimeProcessingUseCase.CloseWriters();
+                    this.replayServer.Dispose();
+                    return;
+                }
+            }
+
+            // The result files are complete once the dataset has been read to its end.
+            this.replayServer.Pipeline.PipelineCompleted += (_, _) =>
+            {
+                this.realTimeProcessingUseCase.CloseWriters();
+
+                // Not Invoke: the interface may be waiting for this pipeline to stop. Disposing
+                // the pipeline closes the stores the process wrote in the dataset.
+                bool stopped = this.realTimeProcessingUseCase.StopRequested;
+                Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.replayServer?.Pipeline?.Dispose();
+                    this.AddLog(stopped
+                        ? "Post processing stopped before the end of the dataset, the result files and the stores are closed."
+                        : "Post processing completed, the result files and the stores are closed.");
+                }));
+            };
+
             this.replayServer.RunPipelineAndSubpipelines();
-            this.AddLog("Server started");
+            this.AddLog("Post processing started");
             this.setupState = SetupState.PipelineInitialised;
-            this.server?.TriggerNewProcessEvent("PsiPipeline");
+            this.replayServer.TriggerNewProcessEvent("PsiPipeline");
+        }
+
+        /// <summary>
+        /// Says in the log what the replay reads of the dataset: how many streams, which ones
+        /// are read with a type of this application, and which ones are left out because
+        /// their type is not known here.
+        /// </summary>
+        private void LogLoadedDataset()
+        {
+            Dataset? dataset = this.replayServer.Dataset;
+            var connectors = this.replayServer.Connectors;
+            if (dataset == null)
+            {
+                this.AddLog("Post processing: no dataset was loaded.");
+                return;
+            }
+
+            var replaced = new SortedSet<string>();
+            var skipped = new SortedSet<string>();
+            int skippedStreams = 0;
+            foreach (Session session in dataset.Sessions)
+            {
+                foreach (var partition in session.Partitions)
+                {
+                    foreach (var stream in partition.AvailableStreams)
+                    {
+                        string recordedType = stream.TypeName.Split(',')[0];
+                        if (!connectors.TryGetValue(stream.StoreName, out var store) || !store.TryGetValue(stream.Name, out var connector))
+                        {
+                            skipped.Add(recordedType);
+                            skippedStreams++;
+                        }
+                        else if (Type.GetType(stream.TypeName) == null)
+                        {
+                            replaced.Add($"{recordedType} as {connector.DataType.FullName}");
+                        }
+                    }
+                }
+            }
+
+            this.AddLog($"Post processing: {connectors.Values.Sum(store => store.Count)} streams of {connectors.Count} stores and {dataset.Sessions.Count} sessions are replayed.");
+            if (connectors.Count == 0)
+            {
+                this.AddLog("Post processing: the dataset holds no stream, there is nothing to replay.");
+            }
+
+            if (replaced.Count > 0)
+            {
+                this.AddLog($"Post processing: streams read with the types of this application: {string.Join(", ", replaced)}.");
+            }
+
+            if (skippedStreams > 0)
+            {
+                this.AddLog($"Post processing: {skippedStreams} streams are not replayed, their types are not known here: {string.Join(", ", skipped)}.");
+            }
         }
 
         private void SetupPipelineConfiguration()

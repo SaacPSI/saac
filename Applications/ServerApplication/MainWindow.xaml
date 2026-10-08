@@ -12,14 +12,15 @@
             <TabItem Header="Overview">
                 <Grid Background="{StaticResource WindowBackgroundBrush}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="286*"/>
+                        <ColumnDefinition Width="219*"/>
+                        <ColumnDefinition Width="505*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2">
+                    <GroupBox Header="Connected devices" Name="ConnectedDevicesGroupBox" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="5,5,4,138" Grid.RowSpan="2" Grid.ColumnSpan="2">
                         <Grid Name="ConnectedDevicesGrid">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -41,12 +42,12 @@
                             </Grid.RowDefinitions>
                         </Grid>
                     </GroupBox>
-                    <StackPanel Name="AllDevicesStackPanel" Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Margin="50,120,40,50" IsEnabled="False">
+                    <StackPanel Name="AllDevicesStackPanel" Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0" Margin="0,120,40,50" IsEnabled="False" Grid.ColumnSpan="2">
                         <Button Name="StartAllDevicesButton" Click="StartAllDevices" Margin="0,0,0,0" Width="100">Start All</Button>
                         <Button Name="StoplAllDevicesButton" Click="StopAllDevices" Margin="155,0,0,0" Width="100">Stop All</Button>
                     </StackPanel>
 
-                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="6,5,5,21">
+                    <GroupBox Header="Actions" Name="GeneralActionsGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="2"  Margin="6,5,5,21">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -61,7 +62,7 @@
                             <Button Content="Quit" Grid.Row="3" Name="BtnQuit" Click="BtnQuitClick" Margin="0,5,0,5"/>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="1" Margin="5,5,5,5">
+                    <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Grid.Column="2" Margin="6,5,5,5">
                         <TextBox x:Name="Logs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="158" ForceCursor="True" Margin="10,0,6,0"/>
                     </GroupBox>
                 </Grid>
@@ -122,10 +123,10 @@
 
                             <Label Grid.Row="6" Grid.Column="0" Content="Session Mode :" FontWeight="Bold" Grid.ColumnSpan="2" Margin="0,7,33,31" Grid.RowSpan="2"/>
                             <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding SessionModeList}" SelectionChanged="SessionModeSelected" Name="SessionModeComboBox" Grid.ColumnSpan="3" Margin="0,5,5,3"/>
-                            
+
                             <Label Grid.Row="7" Grid.Column="0" Content="Session Name :" FontWeight="Bold" Margin="1,4,4,3"/>
                             <TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" TextWrapping="Wrap" Text="{Binding Path = LocalSessionName}" Margin="0,5,5,2"/>
-                            
+
                             <Label Grid.Row="8" Grid.Column="0" Content="Get Streams Logs :" FontWeight="Bold"/>
                             <CheckBox Grid.Row="8" Grid.Column="1" Name="DebugCheckbox" IsChecked="{Binding IsDebug}" Click="CkbDebug" Margin="0,10,0,0"/>
 
@@ -135,12 +136,12 @@
                             <Label Grid.Row="9" Grid.Column="0" Content="Extra Configuration :" FontWeight="Bold" Margin="1,2,17,1"/>
                             <TextBox Grid.Row="9" Grid.ColumnSpan="2" TextWrapping="Wrap" Text="{Binding Path = ExternalConfigurationDirectory}" Name="ExternalConfigurationTextBox" Margin="0,5,0,3" Grid.Column="1"/>
                             <Button Grid.Row="9" Grid.Column="3" Content="Browse" Click="BtnBrowseExternalConfiguration_Click" Margin="0,4,2,3"/>
-                            
+
                             <Button Content="Load Configuration" Grid.Row="10" Grid.ColumnSpan="4" Click="BtnLoadConfiguration" Name="BtnLoadConfig" Margin="5,5,5,5"/>
                             <Button Content="Save Configuration" Grid.ColumnSpan="4" Grid.Row="11" Click="BtnSaveConfiguration" Name="BtnSaveConfig" Margin="5,5,5,5"/>
                         </Grid>
                     </GroupBox>
-                    
+
                     <GroupBox Header="Configuration Logs" FontWeight="Bold" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Margin="6,5,5,0">
                         <TextBox x:Name="ConfigurationLogs" Grid.Row="0" Grid.Column="0" TextWrapping="Wrap" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ForceCursor="True" Margin="10,0,6,6"/>
                     </GroupBox>
@@ -228,21 +229,18 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Process" x:Name="ProcessTab" Height="20" VerticalAlignment="Bottom">
+                <!-- Left to right: what to compute, how and on what to run it, what was done. -->
                 <Grid Background="{StaticResource WindowBackgroundBrush}" Name="ProcessGrid">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="475*"/>
-                        <ColumnDefinition Width="108*"/>
-                        <ColumnDefinition Width="265*"/>
-                        <ColumnDefinition Width="161*"/>
+                        <ColumnDefinition Width="215"/>
+                        <ColumnDefinition Width="335"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <GroupBox Header="Collaboration Metrics" Padding="10" Margin="10,10,10,10" Grid.RowSpan="3">
+
+                    <!-- 1. What to compute -->
+                    <GroupBox Header="1. Collaboration metrics" FontWeight="Bold" Grid.Column="0" Margin="5,5,3,5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="15,0,0,0">
+                            <StackPanel Margin="6,4,0,0" TextElement.FontWeight="Normal">
 
                                 <!-- Conversational -->
                                 <CheckBox Content="Conversational" FontWeight="Bold" IsChecked="{Binding IsConversationalEnabled}" Checked="Conversational_Checked" Unchecked="Conversational_Unchecked"/>
@@ -257,7 +255,7 @@
                                 </StackPanel>
 
                                 <!-- Visual -->
-                                <CheckBox Content="Visual" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsVisualEnabled}" Checked="Visual_Checked" Unchecked="Visual_Unchecked"/>
+                                <CheckBox Content="Visual" Margin="0,10,0,0" FontWeight="Bold" IsChecked="{Binding IsVisualEnabled}" Checked="Visual_Checked" Unchecked="Visual_Unchecked"/>
 
                                 <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsVisualEnabled}">
                                     <CheckBox x:Name="cbJointVisualAttention" Content="Joint Visual attention" IsChecked="{Binding JointVisualAttention}"/>
@@ -266,7 +264,7 @@
                                 </StackPanel>
 
                                 <!-- Physical -->
-                                <CheckBox Content="Physical" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsPhysicalEnabled}" Checked="Physical_Checked" Unchecked="Physical_Unchecked"/>
+                                <CheckBox Content="Physical" Margin="0,10,0,0" FontWeight="Bold" IsChecked="{Binding IsPhysicalEnabled}" Checked="Physical_Checked" Unchecked="Physical_Unchecked"/>
 
                                 <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsPhysicalEnabled}">
                                     <CheckBox x:Name="cbTaskParticipation" Content="Task participation" IsChecked="{Binding TaskParticipation}"/>
@@ -276,7 +274,7 @@
                                 </StackPanel>
 
                                 <!-- Spatial -->
-                                <CheckBox Content="Spatial" Margin="0,15,0,0" FontWeight="Bold" IsChecked="{Binding IsSpatialEnabled}" Checked="Spatial_Checked" Unchecked="Spatial_Unchecked"/>
+                                <CheckBox Content="Spatial" Margin="0,10,0,0" FontWeight="Bold" IsChecked="{Binding IsSpatialEnabled}" Checked="Spatial_Checked" Unchecked="Spatial_Unchecked"/>
 
                                 <StackPanel Margin="15,0,0,0" IsEnabled="{Binding IsSpatialEnabled}">
                                     <CheckBox x:Name="cbPhysicalProximity" Content="Physical Proximity" IsChecked="{Binding PhysicalProximity}"/>
@@ -285,91 +283,133 @@
                             </StackPanel>
                         </ScrollViewer>
                     </GroupBox>
-                    <GroupBox Header="Metrics Computation Settings" Padding="10" Margin="10,10,10,64" Grid.Column="1" Grid.ColumnSpan="3" Grid.RowSpan="2">
-                        <StackPanel>
-                            <!-- Collaboration Profile -->
-                            <CheckBox Content="Collaboration Profile Computation" Margin="0,0,0,5" IsChecked="{Binding IsCollaborationProfileEnabled}"/>
 
-                            <!-- Enable Sliding Windows -->
-                            <CheckBox Content="Sliding Windows Computation" IsChecked="{Binding IsSlidingWindowEnabled}"/>
+                    <!-- 2 to 4. How to compute it, and on what to run it -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                            <Border Margin="0,2,0,0" Visibility="{Binding IsSlidingWindowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" MaxHeight="125" Height="138" RenderTransformOrigin="0.5,0.193">
+                        <GroupBox Header="2. Computation settings" FontWeight="Bold" Grid.Row="0" Margin="3,5,3,2">
+                            <Grid Margin="6,4,6,2" TextElement.FontWeight="Normal">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                <StackPanel Margin="0,0,0,-12">
-                                    <!-- Sliding Window List (only visible if enabled) -->
-                                    <TextBlock Text="Sliding Windows" FontWeight="Bold" Margin="0,0,0,2"/>
-                                    <Button Content="Add Sliding Window" Command="{Binding AddWindowCommand}" Margin="0,5,0,5"/>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0" Height="76">
-                                        <ItemsControl ItemsSource="{Binding SlidingWindows}" Height="Auto">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                                        <TextBlock Text="Window length (s)" VerticalAlignment="Center"/>
-                                                        <TextBox Width="60" Margin="5,0" Text="{Binding WindowLengthSeconds}"/>
+                                <!-- The session: who, and in which frame the positions are -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Participants" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Width="45" HorizontalAlignment="Left" Margin="0,0,0,3" Text="{Binding ParticipantCount}"/>
 
-                                                        <Button Content="Remove" Command="{Binding DataContext.RemoveWindowCommand,
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Data frame" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,3" ItemsSource="{Binding DataFrames}" DisplayMemberPath="Label" SelectedValuePath="Frame" SelectedValue="{Binding SelectedDataFrame}" ToolTip="Frame the positions are expressed in. Unity: Y is the vertical axis. Standard: Z is the vertical axis (Y and Z swapped)."/>
+
+                                <!-- The speech of a session without voice activity or transcription stream is computed from its audio -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Audio streams" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,0,0,3" Text="{Binding AudioStreamNames}" ToolTip="Only read when a conversational metric is checked and the session has no voice activity (VAD_1...) or transcription (STT_1...) stream: they are then computed from the audio. Empty: the audio streams of the session, whatever their names, are numbered in the order of their names (the log lists them: 1 = ..., 2 = ...) and audio 1 is participant 1, audio 2 is participant 2... Otherwise the audio of each participant, by id or by name, in the order of the participants, separated by ';' (2;1 or Audio_User_yellow;Audio_User_red)."/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Whisper models" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Margin="0,0,0,3" Text="{Binding WhisperModelDirectory}" ToolTip="Folder of the Whisper models, read when the transcription is computed from the audio (model tiny.en; Whisper downloads it into the folder when it is not there)."/>
+
+                                <!-- What is computed on top of the indices -->
+                                <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Collaboration Score Computation" Margin="0,3,0,2" IsChecked="{Binding IsCollaborationScoreEnabled}"/>
+                                <CheckBox Grid.Row="5" Grid.ColumnSpan="2" Content="Collaboration Profile Computation" Margin="0,0,0,2" IsChecked="{Binding IsCollaborationProfileEnabled}"/>
+
+                                <!-- The sliding windows: every index is computed over one of them -->
+                                <DockPanel Grid.Row="6" Grid.ColumnSpan="2" LastChildFill="False" Margin="0,0,0,2">
+                                    <CheckBox DockPanel.Dock="Left" Content="Sliding Windows Computation" VerticalAlignment="Center" IsChecked="{Binding IsSlidingWindowEnabled}"/>
+                                    <Button DockPanel.Dock="Right" Content="Add window" Padding="10,0" Margin="8,0,0,0" Command="{Binding AddWindowCommand}" Visibility="{Binding IsSlidingWindowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </DockPanel>
+
+                                <TextBlock Grid.Row="7" Grid.ColumnSpan="2" Text="Unchecked: there is no window, so no index, score or profile is computed." TextWrapping="Wrap" Foreground="Gray" FontStyle="Italic" Margin="0,2,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSlidingWindowEnabled}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <ScrollViewer Grid.Row="7" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding IsSlidingWindowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ItemsControl ItemsSource="{Binding SlidingWindows}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                    <TextBlock Text="Window length (s)" VerticalAlignment="Center"/>
+                                                    <TextBox Width="60" Margin="5,0" Text="{Binding WindowLengthSeconds}"/>
+
+                                                    <Button Content="Remove" Command="{Binding DataContext.RemoveWindowCommand,
                                 RelativeSource={RelativeSource AncestorType=GroupBox}}" CommandParameter="{Binding}" Margin="10,0"/>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <!-- Add new window -->
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </GroupBox>
 
-                                    </ScrollViewer>
+                        <GroupBox Header="3. Live session" Name="ActionsGroupBox" FontWeight="Bold" Grid.Row="1" Margin="3,2,3,2">
+                            <UniformGrid Columns="2" Margin="6,4,6,4" TextElement.FontWeight="Normal">
+                                <Button Content="Start Process" Name="StartProcess" Click="BtnStartProcess" Margin="0,0,3,0" ToolTip="Computes the selection on the streams of the applications connected to the server."/>
+                                <Button Content="Stop" Click="BtnStopClick" Margin="3,0,0,0" ToolTip="Stops the pipeline and closes the result files."/>
+                            </UniformGrid>
+                        </GroupBox>
 
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Header="Post-processing" Name="LoadDatasetGroupBox" FontWeight="Bold" Grid.Row="1" Grid.Column="1"  Margin="11,87,11,109" Grid.ColumnSpan="3" Grid.RowSpan="2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="97*"/>
-                                <ColumnDefinition Width="236*"/>
-                                <ColumnDefinition Width="167*"/>
-                            </Grid.ColumnDefinitions>
-                            <Label Content="Dataset Path :" FontWeight="Bold" Grid.Row="0" Grid.Column="0" Margin="0,3,10,2"/>
-                            <TextBox TextWrapping="Wrap" Grid.Row="0" Grid.Column="1" Text="{Binding Path = LocalDatasetPath}" Name="DatasetLoadedTextBox" Margin="0,5,10,10">
-                                <TextBox.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleY="1"/>
-                                        <SkewTransform/>
-                                        <RotateTransform/>
-                                        <TranslateTransform/>
-                                    </TransformGroup>
-                                </TextBox.RenderTransform>
-                            </TextBox>
-                            <Button Content="Browse" Grid.Row="0" Grid.Column="2" Click="BtnBrowseNameClick" Margin="0,5,7,10"/>
-                            <Label Content="Pipeline Name: " FontWeight="Bold" Grid.Row="1" Margin="0,3,0,2"/>
-                            <TextBox TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Text="{Binding Path = PipelineSessionName}" Name="PipelineNameTextBox" Margin="0,5,10,10">
-                                <TextBox.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleY="1"/>
-                                        <SkewTransform/>
-                                        <RotateTransform/>
-                                        <TranslateTransform/>
-                                    </TransformGroup>
-                                </TextBox.RenderTransform>
-                            </TextBox>
-                            <Button Content="Start Post Processing" Grid.Row="1" Grid.Column="2" Click="BtnStartPostProcessNameClick" Margin="0,5,7,10"/>
-                        </Grid>
-                    </GroupBox>
-                    <GroupBox Header="Actions" Name="ActionsGroupBox" FontWeight="Bold" Grid.Row="2" Grid.Column="1"  Margin="10,41,10,13" Grid.ColumnSpan="3">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Button Content="Save configuration" Grid.Row="0" Name="SaveConfiguration" Click="BtnSaveConfiguration" Margin="0,12,0,11" Grid.RowSpan="2"/>
-                            <Button Content="Start Process" Grid.Row="1" Name="StartProcess" Click="BtnStartProcess" Margin="0,17,0,4" Grid.RowSpan="2"/>
-                        </Grid>
-                    </GroupBox>
+                        <GroupBox Header="4. Recorded dataset (post-processing)" Name="LoadDatasetGroupBox" FontWeight="Bold" Grid.Row="2" Margin="3,2,3,5">
+                            <Grid Margin="6,4,6,4" TextElement.FontWeight="Normal">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Dataset path" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Path = LocalDatasetPath}" Name="DatasetLoadedTextBox" Margin="0,0,0,3"/>
+                                <Button Grid.Row="0" Grid.Column="2" Content="Browse" Padding="8,0" Click="BtnBrowseNameClick" Margin="6,0,0,3"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Dataset file" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Path = LocalDatasetName}" Margin="0,0,0,3" ToolTip="Name of the .pds file of the dataset, in the folder above. Same setting as the dataset name of the tab Configuration."/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Pipeline name" VerticalAlignment="Center" Margin="0,0,8,3"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Path = PipelineSessionName}" Name="PipelineNameTextBox" Margin="0,0,0,3"/>
+                                <UniformGrid Grid.Row="3" Grid.ColumnSpan="3" Columns="2" Margin="0,2,0,0">
+                                    <Button Content="Start Post Processing" Click="BtnStartPostProcessNameClick" Margin="0,0,3,0" ToolTip="Replays the dataset at its original pace and computes the selection on its streams."/>
+                                    <Button Content="Stop" Click="BtnStopClick" Margin="3,0,0,0" ToolTip="Stops the replay and closes the result files."/>
+                                </UniformGrid>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
 
+                    <!-- What was done -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Margin="3,5,5,2">
+                            <TextBox x:Name="ProcessLogs" TextWrapping="Wrap" FontWeight="Normal" IsReadOnly="True" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log, Mode=OneWay}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="4,2,4,4"/>
+                        </GroupBox>
+                        <Button Grid.Row="1" Content="Save configuration" Name="SaveConfiguration" Click="BtnSaveConfiguration" HorizontalAlignment="Right" Padding="12,2" Margin="3,2,5,6" ToolTip="Saves the settings of the application: the tab Configuration, and the audio streams and the folder of the Whisper models of this tab."/>
+                    </Grid>
                 </Grid>
             </TabItem>
 

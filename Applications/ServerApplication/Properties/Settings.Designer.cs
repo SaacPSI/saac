@@ -238,5 +238,29 @@ namespace ServerApplication.Properties {
                 this["SessionID"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("D:\\WhisperModels")]
+        public string WhisperModelDirectory {
+            get {
+                return ((string)(this["WhisperModelDirectory"]));
+            }
+            set {
+                this["WhisperModelDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioStreamNames {
+            get {
+                return ((string)(this["AudioStreamNames"]));
+            }
+            set {
+                this["AudioStreamNames"] = value;
+            }
+        }
     }
 }

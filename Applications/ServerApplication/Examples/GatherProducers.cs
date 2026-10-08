@@ -42,6 +42,8 @@ namespace ServerApplication.Examples
 
         // Visual
         public List<IProducer<ObjectGazeEvent>> LeftGazeEvents = new List<IProducer<ObjectGazeEvent>>();
+        public List<IProducer<ObjectGazeEvent>> RightGazeEvents = new List<IProducer<ObjectGazeEvent>>();
+        public List<IProducer<ObjectGazeEvent>> AvatarGazeEvents = new List<IProducer<ObjectGazeEvent>>();
         public List<IProducer<string>> LeftGazeEventsStrings = new List<IProducer<string>>();
 
         // Physical
@@ -102,6 +104,113 @@ namespace ServerApplication.Examples
         }
 
         #region Get Producers
+
+        /// <summary>
+        /// The stream of each participant, looked up by its name in every store: a live
+        /// session and a replayed dataset do not put a stream in the same store, but give it
+        /// the same name. The list is empty unless every participant has the stream, so that
+        /// the index in the list is always the participant.
+        /// </summary>
+        /// <typeparam name="T">Type of the stream.</typeparam>
+        /// <param name="server">The pipeline owning the connectors.</param>
+        /// <param name="subP">The pipeline the streams are bridged to.</param>
+        /// <param name="numberOfParticipants">Number of participants, numbered from 1 in the names.</param>
+        /// <param name="streamNames">The names the stream of a participant may have, by order of preference.</param>
+        /// <param name="log">Where to report what was found.</param>
+        /// <param name="reportMissing">False for a stream that only some sessions have: only finding it is reported.</param>
+        /// <param name="accept">Says whether the stream of a store may be read; null to read any.</param>
+        /// <returns>One stream per participant, or none.</returns>
+        public List<IProducer<T>> FindProducers<T>(DatasetPipeline server, Pipeline subP, int numberOfParticipants, Func<int, string[]> streamNames, Action<string>? log = null, bool reportMissing = true, Func<ConnectorInfo, bool>? accept = null)
+        {
+            var found = new List<ConnectorInfo>();
+            for (int i = 1; i <= numberOfParticipants; i++)
+            {
+                string[] names = streamNames(i);
+                ConnectorInfo? connector = names
+                    .Select(name => this.FindConnector<T>(server, name, accept))
+                    .FirstOrDefault(candidate => candidate != null);
+                if (connector == null)
+                {
+                    if (reportMissing)
+                    {
+                        log?.Invoke($"No stream {string.Join(" or ", names)} of type {typeof(T).Name}: the streams of this kind are left out.");
+                    }
+
+                    return new List<IProducer<T>>();
+                }
+
+                found.Add(connector);
+            }
+
+            var producers = new List<IProducer<T>>();
+            foreach (ConnectorInfo connector in found)
+            {
+                producers.Add(connector.CreateBridge<T>(subP));
+            }
+
+            if (found.Count > 0)
+            {
+                // Session and store: the same name may be in several stores of a dataset.
+                log?.Invoke($"Streams {string.Join(", ", found.Select(connector => connector.SourceName))} read from {string.Join(", ", found.Select(connector => $"{connector.SessionName}/{connector.StoreName}").Distinct())}.");
+            }
+
+            return producers;
+        }
+
+        /// <summary>
+        /// The connector of a stream, looked up by its name in every store.
+        /// </summary>
+        /// <typeparam name="T">Type of the stream.</typeparam>
+        /// <param name="server">The pipeline owning the connectors.</param>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <param name="accept">Says whether the stream of a store may be read; null to read any.</param>
+        /// <returns>The connector of the first store that holds the stream; null when none does.</returns>
+        public ConnectorInfo? FindConnector<T>(DatasetPipeline server, string streamName, Func<ConnectorInfo, bool>? accept = null)
+        {
+            return server.Connectors.Values
+                .Where(store => store.ContainsKey(streamName))
+                .Select(store => store[streamName])
+                .FirstOrDefault(candidate => candidate.DataType == typeof(T) && (accept == null || accept(candidate)));
+        }
+
+        /// <summary>
+        /// The names of the streams of a type, in the order the stores list them, each one once.
+        /// </summary>
+        /// <typeparam name="T">Type of the streams.</typeparam>
+        /// <param name="server">The pipeline owning the connectors.</param>
+        /// <returns>The names.</returns>
+        public List<string> FindStreamNames<T>(DatasetPipeline server)
+        {
+            return server.Connectors.Values
+                .SelectMany(store => store.Where(stream => stream.Value.DataType == typeof(T)).Select(stream => stream.Key))
+                .Distinct()
+                .ToList();
+        }
+
+        /// <summary>
+        /// The number of messages the dataset records for a stream, looked up by its name.
+        /// </summary>
+        /// <param name="server">The pipeline owning the dataset.</param>
+        /// <param name="streamName">Name of the stream.</param>
+        /// <returns>The number of messages; 0 when it is not known, as in a live session.</returns>
+        public long RecordedMessageCount(DatasetPipeline server, string streamName)
+        {
+            try
+            {
+                return server.Dataset?.Sessions
+                    .SelectMany(session => session.Partitions)
+                    .SelectMany(partition => partition.AvailableStreams)
+                    .Where(stream => stream.Name == streamName)
+                    .Select(stream => stream.MessageCount)
+                    .DefaultIfEmpty(0)
+                    .Max() ?? 0;
+            }
+            catch (Exception)
+            {
+                // The catalogue of a store that is being written may not be readable.
+                return 0;
+            }
+        }
 
         public List<IProducer<bool>> GetVadProducers(DatasetPipeline server, Pipeline subP, string store, string type, int numberOfQuests, RendezVousPipeline.StoreMode storeMode, bool value)
         {
