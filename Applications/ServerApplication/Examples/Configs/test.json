@@ -271,73 +271,73 @@
   },
   {
     "topic": "1-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "2-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "3-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "4-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "5-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "6-GazeEvent",
-    "type": "FusionDll.ObjectGazeEvent",
+    "type": "SAAC.PsiFormats.ObjectGazeEvent",
     "classFormat": "PsiFormatGazeObjectEvent",
     "streamToStore": "Gaze"
   },
   {
     "topic": "1-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "2-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "3-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "4-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "5-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   },
   {
     "topic": "6-Interactions",
-    "type": "FusionDll.PieceStatus",
+    "type": "SAAC.PsiFormats.PieceStatus",
     "classFormat": "PsiFormatPiecesState",
     "streamToStore": "Task"
   }
