@@ -24,7 +24,6 @@ Two visualizations show a group of any number of participants from what the Coll
 * [Simplified Body Visualization Object](src/VisualizationObjects/SimplifiedBodyVisualizationObject.cs)
 * [Simplified Flock Group Dictionnary Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupDictionnaryVisualisationObject.cs)
 * [Simplified Flock Group Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupVisualisationObject.cs)
-* [Social Graph XY Visualization Object](src/VisualizationObjects/SocialGraphXYVisualizationObject.cs)
 
 ## Current issues
 

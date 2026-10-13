@@ -711,7 +711,6 @@ plumePipeline.LoadPlumeFile(
 - `AugmentedSkeletonVisualizationObject`: Skeleton overlay
 - `SimplifiedBodyListVisualizationObject`: Multi-body view
 - `SimplifiedFlockGroupVisualisationObject`: Group visualization
-- `SocialGraphXYVisualizationObject`: Social network graph
 - `LabeledPoint2DVisualizationObject`: 2D point annotations
 - `PositionOrientationVisualizationObject`: Pose visualization
 
