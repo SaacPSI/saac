@@ -110,6 +110,42 @@ namespace CollaborationIndices.Tests
         }
 
         [TestMethod]
+        public void HeadPose_OfAUnityObject_LooksAlongItsForward()
+        {
+            const float DegreesToRadians = (float)Math.PI / 180f;
+            var unity = new DetectorSettings { HeadForwardAxis = "+Z", Frame = DataFrame.Unity };
+            var standard = new DetectorSettings { HeadForwardAxis = "+Z", Frame = DataFrame.Standard };
+            var position = new Vector3(1.5f, 2.5f, -3.5f);
+
+            // A head that only turns about the vertical axis looks horizontally: along +Z,
+            // then along +X after a quarter turn. In the standard frame Y and Z are swapped.
+            AssertDirection(new Vector3(0, 0, 1), unity.ToHeadPose(Tuple.Create(position, new Vector3(0, 0, 0))).Item2);
+            AssertDirection(new Vector3(1, 0, 0), unity.ToHeadPose(Tuple.Create(position, new Vector3(0, 90, 0))).Item2);
+            AssertDirection(new Vector3(0, 1, 0), standard.ToHeadPose(Tuple.Create(position, new Vector3(0, 0, 0))).Item2);
+            AssertDirection(new Vector3(1, 0, 0), standard.ToHeadPose(Tuple.Create(position, new Vector3(0, 90, 0))).Item2);
+
+            // Read with the axis of the avatar bones, that head looks straight up whatever its turn.
+            var bone = new DetectorSettings { HeadForwardAxis = "+Y", Frame = DataFrame.Unity };
+            AssertDirection(Vector3.UnitY, bone.ToHeadPose(Tuple.Create(position, new Vector3(0, 137, 0))).Item2);
+
+            foreach (Vector3 euler in new[] { new Vector3(0, 0, 0), new Vector3(20, 75, 0), new Vector3(-35, 190, 12), new Vector3(80, -40, -170) })
+            {
+                // The orientation the position files write: the Unity quaternion reframed.
+                Quaternion q = Quaternion.CreateFromYawPitchRoll(euler.Y * DegreesToRadians, euler.X * DegreesToRadians, euler.Z * DegreesToRadians);
+                var reframed = new Quaternion(-q.X, -q.Z, -q.Y, q.W);
+
+                // The position files and the indices give the same look direction.
+                AssertDirection(standard.ToHeadPose(Tuple.Create(position, euler)).Item2, PositionOrientationPreProcessing.ForwardFromQuaternion(reframed, Vector3.UnitZ));
+
+                // With the axis of the avatar bones, the files are what they were.
+                Assert.AreEqual(Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, reframed)), PositionOrientationPreProcessing.ForwardFromQuaternion(reframed, Vector3.UnitY));
+            }
+        }
+
+        private static void AssertDirection(Vector3 expected, Vector3 actual)
+            => Assert.IsTrue(Vector3.Distance(expected, actual) < 1e-5f, $"{actual} instead of {expected}");
+
+        [TestMethod]
         public void Formations_AreTheSameInBothFrames()
         {
             // Two participants facing each other across a table, one standing and looking down,

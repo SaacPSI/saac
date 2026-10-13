@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Psi;
 using SAAC.PsiFormats;
 
@@ -21,6 +22,13 @@ namespace SAAC.CollaborationIndices
         /// previous colour event of the participant by less than this is dropped.
         /// </summary>
         public TimeSpan ColorDebounce { get; set; } = TimeSpan.FromMilliseconds(100);
+
+        /// <summary>
+        /// Objects whose statuses are not task actions and are left out, compared without the
+        /// case: the object of a message an application sends to check its connection, for
+        /// instance ("test" for the test button of the Unity scenes). Empty keeps every status.
+        /// </summary>
+        public List<string> IgnoredObjects { get; set; } = new List<string>();
     }
 
     /// <summary>
@@ -69,6 +77,9 @@ namespace SAAC.CollaborationIndices
         /// <summary>Task actions of every participant.</summary>
         public Emitter<InteractionEvent> Out { get; }
 
+        /// <summary>Gets the number of statuses left out because their object is one of <see cref="TaskActionDetectorConfiguration.IgnoredObjects"/>.</summary>
+        public int IgnoredStatusCount { get; private set; }
+
         /// <summary>Piece statuses of the headset of one participant.</summary>
         public Receiver<PieceStatus> GetPieceInput(uint participantId) => this.pieceReceivers[participantId];
 
@@ -104,6 +115,13 @@ namespace SAAC.CollaborationIndices
         {
             if (status == null)
             {
+                return;
+            }
+
+            if (this.configuration.IgnoredObjects != null
+                && this.configuration.IgnoredObjects.Any(ignored => string.Equals(ignored, status.objectID, StringComparison.OrdinalIgnoreCase)))
+            {
+                this.IgnoredStatusCount++;
                 return;
             }
 

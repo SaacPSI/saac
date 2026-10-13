@@ -8,6 +8,7 @@ using System.IO;
 using System.Numerics;
 using Microsoft.Psi;
 using SAAC.CollaborationIndices;
+using SAAC.PipelineServices;
 
 namespace ServerApplication.Examples
 {
@@ -27,6 +28,9 @@ namespace ServerApplication.Examples
         private readonly GatherProducers streams;
         private readonly CollaborationSessionConfiguration configuration;
         private readonly Action<string> log;
+
+        // Where the detections and the indices are stored; null to store nothing.
+        private readonly ProcessStore? store;
         private readonly List<uint> participants;
         private readonly Dictionary<TimeSpan, TextWriter?> indexWriters = new Dictionary<TimeSpan, TextWriter?>();
         private readonly List<TextWriter> profileWriters = new List<TextWriter>();
@@ -35,14 +39,22 @@ namespace ServerApplication.Examples
         private readonly List<Tally> tallies = new List<Tally>();
         private readonly Dictionary<TimeSpan, CollaborationProfilesComponent> profiles = new Dictionary<TimeSpan, CollaborationProfilesComponent>();
 
+        // The state of the group at the instant is published ten times per second of data.
+        private static readonly TimeSpan InstantPeriod = TimeSpan.FromMilliseconds(100);
+
         // What detects; created only when its streams are there.
         private VerbalizationDetectorComponent? speech;
         private TurnTakingDetector? turnTakings;
+        private VoiceTurnTakingDetector? voiceTurnTakings;
         private FFormationDetector? formations;
         private GazeEpisodeDetector? gazes;
         private JointVisualAttentionDetector? jointAttention;
         private MutualGazeDetector? mutualGazes;
         private TaskActionDetector? taskActions;
+
+        // What the group is doing at each instant, and the handovers only that state lists: no indicator counts them.
+        private ObjectHandoverDetector? handovers;
+        private InstantStateComponent? instant;
 
         // What is computed from the detections, one instance per window.
         private SlidingAverageComputationSet? indices;
@@ -54,8 +66,10 @@ namespace ServerApplication.Examples
         /// <param name="streams">The streams gathered from the connectors of the server.</param>
         /// <param name="configuration">What to compute.</param>
         /// <param name="log">Where to report what is and is not computed.</param>
-        public CollaborationIndicesProcess(Pipeline pipeline, GatherProducers streams, CollaborationSessionConfiguration configuration, Action<string> log)
+        /// <param name="store">Where the detections and the indices are stored; null to store nothing.</param>
+        public CollaborationIndicesProcess(Pipeline pipeline, GatherProducers streams, CollaborationSessionConfiguration configuration, Action<string> log, ProcessStore? store = null)
         {
+            this.store = store;
             this.pipeline = pipeline;
             this.streams = streams;
             this.configuration = configuration;
@@ -64,6 +78,9 @@ namespace ServerApplication.Examples
         }
 
         private bool HasSpeech => this.Complete(this.streams.Stts);
+
+        // The turn takings, from the voice activity or from the transcriptions.
+        private Emitter<InteractionEvent>? TurnTakingOut => this.voiceTurnTakings?.Out ?? this.turnTakings?.Out;
 
         private bool HasHeads => this.Complete(this.streams.HeadPositionOrientationsUnity);
 
@@ -115,7 +132,15 @@ namespace ServerApplication.Examples
                 this.ConnectProfiles();
             }
 
-            // 6. What arrives and what is produced is counted, for the log.
+            // 6. During a live session, the detections and the results are stored in the dataset,
+            // with the state of the group at each instant.
+            if (this.store != null)
+            {
+                this.ConnectInstantState();
+                this.StoreStreams(this.store);
+            }
+
+            // 7. What arrives and what is produced is counted, for the log.
             this.CountStreams();
 
             this.log($"Collaboration indices: computing {string.Join(", ", this.configuration.Indicators.Select(i => i.Type))}.");
@@ -149,6 +174,184 @@ namespace ServerApplication.Examples
         }
 
         private bool Complete<T>(List<T> gathered) => gathered != null && gathered.Count >= this.participants.Count;
+
+        // ------------------------------------------------------------------
+        // What is stored in the dataset
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Stores what the process detects and computes, in partitions of the session of the
+        /// process: one per kind of detection (SpeechEvents, TaskEvents, GazeEvents,
+        /// SpatialEvents) and, for each sliding window, one per kind of result
+        /// (Indices_20s, Scores_20s, Profiles_20s) and one for the graph of the group
+        /// (Graph_20s).
+        ///
+        /// A stream of one participant ends with the number of the participant, as the
+        /// other streams of a session count them: 1 for the first one (the participant 0 of
+        /// the result files). A stream of a pair ends with both numbers.
+        /// </summary>
+        private void StoreStreams(ProcessStore store)
+        {
+            // ---- The detections: events and intervals, whatever the windows.
+            VerbalizationDetectorComponent? speech = this.speech;
+            Emitter<InteractionEvent>? turnTakings = this.TurnTakingOut;
+            if (speech != null && turnTakings != null)
+            {
+                store.Write("SpeechEvents", "SpeechIntervals", speech.Out);
+                store.Write("SpeechEvents", "TurnTakings", turnTakings);
+                this.ForEachParticipant((id, number) =>
+                {
+                    store.Write("SpeechEvents", $"SpeechIntervals_{number}", speech.GetSpeakingEmitter(id));
+
+                    // The turn takings and the overlaps of the participant who takes the floor.
+                    store.Write("SpeechEvents", $"TurnTakings_{number}", turnTakings.Where(turn => turn.ParticipantId == id));
+                });
+
+                // Found on the voice activity, a turn taking is stored as soon as it is known; those the
+                // transcription does not confirm are stored again here, to be taken out.
+                if (this.voiceTurnTakings != null)
+                {
+                    store.Write("SpeechEvents", "TurnTakingsCancelled", this.voiceTurnTakings.CancelledOut);
+                }
+            }
+
+            TaskActionDetector? taskActions = this.taskActions;
+            if (taskActions != null)
+            {
+                store.Write("TaskEvents", "TaskActions", taskActions.Out);
+                if (this.handovers != null)
+                {
+                    store.Write("TaskEvents", "Handovers", this.handovers.Out);
+                }
+
+                this.ForEachParticipant((id, number) => store.Write("TaskEvents", $"TaskActions_{number}", taskActions.GetActionEmitter(id)));
+            }
+
+            GazeEpisodeDetector? gazes = this.gazes;
+            if (gazes != null)
+            {
+                store.Write("GazeEvents", "ObjectGazes", gazes.ObjectGazeOut);
+                store.Write("GazeEvents", "PeerGazes", gazes.PeerGazeIntervalOut);
+                this.ForEachParticipant((id, number) =>
+                {
+                    store.Write("GazeEvents", $"ObjectGazes_{number}", gazes.ObjectGazeOut.Where(gaze => gaze.ParticipantId == id));
+                    store.Write("GazeEvents", $"PeerGazes_{number}", gazes.PeerGazeIntervalOut.Where(gaze => gaze.ParticipantId == id));
+                });
+
+                if (this.jointAttention != null)
+                {
+                    store.Write("GazeEvents", "JointVisualAttentions", this.jointAttention.Out);
+                }
+
+                if (this.mutualGazes != null)
+                {
+                    store.Write("GazeEvents", "MutualGazes", this.mutualGazes.IntervalOut);
+                }
+            }
+
+            FFormationDetector? formations = this.formations;
+            if (formations != null)
+            {
+                store.Write("SpatialEvents", "Formations", formations.FormationOut);
+                this.ForEachPair((a, b, name) => store.Write("SpatialEvents", $"Distance_{name}", formations.GetDistanceEmitter(a, b)));
+            }
+
+            // The state of the group at each instant, in one message, for a visualization
+            // of PsiStudio.
+            if (this.instant != null)
+            {
+                store.Write("Instant", "GroupInstant", this.instant.Out);
+            }
+
+            // The places of the participants in the room, for the graph of each window: where their heads are.
+            Dictionary<uint, IProducer<Vector3>>? places = this.HasHeads
+                ? Enumerable.Range(0, this.participants.Count).ToDictionary(i => this.participants[i], i => this.streams.HeadPositionOrientationsUnity[i].Select(pose => pose.Item1))
+                : null;
+
+            // ---- The results of each sliding window, one value per stream.
+            this.indices!.ForEach((window, instance) =>
+            {
+                string seconds = window.TotalSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+                string indices = $"Indices_{seconds}s";
+                foreach (var output in instance.Outputs.Groups)
+                {
+                    store.Write(indices, output.Name, output.Stream);
+                }
+
+                foreach (var output in instance.Outputs.Individuals)
+                {
+                    this.ForEachParticipant((id, number) =>
+                        store.Write(indices, $"{output.Name}_{number}", output.Stream.Where(values => values.ContainsKey(id)).Select(values => values[id])));
+                }
+
+                foreach (var output in instance.Outputs.Pairs)
+                {
+                    this.ForEachPair((a, b, name) =>
+                    {
+                        var pair = new ParticipantPair(a, b);
+                        store.Write(indices, $"{output.Name}_{name}", output.Stream.Where(values => values.ContainsKey(pair)).Select(values => values[pair]));
+                    });
+                }
+
+                foreach (var output in instance.Outputs.DirectedPairs)
+                {
+                    this.ForEachParticipant((from, fromNumber) => this.ForEachParticipant((to, toNumber) =>
+                    {
+                        if (from != to)
+                        {
+                            var pair = new DirectedParticipantPair(from, to);
+                            store.Write(indices, $"{output.Name}_{fromNumber}to{toNumber}", output.Stream.Where(values => values.ContainsKey(pair)).Select(values => values[pair]));
+                        }
+                    }));
+                }
+
+                if (instance.CollaborationScore != null)
+                {
+                    string scores = $"Scores_{seconds}s";
+                    store.Write(scores, IndexNames.CollaborationScore, instance.CollaborationScore.Out);
+                    foreach (string dimension in SlidingAverageComputation.DefaultDimensions().Select(d => d.Name))
+                    {
+                        store.Write(scores, dimension, instance.CollaborationScore.DimensionsOut.Where(values => values.ContainsKey(dimension)).Select(values => values[dimension]));
+                    }
+                }
+
+                if (this.profiles.TryGetValue(window, out CollaborationProfilesComponent? profiles) && profiles != null)
+                {
+                    string partition = $"Profiles_{seconds}s";
+                    store.Write(partition, "Profiles", profiles.Out);
+                    store.Write(partition, "GroupProfile", profiles.GroupProfileOut);
+                }
+
+                // The state of the group at each tick, in one message, for a visualization
+                // of PsiStudio. It holds whatever is computed for the window,
+                // and where the participants are when their heads are tracked.
+                store.Write(
+                    $"Graph_{seconds}s",
+                    "SocialGraph",
+                    places == null ? instance.ToSocialGraph() : instance.ToSocialGraph(places, this.configuration.Detectors.UpAxis()));
+            });
+        }
+
+        // The participants with their number in the stream names: 1 for the first one.
+        private void ForEachParticipant(Action<uint, int> action)
+        {
+            for (int i = 0; i < this.participants.Count; i++)
+            {
+                action(this.participants[i], i + 1);
+            }
+        }
+
+        // The pairs of participants with their name in the stream names: "1-2".
+        private void ForEachPair(Action<uint, uint, string> action)
+        {
+            for (int i = 0; i < this.participants.Count; i++)
+            {
+                for (int j = i + 1; j < this.participants.Count; j++)
+                {
+                    action(this.participants[i], this.participants[j], $"{i + 1}-{j + 1}");
+                }
+            }
+        }
 
         // ------------------------------------------------------------------
         // 1. What the streams allow
@@ -209,9 +412,27 @@ namespace ServerApplication.Examples
                 this.speech = new VerbalizationDetectorComponent(
                     this.pipeline,
                     new VerbalizationDetectorConfiguration { ParticipantIds = this.participants, PublishLegacyType = false, LogToConsole = false });
-                this.turnTakings = new TurnTakingDetector(
-                    this.pipeline,
-                    new TurnTakingDetectorConfiguration { ParticipantIds = this.participants, ConfirmationDelay = settings.TurnTakingConfirmationDelay });
+                // On the voice activity when every participant has one: a turn taking is then known
+                // about a second after it happened. On the transcribed utterances otherwise.
+                if (settings.TurnTakingSource == TurnTakingSource.VoiceActivity && this.Complete(this.streams.Vads))
+                {
+                    this.voiceTurnTakings = new VoiceTurnTakingDetector(
+                        this.pipeline,
+                        new VoiceTurnTakingDetectorConfiguration
+                        {
+                            ParticipantIds = this.participants,
+                            MinimumSpeechDuration = settings.TurnTakingMinimumSpeech,
+                            MaximumPause = settings.TurnTakingMaximumPause,
+                            ValidateWithTranscription = true,
+                            TranscriptionDelay = settings.TurnTakingConfirmationDelay,
+                        });
+                }
+                else
+                {
+                    this.turnTakings = new TurnTakingDetector(
+                        this.pipeline,
+                        new TurnTakingDetectorConfiguration { ParticipantIds = this.participants, ConfirmationDelay = settings.TurnTakingConfirmationDelay });
+                }
             }
 
             if (this.HasHeads)
@@ -234,13 +455,17 @@ namespace ServerApplication.Examples
 
             if (this.HasTaskLogs)
             {
-                this.taskActions = new TaskActionDetector(this.pipeline, new TaskActionDetectorConfiguration { ParticipantIds = this.participants, ColorArea = null! });
+                this.taskActions = new TaskActionDetector(
+                    this.pipeline,
+                    new TaskActionDetectorConfiguration { ParticipantIds = this.participants, ColorArea = null!, IgnoredObjects = new List<string>(settings.IgnoredTaskObjects ?? new List<string>()) });
             }
 
             var created = new List<string>();
             if (this.speech != null)
             {
-                created.Add($"speech intervals and turn takings (confirmed after {settings.TurnTakingConfirmationDelay.TotalSeconds:0.#} s)");
+                created.Add(this.voiceTurnTakings != null
+                    ? $"speech intervals; turn takings on the voice activity (an intervention is at least {settings.TurnTakingMinimumSpeech.TotalSeconds:0.#} s of voice, a pause under {settings.TurnTakingMaximumPause.TotalSeconds:0.#} s does not end it; withdrawn when no transcription confirms it within {settings.TurnTakingConfirmationDelay.TotalSeconds:0.#} s)"
+                    : $"speech intervals and turn takings on the transcribed utterances (confirmed after {settings.TurnTakingConfirmationDelay.TotalSeconds:0.#} s{(settings.TurnTakingSource == TurnTakingSource.VoiceActivity ? "; the voice activity of every participant was not gathered" : string.Empty)})");
             }
 
             if (this.formations != null)
@@ -257,7 +482,9 @@ namespace ServerApplication.Examples
 
             if (this.taskActions != null)
             {
-                created.Add("task actions");
+                created.Add(settings.IgnoredTaskObjects != null && settings.IgnoredTaskObjects.Count > 0
+                    ? $"task actions (the piece statuses of the objects named in the configuration are left out: {string.Join(", ", settings.IgnoredTaskObjects)})"
+                    : "task actions");
             }
 
             this.log($"Collaboration indices: detectors created for {string.Join("; ", created)}.");
@@ -301,7 +528,7 @@ namespace ServerApplication.Examples
 
         private void ConnectSpeech()
         {
-            if (this.speech == null || this.turnTakings == null)
+            if (this.speech == null)
             {
                 return;
             }
@@ -309,6 +536,23 @@ namespace ServerApplication.Examples
             for (int i = 0; i < this.participants.Count; i++)
             {
                 this.streams.Stts[i].PipeTo(this.speech.GetSttInput(this.participants[i]));
+            }
+
+            // The turn takings on the voice activity, which the transcribed speech validates.
+            if (this.voiceTurnTakings != null)
+            {
+                for (int i = 0; i < this.participants.Count; i++)
+                {
+                    this.streams.Vads[i].PipeTo(this.voiceTurnTakings.GetVoiceInput(this.participants[i]));
+                }
+
+                this.speech.Out.PipeTo(this.voiceTurnTakings.SpeechIn);
+                return;
+            }
+
+            if (this.turnTakings == null)
+            {
+                return;
             }
 
             this.speech.Out.PipeTo(this.turnTakings.SpeechIn);
@@ -407,6 +651,87 @@ namespace ServerApplication.Examples
             }
         }
 
+        /// <summary>
+        /// What the group is doing at each instant, next to the indices of the sliding windows:
+        /// where the participants are (head poses), who speaks (voice activity, known at once,
+        /// whereas a transcription comes once the sentence is over), the looks that are running,
+        /// the formations, what each participant holds, and the detections as they are made.
+        /// Every signal is optional: what was not gathered is left out of the state.
+        /// </summary>
+        private void ConnectInstantState()
+        {
+            bool voices = this.Complete(this.streams.Vads);
+            if (!this.HasHeads && !voices)
+            {
+                this.log("Collaboration indices: the state of the group at each instant is not computed, it is paced by the head positions or the voice activity and neither was gathered.");
+                return;
+            }
+
+            DetectorSettings settings = this.configuration.Detectors;
+            var instant = new InstantStateComponent(
+                this.pipeline,
+                new InstantStateConfiguration { ParticipantIds = this.participants, UpAxis = settings.UpAxis(), MinimumLookDuration = settings.MinimumGazeDuration });
+            this.instant = instant;
+            var signals = new List<string>();
+
+            if (this.HasHeads)
+            {
+                DataClock.FromStream(this.streams.HeadPositionOrientationsUnity[0], InstantPeriod).PipeTo(instant.TickIn);
+                this.ForEachParticipant((id, number) => this.streams.HeadPositionOrientationsUnity[number - 1].Select(settings.ToHeadPose).PipeTo(instant.GetHeadPoseInput(id)));
+                signals.Add("places and headings (head poses)");
+            }
+            else
+            {
+                DataClock.FromStream(this.streams.Vads[0], InstantPeriod).PipeTo(instant.TickIn);
+            }
+
+            if (voices)
+            {
+                this.ForEachParticipant((id, number) => this.streams.Vads[number - 1].PipeTo(instant.GetVoiceInput(id)));
+                signals.Add("who speaks (voice activity)");
+            }
+
+            if (this.gazes != null)
+            {
+                this.gazes.LookStartOut.PipeTo(instant.LookStartIn);
+                this.gazes.LookEndOut.PipeTo(instant.LookEndIn);
+                this.jointAttention?.Out.PipeTo(instant.AddDetectionInput());
+                this.mutualGazes?.Out.PipeTo(instant.AddDetectionInput());
+                signals.Add("looks at peers and at objects, mutual gazes, joint visual attentions");
+            }
+
+            if (this.formations != null)
+            {
+                this.formations.FormationStartOut.PipeTo(instant.FormationStartIn);
+                this.formations.FormationEndOut.PipeTo(instant.FormationEndIn);
+                signals.Add("formations");
+            }
+
+            if (this.taskActions != null)
+            {
+                // A handover: an object grabbed by a participant just after another one released it.
+                this.handovers = new ObjectHandoverDetector(this.pipeline);
+                this.taskActions.Out.PipeTo(this.handovers.ActionsIn);
+                this.taskActions.Out.PipeTo(instant.TaskActionIn);
+                this.handovers.Out.PipeTo(instant.AddDetectionInput());
+                signals.Add("task actions, objects in hand and handovers");
+            }
+
+            if (this.voiceTurnTakings != null)
+            {
+                this.voiceTurnTakings.Out.PipeTo(instant.DetectionIn);
+                this.voiceTurnTakings.CancelledOut.PipeTo(instant.CancelledDetectionIn);
+                signals.Add($"turn takings (from the voice activity: listed about {settings.TurnTakingMinimumSpeech.TotalSeconds:0.#} s after they happened)");
+            }
+            else if (this.turnTakings != null)
+            {
+                this.turnTakings.Out.PipeTo(instant.DetectionIn);
+                signals.Add($"turn takings (from the transcriptions: listed about {settings.TurnTakingConfirmationDelay.TotalSeconds:0.#} s after they happened)");
+            }
+
+            this.log($"Collaboration indices: state of the group at each instant, every {InstantPeriod.TotalMilliseconds:0} ms of data, from {string.Join("; ", signals)}.");
+        }
+
         // ------------------------------------------------------------------
         // 4. Detectors -> indicators
         // ------------------------------------------------------------------
@@ -456,7 +781,10 @@ namespace ServerApplication.Examples
                 // Events of the whole group, each detector to the indicator that counts them.
                 if (window.Contains(IndexNames.TurnTaking))
                 {
-                    this.turnTakings!.Out.PipeTo(window.Get(Indicators.TurnTaking).Component.EventIn);
+                    this.TurnTakingOut!.PipeTo(window.Get(Indicators.TurnTaking).Component.EventIn);
+
+                    // A turn taking the transcription does not confirm is no longer counted.
+                    this.voiceTurnTakings?.CancelledOut.PipeTo(window.Get(Indicators.TurnTaking).Component.CancelIn);
                 }
 
                 if (window.Contains(IndexNames.JointVisualAttention))
@@ -543,10 +871,14 @@ namespace ServerApplication.Examples
             this.CountInputs("piece statuses", this.streams.TaskLogs);
 
             // What the detectors find.
-            if (this.speech != null && this.turnTakings != null)
+            if (this.speech != null && this.TurnTakingOut != null)
             {
                 this.CountOutput("speech intervals", this.speech.Out);
-                this.CountOutput("turn takings and overlaps", this.turnTakings.Out);
+                this.CountOutput("turn takings and overlaps", this.TurnTakingOut);
+                if (this.voiceTurnTakings != null)
+                {
+                    this.CountOutput("turn takings and overlaps withdrawn (no transcription)", this.voiceTurnTakings.CancelledOut);
+                }
             }
 
             if (this.gazes != null && this.jointAttention != null && this.mutualGazes != null)
@@ -565,6 +897,16 @@ namespace ServerApplication.Examples
             if (this.formations != null)
             {
                 this.CountOutput("formations", this.formations.FormationEndOut);
+            }
+
+            if (this.handovers != null)
+            {
+                this.CountOutput("handovers", this.handovers.Out);
+            }
+
+            if (this.instant != null)
+            {
+                this.CountOutput("states of the group at an instant", this.instant.Out);
             }
 
             // What is written: one row of indices per tick and per window.
@@ -635,6 +977,11 @@ namespace ServerApplication.Examples
             if (silent.Count > 0)
             {
                 this.log($"Collaboration indices: nothing was received for: {string.Join("; ", silent)}.");
+            }
+
+            if (this.taskActions != null && this.taskActions.IgnoredStatusCount > 0)
+            {
+                this.log($"Collaboration indices: {this.taskActions.IgnoredStatusCount} piece statuses were left out, those of the objects the configuration names: {string.Join(", ", this.configuration.Detectors.IgnoredTaskObjects)}.");
             }
 
             if (outputs.Count > 0)

@@ -80,7 +80,9 @@
     <Compile Include="Fusion\EqualityIndicator.cs" />
     <Compile Include="Fusion\IndexSnapshot.cs" />
     <Compile Include="Fusion\IndexSnapshotAssembler.cs" />
+    <Compile Include="Fusion\InstantStateComponent.cs" />
     <Compile Include="Fusion\InteractionGraphComponent.cs" />
+    <Compile Include="Fusion\SocialGraph.cs" />
     <Compile Include="Fusion\PhaseGateAndExport.cs" />
     <Compile Include="Fusion\TimeDecayIndexComponent.cs" />
     <Compile Include="Gaze\AttentionLevelComponent.cs" />
@@ -132,6 +134,7 @@
     <Compile Include="Verbal\SubTaskVerbalMetrics.cs" />
     <Compile Include="Verbal\TurnTakingComponent.cs" />
     <Compile Include="Verbal\TurnTakingDetector.cs" />
+    <Compile Include="Verbal\VoiceTurnTakingDetector.cs" />
     <Compile Include="Verbal\TurnTakingIndicator.cs" />
     <Compile Include="Verbal\VadWhisperComponent.cs" />
     <Compile Include="Verbal\VerbalizationDetectorComponent.cs" />
@@ -162,6 +165,10 @@
     <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj">
       <Project>{be76e9ce-2c9a-0ab3-2391-e6ea151c5cfb}</Project>
       <Name>GlobalHelpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Groups\Groups.csproj">
+      <Project>{65613648-c5b7-4ad1-9fa2-6816c54239e9}</Project>
+      <Name>Groups</Name>
     </ProjectReference>
     <ProjectReference Include="..\Helpers\Helpers.csproj">
       <Project>{8675a25f-bfba-72db-db02-545d0c394994}</Project>

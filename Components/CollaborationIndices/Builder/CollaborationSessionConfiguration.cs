@@ -27,6 +27,21 @@ namespace SAAC.CollaborationIndices
         Standard,
     }
 
+    /// <summary>What the turn takings are found on.</summary>
+    public enum TurnTakingSource
+    {
+        /// <summary>
+        /// The voice activity as it unfolds, validated by the transcription
+        /// (VoiceTurnTakingDetector): a turn taking is known about a second after it happened.
+        /// Needs the voice activity of every participant, and microphones that do not hear
+        /// the other participants.
+        /// </summary>
+        VoiceActivity,
+
+        /// <summary>The transcribed utterances, once they are over and confirmed (TurnTakingDetector).</summary>
+        Transcription,
+    }
+
     /// <summary>
     /// The settings of the detectors that an application may want to change. Everything
     /// else keeps the default of each detector.
@@ -47,7 +62,26 @@ namespace SAAC.CollaborationIndices
         /// </summary>
         public string HeadForwardAxis { get; set; } = "+Z";
 
-        /// <summary>Gets or sets how long a turn taking waits to be confirmed (TurnTakingDetector).</summary>
+        /// <summary>
+        /// Gets or sets what the turn takings are found on: the voice activity (default) when
+        /// the session has the one of every participant, the transcribed utterances otherwise.
+        /// </summary>
+        public TurnTakingSource TurnTakingSource { get; set; } = TurnTakingSource.VoiceActivity;
+
+        /// <summary>
+        /// Gets or sets how long a participant must have been speaking for its voice activity
+        /// to be an intervention, which can take the turn (VoiceTurnTakingDetector).
+        /// </summary>
+        public TimeSpan TurnTakingMinimumSpeech { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>Gets or sets the longest pause that does not end an intervention (VoiceTurnTakingDetector).</summary>
+        public TimeSpan TurnTakingMaximumPause { get; set; } = TimeSpan.FromMilliseconds(300);
+
+        /// <summary>
+        /// Gets or sets how long the transcription of an intervention is awaited before what
+        /// was published for it is withdrawn (VoiceTurnTakingDetector), or how long a turn
+        /// taking found on the transcriptions waits to be confirmed (TurnTakingDetector).
+        /// </summary>
         public TimeSpan TurnTakingConfirmationDelay { get; set; } = TimeSpan.FromSeconds(5);
 
         /// <summary>Gets or sets the shortest look that counts (GazeEpisodeDetector).</summary>
@@ -58,6 +92,13 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Gets or sets how long a formation must be observed to start, and missing to end (FFormationDetector).</summary>
         public TimeSpan FormationTransitionDuration { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Gets or sets the objects whose piece statuses are not task actions (TaskActionDetector).
+        /// Empty (default) keeps every status: the message an application sends to check its
+        /// connection is a task action like the others, and counts in the task participation.
+        /// </summary>
+        public List<string> IgnoredTaskObjects { get; set; } = new List<string>();
 
         /// <summary>Gets the vertical axis of the frame of the positions.</summary>
         /// <returns>Y for the Unity frame, Z for the standard one.</returns>

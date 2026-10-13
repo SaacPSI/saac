@@ -23,11 +23,13 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>
         /// How long a turn taking waits to be confirmed. A speech interval is received when
-        /// it ends: a short utterance said over a longer one of somebody else is received
-        /// first and looks, alone, like a turn taking. The turn taking is therefore held back
-        /// until the longer interval can no longer come: when every other participant has
-        /// since been heard starting to speak, or after this delay. Zero publishes at once,
-        /// with those false turn takings.
+        /// it ends, or later: a short utterance said over a longer one of somebody else is
+        /// received first and looks, alone, like a turn taking, and a recogniser delivers a
+        /// long utterance after the short answer that followed it. Whether an interval takes
+        /// the turn, and from whom, is therefore decided once the speech it depends on can no
+        /// longer come: when every other participant has since been heard starting to speak,
+        /// or after this delay. Zero decides at once, with the false turn takings of the
+        /// utterances said over a longer one, and without the utterances received late.
         /// </summary>
         public TimeSpan ConfirmationDelay { get; set; } = TimeSpan.FromSeconds(5);
 
@@ -38,10 +40,7 @@ namespace SAAC.CollaborationIndices
     /// <summary>
     /// Turn takings and overlaps, from the speech intervals of the participants.
     ///
-    /// A speech interval arrives when it ends. It is then compared with the speech of the
-    /// others received so far, each pair of intervals being compared once, when the one that
-    /// ends last arrives. For the new interval U of speaker s and an interval V of another
-    /// speaker p:
+    /// For an interval U of speaker s and an interval V of another speaker p:
     ///
     ///  - V inside U ............................. Overlap, p over s, at the start of V;
     ///  - V running when U starts, U outlasts V .. TurnTakingWithOverlap, s takes the turn
@@ -52,10 +51,19 @@ namespace SAAC.CollaborationIndices
     ///    participant p ......................... TurnTakingWithoutOverlap, s takes the turn
     ///                                             from p, at the start of U.
     ///
-    /// A turn taking is only known for sure once no longer interval of somebody else can
-    /// still arrive and turn out to contain U, which would make U an overlap: see
-    /// ConfirmationDelay. An overlap is published as soon as the interval that contains it
-    /// arrives.
+    /// The intervals of a participant are received in order, each one when it ends or some
+    /// time after. Those of two participants are not: the interval that ended first may be
+    /// received last. The result does not depend on that order:
+    ///
+    ///  - an overlap is published when the second interval of the pair is received,
+    ///    whichever of the two it is;
+    ///  - whether U takes the turn is decided when U is confirmed (see ConfirmationDelay),
+    ///    from all the speech received by then: a longer interval that contains U makes it an
+    ///    overlap, and an interval that ended before U started, received after U, is whose
+    ///    turn it was.
+    ///
+    /// An interval received after the ones it bears on were confirmed changes nothing to
+    /// them: the delay has to cover the time the recogniser takes.
     ///
     /// An event carries who takes the turn (or overlaps) in ParticipantId and whose turn it
     /// was in TargetId, which is what the TurnTaking indicator reads for its pair level. It is
@@ -85,7 +93,7 @@ namespace SAAC.CollaborationIndices
             this.Out = pipeline.CreateEmitter<InteractionEvent>(this, $"{name}-TurnTaking");
         }
 
-        /// <summary>Speech intervals of every participant, each one received when it ends (VerbalizationDetectorComponent.Out).</summary>
+        /// <summary>Speech intervals of every participant, in the order they are received (VerbalizationDetectorComponent.Out).</summary>
         public Receiver<InteractionInterval> SpeechIn { get; }
 
         /// <summary>Any clock on the time of the data, for instance the clock of the indices.</summary>
@@ -93,6 +101,17 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Events of categories TurnTakingWithOverlap, TurnTakingWithoutOverlap and Overlap.</summary>
         public Emitter<InteractionEvent> Out { get; }
+
+        /// <summary>
+        /// An interval is said over another one that starts no later, ends no earlier and
+        /// is longer: its speaker does not take the floor.
+        /// </summary>
+        private static bool SaidOver(InteractionInterval inner, InteractionInterval outer)
+        {
+            return outer.StartTime <= inner.StartTime
+                && inner.EndTime <= outer.EndTime
+                && (outer.StartTime < inner.StartTime || inner.EndTime < outer.EndTime);
+        }
 
         private void ReceiveSpeech(InteractionInterval speech, Envelope envelope)
         {
@@ -104,10 +123,10 @@ namespace SAAC.CollaborationIndices
             InteractionInterval current = speech.Clone();
             DateTime now = envelope.OriginatingTime;
             uint speaker = current.ParticipantId;
-            var events = new List<InteractionEvent>();
-            InteractionInterval floorHolder = null;
-            bool insideAnother = false;
 
+            // Each pair of intervals is compared once, when the second of the two is
+            // received, whether it is the one said over the other or the one that contains it.
+            var overlaps = new List<InteractionEvent>();
             foreach (InteractionInterval other in this.history)
             {
                 if (other.ParticipantId == speaker || !this.Overlap(current, other))
@@ -115,86 +134,45 @@ namespace SAAC.CollaborationIndices
                     continue;
                 }
 
-                if (other.StartTime >= current.StartTime && other.EndTime <= current.EndTime)
+                if (SaidOver(other, current))
                 {
-                    events.Add(new InteractionEvent(other.StartTime, IndexCategories.Overlap, other.ParticipantId, speaker));
+                    overlaps.Add(new InteractionEvent(other.StartTime, IndexCategories.Overlap, other.ParticipantId, speaker));
                 }
-                else if (other.StartTime < current.StartTime && other.EndTime <= current.EndTime)
+                else if (SaidOver(current, other))
                 {
-                    // Several participants may still be speaking when the new interval starts:
-                    // the floor is taken from the last of them to have taken it.
-                    if (floorHolder == null || other.StartTime > floorHolder.StartTime)
-                    {
-                        floorHolder = other;
-                    }
-                }
-                else if (other.StartTime < current.StartTime)
-                {
-                    // The other started before and ends after: the new interval is said over it.
-                    insideAnother = true;
-                    events.Add(new InteractionEvent(current.StartTime, IndexCategories.Overlap, speaker, other.ParticipantId));
-                }
-                else
-                {
-                    // The other started during the new interval and ends after it: it takes the turn.
-                    events.Add(new InteractionEvent(other.StartTime, IndexCategories.TurnTakingWithOverlap, other.ParticipantId, speaker));
+                    overlaps.Add(new InteractionEvent(current.StartTime, IndexCategories.Overlap, speaker, other.ParticipantId));
                 }
             }
 
-            // A turn taking held back was in fact said over this interval: it is not one.
-            this.pending.RemoveAll(p => p.Speech.ParticipantId != speaker && current.StartTime < p.Speech.StartTime && this.Overlap(current, p.Speech));
-
-            if (insideAnother)
-            {
-                // Said over somebody who goes on: no floor is taken.
-            }
-            else if (floorHolder != null)
-            {
-                this.pending.Add(new Pending
-                {
-                    Speech = current,
-                    Event = new InteractionEvent(current.StartTime, IndexCategories.TurnTakingWithOverlap, speaker, floorHolder.ParticipantId),
-                    Deadline = current.EndTime + this.configuration.ConfirmationDelay,
-                });
-            }
-            else
-            {
-                // Whose turn it was: the last interval, of anybody, that ended before this one starts.
-                InteractionInterval previous = this.history
-                    .Where(h => h.EndTime <= current.StartTime + this.configuration.MinimumOverlap)
-                    .OrderByDescending(h => h.EndTime)
-                    .FirstOrDefault();
-                if (previous != null
-                    && previous.ParticipantId != speaker
-                    && (!this.configuration.MaximumSilence.HasValue || current.StartTime - previous.EndTime <= this.configuration.MaximumSilence.Value))
-                {
-                    this.pending.Add(new Pending
-                    {
-                        Speech = current,
-                        Event = new InteractionEvent(current.StartTime, IndexCategories.TurnTakingWithoutOverlap, speaker, previous.ParticipantId),
-                        Deadline = current.EndTime + this.configuration.ConfirmationDelay,
-                    });
-                }
-            }
-
-            foreach (InteractionEvent detected in events.OrderBy(e => e.OriginatingTime))
+            foreach (InteractionEvent detected in overlaps.OrderBy(e => e.OriginatingTime))
             {
                 this.poster.Post(this.Out, detected, now);
             }
+
+            // Whether the interval takes the turn is decided when it is confirmed. Whose turn
+            // it was according to the speech received so far is kept with it: the history may
+            // forget that interval before the confirmation.
+            this.pending.Add(new Pending
+            {
+                Speech = current,
+                Previous = this.PreviousSpeech(current, null),
+                Deadline = current.EndTime + this.configuration.ConfirmationDelay,
+            });
 
             if (!this.latestStart.TryGetValue(speaker, out DateTime latest) || current.StartTime > latest)
             {
                 this.latestStart[speaker] = current.StartTime;
             }
 
+            this.history.Add(current);
             this.PublishConfirmed(now);
 
             // Keep the last interval of each participant whatever its age: it is what tells
-            // whose turn it was after a long silence.
-            this.history.Add(current);
+            // whose turn it was after a long silence. Keep too what may overlap an interval
+            // that is still to be confirmed.
             DateTime oldest = now - this.configuration.HistoryDuration;
             var lastOfEach = this.history.GroupBy(h => h.ParticipantId).Select(g => g.OrderByDescending(h => h.EndTime).First()).ToList();
-            this.history.RemoveAll(h => h.EndTime < oldest && !lastOfEach.Contains(h));
+            this.history.RemoveAll(h => h.EndTime < oldest && !lastOfEach.Contains(h) && !this.pending.Any(p => h.EndTime > p.Speech.StartTime));
         }
 
         private bool Overlap(InteractionInterval a, InteractionInterval b)
@@ -205,9 +183,76 @@ namespace SAAC.CollaborationIndices
         }
 
         /// <summary>
-        /// Publishes the turn takings without overlap that can no longer be contradicted: the
-        /// delay has passed, or every other participant has started to speak since, so that
-        /// an earlier interval of theirs would already have been received.
+        /// Whose turn it was when an interval starts: the last interval, of anybody, that
+        /// ended before it starts, among the speech received so far and the one already known.
+        /// </summary>
+        private InteractionInterval PreviousSpeech(InteractionInterval current, InteractionInterval known)
+        {
+            DateTime limit = current.StartTime + this.configuration.MinimumOverlap;
+            InteractionInterval previous = known;
+            foreach (InteractionInterval other in this.history)
+            {
+                if (!ReferenceEquals(other, current) && other.EndTime <= limit && (previous == null || other.EndTime > previous.EndTime))
+                {
+                    previous = other;
+                }
+            }
+
+            return previous;
+        }
+
+        /// <summary>
+        /// The turn taking of an interval, from all the speech received so far; null when
+        /// its speaker takes no turn.
+        /// </summary>
+        private InteractionEvent TurnTaking(Pending turn)
+        {
+            InteractionInterval current = turn.Speech;
+            uint speaker = current.ParticipantId;
+            InteractionInterval floorHolder = null;
+
+            foreach (InteractionInterval other in this.history)
+            {
+                if (other.ParticipantId == speaker || !this.Overlap(current, other))
+                {
+                    continue;
+                }
+
+                if (SaidOver(current, other))
+                {
+                    // Said over somebody who goes on: no floor is taken.
+                    return null;
+                }
+
+                // Several participants may still be speaking when the interval starts: the
+                // floor is taken from the last of them to have taken it.
+                if (other.StartTime < current.StartTime && (floorHolder == null || other.StartTime > floorHolder.StartTime))
+                {
+                    floorHolder = other;
+                }
+            }
+
+            if (floorHolder != null)
+            {
+                return new InteractionEvent(current.StartTime, IndexCategories.TurnTakingWithOverlap, speaker, floorHolder.ParticipantId);
+            }
+
+            InteractionInterval previous = this.PreviousSpeech(current, turn.Previous);
+            if (previous != null
+                && previous.ParticipantId != speaker
+                && (!this.configuration.MaximumSilence.HasValue || current.StartTime - previous.EndTime <= this.configuration.MaximumSilence.Value))
+            {
+                return new InteractionEvent(current.StartTime, IndexCategories.TurnTakingWithoutOverlap, speaker, previous.ParticipantId);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Decides the intervals that can no longer be contradicted, and publishes the turn
+        /// takings among them: the delay has passed, or every other participant has started
+        /// to speak since, so that an earlier interval of theirs would already have been
+        /// received.
         /// </summary>
         private void PublishConfirmed(DateTime now)
         {
@@ -216,11 +261,20 @@ namespace SAAC.CollaborationIndices
                 return;
             }
 
-            var confirmed = this.pending.Where(p => now >= p.Deadline || this.EveryOtherHasSpokenSince(p)).OrderBy(p => p.Event.OriginatingTime).ToList();
-            foreach (Pending turn in confirmed)
+            var taken = new List<InteractionEvent>();
+            foreach (Pending turn in this.pending.Where(p => now >= p.Deadline || this.EveryOtherHasSpokenSince(p)).ToList())
             {
                 this.pending.Remove(turn);
-                this.poster.Post(this.Out, turn.Event, now);
+                InteractionEvent detected = this.TurnTaking(turn);
+                if (detected != null)
+                {
+                    taken.Add(detected);
+                }
+            }
+
+            foreach (InteractionEvent detected in taken.OrderBy(e => e.OriginatingTime))
+            {
+                this.poster.Post(this.Out, detected, now);
             }
         }
 
@@ -245,7 +299,7 @@ namespace SAAC.CollaborationIndices
         private sealed class Pending
         {
             public InteractionInterval Speech = new InteractionInterval();
-            public InteractionEvent Event = new InteractionEvent();
+            public InteractionInterval Previous;
             public DateTime Deadline;
         }
     }

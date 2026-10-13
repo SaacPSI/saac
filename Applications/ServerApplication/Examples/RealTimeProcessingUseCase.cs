@@ -200,6 +200,13 @@ namespace ServerApplication.Examples
         public int NumberOfParticipants = 2;
 
         /// <summary>
+        /// Local axis of the head streams that points where the participant looks, for the
+        /// position files: "+Z" for a Unity object, "+Y" for the head bone of the avatars.
+        /// The collaboration indices read it from their own configuration.
+        /// </summary>
+        public string HeadForwardAxis = "+Z";
+
+        /// <summary>
         /// Where the process reports what it gathers and computes; the log of the server when null.
         /// </summary>
         public Action<string>? Log = null;
@@ -225,11 +232,26 @@ namespace ServerApplication.Examples
         public bool StoreSpeechFromAudio = true;
 
         /// <summary>
+        /// True to store what the process detects and computes in the dataset, in partitions
+        /// of the session of the process: during a live session and during a post processing.
+        /// </summary>
+        public bool StoreProcessStreams = true;
+
+        /// <summary>
         /// Set by the interface before it stops a pipeline. A replay that is stopped before the
         /// end of its dataset leaves a store of computed speech that only holds a part of the
         /// session: it is marked as such and is not read afterwards.
         /// </summary>
         public bool StopRequested = false;
+
+        /// <summary>
+        /// Gets a value indicating whether the running process stores streams in the dataset.
+        /// </summary>
+        public bool StoresStreams => this.processStore != null && this.processStore.StoresStreams;
+
+        // Where the running process of a live session stores its streams, and how many times the process was started.
+        private ProcessStore? processStore = null;
+        private int processRun = 0;
 
         // The store of computed speech the running process writes, and the file describing it; null when it writes none.
         private SpeechStoreDescription? speechStore = null;
@@ -383,6 +405,25 @@ namespace ServerApplication.Examples
 
             this.SubPipeline = new Subpipeline(server.Pipeline, "CollaborationProcess");
             this.Session = session;
+
+            // The process stores what it detects and computes in partitions of its own: those
+            // of a live session carry the number of the run from the second one on, those
+            // of a post processing the number of the post processing of the dataset.
+            if (!this.StoreProcessStreams)
+            {
+                this.processStore = null;
+            }
+            else if (replay)
+            {
+                int number = NextPostProcessing(server);
+                this.Session = server.CreateOrGetSession(ProcessSessionName);
+                this.processStore = new ProcessStore(server, this.Session, this.SubPipeline, $"_post{number}", $"post processing {number}");
+            }
+            else
+            {
+                this.processRun++;
+                this.processStore = new ProcessStore(server, session, this.SubPipeline, this.processRun <= 1 ? string.Empty : $"_run{this.processRun}", $"run {this.processRun}");
+            }
             this.WritersDisposed = false;
             this.StopRequested = false;
             this.speechStore = null;
@@ -421,18 +462,10 @@ namespace ServerApplication.Examples
                 gatherProducers.AvatarGazeEvents = gatherProducers.FindProducers<ObjectGazeEvent>(server, this.SubPipeline, numberOfConnectedUsers, i => new[] { $"UnityB-H{i}-GazeEvent" }, log, reportMissing: false);
             }
 
-            // The video is only recorded again from a live session.
-            if (this.IsVideoInitialised && !replay && server.Connectors.ContainsKey("VideoRemoteApp-FullScreen"))
+            // The videos are only recorded again from a live session.
+            if (!replay)
             {
-                gatherProducers.ServerVideo = server.Connectors["VideoRemoteApp-FullScreen"]["FullScreen"].CreateBridge<Shared<EncodedImage>>(this.SubPipeline);
-                server.CreateConnectorAndStore("Unity Server", "Video", this.Session, this.SubPipeline, typeof(Shared<EncodedImage>), gatherProducers.ServerVideo);
-                log(this.Session == null
-                    ? "Collaboration process: the video of the VideoRemoteApp application is gathered but not stored, there is no session to store it in."
-                    : $"Collaboration process: the video of the VideoRemoteApp application is stored in the store Video of the session {this.Session.Name}.");
-            }
-            else if (this.IsVideoInitialised && !replay)
-            {
-                log("Collaboration process: the VideoRemoteApp application is connected but its stream FullScreen was not found, the video is not stored.");
+                this.StoreVideos(server, gatherProducers, log);
             }
 
             // LofComputerConfig drives the grid and room geometry.
@@ -473,7 +506,10 @@ namespace ServerApplication.Examples
 
             if (writePositions)
             {
-                log($"Collaboration process: position files of the {numberOfConnectedUsers} participants written in {this.csvAdress}");
+                log($"Collaboration process: position files of the {numberOfConnectedUsers} participants written in {this.csvAdress}, look direction of the heads along their {this.HeadForwardAxis} axis.");
+                log(this.Session == null
+                    ? "Collaboration process: the standardised positions are not stored, the process has no session to store them in."
+                    : $"Collaboration process: the standardised positions (1_Head, 1_Left, 1_Right...) are stored in the partition {this.processStore?.Partition("Positions") ?? "LiveVisualization"} of the session {this.Session.Name}.");
             }
             else
             {
@@ -492,7 +528,12 @@ namespace ServerApplication.Examples
                     {
                         userID = i,
                         sessionNum = this.sessionNumber,
-                        csvAdress = this.csvAdress
+                        csvAdress = this.csvAdress,
+                        headForwardAxis = this.HeadForwardAxis,
+
+                        // The standardised positions are stored in the session of the process.
+                        sessionName = this.Session?.Name ?? string.Empty,
+                        storeName = this.processStore?.Declare("Positions") ?? string.Empty,
                     });
                 this.StreamsWriters.Add(posRot.positionrotationWriter);
                 gatherProducers.HeadPositionOrientationsUnity[i].PipeTo(posRot.HeadPositionOrientationIn);
@@ -503,7 +544,9 @@ namespace ServerApplication.Examples
             // The collaboration indices: what the interface selected, on the streams gathered.
             if (this.CollaborationConfiguration != null)
             {
-                var indices = new CollaborationIndicesProcess(this.SubPipeline, gatherProducers, this.CollaborationConfiguration, log);
+                // The detections and the results are stored in the partitions of the process, live and in a replay.
+                var indices = new CollaborationIndicesProcess(
+                    this.SubPipeline, gatherProducers, this.CollaborationConfiguration, log, this.Session == null ? null : this.processStore);
                 try
                 {
                     this.CollaborationIndices = indices.Build() ? indices : null;
@@ -515,6 +558,11 @@ namespace ServerApplication.Examples
                     indices.Close();
                     this.CollaborationIndices = null;
                 }
+            }
+
+            if (this.processStore != null && this.processStore.StoresStreams)
+            {
+                log($"Collaboration process: {this.processStore.Label}, stored in the session {this.Session!.Name} of the dataset, one partition per kind of data: {this.processStore.Describe()}.");
             }
 
             // A live process starts now, beside the applications that are already running;
@@ -537,6 +585,69 @@ namespace ServerApplication.Examples
             // 2. The PCM will have receivers and emitters that will be connected to other modules in the pipeline
             // 3. The PCM will process data in real-time as it is received from the emitters and send processed data to the receivers
             // 4. The PCM can also send status updates or logs to a monitoring module or UI
+        }
+
+        // The kind of a speech stream is its name without the number of the participant: "VAD_" for "VAD_2".
+        private static string StreamKind(string streamName)
+        {
+            return streamName.TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+        }
+
+        // The messages the streams of a kind recorded in a session of the replayed dataset; 0 when it is not known.
+        private static long RecordedInSession(DatasetPipeline server, string sessionName, string kind)
+        {
+            try
+            {
+                return server.Dataset?.Sessions
+                    .Where(session => session.Name == sessionName)
+                    .SelectMany(session => session.Partitions)
+                    .SelectMany(partition => partition.AvailableStreams)
+                    .Where(stream => StreamKind(stream.Name) == kind)
+                    .Sum(stream => stream.MessageCount) ?? 0;
+            }
+            catch (Exception)
+            {
+                // The catalogue of a store that is being written may not be readable.
+                return 0;
+            }
+        }
+
+        // The number of the next post processing of a dataset: one more than the highest number its partitions carry.
+        private static int NextPostProcessing(DatasetPipeline server)
+        {
+            IEnumerable<string> names = server.Connectors.Keys;
+            if (server.Dataset != null)
+            {
+                names = names.Concat(server.Dataset.Sessions.SelectMany(session => session.Partitions).Select(partition => partition.Name));
+            }
+
+            int last = 0;
+            foreach (string name in names.ToList())
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(name ?? string.Empty, @"_post(\d+)$");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
+                {
+                    last = Math.Max(last, number);
+                }
+            }
+
+            return last + 1;
+        }
+
+        /// <summary>
+        /// Stops the process and leaves the server running: the subpipeline of the process
+        /// is disposed, which closes the stores it wrote, its result files are closed, and
+        /// what it declared on the server is forgotten so that it can be started again.
+        /// </summary>
+        /// <param name="server">The server the process runs on.</param>
+        public void StopProcess(DatasetPipeline server)
+        {
+            this.SubPipeline?.Dispose();
+            this.SubPipeline = null;
+            this.CloseWriters();
+
+            this.processStore?.Forget();
+            this.processStore = null;
         }
 
         /// <summary>
@@ -573,6 +684,80 @@ namespace ServerApplication.Examples
             }
         }
 
+        // What the runs of the process stored in their partition Video: copies, which are not
+        // videos of an application.
+        private readonly HashSet<string> videoCopies = new HashSet<string>();
+
+        /// <summary>
+        /// Stores, in the partition Video of the process, every video the connected applications
+        /// send: each stream of JPEG frames, whatever the name of the application and of its
+        /// capture area. The stream FullScreen of an application named VideoRemoteApp keeps the
+        /// name it always had there, "Unity Server"; the others are named after their
+        /// application and their capture area ("VideoCapture1-TopLeft").
+        /// </summary>
+        private void StoreVideos(DatasetPipeline server, GatherProducers gatherProducers, Action<string> log)
+        {
+            ProcessStore store = this.processStore ?? new ProcessStore(server, this.Session, this.SubPipeline, string.Empty, string.Empty);
+            var stored = new List<string>();
+            foreach (var video in FindVideos(server, this.videoCopies))
+            {
+                string name = video.Name == "VideoRemoteApp-FullScreen" ? "Unity Server" : video.Name;
+                IProducer<Shared<EncodedImage>> frames = video.Connector.CreateBridge<Shared<EncodedImage>>(this.SubPipeline);
+                gatherProducers.ServerVideo ??= frames;
+                if (store.Write("Video", name, frames))
+                {
+                    this.videoCopies.Add($"{store.Partition("Video")}/{name}");
+                    stored.Add(name == video.Name ? name : $"{name} ({video.Name})");
+                }
+            }
+
+            if (stored.Count > 0)
+            {
+                log(this.Session == null
+                    ? $"Collaboration process: {stored.Count} video stream(s) gathered but not stored, there is no session to store them in: {string.Join(", ", stored)}."
+                    : $"Collaboration process: {stored.Count} video stream(s) of the applications stored in the store {store.Partition("Video")} of the session {this.Session.Name}: {string.Join(", ", stored)}.");
+            }
+            else if (this.IsVideoInitialised)
+            {
+                log("Collaboration process: the VideoRemoteApp application is connected but none of its streams is a video (JPEG frames), no video is stored.");
+            }
+        }
+
+        // The videos of the applications: the streams of JPEG frames the server receives, each
+        // with the name of its application and of its capture area. Where these two names are
+        // depends on the store mode of the session: the store "Application-Area" and the stream
+        // "Area" when each stream has its store, the store "Application" and the stream "Area"
+        // when the stores are those of the applications, the stream "Application-Area" in the
+        // store the dictionary names.
+        private static List<(string Name, ConnectorInfo Connector)> FindVideos(DatasetPipeline server, HashSet<string> copies)
+        {
+            var videos = new List<(string Name, ConnectorInfo Connector)>();
+            foreach (var store in server.Connectors.ToList().OrderBy(entry => entry.Key, StringComparer.Ordinal))
+            {
+                foreach (var stream in store.Value.ToList().OrderBy(entry => entry.Key, StringComparer.Ordinal))
+                {
+                    if (stream.Value.DataType != typeof(Shared<EncodedImage>) || copies.Contains($"{store.Key}/{stream.Key}"))
+                    {
+                        continue;
+                    }
+
+                    string name = store.Key.EndsWith("-" + stream.Key, StringComparison.Ordinal) ? store.Key
+                        : stream.Key.Contains("-") ? stream.Key
+                        : $"{store.Key}-{stream.Key}";
+
+                    // Two streams never get the same name.
+                    while (videos.Any(video => video.Name == name))
+                    {
+                        name = $"{store.Key}-{name}";
+                    }
+
+                    videos.Add((name, stream.Value));
+                }
+            }
+
+            return videos;
+        }
+
         // The indicators computed from who speaks when.
         private static readonly string[] SpeechIndicators =
         {
@@ -586,14 +771,37 @@ namespace ServerApplication.Examples
         /// </summary>
         private void GatherSpeech(DatasetPipeline server, Pipeline pipeline, GatherProducers gatherProducers, int participants, bool replay, Action<string> log)
         {
-            // A store of speech computed by a replay that was stopped before its end is not read.
+            // In a replay the dataset says how many messages each stream recorded. The voice
+            // activity or the transcription streams of a session are passed over when none
+            // of them recorded a message: it is what an interrupted recording, or a recogniser
+            // that produced nothing, leaves behind. One empty stream among others is kept: a
+            // participant who said nothing has no transcription. The counts are only trusted
+            // when the audio has some: stores that were never closed report none for every stream.
+            bool countsKnown = replay && gatherProducers.FindStreamNames<AudioBuffer>(server).Any(name => gatherProducers.RecordedMessageCount(server, name) > 0);
+            var emptyStreams = new SortedSet<string>();
+
+            // A store of speech computed by a replay that was stopped before its end is not read either.
             var storesLeftOut = new HashSet<string>();
-            Func<ConnectorInfo, bool> complete = connector => this.IsCompleteSpeech(server, connector, storesLeftOut, log);
+            Func<ConnectorInfo, bool> complete = connector =>
+            {
+                if (countsKnown && RecordedInSession(server, connector.SessionName, StreamKind(connector.SourceName)) == 0)
+                {
+                    emptyStreams.Add($"{connector.SourceName} ({connector.SessionName}/{connector.StoreName})");
+                    return false;
+                }
+
+                return this.IsCompleteSpeech(server, connector, storesLeftOut, log);
+            };
 
             gatherProducers.Vads = gatherProducers.FindProducers<bool>(server, pipeline, participants, i => new[] { $"VAD_{i}" }, log, reportMissing: false, accept: complete);
             gatherProducers.Stts = gatherProducers.FindProducers<IStreamingSpeechRecognitionResult>(server, pipeline, participants, i => new[] { $"STT_{i}" }, log, reportMissing: false, accept: complete);
             bool hasVoiceActivity = gatherProducers.Vads.Count == participants;
             bool hasTranscription = gatherProducers.Stts.Count == participants;
+            if (emptyStreams.Count > 0)
+            {
+                log($"Speech: recorded streams passed over, none of their kind has a message in their session: {string.Join(", ", emptyStreams)}.");
+            }
+
             log($"Speech: voice activity streams (VAD_1 to VAD_{participants}) {(hasVoiceActivity ? "found" : "not found")}; transcription streams (STT_1 to STT_{participants}) {(hasTranscription ? "found" : "not found")}.");
 
             // Those found may come from an earlier run that computed them from the audio.
@@ -638,7 +846,7 @@ namespace ServerApplication.Examples
                 }
             }
 
-            List<IProducer<AudioBuffer>> audios = this.FindAudios(server, pipeline, gatherProducers, participants, log, out AudioStreamAssignment assignment);
+            List<IProducer<AudioBuffer>> audios = this.FindAudios(server, pipeline, gatherProducers, participants, countsKnown, log, out AudioStreamAssignment assignment);
             if (audios.Count != participants)
             {
                 log(hasTranscription
@@ -721,9 +929,14 @@ namespace ServerApplication.Examples
                 return;
             }
 
-            // A store that is being replayed cannot be written: the next free name is taken.
-            string storeName = SpeechStoreName;
-            for (int version = 2; server.Connectors.ContainsKey(storeName); version++)
+            // A live process has partitions of its own. In a replay, a store that is being
+            // read cannot be written, and a name the session already lists cannot be listed
+            // again, even when its store is no longer on the disk: the next free name is taken.
+            // The speech computed by a post processing is not tied to it: the next ones read it.
+            bool ownPartition = this.processStore != null && !replay;
+            string storeName = ownPartition ? this.processStore!.Declare(SpeechStoreName) : SpeechStoreName;
+            Func<string, bool> taken = name => server.Connectors.ContainsKey(name) || session.Partitions.Any(partition => partition.Name == name);
+            for (int version = 2; !ownPartition && taken(storeName); version++)
             {
                 storeName = $"{SpeechStoreName}_{version}";
             }
@@ -768,9 +981,9 @@ namespace ServerApplication.Examples
                 + (replay
                     ? "Once the replay has reached the end of the dataset, the next replays read them and compute nothing from the audio."
                     : "A replay of the session reads them and computes nothing from the audio."));
-            if (storeName != SpeechStoreName)
+            if (storeName != SpeechStoreName && !ownPartition)
             {
-                log($"Speech: the dataset already holds a store named {SpeechStoreName}, the new one is named {storeName}.");
+                log($"Speech: the dataset already lists a store named {SpeechStoreName}, the new one is named {storeName}.");
             }
         }
 
@@ -854,9 +1067,18 @@ namespace ServerApplication.Examples
         /// one, in that order or as <see cref="AudioStreamNames"/> says.
         /// </summary>
         /// <returns>One stream per participant, or none.</returns>
-        private List<IProducer<AudioBuffer>> FindAudios(DatasetPipeline server, Pipeline pipeline, GatherProducers gatherProducers, int participants, Action<string> log, out AudioStreamAssignment assignment)
+        private List<IProducer<AudioBuffer>> FindAudios(DatasetPipeline server, Pipeline pipeline, GatherProducers gatherProducers, int participants, bool countsKnown, Action<string> log, out AudioStreamAssignment assignment)
         {
-            assignment = AudioStreamAssignment.Resolve(gatherProducers.FindStreamNames<AudioBuffer>(server), this.AudioStreamNames, participants);
+            // The audio streams of an interrupted recording hold nothing: they are not candidates.
+            List<string> available = gatherProducers.FindStreamNames<AudioBuffer>(server);
+            List<string> empty = countsKnown ? available.Where(name => gatherProducers.RecordedMessageCount(server, name) == 0).ToList() : new List<string>();
+            if (empty.Count > 0)
+            {
+                log($"Speech: audio streams that recorded no buffer are left out: {string.Join(", ", empty)}.");
+                available = available.Except(empty).ToList();
+            }
+
+            assignment = AudioStreamAssignment.Resolve(available, this.AudioStreamNames, participants);
             if (assignment.Available.Count > 0)
             {
                 log($"Speech: audio streams found, numbered in the order of their names: {string.Join(", ", assignment.Available.Select((name, index) => $"{index + 1} = {name}{Recorded(gatherProducers.RecordedMessageCount(server, name))}"))}.");

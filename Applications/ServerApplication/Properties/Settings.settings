@@ -62,5 +62,11 @@
     <Setting Name="AudioStreamNames" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="HeadForwardAxis" Type="System.String" Scope="User">
+      <Value Profile="(Default)">+Z</Value>
+    </Setting>
+    <Setting Name="ProcessTabJson" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

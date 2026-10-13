@@ -10,6 +10,7 @@ using System.Numerics;
 using Microsoft.Psi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SAAC.CollaborationIndices;
+using SAAC.Groups;
 
 namespace CollaborationIndices.Tests
 {
@@ -93,6 +94,44 @@ namespace CollaborationIndices.Tests
             Assert.AreEqual(1.0, last.Group["GazeOnPeers"], "The gaze of 7.5 s.");
             Assert.AreEqual(1.0, last.Group["TurnTakingWithoutOverlap"], "The turn taking of 8.0 s.");
             Assert.AreEqual(0.0, last.Individual["TimeInArea_Table"][0], 1e-9);
+        }
+
+        [TestMethod]
+        public void GazeIndicators_NameWhoIsWatchedTheMostAndWhoLeadsTheAttention()
+        {
+            Run(1, out List<IndexSnapshot> snapshots, out _, out StringWriter csv, out _);
+
+            // First tick, 4.02 s: one episode initiated by participant 0, one look at participant 1.
+            IndexSnapshot first = snapshots[0];
+            Assert.AreEqual(1.0, first.Group["LeadVisualAttention"], "Participant 0, as its identifier plus one.");
+            Assert.AreEqual(2.0, first.Group["WatchedMost"], "Participant 1.");
+            Assert.AreEqual(1.0, first.Pair["LeadVisualAttention"][new ParticipantPair(0, 1)]);
+            Assert.AreEqual(0.0, first.Pair["LeadVisualAttention"][new ParticipantPair(1, 2)], "Neither of the two initiated an episode.");
+            Assert.AreEqual(2.0, first.Pair["WatchedMost"][new ParticipantPair(1, 2)]);
+            Assert.AreEqual(0.0, first.Pair["WatchedMost"][new ParticipantPair(0, 2)], "Neither of the two was looked at.");
+
+            // 5.02 s: participants 0 and 2 initiated one episode each, nobody stands out.
+            Assert.AreEqual(0.0, snapshots[1].Group["LeadVisualAttention"]);
+            Assert.AreEqual(2.0, snapshots[1].Group["WatchedMost"]);
+
+            // 6.02 s: the first episode left the window; participants 1 and 2 were looked at once each.
+            Assert.AreEqual(3.0, snapshots[2].Group["LeadVisualAttention"], "Participant 2.");
+            Assert.AreEqual(0.0, snapshots[2].Group["WatchedMost"]);
+
+            // Last tick, 11.02 s: no episode in the window, and the look of 7.5 s at participant 0.
+            IndexSnapshot last = snapshots[snapshots.Count - 1];
+            Assert.AreEqual(0.0, last.Group["LeadVisualAttention"]);
+            Assert.AreEqual(1.0, last.Group["WatchedMost"]);
+
+            // They are columns of the export, and values of the group in the graph of the window.
+            string header = IndicesHarness.Rows(csv)[0];
+            StringAssert.Contains(header, "WatchedMost");
+            StringAssert.Contains(header, "LeadVisualAttention");
+            IndividualPairCharacteristics graph = SocialGraph.From(first, Participants);
+            Assert.AreEqual(2.0, graph.PersonGroup.WatchedMost);
+            Assert.AreEqual(1.0, graph.PersonGroup.LeadVA);
+            Assert.AreEqual(first.Group["TalkingMost"], graph.PersonGroup.TalkingMost);
+            Assert.AreEqual(first.Group["TaskingMost"], graph.PersonGroup.TaskingMost);
         }
 
         [TestMethod]

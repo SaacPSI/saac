@@ -19,6 +19,18 @@ namespace SAAC.CollaborationIndices
         public string correctedOrbCsvPath = string.Empty;
         public int sessionIdForCorrection = 0;
         public string conditionForCorrection = string.Empty;
+
+        /// <summary>
+        /// Local axis of the Unity head transform that points where the participant looks:
+        /// "+Y" for the head bone of the avatars, as before; "+Z" for a plain Unity object.
+        /// </summary>
+        public string headForwardAxis = "+Y";
+
+        /// <summary>
+        /// Name of the store receiving the standardised positions of a live session;
+        /// "LiveVisualization" when empty, as before.
+        /// </summary>
+        public string storeName = string.Empty;
     }
 
     public class PositionOrientationPreProcessing
@@ -26,6 +38,9 @@ namespace SAAC.CollaborationIndices
         public StreamWriter positionrotationWriter;
         private readonly PositionOrientationConfiguration positionOrientationConfiguration;
         private CorrectedOrbSource correctedOrbs;
+
+        // The configured look axis of the head, as a vector of the Unity transform.
+        private Vector3? unityHeadForwardAxis;
 
         // private string headWristHeadupEU = "utc_timestamp_ms,participant_id,position_x,position_y,position_z,rotation_x,rotation_y,rotation_z,left_hand_position_x,left_hand_position_y,left_hand_position_z,right_hand_position_x,right_hand_position_y,right_hand_position_z,left_hand_rotation_x,left_hand_rotation_y,left_hand_rotation_z,right_hand_rotation_x,right_hand_rotation_y,right_hand_rotation_z".Replace(',', ';');
         private string headWristHeadupEU = "utc_timestamp_ms,participant_id,type,position_x,position_y,position_z,rotation_x,rotation_y,rotation_z,rotation_w,forward_x,forward_y,forward_z,left_hand_position_x,left_hand_position_y,left_hand_position_z,right_hand_position_x,right_hand_position_y,right_hand_position_z,left_hand_rotation_x,left_hand_rotation_y,left_hand_rotation_z,right_hand_rotation_x,right_hand_rotation_y,right_hand_rotation_z".Replace(',', ';');
@@ -60,7 +75,7 @@ namespace SAAC.CollaborationIndices
             this.RightHandPositionOrientationOut = pipeline.CreateEmitter<Tuple<Vector3, Vector3>>(this, nameof(this.RightHandPositionOrientationOut));
 
             this.sessionName = server.GetSession(this.positionOrientationConfiguration.sessionName);
-            var storeName = "LiveVisualization";
+            var storeName = string.IsNullOrEmpty(this.positionOrientationConfiguration.storeName) ? "LiveVisualization" : this.positionOrientationConfiguration.storeName;
 
             if (this.positionOrientationConfiguration.isReplay)
             {
@@ -227,10 +242,23 @@ namespace SAAC.CollaborationIndices
             Quaternion qUnity = this.EulerToQuaternion(unityEulerDegrees);
             Quaternion rotation = this.ToExternalFrame(qUnity);
 
-            Vector3 forward = this.ForwardFromQuaternion(rotation);
+            this.unityHeadForwardAxis ??= new DetectorSettings { HeadForwardAxis = this.positionOrientationConfiguration.headForwardAxis }.HeadForwardVector();
+            Vector3 forward = ForwardFromQuaternion(rotation, this.unityHeadForwardAxis.Value);
 
             return new Pose(position, rotation, forward);
         }
+
+        /// <summary>
+        /// Head forward in the external (right-handed, Z-up) frame, for a head whose look
+        /// direction is a given local axis of its Unity transform. The axis is seen in the
+        /// external frame (Y and Z swapped), then turned by the reframed orientation. With
+        /// the +Y axis of Unity it is <see cref="ForwardFromQuaternion(Quaternion)"/>.
+        /// </summary>
+        /// <param name="rotation">Orientation of the head, already reframed.</param>
+        /// <param name="unityLocalAxis">Look axis of the head in its Unity transform.</param>
+        /// <returns>The unit look direction in the external frame.</returns>
+        public static Vector3 ForwardFromQuaternion(Quaternion rotation, Vector3 unityLocalAxis)
+            => Vector3.Normalize(Vector3.Transform(new Vector3(unityLocalAxis.X, unityLocalAxis.Z, unityLocalAxis.Y), rotation));
 
         /// <summary>Swap Y and Z components. Valid for points and direction vectors.</summary>
         public Vector3 SwapYZ(Vector3 v) => new Vector3(v.X, v.Z, v.Y);

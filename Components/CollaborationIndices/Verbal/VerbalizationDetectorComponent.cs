@@ -71,6 +71,12 @@ namespace SAAC.CollaborationIndices
 
         private readonly MonotonicPoster poster = new MonotonicPoster();
 
+        // The intervals of a participant are received in order, those of the group are not: a
+        // recogniser delivers a long utterance after the short answer that followed it. On the
+        // stream of the group such an interval is posted right after the last one, so that
+        // none is lost; its bounds are in the interval itself.
+        private readonly MonotonicPoster groupPoster = new MonotonicPoster(NonMonotonicPolicy.Advance);
+
         private DateTime taskStart = DateTime.MinValue;
         private DateTime taskEnd = DateTime.MaxValue;
 
@@ -99,7 +105,11 @@ namespace SAAC.CollaborationIndices
 
         public string Name { get; }
 
-        /// <summary>Every speech interval, whatever the participant.</summary>
+        /// <summary>
+        /// Every speech interval, whatever the participant, in the order they are received. A
+        /// message is stamped with the end of its interval, or one tick after the previous
+        /// message when an interval that ended later was received first.
+        /// </summary>
         public Emitter<InteractionInterval> Out { get; }
 
         public Receiver<DateTime> TaskStartIn { get; }
@@ -160,7 +170,7 @@ namespace SAAC.CollaborationIndices
             var interval = new InteractionInterval(start, end, IndexCategories.Speaking, participantId, null, text ?? string.Empty);
 
             // Out is written from every participant's receiver, so it needs the guard.
-            this.poster.Post(this.Out, interval, envelope.OriginatingTime);
+            this.groupPoster.Post(this.Out, interval, envelope.OriginatingTime);
             this.poster.Post(this.intervalEmitters[participantId], interval, envelope.OriginatingTime);
 
             if (this.configuration.PublishLegacyType)

@@ -262,5 +262,29 @@ namespace ServerApplication.Properties {
                 this["AudioStreamNames"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("+Z")]
+        public string HeadForwardAxis {
+            get {
+                return ((string)(this["HeadForwardAxis"]));
+            }
+            set {
+                this["HeadForwardAxis"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ProcessTabJson {
+            get {
+                return ((string)(this["ProcessTabJson"]));
+            }
+            set {
+                this["ProcessTabJson"] = value;
+            }
+        }
     }
 }

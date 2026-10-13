@@ -28,6 +28,8 @@ namespace SAAC.CollaborationIndices
         public const string JointVisualAttentionPair = "JointVisualAttentionPair";
         public const string GazeOnPeers = "GazeOnPeers";
         public const string MutualGaze = "MutualGaze";
+        public const string WatchedMost = "WatchedMost";
+        public const string LeadVisualAttention = "LeadVisualAttention";
         public const string Formation = "Formation";
         public const string Proximity = "Proximity";
         public const string TimeInArea = "TimeInArea";

@@ -164,13 +164,18 @@ namespace ServerApplication.Examples
         /// <param name="server">The pipeline owning the connectors.</param>
         /// <param name="streamName">Name of the stream.</param>
         /// <param name="accept">Says whether the stream of a store may be read; null to read any.</param>
-        /// <returns>The connector of the first store that holds the stream; null when none does.</returns>
+        /// <returns>
+        /// The connector of the store that holds the stream; null when none does. When several
+        /// stores hold it, the one that recorded the most messages, and the first one among equals.
+        /// </returns>
         public ConnectorInfo? FindConnector<T>(DatasetPipeline server, string streamName, Func<ConnectorInfo, bool>? accept = null)
         {
             return server.Connectors.Values
                 .Where(store => store.ContainsKey(streamName))
                 .Select(store => store[streamName])
-                .FirstOrDefault(candidate => candidate.DataType == typeof(T) && (accept == null || accept(candidate)));
+                .Where(candidate => candidate.DataType == typeof(T) && (accept == null || accept(candidate)))
+                .OrderByDescending(candidate => this.RecordedMessageCount(server, streamName, candidate.StoreName))
+                .FirstOrDefault();
         }
 
         /// <summary>
@@ -192,15 +197,16 @@ namespace ServerApplication.Examples
         /// </summary>
         /// <param name="server">The pipeline owning the dataset.</param>
         /// <param name="streamName">Name of the stream.</param>
-        /// <returns>The number of messages; 0 when it is not known, as in a live session.</returns>
-        public long RecordedMessageCount(DatasetPipeline server, string streamName)
+        /// <param name="storeName">Name of the store holding the stream; null for the largest count among the stores that hold it.</param>
+        /// <returns>The number of messages; 0 when it is not known, as in a live session or for a store that was never closed.</returns>
+        public long RecordedMessageCount(DatasetPipeline server, string streamName, string? storeName = null)
         {
             try
             {
                 return server.Dataset?.Sessions
                     .SelectMany(session => session.Partitions)
                     .SelectMany(partition => partition.AvailableStreams)
-                    .Where(stream => stream.Name == streamName)
+                    .Where(stream => stream.Name == streamName && (storeName == null || stream.StoreName == storeName))
                     .Select(stream => stream.MessageCount)
                     .DefaultIfEmpty(0)
                     .Max() ?? 0;

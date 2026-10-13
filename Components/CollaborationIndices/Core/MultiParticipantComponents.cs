@@ -28,6 +28,7 @@ namespace SAAC.CollaborationIndices
         {
             this.EventIn = pipeline.CreateReceiver<InteractionEvent>(this, this.ReceiveEvent, $"{name}-EventIn");
             this.EventsIn = pipeline.CreateReceiver<IEnumerable<InteractionEvent>>(this, this.ReceiveEvents, $"{name}-EventsIn");
+            this.CancelIn = pipeline.CreateReceiver<InteractionEvent>(this, (cancelled, envelope) => this.events.Remove(cancelled), $"{name}-CancelIn");
 
             foreach (uint participantId in configuration.ParticipantIds)
             {
@@ -50,6 +51,12 @@ namespace SAAC.CollaborationIndices
         public Receiver<InteractionEvent> EventIn { get; }
 
         public Receiver<IEnumerable<InteractionEvent>> EventsIn { get; }
+
+        /// <summary>
+        /// Events to forget: those a detector published at once and withdraws afterwards
+        /// (VoiceTurnTakingDetector.CancelledOut). From then on they are no longer counted.
+        /// </summary>
+        public Receiver<InteractionEvent> CancelIn { get; }
 
         public Receiver<InteractionEvent> GetEventInput(uint participantId)
         {

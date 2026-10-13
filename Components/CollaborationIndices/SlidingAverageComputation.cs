@@ -112,6 +112,7 @@ namespace SAAC.CollaborationIndices
                 blueprint.ConfigureScore?.Invoke(scoreConfiguration);
 
                 this.CollaborationScore = new CollaborationScoreComponent(this.pipeline, scoreConfiguration, $"{this.Name}-CollaborationScore");
+                this.ScoreNames = scoreConfiguration.Dimensions.Select(dimension => dimension.Name).Concat(new[] { IndexNames.CollaborationScore }).ToList();
                 snapshots.PipeTo(this.CollaborationScore.SnapshotIn);
                 snapshots = this.CollaborationScore.SnapshotOut;
             }
@@ -187,6 +188,12 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Gets the collaboration score, or null when the builder did not ask for it.</summary>
         public CollaborationScoreComponent? CollaborationScore { get; }
+
+        /// <summary>
+        /// Gets the names of the scores of the collaboration model, as the snapshots hold them: its
+        /// dimensions in order, then the collaboration score. Empty when the score is not computed.
+        /// </summary>
+        public IReadOnlyList<string> ScoreNames { get; } = new List<string>();
 
         /// <summary>Gets the interaction graph, or null when the builder did not ask for it.</summary>
         public InteractionGraphComponent? Graph { get; }

@@ -371,6 +371,39 @@ namespace CollaborationIndices.Tests
             Assert.AreEqual(5.0, Seconds(handovers[0].OriginatingTime));
         }
 
+        [TestMethod]
+        public void TaskActions_LeaveOutTheObjectsThatAreNotPiecesOfTheTask()
+        {
+            var actions = new List<InteractionEvent>();
+            TaskActionDetector detector = null;
+
+            IndicesHarness.Run(1, pipeline =>
+            {
+                // The test button of the Unity scenes sends the grab of an object "test", which no release follows.
+                var script = new Script()
+                    .At(1.0, "piece0", Piece(State.Grab, "test", Location.Hand))
+                    .At(2.0, "piece0", Piece(State.Grab, "angle", Location.Hand))
+                    .At(3.0, "piece1", Piece(State.Grab, "Test", Location.Hand))
+                    .At(4.0, "piece0", Piece(State.Ungrab, "angle", Location.Hand))
+                    .Play(pipeline);
+
+                detector = new TaskActionDetector(pipeline, new TaskActionDetectorConfiguration { ParticipantIds = Trio, IgnoredObjects = new List<string> { "test" } });
+                for (uint id = 0; id < 2; id++)
+                {
+                    script.Of($"piece{id}", e => e.Piece).PipeTo(detector.GetPieceInput(id));
+                }
+
+                detector.Out.Do(e => actions.Add(e.Clone()));
+            });
+
+            CollectionAssert.AreEqual(new[] { "Grab", "Ungrab" }, actions.Select(a => a.Category).ToList());
+            Assert.IsTrue(actions.All(a => a.Label.StartsWith("angle@")));
+            Assert.AreEqual(2, detector.IgnoredStatusCount, "The name is compared without the case.");
+
+            // The server keeps every status unless its configuration names objects to leave out.
+            Assert.AreEqual(0, new DetectorSettings().IgnoredTaskObjects.Count);
+        }
+
         private static double Seconds(DateTime time) => Math.Round((time - SyntheticData.Start).TotalSeconds, 3);
 
         private static Entry Gaze(string type, string target, bool status)

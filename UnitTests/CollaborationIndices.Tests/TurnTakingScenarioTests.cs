@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Psi;
+using Microsoft.Psi.Speech;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SAAC.CollaborationIndices;
 
@@ -24,6 +25,10 @@ namespace CollaborationIndices.Tests
     ///    previous speaker stopped, and goes on;
     ///  - overlap: somebody speaks over the speaker, who keeps the floor (backchannel,
     ///    failed interruption).
+    ///
+    /// A recogniser does not answer at once, and takes longer on a long utterance: the last
+    /// part gives the intervals in the order they are then received, which is not the order
+    /// of their ends.
     /// </summary>
     [TestClass]
     public class TurnTakingScenarioTests
@@ -285,6 +290,161 @@ namespace CollaborationIndices.Tests
         }
 
         // ------------------------------------------------------------------
+        // 4. Intervals received late
+        // ------------------------------------------------------------------
+
+        [TestMethod]
+        public void IntervalsReceivedLate_AreDetectedAsWhatTheyAre()
+        {
+            var failures = new List<string>();
+
+            // Each interval with the moment it is received: a recogniser takes longer on a
+            // long utterance than on the short one that follows it.
+            void Check(string name, (uint Speaker, double Start, double End, double ReceivedAt)[] speech, params (string Category, uint Who, uint From, double At)[] expected)
+            {
+                var received = speech.Select(s => (Speech(s.Speaker, s.Start, s.End), s.ReceivedAt)).ToList();
+                List<string> detected = Describe(DetectAsReceived(received, new TurnTakingDetectorConfiguration { ParticipantIds = Trio }));
+                List<string> wanted = expected.Select(e => $"{e.Category} {e.Who}<{e.From} @{e.At:0.0}").OrderBy(s => s).ToList();
+                if (!detected.SequenceEqual(wanted))
+                {
+                    failures.Add($"{name}: expected [{string.Join(", ", wanted)}], detected [{string.Join(", ", detected)}]");
+                }
+            }
+
+            Check(
+                "answer received before the utterance it answers",
+                new[] { (A, 0.0, 6.0, 8.0), (B, 6.5, 7.0, 7.3) },
+                (Without, B, A, 6.5));
+
+            Check(
+                "the same among three: the turn is taken from the last to have spoken, not from the last received",
+                new[] { (C, 0.0, 2.0, 2.2), (A, 3.0, 9.0, 11.0), (B, 9.5, 10.0, 10.3) },
+                (Without, A, C, 3.0),
+                (Without, B, A, 9.5));
+
+            Check(
+                "utterance received after the next segment of the speaker it took the turn from",
+                new[] { (A, 0.0, 2.0, 2.2), (B, 2.5, 6.0, 8.0), (A, 6.4, 7.0, 7.3) },
+                (Without, B, A, 2.5),
+                (Without, A, B, 6.4));
+
+            Check(
+                "overlapping switch, the first speaker received last",
+                new[] { (A, 0.0, 6.0, 8.5), (B, 5.5, 7.5, 8.0) },
+                (With, B, A, 5.5));
+
+            Check(
+                "backchannel received after the utterance it is said over",
+                new[] { (A, 0.0, 3.0, 3.2), (B, 1.0, 1.5, 4.0) },
+                (Over, B, A, 1.0));
+
+            Check(
+                "backchannel received before the utterance it is said over, itself received late",
+                new[] { (B, 0.0, 1.0, 1.2), (A, 2.0, 8.0, 9.0), (B, 4.0, 4.5, 4.8) },
+                (Without, A, B, 2.0),
+                (Over, B, A, 4.0));
+
+            Assert.AreEqual(0, failures.Count, "\n" + string.Join("\n", failures));
+        }
+
+        [TestMethod]
+        public void SimulatedConversations_AreRecoveredWhateverTheTimeTheRecogniserTakes()
+        {
+            foreach (int participants in new[] { 2, 3, 4 })
+            {
+                var totals = new Dictionary<string, Score> { { Without, new Score() }, { With, new Score() }, { Over, new Score() } };
+                int receivedLate = 0;
+                int intervals = 0;
+                for (int seed = 1; seed <= 10; seed++)
+                {
+                    Conversation conversation = Conversation.Simulate(seed, participants, turns: 120, longestSegment: 4.5);
+
+                    // A recogniser per participant, which takes 0.3 s plus 80 % of the utterance.
+                    List<(InteractionInterval Interval, double ReceivedAt)> received = AsReceived(conversation.Speech, duration => 0.3 + (0.8 * duration));
+                    var inOrderOfReception = received.OrderBy(r => r.ReceivedAt).Select(r => r.Interval).ToList();
+                    DateTime latestEnd = DateTime.MinValue;
+                    foreach (InteractionInterval interval in inOrderOfReception)
+                    {
+                        receivedLate += interval.EndTime < latestEnd ? 1 : 0;
+                        latestEnd = interval.EndTime > latestEnd ? interval.EndTime : latestEnd;
+                    }
+
+                    intervals += received.Count;
+
+                    // The delay covers the longest segment and the time the recogniser takes on it.
+                    var configuration = new TurnTakingDetectorConfiguration { ParticipantIds = conversation.Participants, ConfirmationDelay = TimeSpan.FromSeconds(20) };
+                    Accumulate(totals, conversation.Truth, Describe(DetectAsReceived(received, configuration)));
+                }
+
+                Console.WriteLine($"{participants} participants, {receivedLate} of {intervals} intervals received after one that ended later: {Summary(totals)}");
+                Assert.IsTrue(receivedLate > 100, $"{participants} participants: many intervals are received after one that ended later ({receivedLate} of {intervals}).");
+                foreach (var entry in totals)
+                {
+                    Assert.AreEqual(0, entry.Value.Missed, $"{participants} participants, {entry.Key}: every event that happened is detected.");
+                    Assert.AreEqual(0, entry.Value.Invented, $"{participants} participants, {entry.Key}: nothing else is detected.");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void SpeechDetector_KeepsOnTheStreamOfTheGroupTheUtterancesReceivedLate()
+        {
+            // The recogniser of A answers at 11 s about an utterance that ended at 9 s, after
+            // the one of B has answered about the utterance that followed it.
+            var utterances = new List<(InteractionInterval Interval, double ReceivedAt)>
+            {
+                (Speech(C, 0.0, 2.0), 2.2),
+                (Speech(A, 3.0, 9.0), 11.0),
+                (Speech(B, 9.5, 10.0), 10.3),
+                (Speech(B, 10.6, 12.0), 12.4),
+                (Speech(A, 12.5, 13.5), 13.8),
+            };
+            var group = new List<(InteractionInterval Interval, DateTime Time)>();
+            var ofEach = new List<InteractionInterval>();
+            var turns = new List<InteractionEvent>();
+
+            IndicesHarness.Run(1, pipeline =>
+            {
+                IProducer<InteractionInterval> source = Source(pipeline, utterances, tickPeriod: 0.5);
+                var speech = new VerbalizationDetectorComponent(pipeline, new VerbalizationDetectorConfiguration { ParticipantIds = Trio, PublishLegacyType = false, LogToConsole = false });
+                foreach (uint id in Trio)
+                {
+                    // The results of a participant, each one stamped with the end of its utterance.
+                    source
+                        .Where(m => m.Category != "Tick" && m.ParticipantId == id)
+                        .Process<InteractionInterval, IStreamingSpeechRecognitionResult>((utterance, envelope, emitter) =>
+                            emitter.Post(new StreamingSpeechRecognitionResult(true, "words", 1.0, null, null, utterance.EndTime - utterance.StartTime), utterance.EndTime))
+                        .PipeTo(speech.GetSttInput(id));
+                    speech.GetSpeakingEmitter(id).Do(interval => ofEach.Add(interval.Clone()));
+                }
+
+                // As the applications connect them.
+                var detector = new TurnTakingDetector(pipeline, new TurnTakingDetectorConfiguration { ParticipantIds = Trio });
+                speech.Out.PipeTo(detector.SpeechIn);
+                source.Where(m => m.Category == "Tick").Select(_ => true).PipeTo(detector.TickIn);
+
+                speech.Out.Do((interval, envelope) => group.Add((interval.Clone(), envelope.OriginatingTime)));
+                detector.Out.Do(e => turns.Add(e.Clone()));
+            });
+
+            Assert.AreEqual(utterances.Count, ofEach.Count, "Every utterance is on the stream of its participant.");
+            Assert.AreEqual(utterances.Count, group.Count, "Every utterance is on the stream of the group, the one received late too.");
+
+            string Bounds(InteractionInterval interval) => $"{interval.ParticipantId}[{(interval.StartTime - SyntheticData.Start).TotalSeconds:0.0},{(interval.EndTime - SyntheticData.Start).TotalSeconds:0.0}]";
+            CollectionAssert.AreEqual(
+                new[] { "2[0.0,2.0]", "1[9.5,10.0]", "0[3.0,9.0]", "1[10.6,12.0]", "0[12.5,13.5]" },
+                group.Select(g => Bounds(g.Interval)).ToList(),
+                "The stream of the group follows the order of reception, and an interval keeps its own bounds.");
+            Assert.AreEqual(group[1].Time.AddTicks(1), group[2].Time, "The utterance received late is posted right after the last one.");
+            Assert.IsTrue(group.Zip(group.Skip(1), (first, second) => second.Time > first.Time).All(increasing => increasing), "The times of the stream increase.");
+
+            CollectionAssert.AreEqual(
+                new[] { "TurnTakingWithoutOverlap 0<1 @12.5", "TurnTakingWithoutOverlap 0<2 @3.0", "TurnTakingWithoutOverlap 1<0 @9.5" },
+                Describe(turns),
+                "B takes the turn from A, whose utterance was received after the answer of B.");
+        }
+
+        // ------------------------------------------------------------------
         // Support
         // ------------------------------------------------------------------
 
@@ -329,6 +489,80 @@ namespace CollaborationIndices.Tests
                 var detector = new TurnTakingDetector(pipeline, configuration);
                 intervals.PipeTo(detector.SpeechIn);
                 ticks.PipeTo(detector.TickIn);
+                detector.Out.Do(e => detected.Add(e.Clone()));
+            });
+
+            return detected;
+        }
+
+        /// <summary>
+        /// When each interval is received: every participant has a recogniser, which answers
+        /// about an utterance some time after it ends, and about one utterance at a time.
+        /// </summary>
+        private static List<(InteractionInterval Interval, double ReceivedAt)> AsReceived(List<InteractionInterval> speech, Func<double, double> timeTaken)
+        {
+            var received = new List<(InteractionInterval, double)>();
+            var free = new Dictionary<uint, double>();
+            foreach (InteractionInterval interval in speech.OrderBy(s => s.EndTime))
+            {
+                double end = (interval.EndTime - SyntheticData.Start).TotalSeconds;
+                double start = free.TryGetValue(interval.ParticipantId, out double busyUntil) ? Math.Max(end, busyUntil) : end;
+                double answer = start + timeTaken((interval.EndTime - interval.StartTime).TotalSeconds);
+                free[interval.ParticipantId] = answer;
+                received.Add((interval, answer));
+            }
+
+            return received;
+        }
+
+        /// <summary>
+        /// One source for the intervals, at the moments they are received, and for a clock:
+        /// what is read from it reaches the components in that order. A tick has the category "Tick".
+        /// </summary>
+        private static IProducer<InteractionInterval> Source(Pipeline pipeline, List<(InteractionInterval Interval, double ReceivedAt)> received, double tickPeriod)
+        {
+            var messages = received.Select(r => (r.Interval, Time: SyntheticData.At(r.ReceivedAt))).ToList();
+            DateTime end = messages.Max(m => m.Time) + TimeSpan.FromSeconds(40);
+            for (DateTime tick = SyntheticData.Start; tick <= end; tick += TimeSpan.FromSeconds(tickPeriod))
+            {
+                messages.Add((null, tick));
+            }
+
+            var ordered = new List<(InteractionInterval, DateTime)>();
+            DateTime last = DateTime.MinValue;
+            foreach (var message in messages.OrderBy(m => m.Time).ThenBy(m => m.Interval == null ? 0 : 1))
+            {
+                DateTime stamped = message.Time > last ? message.Time : last.AddTicks(1);
+                ordered.Add((message.Interval ?? new InteractionInterval { Category = "Tick" }, stamped));
+                last = stamped;
+            }
+
+            return Generators.Sequence(pipeline, ordered);
+        }
+
+        /// <summary>
+        /// Gives the detector the intervals in the order they are received, stamped the way
+        /// VerbalizationDetectorComponent stamps the stream of the group: with the end of the
+        /// interval, or right after the previous one when that end has passed.
+        /// </summary>
+        private static List<InteractionEvent> DetectAsReceived(List<(InteractionInterval Interval, double ReceivedAt)> received, TurnTakingDetectorConfiguration configuration)
+        {
+            var detected = new List<InteractionEvent>();
+            IndicesHarness.Run(1, pipeline =>
+            {
+                IProducer<InteractionInterval> source = Source(pipeline, received, tickPeriod: 0.5);
+                DateTime last = DateTime.MinValue;
+                IProducer<InteractionInterval> intervals = source
+                    .Where(m => m.Category != "Tick")
+                    .Process<InteractionInterval, InteractionInterval>((interval, envelope, emitter) =>
+                    {
+                        last = interval.EndTime > last ? interval.EndTime : last.AddTicks(1);
+                        emitter.Post(interval.Clone(), last);
+                    });
+
+                var detector = new TurnTakingDetector(pipeline, configuration);
+                intervals.PipeTo(detector.SpeechIn);
+                source.Where(m => m.Category == "Tick").Select(_ => true).PipeTo(detector.TickIn);
                 detector.Out.Do(e => detected.Add(e.Clone()));
             });
 

@@ -91,6 +91,8 @@ namespace SAAC.CollaborationIndices
             this.ObjectGazeOut = pipeline.CreateEmitter<InteractionInterval>(this, $"{name}-ObjectGaze");
             this.PeerGazeOut = pipeline.CreateEmitter<InteractionEvent>(this, $"{name}-PeerGaze");
             this.PeerGazeIntervalOut = pipeline.CreateEmitter<InteractionInterval>(this, $"{name}-PeerGazeInterval");
+            this.LookStartOut = pipeline.CreateEmitter<InteractionEvent>(this, $"{name}-LookStart");
+            this.LookEndOut = pipeline.CreateEmitter<InteractionEvent>(this, $"{name}-LookEnd");
 
             foreach (uint participantId in configuration.ParticipantIds)
             {
@@ -107,6 +109,18 @@ namespace SAAC.CollaborationIndices
 
         /// <summary>Looks at a peer as intervals: category GazeOnPeer, gazer and gazed.</summary>
         public Emitter<InteractionInterval> PeerGazeIntervalOut { get; }
+
+        /// <summary>
+        /// The start of every look, when the gaze enters its target: a look at a peer (category
+        /// GazeOnPeer, the peer in TargetId) or at an object (category GazeOnObject, the object
+        /// in the label). For what shows the looks while they last: the other outputs are
+        /// published when a look ends. A look shorter than MinimumDuration, which the other
+        /// outputs drop, starts and ends here like any other.
+        /// </summary>
+        public Emitter<InteractionEvent> LookStartOut { get; }
+
+        /// <summary>The end of every look, when the gaze leaves its target: same content as <see cref="LookStartOut"/>.</summary>
+        public Emitter<InteractionEvent> LookEndOut { get; }
 
         /// <summary>
         /// Gaze events of the headset of one participant; only the events on objects are read.
@@ -146,6 +160,58 @@ namespace SAAC.CollaborationIndices
         }
 
         private void ReceiveObjectGaze(uint participantId, ObjectGazeEvent gaze, Envelope envelope)
+        {
+            var before = new HashSet<string>(this.objectGazes[participantId].Keys);
+            this.TrackObjectGaze(participantId, gaze, envelope);
+            this.PublishLooks(participantId, before, this.objectGazes[participantId], envelope.OriginatingTime, peers: false);
+        }
+
+        private void ReceivePeerGaze(uint participantId, ObjectGazeEvent gaze, Envelope envelope)
+        {
+            var before = new HashSet<string>(this.peerGazes[participantId].Keys);
+            this.TrackPeerGaze(participantId, gaze, envelope);
+            this.PublishLooks(participantId, before, this.peerGazes[participantId], envelope.OriginatingTime, peers: true);
+        }
+
+        // The looks that a gaze event started or ended.
+        private void PublishLooks(uint participantId, HashSet<string> before, Dictionary<string, DateTime> running, DateTime time, bool peers)
+        {
+            foreach (string target in before.Where(target => !running.ContainsKey(target)).ToList())
+            {
+                InteractionEvent look = this.Look(participantId, target, time, peers);
+                if (look != null)
+                {
+                    this.poster.Post(this.LookEndOut, look, time);
+                }
+            }
+
+            foreach (string target in running.Keys.Where(target => !before.Contains(target)).ToList())
+            {
+                InteractionEvent look = this.Look(participantId, target, time, peers);
+                if (look != null)
+                {
+                    this.poster.Post(this.LookStartOut, look, time);
+                }
+            }
+        }
+
+        private InteractionEvent Look(uint participantId, string target, DateTime time, bool peers)
+        {
+            if (!peers)
+            {
+                return new InteractionEvent(time, DetectionCategories.GazeOnObject, participantId, null, 1.0, target);
+            }
+
+            if (!int.TryParse(target, NumberStyles.Integer, CultureInfo.InvariantCulture, out int sourceId))
+            {
+                return null;
+            }
+
+            uint gazed = this.configuration.PeerIdMap.ToParticipantId(sourceId);
+            return gazed == participantId ? null : new InteractionEvent(time, IndexCategories.GazeOnPeer, participantId, gazed);
+        }
+
+        private void TrackObjectGaze(uint participantId, ObjectGazeEvent gaze, Envelope envelope)
         {
             if (gaze == null || gaze.type != this.configuration.ObjectType || gaze.objectID == null)
             {
@@ -188,7 +254,7 @@ namespace SAAC.CollaborationIndices
             }
         }
 
-        private void ReceivePeerGaze(uint participantId, ObjectGazeEvent gaze, Envelope envelope)
+        private void TrackPeerGaze(uint participantId, ObjectGazeEvent gaze, Envelope envelope)
         {
             if (gaze == null || gaze.type != this.configuration.PeerType || gaze.objectID == null)
             {

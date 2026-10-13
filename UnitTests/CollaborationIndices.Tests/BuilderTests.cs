@@ -162,9 +162,10 @@ namespace CollaborationIndices.Tests
                     .AddIndicator(Indicators.GazeOnPeers)
                     .Build();
 
-                CollectionAssert.AreEqual(new[] { "Movement", "Synchrony", "GazeOnPeers" }, indices.Outputs.Groups.Select(o => o.Name).ToList());
+                // The gaze on peers also names who is watched the most, for the group and in each pair.
+                CollectionAssert.AreEqual(new[] { "Movement", "Synchrony", "GazeOnPeers", "WatchedMost" }, indices.Outputs.Groups.Select(o => o.Name).ToList());
                 CollectionAssert.AreEqual(new[] { "Movement" }, indices.Outputs.Individuals.Select(o => o.Name).ToList());
-                CollectionAssert.AreEqual(new[] { "Synchrony" }, indices.Outputs.Pairs.Select(o => o.Name).ToList());
+                CollectionAssert.AreEqual(new[] { "Synchrony", "WatchedMost" }, indices.Outputs.Pairs.Select(o => o.Name).ToList());
                 CollectionAssert.AreEqual(new[] { "GazeOnPeers" }, indices.Outputs.DirectedPairs.Select(o => o.Name).ToList());
                 CollectionAssert.AreEqual(new[] { "Movement", "Synchrony", "GazeOnPeers" }, indices.Outputs.ScoreInputs.Select(o => o.Name).ToList());
 

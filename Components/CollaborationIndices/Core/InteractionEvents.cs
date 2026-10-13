@@ -158,6 +158,33 @@ namespace SAAC.CollaborationIndices
             }
         }
 
+        /// <summary>
+        /// Forgets an event: the one of the same participant, category, time, target and
+        /// label. For a detector that publishes at once what a later validation withdraws.
+        /// </summary>
+        /// <param name="interactionEvent">The event to forget.</param>
+        /// <returns>True when the store held it.</returns>
+        public bool Remove(InteractionEvent interactionEvent)
+        {
+            if (interactionEvent == null)
+            {
+                return false;
+            }
+
+            string key = $"{interactionEvent.ParticipantId}|{interactionEvent.Category}|{interactionEvent.OriginatingTime.Ticks}|{interactionEvent.TargetId}|{interactionEvent.Label}";
+            if (!this.knownKeys.Remove(key))
+            {
+                return false;
+            }
+
+            if (this.byParticipant.TryGetValue(interactionEvent.ParticipantId, out var categories) && categories.TryGetValue(interactionEvent.Category, out var events))
+            {
+                events.RemoveAll(e => e.OriginatingTime == interactionEvent.OriginatingTime && e.TargetId == interactionEvent.TargetId && e.Label == interactionEvent.Label);
+            }
+
+            return true;
+        }
+
         public void Prune(DateTime oldestAllowed)
         {
             foreach (var categories in this.byParticipant.Values)

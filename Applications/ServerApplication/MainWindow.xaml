@@ -311,7 +311,11 @@
 
                                 <!-- The session: who, and in which frame the positions are -->
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Participants" VerticalAlignment="Center" Margin="0,0,8,3"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Width="45" HorizontalAlignment="Left" Margin="0,0,0,3" Text="{Binding ParticipantCount}"/>
+                                <DockPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,3">
+                                    <TextBox DockPanel.Dock="Left" Width="45" Text="{Binding ParticipantCount}"/>
+                                    <TextBlock DockPanel.Dock="Left" Text="Head axis" VerticalAlignment="Center" Margin="10,0,6,0"/>
+                                    <ComboBox ItemsSource="{Binding HeadAxes}" DisplayMemberPath="Label" SelectedValuePath="Axis" SelectedValue="{Binding SelectedHeadAxis}" ToolTip="Local axis of the head streams that points where the participant looks. +Z when the head is a Unity object: it is its forward. +Y when it is the head bone of the avatars, as in the recorded Fusion and Expe3 sessions. Used for the formations, the joint attention and the look direction of the position files."/>
+                                </DockPanel>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Data frame" VerticalAlignment="Center" Margin="0,0,8,3"/>
                                 <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,3" ItemsSource="{Binding DataFrames}" DisplayMemberPath="Label" SelectedValuePath="Frame" SelectedValue="{Binding SelectedDataFrame}" ToolTip="Frame the positions are expressed in. Unity: Y is the vertical axis. Standard: Z is the vertical axis (Y and Z swapped)."/>
@@ -367,7 +371,7 @@
                         <GroupBox Header="3. Live session" Name="ActionsGroupBox" FontWeight="Bold" Grid.Row="1" Margin="3,2,3,2">
                             <UniformGrid Columns="2" Margin="6,4,6,4" TextElement.FontWeight="Normal">
                                 <Button Content="Start Process" Name="StartProcess" Click="BtnStartProcess" Margin="0,0,3,0" ToolTip="Computes the selection on the streams of the applications connected to the server."/>
-                                <Button Content="Stop" Click="BtnStopClick" Margin="3,0,0,0" ToolTip="Stops the pipeline and closes the result files."/>
+                                <Button Content="Stop Process" Click="BtnStopProcessClick" Margin="3,0,0,0" ToolTip="Stops the collaboration process only: its result files and its partitions are closed, the server keeps recording the applications. Started again, the process writes new result files and new partitions. 'Stop Session', on the first tab, stops the whole session."/>
                             </UniformGrid>
                         </GroupBox>
 
@@ -408,7 +412,7 @@
                         <GroupBox Header="Log" FontWeight="Bold" Grid.Row="0" Margin="3,5,5,2">
                             <TextBox x:Name="ProcessLogs" TextWrapping="Wrap" FontWeight="Normal" IsReadOnly="True" IsReadOnlyCaretVisible="True" AutomationProperties.IsOffscreenBehavior="FromClip" Text="{Binding Path = Log, Mode=OneWay}" TextChanged="Log_TextChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="4,2,4,4"/>
                         </GroupBox>
-                        <Button Grid.Row="1" Content="Save configuration" Name="SaveConfiguration" Click="BtnSaveConfiguration" HorizontalAlignment="Right" Padding="12,2" Margin="3,2,5,6" ToolTip="Saves the settings of the application: the tab Configuration, and the audio streams and the folder of the Whisper models of this tab."/>
+                        <Button Grid.Row="1" Content="Save configuration" Name="SaveConfiguration" Click="BtnSaveConfiguration" HorizontalAlignment="Right" Padding="12,2" Margin="3,2,5,6" ToolTip="Saves the settings of the application: the tab Configuration and everything this tab holds (metrics, computation settings, sliding windows, dataset and pipeline name)."/>
                     </Grid>
                 </Grid>
             </TabItem>

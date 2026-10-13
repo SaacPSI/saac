@@ -52,6 +52,25 @@ namespace ServerApplication
         private string sessionId = string.Empty;
         private uint annotationPort = 8080;
         private string log = "Not Initialised\n";
+
+        // The log of a session is also written, line by line, in a file next to its dataset.
+        private StreamWriter? sessionLog = null;
+
+        // True once the pipelines were stopped and the files closed, until another session starts.
+        private bool stopped = false;
+
+        // A session of the server or a replay runs; the collaboration process runs on it.
+        private bool pipelineRunning = false;
+        private bool processRunning = false;
+
+        // What the Process tab held when the configuration was saved; null when it was never saved.
+        private ProcessTabState? savedProcessTab = null;
+
+        // True while the saved state is put back: checking a category then leaves its metrics alone.
+        private bool restoringProcessTab = false;
+
+        // The session of the dataset in which the process of this session of the server stores its streams.
+        private Session? processSession = null;
         private SetupState setupState;
         private LogStatus internalLog;
         private Microsoft.Psi.Interop.Transport.WebSocketsManager? websocketManager = null;
@@ -134,6 +153,59 @@ namespace ServerApplication
 
             /// <summary>Gets its name in the interface and in the log.</summary>
             public string Label { get; }
+        }
+
+        /// <summary>
+        /// A choice of the local axis of the head streams that points where the participant looks.
+        /// </summary>
+        public class HeadAxisChoice
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="HeadAxisChoice"/> class.
+            /// </summary>
+            /// <param name="axis">The axis, as the configuration writes it.</param>
+            /// <param name="label">Its name in the interface and in the log.</param>
+            public HeadAxisChoice(string axis, string label)
+            {
+                this.Axis = axis;
+                this.Label = label;
+            }
+
+            /// <summary>Gets the axis, as the configuration writes it.</summary>
+            public string Axis { get; }
+
+            /// <summary>Gets its name in the interface and in the log.</summary>
+            public string Label { get; }
+        }
+
+        /// <summary>
+        /// What the Process tab holds, saved with the configuration of the application.
+        /// </summary>
+        public class ProcessTabState
+        {
+            /// <summary>Gets or sets the check boxes of the categories and of the metrics, by the name of their property.</summary>
+            public Dictionary<string, bool> Metrics { get; set; } = new Dictionary<string, bool>();
+
+            /// <summary>Gets or sets the number of participants.</summary>
+            public int Participants { get; set; } = 2;
+
+            /// <summary>Gets or sets the frame of the positions.</summary>
+            public DataFrame DataFrame { get; set; } = DataFrame.Unity;
+
+            /// <summary>Gets or sets a value indicating whether the collaboration score is computed.</summary>
+            public bool Score { get; set; }
+
+            /// <summary>Gets or sets a value indicating whether the collaboration profiles are computed.</summary>
+            public bool Profiles { get; set; }
+
+            /// <summary>Gets or sets a value indicating whether the sliding windows are computed.</summary>
+            public bool SlidingWindows { get; set; }
+
+            /// <summary>Gets or sets the lengths of the sliding windows, in seconds.</summary>
+            public List<double> WindowLengths { get; set; } = new List<double>();
+
+            /// <summary>Gets or sets the name of the pipeline of the post processing.</summary>
+            public string PipelineName { get; set; } = string.Empty;
         }
 
         public class RelayCommand : ICommand
@@ -257,6 +329,35 @@ namespace ServerApplication
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
+        }
+
+        /// <summary>
+        /// Sets a metric another one is computed from: the speech participation for the
+        /// speech equality, the task participation for the task equality. It stays checked
+        /// while the other one is: the other one is unchecked first.
+        /// </summary>
+        /// <param name="field">Reference to the backing field.</param>
+        /// <param name="value">The new value.</param>
+        /// <param name="isNeeded">Whether the metric computed from this one is checked.</param>
+        /// <param name="name">The label of the metric.</param>
+        /// <param name="neededBy">The label of the metric computed from it.</param>
+        /// <param name="propertyName">The name of the property (automatically provided by CallerMemberName).</param>
+        private void SetSourceMetric(ref bool field, bool value, bool isNeeded, string name, string neededBy, [CallerMemberName] string propertyName = null)
+        {
+            if (!value && isNeeded)
+            {
+                // The box that was clicked shows what it was given. Its property is announced
+                // again once the click is handled, so that the box shows it is still checked.
+                this.Dispatcher.BeginInvoke(new Action(() => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName))));
+                if (field && !this.restoringProcessTab)
+                {
+                    this.AddLog($"Process: \"{name}\" stays checked, \"{neededBy}\" is computed from it. Uncheck \"{neededBy}\" first.");
+                }
+
+                value = true;
+            }
+
+            this.SetProperty(ref field, value, propertyName);
         }
 
         #endregion
@@ -393,7 +494,12 @@ namespace ServerApplication
         public string Log
         {
             get => this.log;
-            set => this.SetProperty(ref this.log, value);
+            set
+            {
+                string previous = this.log;
+                this.SetProperty(ref this.log, value);
+                this.WriteSessionLog(previous, value);
+            }
         }
 
         // General
@@ -460,7 +566,7 @@ namespace ServerApplication
         public bool SpeechParticipation
         {
             get => this.speechParticipation;
-            set => this.SetProperty(ref this.speechParticipation, value);
+            set => this.SetSourceMetric(ref this.speechParticipation, value, this.speechEquality, "Speech participation", "Speech equality");
         }
 
         /// <summary>
@@ -469,7 +575,16 @@ namespace ServerApplication
         public bool SpeechEquality
         {
             get => this.speechEquality;
-            set => this.SetProperty(ref this.speechEquality, value);
+            set
+            {
+                this.SetProperty(ref this.speechEquality, value);
+
+                // The speech equality is computed from the speech participation: checked, it checks it.
+                if (value)
+                {
+                    this.SpeechParticipation = true;
+                }
+            }
         }
 
         /// <summary>
@@ -528,7 +643,7 @@ namespace ServerApplication
         public bool TaskParticipation
         {
             get => this.taskParticipation;
-            set => this.SetProperty(ref this.taskParticipation, value);
+            set => this.SetSourceMetric(ref this.taskParticipation, value, this.taskEquality, "Task participation", "Task equality");
         }
 
         /// <summary>
@@ -537,7 +652,16 @@ namespace ServerApplication
         public bool TaskEquality
         {
             get => this.taskEquality;
-            set => this.SetProperty(ref this.taskEquality, value);
+            set
+            {
+                this.SetProperty(ref this.taskEquality, value);
+
+                // The task equality is computed from the task participation: checked, it checks it.
+                if (value)
+                {
+                    this.TaskParticipation = true;
+                }
+            }
         }
 
         /// <summary>
@@ -625,6 +749,26 @@ namespace ServerApplication
         }
 
         /// <summary>
+        /// Gets the local axes of a head stream that may point where the participant looks.
+        /// </summary>
+        public IReadOnlyList<HeadAxisChoice> HeadAxes { get; } = new[]
+        {
+            new HeadAxisChoice("+Z", "+Z (Unity)"),
+            new HeadAxisChoice("+Y", "+Y (avatar)"),
+        };
+
+        /// <summary>
+        /// Gets or sets the local axis of the head streams that points where the participant
+        /// looks: "+Z" when the head is a Unity object, whose forward it is; "+Y" when it is
+        /// the head bone of the avatars of the recorded studies.
+        /// </summary>
+        public string SelectedHeadAxis
+        {
+            get => this.selectedHeadAxis;
+            set => this.SetProperty(ref this.selectedHeadAxis, value);
+        }
+
+        /// <summary>
         /// Gets or sets the number of participants whose collaboration is analysed.
         /// </summary>
         public int ParticipantCount
@@ -659,6 +803,84 @@ namespace ServerApplication
         public ICommand AddWindowCommand { get; }
 
         public ICommand RemoveWindowCommand { get; }
+
+        // The check boxes of the Process tab, the categories first: a category sets its metrics, which are then set one by one.
+        // An equality comes before the participation it is computed from, which stays checked while the equality is.
+        private static readonly string[] ProcessTabChecks =
+        {
+            nameof(IsConversationalEnabled), nameof(IsVisualEnabled), nameof(IsPhysicalEnabled), nameof(IsSpatialEnabled),
+            nameof(TurnTakingWithOverlap), nameof(TurnTakingWithoutOverlap), nameof(SpeechEquality), nameof(SpeechParticipation), nameof(Silence), nameof(CrossTalk),
+            nameof(JointVisualAttention), nameof(MutualGaze), nameof(GazeOnPeers),
+            nameof(TaskEquality), nameof(TaskParticipation), nameof(PhysicalActivityLevel), nameof(PhysicalSynchronyScore),
+            nameof(PhysicalProximity), nameof(FacingFormation),
+        };
+
+        /// <summary>
+        /// What the Process tab holds now, to save it with the configuration: the metrics,
+        /// the participants, the frame, the score, the profiles, the sliding windows and the
+        /// pipeline name. The audio streams, the head axis, the Whisper models and the
+        /// dataset have settings of their own.
+        /// </summary>
+        private ProcessTabState CaptureProcessTab()
+        {
+            return new ProcessTabState
+            {
+                Metrics = ProcessTabChecks.ToDictionary(name => name, name => (bool)this.GetType().GetProperty(name)!.GetValue(this)!),
+                Participants = this.ParticipantCount,
+                DataFrame = this.SelectedDataFrame,
+                Score = this.IsCollaborationScoreEnabled,
+                Profiles = this.IsCollaborationProfileEnabled,
+                SlidingWindows = this.IsSlidingWindowEnabled,
+                WindowLengths = this.SlidingWindows.Select(window => window.WindowLengthSeconds).ToList(),
+                PipelineName = this.PipelineSessionName ?? string.Empty,
+            };
+        }
+
+        /// <summary>
+        /// Puts back in the Process tab what was saved with the configuration. Nothing is
+        /// changed when the tab was never saved: it keeps its defaults.
+        /// </summary>
+        private void RestoreProcessTab()
+        {
+            ProcessTabState? saved = this.savedProcessTab;
+            if (saved == null)
+            {
+                return;
+            }
+
+            this.restoringProcessTab = true;
+            try
+            {
+                foreach (string name in ProcessTabChecks)
+                {
+                    if (saved.Metrics != null && saved.Metrics.TryGetValue(name, out bool isChecked))
+                    {
+                        this.GetType().GetProperty(name)!.SetValue(this, isChecked);
+                    }
+                }
+
+                this.ParticipantCount = saved.Participants;
+                this.SelectedDataFrame = saved.DataFrame;
+                this.IsCollaborationScoreEnabled = saved.Score;
+                this.IsCollaborationProfileEnabled = saved.Profiles;
+                this.IsSlidingWindowEnabled = saved.SlidingWindows;
+                this.PipelineSessionName = saved.PipelineName ?? string.Empty;
+
+                List<double> lengths = saved.WindowLengths ?? new List<double>();
+                if (!this.SlidingWindows.Select(window => window.WindowLengthSeconds).SequenceEqual(lengths))
+                {
+                    this.SlidingWindows.Clear();
+                    foreach (double length in lengths)
+                    {
+                        this.SlidingWindows.Add(new SlidingWindow { Name = $"Window {this.SlidingWindows.Count + 1}", WindowLengthSeconds = length });
+                    }
+                }
+            }
+            finally
+            {
+                this.restoringProcessTab = false;
+            }
+        }
 
         private void AddSlidingWindow()
         {
@@ -715,6 +937,7 @@ namespace ServerApplication
         private bool isCollaborationScoreEnabled;
         private DataFrame selectedDataFrame = DataFrame.Unity;
         private int participantCount = 2;
+        private string selectedHeadAxis = "+Z";
         private string audioStreamNames = string.Empty;
         private string whisperModelDirectory = string.Empty;
         private string pipelineName;
@@ -754,6 +977,9 @@ namespace ServerApplication
             this.SetupAnnotationTab();
             this.RefreshUIFromConfiguration();
             this.UpdateLayout();
+
+            // The check box of a category checks all its metrics when the bindings settle: the saved metrics are put back after that.
+            this.Dispatcher.BeginInvoke(new Action(this.RestoreProcessTab), System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
 
         /// <summary>
@@ -782,7 +1008,19 @@ namespace ServerApplication
             this.ExternalConfigurationDirectory = Properties.Settings.Default.ExternalConfigurationDirectory;
             this.SessionID = Properties.Settings.Default.SessionID;
             this.AudioStreamNames = Properties.Settings.Default.AudioStreamNames;
+            this.SelectedHeadAxis = this.HeadAxes.Any(choice => choice.Axis == Properties.Settings.Default.HeadForwardAxis) ? Properties.Settings.Default.HeadForwardAxis : "+Z";
             this.WhisperModelDirectory = Properties.Settings.Default.WhisperModelDirectory;
+
+            // The rest of the Process tab is one setting; it is put back once the window exists.
+            try
+            {
+                string processTab = Properties.Settings.Default.ProcessTabJson;
+                this.savedProcessTab = string.IsNullOrWhiteSpace(processTab) ? null : Newtonsoft.Json.JsonConvert.DeserializeObject<ProcessTabState>(processTab);
+            }
+            catch (Exception)
+            {
+                this.savedProcessTab = null;
+            }
 
             // Annotation Tab
             this.IsAnnotationEnabled = Properties.Settings.Default.IsAnnotationEnabled;
@@ -810,6 +1048,7 @@ namespace ServerApplication
         {
             // Configuration Tab
             this.LoadConfig();
+            this.RestoreProcessTab();
             this.StoreModeComboBox.SelectedIndex = Properties.Settings.Default.StoreMode;
             this.SessionModeComboBox.SelectedIndex = Properties.Settings.Default.SessionMode;
 
@@ -853,6 +1092,8 @@ namespace ServerApplication
             Properties.Settings.Default.ExternalConfigurationDirectory = this.ExternalConfigurationDirectory;
             Properties.Settings.Default.SessionID = this.SessionID;
             Properties.Settings.Default.AudioStreamNames = this.AudioStreamNames;
+            Properties.Settings.Default.HeadForwardAxis = this.SelectedHeadAxis;
+            Properties.Settings.Default.ProcessTabJson = Newtonsoft.Json.JsonConvert.SerializeObject(this.CaptureProcessTab());
             Properties.Settings.Default.WhisperModelDirectory = this.WhisperModelDirectory;
 
             // Annotation Tab
@@ -945,6 +1186,18 @@ namespace ServerApplication
                 return;
             }
 
+            if (!this.pipelineRunning)
+            {
+                this.AddLog("Start Process: the session of the server is stopped, there is no stream to process.");
+                return;
+            }
+
+            if (this.processRunning)
+            {
+                this.AddLog("Start Process: the collaboration process is already running. Stop it before starting it again.");
+                return;
+            }
+
             if (this.realTimeProcessingUseCase != null)
             {
                 RealTimeProcessingUseCaseConfiguration config = new RealTimeProcessingUseCaseConfiguration()
@@ -978,7 +1231,31 @@ namespace ServerApplication
                     return;
                 }
 
-                this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName, this.server.GetSession("RawDataPipelineProcess.000"));
+                // The session of what the process produces, named by the session mode of the
+                // server: RawDataPipelineProcess.000 with the mode Increment. Every run of the
+                // process of this session of the server stores there, in partitions of its own.
+                this.processSession ??= this.server.CreateOrGetSessionFromMode("PipelineProcess");
+                Session? processSession = this.processSession;
+                this.AddLog(processSession == null
+                    ? "Process: the server has no dataset, the streams of the process are not stored."
+                    : $"Process: the streams it produces are stored in the session {processSession.Name} of the dataset.");
+
+                try
+                {
+                    this.realTimeProcessingUseCase.StartPipelineCollaborationProcess(this.server, this.PipelineSessionName, processSession);
+                }
+                catch (Exception ex)
+                {
+                    this.AddLog($"Error starting the collaboration process: {ex.Message}");
+                    this.realTimeProcessingUseCase.StopProcess(this.server);
+                    return;
+                }
+
+                if (processSession != null && !this.realTimeProcessingUseCase.StoresStreams)
+                {
+                    this.AddLog("Process: it has no stream to store yet (no application connected, or nothing to compute).");
+                }
+                this.processRunning = true;
                 this.server?.TriggerNewProcessEvent("PsiPipeline");
             }
         }
@@ -1020,6 +1297,7 @@ namespace ServerApplication
             this.realTimeProcessingUseCase.sessionNumber = sessionNumber;
             this.realTimeProcessingUseCase.csvAdress = outputFolder;
             this.realTimeProcessingUseCase.NumberOfParticipants = this.ParticipantCount;
+            this.realTimeProcessingUseCase.HeadForwardAxis = this.SelectedHeadAxis;
 
             // Read when the session has no voice activity or transcription stream: they are then computed from the audio.
             this.realTimeProcessingUseCase.AudioStreamNames = (this.AudioStreamNames ?? string.Empty)
@@ -1081,11 +1359,11 @@ namespace ServerApplication
                 ComputeCollaborationScores = this.IsCollaborationScoreEnabled,
             };
 
-            // The frame of the positions comes from the interface. The head streams of the
-            // Unity server are those of the avatars, whose look direction is the local +Y axis
-            // of the head: it is the direction PositionOrientationPreProcessing computes.
+            // The frame of the positions and the look axis of the heads come from the
+            // interface: +Z for a head that is a Unity object, +Y for the head bone of the
+            // avatars of the recorded studies.
             collaboration.Detectors.Frame = this.SelectedDataFrame;
-            collaboration.Detectors.HeadForwardAxis = "+Y";
+            collaboration.Detectors.HeadForwardAxis = this.SelectedHeadAxis;
 
             // The profiles read a fixed set of indicators: computed without one of them, they
             // would read 0 for it. Asking for the profiles asks for these indicators, with
@@ -1119,6 +1397,9 @@ namespace ServerApplication
                 }
 
                 this.AddIndicator(collaboration, this.SpeechParticipation, IndexNames.VerbalParticipation);
+
+                // Who speaks the most is read on the speech participation: it comes with it.
+                this.AddIndicator(collaboration, this.SpeechParticipation, IndexNames.TalkingMost);
                 this.AddIndicator(collaboration, this.SpeechEquality, IndexNames.SpeechEquality);
                 this.AddIndicator(collaboration, this.Silence, IndexNames.Silence);
                 this.AddIndicator(collaboration, this.CrossTalk, IndexNames.CrossTalk);
@@ -1136,6 +1417,9 @@ namespace ServerApplication
             if (this.IsPhysicalEnabled)
             {
                 this.AddIndicator(collaboration, this.TaskParticipation, IndexNames.TaskParticipation);
+
+                // Who acts the most on the task is read on the task participation: it comes with it.
+                this.AddIndicator(collaboration, this.TaskParticipation, IndexNames.TaskingMost);
                 this.AddIndicator(collaboration, this.TaskEquality, IndexNames.TaskEquality);
                 this.AddIndicator(collaboration, this.PhysicalActivityLevel, IndexNames.Movement);
                 this.AddIndicator(collaboration, this.PhysicalSynchronyScore, IndexNames.Synchrony);
@@ -1155,7 +1439,7 @@ namespace ServerApplication
             }
 
             this.AddLog($"Collaboration indices: selected {string.Join(", ", collaboration.Indicators.Select(indicator => indicator.Type))}.");
-            this.AddLog($"Collaboration indices: {collaboration.ParticipantIds.Count} participants; windows of {string.Join(", ", windows.Select(window => $"{window.TotalSeconds:0.###} s"))}; data frame {this.DataFrames.First(choice => choice.Frame == this.SelectedDataFrame).Label}; "
+            this.AddLog($"Collaboration indices: {collaboration.ParticipantIds.Count} participants; windows of {string.Join(", ", windows.Select(window => $"{window.TotalSeconds:0.###} s"))}; data frame {this.DataFrames.First(choice => choice.Frame == this.SelectedDataFrame).Label}; head axis {this.HeadAxes.First(choice => choice.Axis == this.SelectedHeadAxis).Label}; "
                 + $"score {(this.IsCollaborationScoreEnabled ? "asked" : "not asked")}; profiles {(this.IsCollaborationProfileEnabled ? "asked" : "not asked")}.");
 
             if (this.IsCollaborationProfileEnabled)
@@ -1233,15 +1517,10 @@ namespace ServerApplication
             switch (e.Item1)
             {
                 case "PsiPipeline":
-                    if (!this.realTimeProcessingUseCase.IsPsiPipelineStarted)
-                    {
-                        this.realTimeProcessingUseCase.IsPsiPipelineStarted = true;
-                    }
-                    else
-                    {
-                        this.realTimeProcessingUseCase.IsPsiPipelineStarted = false;
-                    }
-
+                    // Raised when the server or a replay starts, and again when the process
+                    // starts: a pipeline runs. It used to switch the state, so that starting
+                    // the process turned it off and "Stop" answered that nothing was running.
+                    this.realTimeProcessingUseCase.IsPsiPipelineStarted = true;
                     break;
                 case "UnityServer":
                     if (!this.realTimeProcessingUseCase.IsServerInitialised && this.realTimeProcessingUseCase.IsPsiPipelineStarted)
@@ -1315,6 +1594,7 @@ namespace ServerApplication
         {
             if (this.setupState >= SetupState.PipelineInitialised)
             {
+                this.AddLog("Start Session: a session or a post processing was already started from this window. Quit and start the application again for another one.");
                 return;
             }
 
@@ -1343,6 +1623,9 @@ namespace ServerApplication
                 return;
             }
 
+            this.stopped = false;
+            this.StartSessionLog("live session, the dataset is recorded");
+
             // this.PipelineSessionName = "CollaborationProcess";
             this.server.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
 
@@ -1365,6 +1648,8 @@ namespace ServerApplication
             this.StartStatusMonitoring();
             this.AllDevicesStackPanel.IsEnabled = true;
             this.setupState = SetupState.PipelineInitialised;
+            this.pipelineRunning = true;
+            this.processSession = null;
             this.server?.TriggerNewProcessEvent("PsiPipeline");
         }
 
@@ -1499,13 +1784,15 @@ namespace ServerApplication
         /// <param name="e">The event arguments.</param>
         private void BtnStopClick(object sender, RoutedEventArgs e)
         {
-            if (!this.realTimeProcessingUseCase.IsPsiPipelineStarted)
+            if (!this.pipelineRunning)
             {
-                this.AddLog("Stop: no pipeline is running.");
+                this.AddLog("Stop: no session nor post processing is running.");
                 return;
             }
 
-            this.AddLog("Stop: stopping the pipeline.");
+            this.AddLog(this.replayServer != null
+                ? "Stop: stopping the post processing."
+                : "Stop: stopping the session: the collaboration process, if it runs, and the recording of the applications.");
 
             // A replay stopped here has not read its dataset to the end: what it stores is marked as partial.
             this.realTimeProcessingUseCase.StopRequested = true;
@@ -1519,10 +1806,15 @@ namespace ServerApplication
 
             this.server?.Dataset?.Save();
             this.server?.Stop();
-            this.AddLog("Stop: pipeline stopped.");
+            this.AddLog(this.server != null
+                ? "Stop: session stopped. Its stores are closed when the application is closed."
+                : "Stop: pipeline stopped.");
 
             // The process has stopped: its result files can be closed.
             this.realTimeProcessingUseCase.CloseWriters();
+            this.pipelineRunning = false;
+            this.processRunning = false;
+            this.realTimeProcessingUseCase.IsPsiPipelineStarted = false;
 
             if (this.realTimeProcessingUseCase.IsServerInitialised)
             {
@@ -1543,6 +1835,35 @@ namespace ServerApplication
         }
 
         /// <summary>
+        /// Stops the collaboration process of a live session, and only it: its result files
+        /// and the stores it wrote are closed, the server keeps running and recording the
+        /// applications, and the process can be started again.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void BtnStopProcessClick(object sender, RoutedEventArgs e)
+        {
+            if (this.server == null || !this.pipelineRunning || !this.processRunning)
+            {
+                this.AddLog("Stop Process: no collaboration process is running on a live session.");
+                return;
+            }
+
+            this.AddLog("Stop Process: stopping the collaboration process. The server keeps running and recording the applications.");
+            try
+            {
+                this.realTimeProcessingUseCase.StopProcess(this.server);
+            }
+            catch (Exception ex)
+            {
+                this.AddLog($"Stop Process: error while stopping the process: {ex.Message}");
+            }
+
+            this.processRunning = false;
+            this.AddLog("Stop Process: stopped. \"Start Process\" starts it again with the current selection.");
+        }
+
+        /// <summary>
         /// Handles the quit button click event.
         /// </summary>
         /// <param name="sender">The event sender.</param>
@@ -1559,6 +1880,14 @@ namespace ServerApplication
         /// </summary>
         private void Stop()
         {
+            // "Quit" stops, then closes the window, which stops as well.
+            if (this.stopped)
+            {
+                return;
+            }
+
+            this.stopped = true;
+
             // Stop annotations component
             if (this.websocketManager != null)
             {
@@ -1592,6 +1921,8 @@ namespace ServerApplication
 
 
             this.realTimeProcessingUseCase.StopRequested = true;
+            this.pipelineRunning = false;
+            this.processRunning = false;
             this.server?.Dataset?.Save();
             this.server?.Dispose();
             this.replayServer?.Pipeline?.Dispose();
@@ -1599,6 +1930,96 @@ namespace ServerApplication
             // The pipelines have stopped: the result files of the process can be closed.
             this.realTimeProcessingUseCase.CloseWriters();
             this.StopStatusMonitoring();
+            this.CloseSessionLog();
+        }
+
+        /// <summary>
+        /// Closing the window ends the session as "Quit" does: the pipelines are stopped, and
+        /// the stores, the result files and the log are closed. Without it, a window closed
+        /// by its cross left the stores open and the result files cut in the middle of a row.
+        /// </summary>
+        /// <param name="e">The event arguments.</param>
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            this.Stop();
+            base.OnClosing(e);
+        }
+
+        /// <summary>
+        /// Starts the log file of a session, in the folder Logs of the dataset. It receives
+        /// what the log already holds, then every line as it is added, with the time, written
+        /// at once: an application that is ended abruptly still leaves the log of what it did.
+        /// </summary>
+        /// <param name="kind">What the session is, for the header of the file.</param>
+        private void StartSessionLog(string kind)
+        {
+            this.CloseSessionLog();
+            string folder = System.IO.Path.Combine(this.LocalDatasetPath ?? string.Empty, "Logs");
+            string file = System.IO.Path.Combine(folder, $"ServerApplication_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+            try
+            {
+                Directory.CreateDirectory(folder);
+                var writer = new StreamWriter(file, false) { AutoFlush = true };
+                writer.WriteLine($"ServerApplication, {kind}; log opened on {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                writer.WriteLine($"Dataset: {System.IO.Path.Combine(this.LocalDatasetPath ?? string.Empty, this.LocalDatasetName ?? string.Empty)}; session name: {this.LocalSessionName}; "
+                    + $"session mode: {this.SessionModeComboBox.SelectedItem}; store mode: {this.StoreModeComboBox.SelectedItem}; session id: {this.SessionID}");
+                writer.WriteLine("---- logged in the window before this file was opened");
+                writer.WriteLine(this.log.TrimEnd('\n'));
+                writer.WriteLine("---- logged from here on, with the time of each line");
+                this.sessionLog = writer;
+            }
+            catch (Exception ex)
+            {
+                this.AddLog($"The log of the session cannot be written in {file}: {ex.Message}");
+                return;
+            }
+
+            this.AddLog($"Log of this session: {file}");
+        }
+
+        // What was added to the log since its previous value, one line of the file per line, with the time.
+        private void WriteSessionLog(string previous, string current)
+        {
+            if (this.sessionLog == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // The log only grows.
+                string added = current.Length >= previous.Length ? current.Substring(previous.Length) : current;
+                string time = DateTime.Now.ToString("HH:mm:ss.fff");
+                foreach (string line in added.TrimEnd('\n').Split('\n'))
+                {
+                    this.sessionLog.WriteLine($"{time}  {line.TrimEnd('\r')}");
+                }
+            }
+            catch (Exception)
+            {
+                // The file is no longer writable: the window keeps the log.
+                this.sessionLog = null;
+            }
+        }
+
+        private void CloseSessionLog()
+        {
+            StreamWriter? writer = this.sessionLog;
+            this.sessionLog = null;
+            if (writer == null)
+            {
+                return;
+            }
+
+            try
+            {
+                writer.WriteLine($"{DateTime.Now:HH:mm:ss.fff}  ---- log closed");
+                writer.Dispose();
+            }
+            catch (Exception)
+            {
+                // Nothing more can be written.
+            }
         }
 
         /// <summary>
@@ -1736,6 +2157,8 @@ namespace ServerApplication
 
             this.replayServer.AddNewProcessEvent(this.CheckAllProcessAreInitialized);
 
+            this.stopped = false;
+            this.StartSessionLog("post processing, the dataset is replayed");
             this.AddLog($"Post processing: dataset {this.LocalDatasetName} of {this.LocalDatasetPath}, replayed at its original pace.");
             this.replayServer.LoadDatasetAndConnectors();
             this.LogLoadedDataset();
@@ -1783,6 +2206,8 @@ namespace ServerApplication
             this.replayServer.RunPipelineAndSubpipelines();
             this.AddLog("Post processing started");
             this.setupState = SetupState.PipelineInitialised;
+            this.pipelineRunning = true;
+            this.processRunning = processPrepared;
             this.replayServer.TriggerNewProcessEvent("PsiPipeline");
         }
 
@@ -1830,6 +2255,15 @@ namespace ServerApplication
                 this.AddLog("Post processing: the dataset holds no stream, there is nothing to replay.");
             }
 
+            // A store that was moved or deleted is still listed by the dataset file.
+            List<string> missing = dataset.Sessions
+                .SelectMany(session => session.Partitions.Where(partition => !partition.IsStoreValid).Select(partition => $"{session.Name}/{partition.Name}"))
+                .ToList();
+            if (missing.Count > 0)
+            {
+                this.AddLog($"Post processing: {missing.Count} stores listed by the dataset file are not on the disk and are not replayed: {string.Join(", ", missing)}.");
+            }
+
             if (replaced.Count > 0)
             {
                 this.AddLog($"Post processing: streams read with the types of this application: {string.Join(", ", replaced)}.");
@@ -1861,10 +2295,17 @@ namespace ServerApplication
 
         private void SetConversational(bool value)
         {
+            if (this.restoringProcessTab)
+            {
+                return;
+            }
+
             this.cbTurnTakingWithoutOverlap.IsChecked = value;
             this.cbTurnTakingWithOverlap.IsChecked = value;
-            this.cbSpeechParticipation.IsChecked = value;
+
+            // The equality first: the participation it is computed from stays checked while it is.
             this.cbSpeechEquality.IsChecked = value;
+            this.cbSpeechParticipation.IsChecked = value;
             this.cbSilence.IsChecked = value;
             this.cbCrossTalk.IsChecked = value;
         }
@@ -1876,6 +2317,11 @@ namespace ServerApplication
 
         private void SetVisual(bool value)
         {
+            if (this.restoringProcessTab)
+            {
+                return;
+            }
+
             this.cbJointVisualAttention.IsChecked = value;
             this.cbMutualGaze.IsChecked = value;
             this.cbGazeOnPeers.IsChecked = value;
@@ -1889,8 +2335,14 @@ namespace ServerApplication
 
         private void SetPhysical(bool value)
         {
-            this.cbTaskParticipation.IsChecked = value;
+            if (this.restoringProcessTab)
+            {
+                return;
+            }
+
+            // The equality first: the participation it is computed from stays checked while it is.
             this.cbTaskEquality.IsChecked = value;
+            this.cbTaskParticipation.IsChecked = value;
             this.cbPhysicalActivityLevel.IsChecked = value;
             this.cbPhysicalSynchronyScore.IsChecked = value;
             //this.RefreshUI();
@@ -1903,6 +2355,11 @@ namespace ServerApplication
 
         private void SetSpatial(bool value)
         {
+            if (this.restoringProcessTab)
+            {
+                return;
+            }
+
             this.cbPhysicalProximity.IsChecked = value;
             this.cbFacingFormation.IsChecked = value;
             //this.RefreshUI();
@@ -2507,12 +2964,35 @@ namespace ServerApplication
                 }
 
                 var formatInstance = (IPsiFormat)this.CreateInstance(formatType);
-                this.AddLog($"Topic {item.Topic} format is {formatInstance.ToString()}");
                 this.configuration.AddTopicFormatAndTransformer(item.Topic, messageType, formatInstance);
                 this.configuration.StreamToStore.Add(item.Topic, item.StreamToStore);
+
+                // A type that already has a format keeps it. The stream gets the type its
+                // format reads, whatever type the topic declares.
+                IPsiFormat used = this.configuration.TypesSerializers[messageType];
+                this.AddLog($"Topic {item.Topic} format is {used.ToString()}");
+                Type? read = FormatMessageType(used);
+                if (read != null && read != messageType)
+                {
+                    this.AddLog($"Topic {item.Topic}: declared as {messageType.FullName} but its format reads {read.FullName}. The stream will have that type, and what looks for the declared type will not find it.");
+                }
             }
 
             return true;
+        }
+
+        // The type of the messages a format reads; null when it cannot be told.
+        private static Type? FormatMessageType(IPsiFormat format)
+        {
+            try
+            {
+                Type type = ((object)format.GetFormat()).GetType();
+                return type.IsGenericType ? type.GetGenericArguments()[0] : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>

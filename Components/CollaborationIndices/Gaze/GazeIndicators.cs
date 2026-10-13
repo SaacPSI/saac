@@ -22,6 +22,10 @@ namespace SAAC.CollaborationIndices
     /// attention of another one (<see cref="JointVisualAttentionComponent"/>). Connect the
     /// episodes to <c>Component.EventsIn</c>, the initiator in ParticipantId and the
     /// responder in TargetId.
+    ///
+    /// It also names who leads the visual attention (<see cref="IndexNames.LeadVisualAttention"/>):
+    /// the participant who initiated the most episodes of the window, as its identifier plus
+    /// one, 0 when nobody stands out; for the group and inside each pair.
     /// </summary>
     public class JointVisualAttentionIndicator : ComponentIndicator<JointVisualAttentionOptions, JointVisualAttentionComponent>
     {
@@ -60,7 +64,16 @@ namespace SAAC.CollaborationIndices
             {
                 context.PublishPair(this.Name, this.Component.PairOut);
             }
+
+            // Who leads: computed with the index, whatever its levels.
+            string lead = this.IndexNameOf(IndexNames.LeadVisualAttention);
+            context.PublishGroup(lead, this.Component.LeadVisualAttentionOut);
+            context.PublishPair(lead, this.Component.LeadVisualAttentionByPairOut, IndexUsage.Export);
         }
+
+        // A renamed indicator prefixes the index, so that two of them can live in the same instance.
+        private string IndexNameOf(string index)
+            => string.IsNullOrEmpty(this.Options.Name) ? index : $"{this.Options.Name}_{index}";
     }
 
     /// <summary>
@@ -74,6 +87,10 @@ namespace SAAC.CollaborationIndices
     /// Gaze on peers: how often each participant looks at each peer
     /// (<see cref="GazeOnPeersComponent"/>). Connect the gaze events to
     /// <c>Component.EventsIn</c>, the gazer in ParticipantId and the gazed peer in TargetId.
+    ///
+    /// It also names who is watched the most (<see cref="IndexNames.WatchedMost"/>): the
+    /// participant the others looked at the most often over the window, as its identifier
+    /// plus one, 0 when nobody stands out; for the group and inside each pair.
     /// </summary>
     public class GazeOnPeersIndicator : ComponentIndicator<GazeOnPeersOptions, GazeOnPeersComponent>
     {
@@ -111,7 +128,16 @@ namespace SAAC.CollaborationIndices
             {
                 context.PublishDirectedPair(this.Name, this.Component.DirectedPairOut);
             }
+
+            // Who is watched the most: computed with the index, whatever its levels.
+            string watched = this.IndexNameOf(IndexNames.WatchedMost);
+            context.PublishGroup(watched, this.Component.MostWatchedOut);
+            context.PublishPair(watched, this.Component.MostWatchedByPairOut, IndexUsage.Export);
         }
+
+        // A renamed indicator prefixes the index, so that two of them can live in the same instance.
+        private string IndexNameOf(string index)
+            => string.IsNullOrEmpty(this.Options.Name) ? index : $"{this.Options.Name}_{index}";
     }
 
     /// <summary>
