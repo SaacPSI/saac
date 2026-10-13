@@ -12,8 +12,9 @@ to be edited in the library to select, configure or add an indicator.
 
 A complete program that runs as it is: `Applications/CollaborationIndicesExample`.
 
-Detailed documentation (time window, computation of each indicator, collaboration score, conformity
-with the published method): `docs/wiki/CollaborationIndices-Component.md`.
+Detailed documentation (time window, computation of each indicator, collaboration score, use in
+the server application, visualizations of PsiStudio, conformity with the published method):
+`docs/wiki/CollaborationIndices-Component.md`.
 
 ## Instantiation with the builder
 
@@ -79,11 +80,11 @@ builder, for instance next to the results it produced.
 | `VerbalParticipation` | Speaking time per participant and for the group | | `GetIntervalInput(id)`, `IntervalsIn` |
 | `SpeechEquality` | Gini index of the speaking times | `VerbalParticipation` | |
 | `TalkingMost` | Who speaks the most | `VerbalParticipation` | |
-| `TurnTaking` | Turn takings with / without overlap, overlaps | 2 participants | `EventsIn` |
+| `TurnTaking` | Turn takings with / without overlap, overlaps | 2 participants, and unidirectional microphones (below) | `EventsIn` |
 | `Silence` | Cumulated time during which nobody speaks | | `GetIntervalInput(id)`, `IntervalsIn` (the speech intervals) |
 | `CrossTalk` | Cumulated time during which at least two participants speak, for the group and per pair | 2 participants | `GetIntervalInput(id)`, `IntervalsIn` (the speech intervals) |
-| `JointVisualAttention` | Episodes of joint visual attention | 2 participants | `EventsIn` |
-| `GazeOnPeers` | Gazes of each participant on each peer | 2 participants | `EventsIn` |
+| `JointVisualAttention` | Episodes of joint visual attention; also `LeadVisualAttention`, who initiated the most of them | 2 participants | `EventsIn` |
+| `GazeOnPeers` | Gazes of each participant on each peer; also `WatchedMost`, who was looked at the most | 2 participants | `EventsIn` |
 | `MutualGaze` | Times two participants look at each other, for the group and per pair | 2 participants | `EventIn`, `EventsIn` (from `MutualGazeDetector`) |
 | `AttentionLevel` | Attention accumulator, on its own fast clock | | `GetAttentiveInput(id)`, `ClockIn` of the indicator |
 | `TaskParticipation` | Productive task actions | | `EventsIn` |
@@ -104,6 +105,10 @@ set in `SpeechFromAudioConfiguration`. Such a pipeline runs at the pace of the s
 `AudioStreamAssignment` gives each participant an audio stream whatever the streams are named:
 it numbers them in the natural order of their names, and takes them in that order or as an
 instruction says, by id or by name.
+
+The computation of the turn takings currently requires unidirectional microphones, which
+isolate the audio track of each participant individually: a voice heard by two microphones
+gives turn takings and overlaps that did not happen.
 
 The name of an entry is at once the `Type` in a configuration, the default name of the outputs
 (`indices.Outputs.Group("Synchrony")`), the prefix of the CSV columns and the key of the
@@ -156,6 +161,19 @@ downstream.
 
 `options.IncludeInScore = false` keeps an indicator out of the score while still computing and
 exporting it.
+
+## Around the indices
+
+The component also holds what an application needs before and after the indices; the wiki
+page describes each of them.
+
+| | | Wiki |
+|---|---|---|
+| Detectors (`*Detector.cs`) | find the events and the intervals in the raw streams: speech intervals and turn takings, looks, joint visual attentions and mutual gazes, task actions and handovers, distances and formations | section 1 |
+| `CollaborationSessionConfiguration` | what an application computes for one session, as a JSON file: participants, windows, indicators, score, profiles, settings of the detectors. `Applications/Expe2Reprocessing` and the "Process" tab of `Applications/ServerApplication` are built on it | section 2.9 |
+| `CollaborationProfilesComponent` | the collaboration profile of each pair and of the group, from the snapshot of the indices | section 1 |
+| `indices.ToSocialGraph()` | the graph of a window, which a visualization of PsiStudio can draw | sections 7.2 and 8 |
+| `InstantStateComponent` | what the group is doing at each instant, which a visualization of PsiStudio can draw | sections 7.3 and 8 |
 
 ## Adding an indicator
 
@@ -247,15 +265,15 @@ into builder calls by `Legacy/LegacyIndices.cs`:
 `sa.ActivityLevel`, `sa.Synchrony`, `sa.VerbalParticipation`, ... are kept and return `null` when
 the indicator is not part of the instance. Differences with the previous constructor:
 
-- a family switched off is not instantiated any more (`UsePhysicalIndices = false` used to create
-  the physical components without pacing them);
-- combinations of flags that threw a `NullReferenceException` now work;
-- the score and the CSV rows hold the indices of their own tick (they used to hold a mix of two
-  consecutive ticks), so their values differ from files produced before;
+- a family that is switched off is not instantiated;
+- every combination of flags is accepted;
+- the score and the CSV rows hold the indices of their own tick: their values are not those of
+  files produced with the previous constructor;
 - the builder defaults to `RequirePhase = false`; the legacy configuration keeps its `true`.
 
 ## Tests
 
 `UnitTests/CollaborationIndices.Tests` (MSTest): construction by builder and by configuration,
-validation, indices on windows worked out by hand, replay from a store, alignment of the score,
-and equivalence with the outputs recorded before the builder existed (`Golden/`).
+validation, indices on windows worked out by hand, detectors on streams whose events are known,
+profiles, replay from a store, alignment of the score, graph of the window and state of the
+instant, and equivalence with the outputs recorded before the builder existed (`Golden/`).

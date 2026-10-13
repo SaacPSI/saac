@@ -21,7 +21,7 @@ Welcome to the SAAC (Situated Analytics with Augmented Cognition) framework docu
 - [AnnotationsComponents Component](AnnotationsComponents-Component.md) - Web-based annotation interface
 - [WebRTC Component](WebRTC-Component.md) - Unity/Unreal Engine streaming
 - [Bodies Component](Bodies-Component.md) - Body tracking and analysis
-- [CollaborationIndices Component](CollaborationIndices-Component.md) - Collaboration indicators on a sliding window, and collaboration score
+- [CollaborationIndices Component](CollaborationIndices-Component.md) - Collaboration indicators on a sliding window, collaboration score, use in the server application, and visualizations in PsiStudio
 
 ### Additional Components
 - [Additional Components](Additional-Components.md) - Documentation for all other SAAC components (Audio, Sensors, AI, Utilities)

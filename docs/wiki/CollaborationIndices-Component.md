@@ -28,12 +28,19 @@ dimension-based collaboration score.
 4. [Normalisation and calibration](#4-normalisation-and-calibration)
 5. [Indicators](#5-indicators)
 6. [The collaboration score](#6-the-collaboration-score)
-7. [Outputs: snapshot, graph, CSV](#7-outputs-snapshot-graph-csv)
-8. [Conformity with the published method](#8-conformity-with-the-published-method)
-9. [Extending, testing, files](#9-extending-testing-files)
+7. [Outputs: snapshot, graph, instant state, CSV, stores](#7-outputs-snapshot-graph-instant-state-csv-stores)
+8. [Visualizations in PsiStudio](#8-visualizations-in-psistudio)
+9. [Conformity with the published method](#9-conformity-with-the-published-method)
+10. [Extending, testing, files](#10-extending-testing-files)
 
-A shorter introduction is in `Components/CollaborationIndices/README.md`, and a program that
-runs as it is in `Applications/CollaborationIndicesExample`.
+| To | Read |
+|---|---|
+| compute the indices of a live session or of a recorded dataset with the server application | section 2.9 |
+| declare the indices in a program | sections 2.1 to 2.7. `Components/CollaborationIndices/README.md` is a shorter introduction, and `Applications/CollaborationIndicesExample` a program that runs as it is |
+| know what an index measures and how it is computed | sections 3 to 6 |
+| read the result files and the stores | section 7 |
+| look at a session in PsiStudio | section 8 |
+| compare the values with those of [A] and [B] | section 9 |
 
 ---
 
@@ -75,6 +82,23 @@ Every indicator receives two kinds of input: its **data** (events, intervals or 
 stamped with their originating time) and the **tick** of the shared clock. Data is only stored
 when it arrives; all the computing happens on a tick.
 
+In an application the indicators are the middle of a longer chain. The detectors find the
+events and the intervals in the raw streams. The indices of each window are merged into a
+snapshot, from which the score, the profiles, the result files and the graph are made. The
+state of the group at each instant is built beside them, from the detectors:
+
+```
+ raw streams ───► detectors ───► indicators ───► snapshot ─┬─► score, profiles
+ (poses, speech,  (events and    (one set per              ├─► result files (CSV)
+  gaze, task)      intervals)     window)                  ├─► stores Indices_, Scores_, Profiles_
+                      │                                    └─► graph ─► store Graph_ ─► visualization
+                      │
+                      └────► state of the group at each instant ─► store Instant ─► visualization
+```
+
+Sections 1 to 6 follow the chain up to the score, section 7 describes what comes out of it,
+and section 8 the two visualizations of PsiStudio.
+
 ### Input types
 
 | Type | Meaning | Used by |
@@ -102,12 +126,13 @@ read the time of the data.
 | `AreaPresenceDetector` | enter and leave events of the areas | presence intervals (open, then closed), current area | `TimeInArea` |
 | `FFormationDetector` | position and forward direction of the heads | distance of each pair; formations (face to face, L shape, side by side) with 1 s of hysteresis | `Proximity`, `Formation` |
 | `VerbalizationDetectorComponent` | transcriptions | speech intervals | `VerbalParticipation`, `Silence`, `CrossTalk` |
-| `TurnTakingDetector` | speech intervals | turn takings with and without overlap, overlaps | `TurnTaking` |
-| `GazeEpisodeDetector` | gaze events of the eye trackers | looks at objects, looks at peers (at least 200 ms) | `GazeOnPeers`, `AttentionLevel`, and the next two |
+| `VoiceTurnTakingDetector` | voice activity of each participant, and the speech intervals that validate it | turn takings with and without overlap, overlaps, about a second after they happened; those the transcription does not confirm are withdrawn (`CancelledOut`) | `TurnTaking` |
+| `TurnTakingDetector` | speech intervals | the same events, found on the transcribed utterances once they are over and confirmed | `TurnTaking` |
+| `GazeEpisodeDetector` | gaze events of the eye trackers | looks at objects, looks at peers (at least 200 ms), published when they end; the start and the end of each look as they happen (`LookStartOut`, `LookEndOut`) | `GazeOnPeers`, `AttentionLevel`, and the next two; the starts and the ends go to the state of the instant (section 7.3) |
 | `JointVisualAttentionDetector` | looks at objects, optionally the head poses | joint looks at the same object within 2 s, initiator and responder | `JointVisualAttention` |
 | `MutualGazeDetector` | looks at peers, as intervals | mutual gazes: a look of A at B and a look of B at A that overlap | `MutualGaze` |
-| `TaskActionDetector` | piece statuses, generator interactions, current area | task actions labelled "object@place" | `TaskParticipation` |
-| `ObjectHandoverDetector` | task actions | handovers (release then grab by another within 2 s) | no indicator yet |
+| `TaskActionDetector` | piece statuses, generator interactions, current area | task actions labelled "object@place". The statuses of the objects named in `IgnoredObjects` are left out: an application that sends a message to check its connection names its object there | `TaskParticipation` |
+| `ObjectHandoverDetector` | task actions | handovers (release then grab by another within 2 s) | no indicator yet; listed in the state of the instant (section 7.3) |
 
 `Applications/Expe2Reprocessing` is a complete program that wires them on a recorded session
 of the puzzle task: `SessionStreams` opens the stores, `CollaborationPipeline` declares the
@@ -139,34 +164,81 @@ are numbered from 1 in the natural order of their names (`Audio_2` before `Audio
 assignment is given by id or by name. It does not guess: with more or fewer streams than
 participants and no instruction, it is not resolved and `Problem` says why.
 
-The detectors replace components of the *CollaborationAnalysisFramework* repository. They were
-checked on a recorded session against what those components had stored: same task actions and
-same looks at peers, event for event; time in area, gaze on peers and verbal participation
-indices close to the stored ones (correlation 0.98 to 1.00, one gaze series at 0.88). Three of
-them deliberately do not reproduce the original, whose result depended on a defect; each class
-comment says how:
+The detectors take over from components of the *CollaborationAnalysisFramework* repository. On
+a recorded session of the puzzle task they give the task actions and the looks at peers those
+components stored, event for event, and time in area, gaze on peers and verbal participation
+indices close to the stored ones (correlation 0.98 to 1.00, one gaze series at 0.88). Three
+detectors follow rules of their own, and their counts are not those stored with that session:
 
-- **Joint visual attention.** The original required the two participants to look at the same
-  zone, but computed it from the components of the head quaternion read as angles: the test
-  kept about one candidate in six without measuring where the heads pointed. It also named
-  initiator the participant with the lowest index. The detector finds the stored episodes and
-  about six times more without head test, about four and a half times more with it
-  (`RequireConvergingHeads`). **The reference values of the calibration (section 4.2) were
-  measured with the original and do not apply to these counts.**
-- **Turn taking.** The original rules could not be reproduced. The detector finds every stored
-  turn taking with overlap and overlap, and about twice as many turn takings without overlap.
-  It was checked on simulated conversations whose turns are known by construction (smooth
-  switches, overlapping switches, backchannels, two to four participants, about 1 600 events
-  per group size): every event is found and none is invented
-  (`TurnTakingScenarioTests`). A speech interval is received when it ends, so a backchannel
-  is received before the longer utterance it was said over and looks, alone, like a turn
-  taking; the detector therefore holds a turn taking back until the longer utterance can no
-  longer come (`ConfirmationDelay`, 5 s). Without that delay three backchannels in four are
-  also counted as turn takings (15 of the 100 turn takings without overlap of the recorded
-  session). The delay must cover the longest speech intervals (5.9 s in that session): the
-  events are published that much later, with the time they happened.
-- **Distances and formations.** The original refreshed the position of one participant per
-  second: its distances differ from the true ones by 0.3 m (median) and up to 2.9 m.
+- **Joint visual attention.** Two looks at the same object that overlap, or that follow each
+  other within 2 s (`MaximumDelay`), are an episode; the participant who looked first is its
+  initiator, the other its responder. With `RequireConvergingHeads` the two heads must also
+  point towards the same place, which tells apart two objects of the same name. The detector
+  finds the stored episodes and about six times more without the test on the heads, about four
+  and a half times more with it. **The reference values of the calibration (section 4.2) were
+  measured on the stored counts and do not apply to the counts of this detector.**
+- **Turn taking.** A speech interval is received when it ends, so a backchannel is received
+  before the longer utterance it was said over and looks, alone, like a turn taking. The
+  detector therefore holds a turn taking back until the longer utterance can no longer come
+  (`ConfirmationDelay`, 5 s), and decides whether an interval takes the turn, and from whom,
+  when the interval is confirmed, from all the speech received by then. The events are
+  published that much later, with the time they happened. The delay must cover the longest
+  speech intervals (5.9 s in the recorded session) and the time the recogniser takes: the
+  result then does not depend on the order in which the intervals are received.
+
+  The intervals of one participant come in order, those of two participants do not: a
+  recogniser takes longer on a long utterance, which is then received after the short answer
+  that followed it. `VerbalizationDetectorComponent` keeps every interval on its common
+  stream `Out`, the one the turn taking detector reads: an interval received after one that
+  ended later is posted one tick after it, with its own bounds.
+
+  The detector is checked on simulated conversations whose turns are known by construction
+  (smooth switches, overlapping switches, backchannels, two to four participants, about
+  1 600 events per group size, with recognisers that answer after 0.3 s plus 80 % of the
+  utterance): every event is found and none is invented (`TurnTakingScenarioTests`). On the
+  recorded session it finds every stored turn taking with overlap and every stored overlap,
+  and about twice as many turn takings without overlap.
+- **Distances and formations.** The distances and the formations are evaluated every 200 ms
+  of data (`SamplingInterval`), from the latest head pose of each participant. On the
+  recorded session the distances differ from the stored ones by 0.3 m (median), and by up to
+  2.9 m.
+
+**Turn takings on the voice activity.** A transcription only gives an utterance when it is
+over; the voice activity says at once who is speaking. `VoiceTurnTakingDetector` applies the
+rules of the turn takings to the voice activity as it unfolds, and lets the transcription
+validate it:
+
+- an *intervention* is the voice activity of a participant that lasts at least
+  `MinimumSpeechDuration` (1 s), pauses shorter than `MaximumPause` (0.3 s) included. Shorter
+  voice activity (a breath, a noise, a word) neither takes the floor nor holds it;
+- an intervention that starts while nobody else is in one, after an intervention of another
+  participant, is a turn taking without overlap: known once it is an intervention, a second
+  after its start, whatever the length of the silence before. The same participant resuming
+  takes no turn;
+- an intervention that starts while another participant is in one is a turn taking with
+  overlap when it outlasts the other, known when the other stops, and an overlap when it
+  stops first, known when it stops;
+- with `ValidateWithTranscription`, an intervention no speech interval of its participant
+  overlaps within `TranscriptionDelay` (5 s) after its end was not speech: its events are
+  published again on `CancelledOut`, and it no longer counts as whose turn it was. The
+  indicator and the state of the instant take these withdrawals (`CancelIn`,
+  `CancelledDetectionIn`).
+
+The voice activity streams are not synchronised with each other: a sample is handled once
+every participant has sent its own up to that time, a participant whose stream stopped for
+`VoiceLifetime` (1 s) left aside.
+
+**Microphones.** The computation of the turn takings currently requires unidirectional
+microphones, one per participant, which isolate the audio track of each participant
+individually: each track must hold the voice of its participant and of nobody else. A voice
+heard by two microphones is two interventions, and gives turn takings and overlaps that did
+not happen. This holds for both detectors: the voice activity and the transcription are
+computed per track.
+
+On a session of two participants (13.7 min), `VoiceTurnTakingDetector` gives the turn
+takings of `TurnTakingDetector`, 35 of the 38 without overlap and the 18 with overlap, known
+1.2 s after they happened on average instead of 5.8 s; 13 of the 80 events it publishes are
+withdrawn, their voice activity having no transcribed speech.
 
 A store recorded with the `SerializableClass` assembly is read with the SAAC types after
 `PsiStore.Open(...).WithLegacyTypes()` (`LegacyStoreTypes`). The replay of the server does the
@@ -197,11 +269,10 @@ The component can write three files: the confidences, the profiles of each tick,
 duration of each group profile.
 
 The rules are those of `UpdateConfidenceOnCollaborationProfiles_MultipleUsers` and
-`CollaborationProfileMerging`, with two defects of the original not kept
-(`ReproduceLegacyDefects` brings them back): the two turn takers profiles were never evaluated
-(their confidence was always 0), and the profile published for a pair was the one *before*
-the best in the enumeration (leader/follower came out as independent sociable,
-everything/nothing as none).
+`CollaborationProfileMerging` of the *CollaborationAnalysisFramework* repository: the seven
+profiles are evaluated at each tick and the pair takes the one of highest confidence. An
+option of `CollaborationProfileRulesConfiguration` gives the profiles as that repository
+stored them.
 
 ---
 
@@ -414,6 +485,9 @@ it from its interface. Both then build the same way.
   "Detectors": {
     "Frame": "Unity",
     "HeadForwardAxis": "+Y",
+    "TurnTakingSource": "VoiceActivity",
+    "TurnTakingMinimumSpeech": "00:00:01",
+    "TurnTakingMaximumPause": "00:00:00.3000000",
     "TurnTakingConfirmationDelay": "00:00:05",
     "MinimumGazeDuration": "00:00:00.2000000",
     "RequireConvergingHeads": true,
@@ -432,18 +506,30 @@ it from its interface. Both then build the same way.
 | `ComputeProfiles` | profiles of the pairs and of the group, one component per window |
 | `Detectors` | the detector settings an application may want to change; the others keep their defaults |
 
+Four settings of `Detectors` are those of the turn takings:
+
+| Setting | Effect |
+|---|---|
+| `TurnTakingSource` | `VoiceActivity` (default): the turn takings are found on the voice activity (`VoiceTurnTakingDetector`, section 1) when the session has the one of every participant, and on the transcribed utterances otherwise. `Transcription`: always on the transcribed utterances (`TurnTakingDetector`) |
+| `TurnTakingMinimumSpeech` | how long a participant must have been speaking for its voice activity to be an intervention (1 s) |
+| `TurnTakingMaximumPause` | the longest pause that does not end an intervention (0.3 s) |
+| `TurnTakingConfirmationDelay` | on the voice activity, how long the transcription of an intervention is awaited before its events are withdrawn; on the transcribed utterances, how long a turn taking waits to be confirmed (5 s) |
+
+Whatever the source, the turn takings currently require unidirectional microphones, which
+isolate the audio track of each participant (section 1, "Microphones").
+
 Two settings of `Detectors` describe the positions and the head rotations of the session:
 
 | Setting | Values | Effect |
 |---|---|---|
 | `Frame` | `Unity`: left-handed, Y up, what the Unity server streams. `Standard`: right-handed, Z up, the Unity frame with Y and Z swapped, what `PositionOrientationPreProcessing` publishes | the vertical axis used by the formations (`UpAxis()`), and the frame the direction of a head is expressed in (`ToHeadPose`) |
-| `HeadForwardAxis` | `+X` ... `-Z` | the local axis of the head transform that points where the participant looks: `+Z` for a Unity camera, `+Y` for the head of the avatars of the Unity server |
+| `HeadForwardAxis` | `+X` ... `-Z` | the local axis of the head transform that points where the participant looks: `+Z` for a Unity object (a camera, a plain transform), `+Y` for the head bone of the avatars of the recorded Fusion and Expe3 sessions |
 
 The rotation of a head is its Unity Euler angles in both frames (the standardised streams keep
 them and only swap the position). With `+Y`, the direction is the one of
 `PositionOrientationPreProcessing.Convert`: the local +Z axis of its reframed rotation is the
 local +Y axis of the Unity transform, with Y and Z swapped. A session gives the same formations
-in either frame, provided the frame declared is the one of the data; declared in the wrong one,
+in either frame, provided the frame declared is the one of the data; declared in the other one,
 the height is taken for a horizontal axis. Distances, movement and synchrony do not depend on
 the frame.
 
@@ -503,27 +589,70 @@ Two applications follow it:
 | Missing stream | an error: the dataset layout is known | the indicators that need it are left out and reported in the log |
 | Results | the output folder | `<dataset path>/CollaborationIndices/<session id>_<date>_<time>/`, with `configuration.json` |
 
-In the server, the "Process" tab reads from left to right: 1. the metrics to compute,
-2. the computation settings, 3. the live session and 4. the recorded dataset, each with its
-start and stop buttons, then the log of what was done. It gives the configuration as follows.
-The same selection applies to "Start Process" (live session) and to "Start Post Processing"
-(replay of the dataset).
+#### The "Process" tab of the server
+
+The "Process" tab reads from left to right: 1. the metrics to compute, 2. the computation
+settings, 3. the live session and 4. the recorded dataset, each with its start and stop
+buttons, then the log of what was done. The same selection applies to "Start Process" (live
+session) and to "Start Post Processing" (replay of the dataset). It gives the configuration
+as follows.
 
 | Interface | Configuration |
 |---|---|
 | Turn-taking with overlap, without overlap | `TurnTaking`, with the checked categories |
-| Speech participation, Speech equality | `VerbalParticipation`, `SpeechEquality` |
+| Speech participation, Speech equality | `VerbalParticipation`, `SpeechEquality`. Speech participation also brings `TalkingMost`, who speaks the most |
 | Silence, Cross-talk | `Silence`, `CrossTalk` |
-| Joint Visual attention, Gaze on peers, Mutual gaze | `JointVisualAttention`, `GazeOnPeers`, `MutualGaze` |
-| Task participation, Task equality | `TaskParticipation`, `TaskEquality` |
+| Joint Visual attention, Gaze on peers, Mutual gaze | `JointVisualAttention` (with `LeadVisualAttention`, who leads it), `GazeOnPeers` (with `WatchedMost`, who is watched the most), `MutualGaze` |
+| Task participation, Task equality | `TaskParticipation`, `TaskEquality`. Task participation also brings `TaskingMost`, who acts the most on the task |
+| (no control) | `Detectors.IgnoredTaskObjects`, empty by default: every piece status is a task action, the message an application sends to check its connection included (the grab of an object `test`), and counts in the task participation. The piece statuses of the objects it names are left out; the log says how many |
 | Physical activity level, Physical synchrony score | `Movement`, `Synchrony` |
 | Physical Proximity, Facing-Formation | `Proximity`, `Formation` |
 | Participants | `ParticipantIds`, numbered from 0 |
-| Data frame | `Detectors.Frame`: "Unity (Y up, left-handed)" or "Standard (Z up, right-handed)"; `Detectors.HeadForwardAxis` is `+Y`, the head of the avatars |
+| Data frame | `Detectors.Frame`: "Unity (Y up, left-handed)" or "Standard (Z up, right-handed)" |
+| Head axis | `Detectors.HeadForwardAxis`, the local axis of the head streams that points where the participant looks: "+Z (Unity)" when the head is a Unity object, whose forward it is; "+Y (avatar)" when it is the head bone of the avatars, as in the recorded Fusion and Expe3 sessions. Saved with the configuration of the application |
 | Audio streams, Whisper models | not in the configuration: how the speech is computed from the audio when the session did not record it (below) |
 | Sliding Windows Computation and its list | `Windows`. Unchecked, or with an empty list, there is no window: no index, score or profile is computed, and the log says so |
 | Collaboration Profile Computation | `ComputeProfiles`, and the indicators the profiles read are declared with their default options |
 | Collaboration Score Computation | `ComputeCollaborationScores`: the score of the selected metrics (section 6.4); the log names the indices of the score that are not selected |
+
+#### What the boxes select
+
+Each box of a metric declares its indicator, and the result files hold the indices of the
+boxes that are checked:
+
+- **An equality comes with its participation.** "Speech equality" is computed from the
+  speaking times of "Speech participation", and "Task equality" from the action counts of
+  "Task participation". Checking an equality checks its participation; checking a
+  participation does not check the equality. While an equality is checked its participation
+  stays checked: clicked, it is checked again, and the log says which box to uncheck first.
+- **The box of a category** (Conversational, Visual, Physical, Spatial) checks or unchecks
+  all its metrics at once. A metric is computed when its box and the box of its category are
+  both checked.
+- **The profiles** read eleven indicators
+  (`CollaborationSessionConfiguration.ProfileIndicators`): "Collaboration Profile
+  Computation" declares them whatever the boxes, and the log lists them.
+- **The score** adds no indicator: it is the score of the metrics that are checked
+  (section 6.4).
+
+The boxes select the indices, the score, the profiles and the result files. The detectors do
+not depend on them: every detector whose streams the session has is created, and the events,
+the state of the group at each instant and the graph of each window are stored whatever the
+boxes (see "What a process stores"). With "Silence" alone, `indices_20.csv` holds the columns
+`Timestamp;Silence` and the partition `Indices_20s` one stream, beside the partitions
+`SpeechEvents`, `SpatialEvents`, `GazeEvents`, `TaskEvents`, `Instant` and `Graph_20s`, each
+one when the session has its streams.
+
+The saved `configuration.json` lists what was actually computed, after the indicators without
+streams were left out; it is in the format the console applications read.
+
+#### What is saved and logged
+
+**The tab is saved with the configuration.** "Save configuration" (first tab) keeps what the
+Process tab holds with the other settings of the application: the categories and the metrics
+checked, the participants, the data frame, the head axis, the audio streams, the folder of the
+Whisper models, the score, the profiles, the sliding windows with their lengths, and the
+pipeline name. The next launch of the application and "Load configuration" put them back. A
+tab that was never saved keeps its defaults.
 
 The log of the server follows each step: what was selected, the streams found and the store
 each one is read from, the streams left out, the detectors created and their settings, what
@@ -531,10 +660,102 @@ paces the indices, the result files, then the first message of each stream and o
 detection as it arrives. When the process stops it reports the number of messages received per
 participant for each stream, the streams that stayed silent, and what was produced: detections,
 rows of indices and of profiles. For a replay it also says how many streams of the dataset are
-read, which ones with a type of the application, and which ones are left out.
+read, which ones with a type of the application, which ones are left out, and which stores the
+dataset file lists that are not on the disk.
 
-**Speech of the session, or computed from its audio.** The conversational metrics read the
-transcription of each participant (streams `STT_1`, `STT_2`...), and the voice activity
+**The log is kept with the dataset.** When a session starts, live ("Start", the dataset is
+recorded) or post processing, the log is also written in
+`<dataset>/Logs/ServerApplication_<date>_<time>.log`: a header (dataset, session name, session
+and store modes), what the window had logged before, then every line as it is added, with the
+time, written at once. An application that is ended abruptly still leaves the log of what it
+did up to that point.
+
+#### The head axis
+
+The look direction of a head is computed with the axis chosen in "Head axis": `+Z` for a
+head that is a Unity object, `+Y` for the head bone of the avatars. The formations depend on
+it. With another axis than the one of the data the direction does not follow the head (a
+Unity object read with `+Y` looks straight up whatever its turn): no formation is found and
+`Formation` stays at 0 on every row. The detectors line of the log gives the axis in use, and
+the position files write the look direction computed with it (`forward_x`, `forward_y`,
+`forward_z`).
+
+#### What a process stores
+
+"Start Process" asks the server for the session of the process, named by its session mode
+(`RawDataPipelineProcess.000` with the mode Increment), and stores there what it detects and
+computes, in one partition per kind of data
+(`Examples/ProcessStore.cs`, `CollaborationIndicesProcess.StoreStreams`). A post processing
+stores the same partitions, in the session `RawDataPipelineProcess.000` of the dataset it
+replays:
+
+| Partition | Streams |
+|---|---|
+| `Positions` | the standardised positions of each participant: `1_Head`, `1_Left`, `1_Right`... (live session only) |
+| `Video` | the videos the applications send, for the time the process runs: every stream of JPEG frames, whatever the name of the application and of its capture area, one stream each named `<application>-<area>` (`VideoCapture1-TopLeft`). The stream `FullScreen` of an application named `VideoRemoteApp` keeps its name `Unity Server`. Live session only, for the applications connected before "Start Process"; the whole video of the session is in the session of its application (`RawDataVideoRemoteApp.000`) |
+| `SpeechFromAudio` | `VAD_1`, `STT_1`...: the speech computed from the audio, when the session did not record it |
+| `SpeechEvents` | `SpeechIntervals` and `TurnTakings` (turn takings with and without overlap, overlaps), then the same per participant: `SpeechIntervals_1`, `TurnTakings_1` (those of the participant who takes the floor)... Found on the voice activity, a turn taking is stored as soon as it is known; `TurnTakingsCancelled` holds those the transcription did not confirm, to be taken out of `TurnTakings` |
+| `TaskEvents` | `TaskActions`, and `TaskActions_1`... per participant; `Handovers` |
+| `GazeEvents` | `ObjectGazes`, `PeerGazes` and the same per participant, `JointVisualAttentions`, `MutualGazes` |
+| `SpatialEvents` | `Formations`, and the distance of each pair: `Distance_1-2`... |
+| `Instant` | `GroupInstant`: what the group is doing at each instant in one message, ten per second of data, which a visualization of PsiStudio can draw (section 8). It needs the head positions or the voice activity, which pace it |
+| `Indices_20s` | every index of the window of 20 s, one value per stream: `Movement`, `Movement_1`, `Synchrony_1-2`, `GazeOnPeers_1to2`, `Silence`... |
+| `Scores_20s` | `CollaborationScore` and each of its dimensions, when the score is computed |
+| `Profiles_20s` | `Profiles` and `GroupProfile`, when the profiles are computed |
+| `Graph_20s` | `SocialGraph`: the state of the group at each tick in one message, which a visualization of PsiStudio can draw (section 8). It holds the indices of the window and, when the heads are tracked, the place of each participant in the room |
+
+The four last ones exist for each sliding window (`Indices_60s`, `Scores_60s`...). The events
+and the intervals are `InteractionEvent` and `InteractionInterval` messages. In a stream name a
+participant has the number it has in the other streams of a session, 1 for the first one: it is
+the participant 0 of the result files, whose columns use the identifiers of the configuration.
+A partition is only created for what the process has: no `GazeEvents` without gaze streams.
+
+Every run of the process stores: started again after "Stop Process", the process writes new
+result files and new partitions, with the number of the run in their names
+(`Indices_20s_run2`, `TaskEvents_run2`...), in the same session. The result files are written
+in any case.
+
+Every post processing stores too, beside what the live session stored: its partitions carry
+its number in the dataset, `SpeechEvents_post1`, `Indices_20s_post1`... for the first one,
+`_post2` for the next one, so that a post processing with other metrics or other windows
+replaces nothing. The number is one more than the highest one the dataset holds. The dataset
+file lists the new partitions, and the stores are closed when the replay ends or is stopped.
+The positions are not stored again, the dataset has them; the speech computed from the audio
+has a store of its own, which the next post processings read (below). The log says what was
+stored:
+
+```
+Collaboration process: post processing 1, stored in the session RawDataPipelineProcess.000 of the dataset, one partition per kind of data: SpeechEvents_post1 (8 streams), TaskEvents_post1 (4 streams), ...
+```
+
+#### Stopping
+
+| Button | Stops | Afterwards |
+|---|---|---|
+| "Stop Process" (Process tab, live session) | the collaboration process only: its result files and its partitions are closed | the server keeps recording the applications; "Start Process" starts the process again with the current selection, in new result files and new partitions |
+| "Stop Session" (first tab) | the session: the process if it runs, and the recording of the applications | the stores of the session are closed when the application is closed; another session needs the application to be started again |
+| "Stop" (Process tab, recorded dataset) | the post processing | its result files and its partitions are closed; they hold the part of the dataset that was replayed |
+| "Quit", or the cross of the window | everything | the pipelines are stopped; the stores, the result files and the log are closed |
+
+The stores of a session whose application was ended abruptly are not closed: they keep their
+`.Live` markers, and their catalogues have no message count nor time span. Such a dataset can
+still be read, but a replay of it is not paced by the time of the data: it runs as fast as it
+can and its streams are not synchronised.
+
+#### The type of a stream
+
+The type of a stream is the one its format reads. A topic of the configuration file
+(`Examples/Configs/*.json`) declares a type and a format class. A type that already has a
+format in the server keeps it, which is the case of `SAAC.PsiFormats.PieceStatus` and
+`SAAC.PsiFormats.ObjectGazeEvent`: declaring these types is enough for the process to find the
+interactions and the gaze events of a live session. Declared with the types of an external
+assembly (`FusionDll.PieceStatus`), the streams are recorded but the process does not find
+them. The log gives the format used for each topic, and says when a format reads another type
+than the declared one.
+
+#### Speech of the session, or computed from its audio
+
+The conversational metrics read the transcription of each participant (streams `STT_1`, `STT_2`...), and the voice activity
 (`VAD_1`, `VAD_2`...) lets a turn taking be confirmed while nobody speaks. The process
 (`RealTimeProcessingUseCase.GatherSpeech`) first looks for these streams, in a live session and
 in a replayed dataset alike, and says in the log which ones it found:
@@ -544,6 +765,18 @@ in a replayed dataset alike, and says in the log which ones it found:
 | voice activity and transcription | yes or no | uses them as recorded; nothing is computed from the audio |
 | one of them, or none | no | nothing: what is missing is not computed |
 | one of them, or none | yes | computes what is missing from the audio of each participant, with `SpeechFromAudio`, and stores it in the dataset; what is recorded is used as it is |
+
+In a replay, the dataset gives the number of messages of each stream. The voice activity
+streams of a session, or its transcription streams, are passed over when none of them recorded
+a message: it is what a recording interrupted at its start leaves in the dataset, or a
+recogniser that never answered. They do not count as found, so that the speech is computed
+from the audio instead of being read as a silence of the whole session; the log names the
+streams passed over. One empty stream among others is kept: a participant who said nothing has
+no transcription. An audio stream without a buffer is left out before the audio streams are
+numbered. When several stores hold a stream of the same name, the one that recorded the most
+messages is read. These counts are only used when the dataset has them: stores that were never
+closed give none (see "Stopping"), and their streams are then taken
+as they are.
 
 The audio streams are found by their type, whatever they are named: by number (`Audio_1`), by
 colour (`Audio_User_red`) or otherwise. `AudioStreamAssignment` (folder `Verbal` of the
@@ -596,7 +829,8 @@ how it was obtained:
 |---|---|
 | the replay reads the dataset to its end | the store is marked `Complete`; the window disposes the pipeline, which closes the store; the next replays read it, and the log recalls where it comes from |
 | the replay is stopped before the end ("Stop", or the window is closed) | the store only holds the beginning of the session: it stays marked `"Complete": false`, the next replays do not read it and compute the speech again, in a store `SpeechFromAudio_2`; its folder can be deleted |
-| the speech must be computed again (another assignment of the audio, another model) | delete the folder `SpeechFromAudio.0000`: its streams are no longer found, and the next replay computes and stores them again |
+| the speech must be computed again (another assignment of the audio, another model) | delete the folder `SpeechFromAudio.0000`: its streams are no longer found, and the next replay computes and stores them again, in a store `SpeechFromAudio_2` |
+| the dataset file lists a `SpeechFromAudio` store that is no longer on the disk (deleted, or moved away) | a session cannot list a name twice, and an entry whose store is missing when the file is saved is never read again, even if a store comes back at its path: the new store takes the next free name, `SpeechFromAudio_2`, and is listed; the first entry stays in the file and points to nothing |
 | a live session | the store is written in the session of the process, and is complete when the process stops |
 
 `RealTimeProcessingUseCase.StoreSpeechFromAudio = false` computes without storing. The stored
@@ -604,10 +838,6 @@ transcription holds what the participants said, like the `STT` streams a session
 A replay that reads the stored streams gives the speech indices of the run that computed them
 (checked row by row on a recorded session), and no longer depends on Whisper: it also fixes
 the utterances, which two computations from the audio do not find exactly alike.
-
-A metric of a category whose box is unchecked is not computed. The saved `configuration.json`
-lists what was actually computed, after the indicators without streams were left out; it is in
-the format the console applications read.
 
 ---
 
@@ -760,7 +990,7 @@ another window or another study, measure the percentiles on your data and pass t
 `WithCalibration(new IndexCalibration { ReferenceValues = ... })`. An index without reference
 value is left as it is (identity).
 
-The last two rows are not applied by the current code, see section 8.
+The last two rows are not applied by the current code, see section 9.2 (items 1 and 2).
 
 ---
 
@@ -803,7 +1033,7 @@ while tracked.
 |---|---|---|
 | individual | `Movement` | `activity(p)` |
 | group | `Movement` | mean of `activity(p)` over the participants (`GroupAggregator`) |
-| score input | `Movement` | the group value, **not normalised** (section 8, item 1) |
+| score input | `Movement` | the group value, **not normalised** (section 9.2, item 1) |
 
 Component streams: `Out`, `GroupActivityLevelOut`, one emitter per participant, one per
 additional window.
@@ -877,7 +1107,7 @@ usable        = group > MinimumRatioForEquality                       (0.15)
 |---|---|---|
 | individual | `VerbalParticipation` | `ratio(p)` |
 | group | `VerbalParticipation` | `group` |
-| score input | `VerbalParticipation` | `group`, **a ratio, not the normalised speaking time** (section 8, item 2) |
+| score input | `VerbalParticipation` | `group`, **a ratio, not the normalised speaking time** (section 9.2, item 2) |
 
 Component streams: `Out`, `SpeakingTimesOut` (seconds, the distribution read by the equality
 and dominance indicators), `PairOut`, `GroupOut`, `EqualityUsableOut`.
@@ -938,7 +1168,12 @@ dynamics. After Gravano and Hirschberg (2011).*
 **Input.** Events of the categories `TurnTakingWithOverlap`, `TurnTakingWithoutOverlap` and
 `Overlap` (`EventsIn`), the new speaker in `ParticipantId` and the previous speaker in
 `TargetId`; optionally `Silence` events whose `Intensity` is a duration in seconds. The detection
-of the turn takings from the voice activity is done upstream.
+of the turn takings is done upstream (section 1). `CancelIn` takes the events a detector
+withdraws: from then on they are no longer counted.
+
+**Requirement.** The computation of the turn takings currently requires unidirectional
+microphones, which isolate the audio track of each participant individually (section 1,
+"Microphones").
 
 **Computation**, for each category `c`:
 
@@ -989,9 +1224,11 @@ lead         = argmax over p of initiated(p), published as id + 1, 0 on a tie
 | group | `JointVisualAttention` | normalised number of episodes |
 | pair | same | normalised number of episodes of the pair |
 | score input | same | the group value |
+| group | `LeadVisualAttention` | who leads the visual attention (after Cheng et al. 2022): `lead`, the participant who initiated the most episodes of the window, as its identifier plus one, 0 on a tie or without any episode |
+| pair | same, for the export | the same between the two participants of the pair |
 
-Component streams also give `InitiatorCountsOut`, `LeadVisualAttentionOut` (who leads visual
-attention, after Cheng et al. 2022) and `LeadVisualAttentionByPairOut`.
+The component stream `InitiatorCountsOut` gives the number of episodes each participant
+initiated.
 
 ### 5.8 Gaze on peers
 
@@ -1017,8 +1254,10 @@ most watched  = argmax over b of watched(b), published as id + 1, 0 on a tie
 | directed pair | `GazeOnPeers` | `gaze(a -> b)`, a raw count; `1 -> 2` and `2 -> 1` are distinct |
 | group | same | normalised total |
 | score input | same | the group value |
+| group | `WatchedMost` | `most watched`, the participant the others looked at the most often over the window, as its identifier plus one, 0 on a tie or without any look |
+| pair | same, for the export | the same between the two participants of the pair |
 
-Component streams also give `WatchedOut`, `MostWatchedOut` and `MostWatchedByPairOut`.
+The component stream `WatchedOut` gives how often each participant was looked at.
 
 ### 5.9 Attention level
 
@@ -1189,6 +1428,7 @@ previous look at the same peer is not a new look.
 | VerbalParticipation | speaking time | division by the window | group ratio |
 | SpeechEquality, TaskEquality | Gini index | its maximum | `1 - G`, with validity |
 | TalkingMost, TaskingMost | arg max | | no |
+| WatchedMost (with GazeOnPeers), LeadVisualAttention (with JointVisualAttention) | arg max | | no |
 | TurnTaking | event count per category | calibration | group of each category |
 | JointVisualAttention | episode count | calibration | group |
 | GazeOnPeers | gaze count | calibration (group) | group |
@@ -1281,7 +1521,7 @@ inputs used, for inspection). In a snapshot and in the CSV the global score is
 
 ---
 
-## 7. Outputs: snapshot, graph, CSV
+## 7. Outputs: snapshot, graph, instant state, CSV, stores
 
 ### 7.1 Snapshot
 
@@ -1306,7 +1546,7 @@ its own clock (attention level) is read at its latest value.
 The score, the graph and the export all read the same snapshot, completed by the score on its
 way, so a score, a graph and a CSV row of one tick never mix the values of two ticks.
 
-### 7.2 Interaction graph
+### 7.2 The graph of the window
 
 `WithInteractionGraph()` posts one `InteractionGraph` per tick on `indices.Out`: a node per
 participant with its individual metrics, an edge per pair with its pair metrics and, in
@@ -1314,7 +1554,64 @@ participant with its individual metrics, an edge per pair with its pair metrics 
 (`CollaborationScore`). Which outputs become graph metrics is declared by the indicators
 (`IndexUsage.Graph`).
 
-### 7.3 CSV export
+`indices.ToSocialGraph()` (class `SocialGraph`) posts, per tick, a graph made to be
+drawn (section 8): an `IndividualPairCharacteristics` of the Groups component,
+with a node per participant, an edge per pair and the values of the group. It is made from
+the snapshot, whatever the indicators declared and the number of participants: every index is
+copied under its name at its level, and an index that is not declared is not in the graph.
+Nothing is required; without any index the graph holds the participants and their pairs.
+
+| In the graph | From the indices |
+|---|---|
+| node `Id` | the number of the participant, its identifier plus one: `"1"` for participant 0. It is how `TalkingMost` and `TaskingMost` name a participant |
+| node `Metrics[name]` | `Individual[name]`: `VerbalParticipation`, `TaskParticipation`, `Movement`... |
+| edge `Metrics[name]` | `Pair[name]`: `Synchrony`, `JointVisualAttention`, `SpeechEquality`, `Proximity`... |
+| edge `ForwardMetrics[name]`, `BackwardMetrics[name]` | `DirectedPair[name]` (`GazeOnPeers`), from the lower number to the higher one and back |
+| edge `Metrics["Distance"]` | the distance of the tick, in metres, from `Proximity`: `(1 - score) x MaximumDistance` when the indicator publishes a score (its default), the value itself otherwise |
+| edge `Metrics["MeanDistance"]` | the mean of that distance over the window of the indices |
+| node `Metrics["PositionX"]`, `["PositionY"]` | the place of the participant in the room at the tick, seen from above, in metres, when positions are given: `indices.ToSocialGraph(positions, upAxis)` takes the position of each participant (its head, in the server) and the vertical axis of the frame. The floor is (X, Z) with Y up, the frame of a Unity scene, and (X, Y) with Z up |
+| node `Metrics["MeanPositionX"]`, `["MeanPositionY"]` | the mean of that place over the window of the indices |
+| group `Metrics[name]` | `Group[name]`: the indices of the group, who does the most of something (`TalkingMost`, `TaskingMost`, `WatchedMost`, `LeadVisualAttention`, each one when its indicator is computed), the dimension scores and `CollaborationScore` |
+| group `ScoreNames` | the scores of the model in order, so that other dimensions than the default ones are listed |
+| `WindowSeconds` | the window of the indices |
+
+**One span of time.** The proximity index is the distance at the tick; every other index is
+a statistic of the window. A picture drawn from them would show where the participants are
+now and what they did during the last window. `ToSocialGraph()` therefore adds to each pair
+the mean of its distance over the same window (`SocialGraphAssembler`), so that a picture of
+the group can describe one span of time. The mean is computed from the snapshots and changes nothing to the
+indices; it covers a whole window one window after the first snapshot, and a distance beyond
+the maximum of the proximity score counts as that maximum. With the positions, a pair whose
+proximity is not computed gets its distance from the places.
+
+### 7.3 The group at the instant
+
+That graph describes the last window. `InstantStateComponent` (folder `Fusion`) posts what
+the group is doing at each tick of a clock of its own: a `GroupInstant` of the Groups
+component, made to be drawn too (section 8). Nothing in it is a
+mean or a count: each signal is taken as it is at the tick, for any number of participants.
+
+| In the state | From |
+|---|---|
+| person `X`, `Y`, `HeadingX`, `HeadingY` | its last head pose (`GetHeadPoseInput`), on the floor: where it is in the room seen from above, in metres, and the direction it faces. No place when the pose is older than `PlaceLifetime` (2 s) |
+| person `Speaking` | its voice activity (`GetVoiceInput`), not the speech intervals: the voice activity is known at once, an interval once the recogniser has answered. False when the voice activity stopped coming for `VoiceLifetime` (1 s) |
+| person `LooksAtPersons`, `LooksAtObjects` | the looks that are running, from `GazeEpisodeDetector.LookStartOut` and `LookEndOut`, once they have lasted `MinimumLookDuration` (200 ms) |
+| pair `MutualGaze` | both participants are looking at each other |
+| pair `SharedObjects` | the objects both are looking at |
+| pair `Formation` | the formation the pair stands in, from `FFormationDetector.FormationStartOut` to `FormationEndOut` |
+| person `Holds` | the objects in its hands: from a `Grab` of `TaskActionDetector` to the `Ungrab` or the `Place` of the same object. An object whose release is not reported stays in the hands of who grabbed it; the objects of `IgnoredTaskObjects` are never held |
+| `Events` | the detections as they are made: the task actions (`TaskActionIn`) and whatever is given to `DetectionIn` and to the inputs `AddDetectionInput()` creates (joint visual attentions, mutual gazes, turn takings, handovers). Each one is listed for `EventLifetime` (4 s) after it was detected, with the time it happened: a detector names an event when it is complete, a turn taking about a second after the floor was taken when it is found on the voice activity. A detection given to `CancelledDetectionIn` is no longer listed |
+| `Signals` | the signals known to be there (`Places`, `Voice`, `Gaze`, `Formations`, `Task`): what is not named is not known, which is not the same as nobody speaking or looking. The places, the voices and the looks are named once the first one has arrived; the formations as soon as their input is connected and the heads arrive; the task as soon as its input is connected |
+
+Every input is optional. A pair is in the state when it has something in common at the tick.
+`TickIn` takes the clock, any stream on the time of the data (`DataClock.FromStream`).
+
+The server creates the component with the detectors it has, and stores the state in the
+partition `Instant` (section 2.9): one state every 100 ms of data, paced by the head positions
+of the first participant, or by its voice activity when no head is tracked. The handovers are
+detected for it and stored with the task actions; no index counts them.
+
+### 7.4 CSV export
 
 `WithCsvExport(writer or path)` writes one row per tick: `Timestamp` (Unix milliseconds of the
 tick), then the columns. By default the columns are every output declared for export, in the
@@ -1323,22 +1620,47 @@ pair, `Name_<a>-><b>` for an ordered pair, then the dimension scores and `Collab
 Separator `;`, invariant culture, `NA` until an index has been published. Pass `columns` to fix
 the list and the order.
 
-### 7.4 Stores
+### 7.5 Stores
 
 With `WithStore(server)`, the components write the streams they have always written into the
 `LiveVisualization` store of the session: group and individual activity levels, group and pair
 synchrony, speaking times and group verbal participation, group equality.
 
+The server application does not use it: it stores every detection and every index in
+partitions named after the kind of data, live and in a post processing (section 2.9, "What a
+process stores").
+
 ---
 
-## 8. Conformity with the published method
+## 8. Visualizations in PsiStudio
+
+Two visualizations of PsiStudio show a group from what a process stores:
+
+| Purpose | Reads | In the stores of the server |
+|---|---|---|
+| what the group did over the last window: the collaboration indices and the scores | the graph of the window, an `IndividualPairCharacteristics` (section 7.2) | stream `SocialGraph` of the partition `Graph_20s`, one partition per sliding window |
+| what the group is doing at the instant of the cursor: places, speech, looks, formations, detections | the state of the instant, a `GroupInstant` (section 7.3) | stream `GroupInstant` of the partition `Instant` |
+
+They are distributed separately from this repository, as an assembly added to "Additional
+Assemblies" in the settings of PsiStudio.
+
+The two streams are in the session of the process (`RawDataPipelineProcess.000` with the
+session mode Increment), in the partitions `Graph_20s` and `Instant`; those of a post
+processing are in `Graph_20s_post1` and `Instant_post1` (section 2.9, "What a process
+stores"). The server stores them whatever the metrics checked in its "Process" tab: the graph
+holds the indices the selection computed, the state of the instant the signals the session
+has.
+
+---
+
+## 9. Conformity with the published method
 
 This section compares three things: what [A] and [B] describe, what the implementation used for
 those studies did (`SlidingAverageComputation.cs` of the *CollaborationAnalysisFramework*
 repository, called "original" below), and what this component does. It was established by
 reading the three; where they agree nothing is listed.
 
-### 8.1 What matches
+### 9.1 What matches
 
 - The window `[T - W, T]`, one computation per second, the warm-up of one window after the start
   of a phase.
@@ -1353,7 +1675,7 @@ reading the three; where they agree nothing is listed.
 - The five dimensions and their indices; the score as the mean of the valid dimensions; equality
   entering the score as `1 - Gini`.
 
-### 8.2 What differs
+### 9.2 What differs
 
 | # | Subject | [A] / [B] | Original implementation | This component |
 |---|---|---|---|---|
@@ -1368,7 +1690,7 @@ reading the three; where they agree nothing is listed.
 | 8 | Default window | 20 s | set per instance | 30 s for the builder: set `WithWindow(TimeSpan.FromSeconds(20))` |
 | 9 | Undefined equality | not specified | group Gini 0 when nobody spoke or acted | -1, and flagged invalid |
 | 10 | Inefficient action | not specified | grab then release of the same object, both in the central table zone, consecutive among grabs, releases and placements | grab then release with the same label (same object, same place, any zone), consecutive among grabs and releases |
-| 11 | Reference values | not given | some applied values differ from those documented next to them: for 45 s the 20 s values of most indicators, 8 instead of 5 for the joint visual attention pair at 20 s, 5 instead of 4 for the turn taking pair at 30 s | the documented values (section 4.2) |
+| 11 | Reference values | not given | for 45 s, the 20 s values of most indicators; 8 for the joint visual attention pair at 20 s; 5 for the turn taking pair at 30 s | the values of section 4.2 |
 | 12 | An indicator absent from a dimension | every indicator is present | counted with its value, possibly zero | skipped; the dimension is the mean of the indices it has |
 
 Items 1 to 4 make the score of this component numerically different from the one described in
@@ -1382,7 +1704,7 @@ participant moves at a few tenths of a metre per second, far above 0.041, so the
 value would always be close to 1. Either the indicator is used per sample at the sampling rate
 of the study, or the reference value is measured again in metres per second.
 
-### 8.3 Not specified by the papers
+### 9.3 Not specified by the papers
 
 The following are choices of the implementation: the retention margins, the stale-data guards of
 the synchrony, the handling of late data, the keeping of the last value of a silent indicator,
@@ -1390,7 +1712,7 @@ the attention accumulator and its constants, the proximity scale of 3 m.
 
 ---
 
-## 9. Extending, testing, files
+## 10. Extending, testing, files
 
 **Adding an indicator** takes two classes, a component and an indicator, and no change in the
 library: see "Adding an indicator" in the README and the complete tested example in
@@ -1400,12 +1722,17 @@ library: see "Adding an indicator" in the README and the complete tested example
 
 | File | What it checks |
 |---|---|
-| `BuilderTests`, `ValidationTests` | construction by builder and by configuration, JSON, every validation rule |
-| `IndicatorComputationTests`, `AllIndicatorsTests` | each indicator on windows worked out by hand |
+| `BuilderTests`, `ValidationTests`, `SessionConfigurationTests` | construction by builder, by configuration and by session configuration, JSON, every validation rule |
+| `IndicatorComputationTests`, `AllIndicatorsTests`, `SilenceCrossTalkMutualGazeTests` | each indicator on windows worked out by hand |
+| `DetectorTests`, `TurnTakingScenarioTests`, `VoiceTurnTakingTests`, `AudioStreamAssignmentTests` | the detectors on streams whose events are known by construction; which audio stream is the one of which participant |
+| `ProfileTests` | the collaboration profiles of the pairs and of the group |
 | `ReplayTests` | replay faster than real time, from a store, at another date, with a data clock |
 | `FusionAlignmentTests` | the score, the graph and the rows hold the values of their own tick, with several threads |
+| `SocialGraphTests`, `InstantStateTests` | the graph of the window and the state of the group at the instant |
 | `EquivalenceTests` | same outputs as recorded before the builder existed (`Golden/`) |
-| `RegressionTests`, `CustomIndicatorTests` | the defects fixed, and an indicator defined outside the library |
+| `RegressionTests`, `CustomIndicatorTests` | behaviours pinned one by one (combinations of flags, ticks, undefined values), and an indicator defined outside the library |
+
+`UnitTests/Groups.Tests` checks the classes of the graph and of the instant state.
 
 **Files** (`Components/CollaborationIndices`):
 
@@ -1414,7 +1741,8 @@ library: see "Adding an indicator" in the README and the complete tested example
 | `Builder/` | builder, configuration, validation |
 | `Core/` | indicator abstraction, build context, outputs, registry, base components, stores, normalizers, calibration |
 | `Physical/`, `Verbal/`, `Gaze/`, `Task/`, `Spatial/` | components and their indicators, the detectors (`*Detector.cs`, section 1), and the pre-processing of the source streams: the speech chain in `Verbal/`, `Spatial/PositionOrientationPreProcessing` (head and hands of one participant), `Task/InteractionFilter` (piece interactions) |
-| `Fusion/` | phase gate, equality, dominance, score, snapshot, graph, export, data clock |
+| `Fusion/` | phase gate, equality, dominance, score, snapshot, graph of the window, state of the instant, export, data clock |
+| `Profiles/` | the collaboration profiles of the pairs and of the group |
 | `Adapters/` | conversion of the SAAC stream types |
 | `Legacy/` | the configuration by families of indices and its translation |
 | `Indicators.cs` | the catalogue |

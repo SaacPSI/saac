@@ -27,7 +27,7 @@ This page provides an overview of all components available in the SAAC framework
 
 ### 👥 Social & Group Analysis
 - [Groups](Groups-Component.md) - Group dynamics and flock behavior detection
-- [CollaborationIndices](CollaborationIndices-Component.md) - Collaboration indicators on a sliding window, and collaboration score
+- [CollaborationIndices](CollaborationIndices-Component.md) - Collaboration indicators on a sliding window, collaboration score, and their visualizations in PsiStudio
 
 ### 🗣️ Speech & Audio Processing
 - [Whisper](Whisper-Component.md) - OpenAI Whisper speech-to-text
@@ -44,7 +44,7 @@ This page provides an overview of all components available in the SAAC framework
 
 ### 📝 Annotations & Visualization
 - [AnnotationsComponents](AnnotationsComponents-Component.md) - Web-based annotation interface
-- [Visualizations](Visualizations-Component.md) - PsiStudio visualization objects
+- [Visualizations](Additional-Components.md#visualizations-component) - PsiStudio visualization objects; the two visualizations of a group are in [CollaborationIndices, section 8](CollaborationIndices-Component.md#8-visualizations-in-psistudio)
 
 ### 🔧 Utilities & Services
 - [PipelineServices](PipelineServices-Component.md) - Pipeline management (RendezVous, Replay, Dataset)
