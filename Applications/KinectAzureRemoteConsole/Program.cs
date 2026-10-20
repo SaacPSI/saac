@@ -83,7 +83,7 @@ namespace KinectAzureRemoteConsole
             client.Log($"StopKinect done.");
         }
 
-        void CommandRecieved(string source, Microsoft.Psi.Message<(RendezVousPipeline.Command, string)> message)
+        void CommandRecieved(string source, Microsoft.Psi.Message<(Command, string)> message)
         {
             if ($"{commandServer}-Command" != source)
                 return;
@@ -95,20 +95,20 @@ namespace KinectAzureRemoteConsole
             client.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Initialize:
+                case Command.Initialize:
                     UpdateConfigurationFromArgs(args);
                     break;
-                case RendezVousPipeline.Command.Run:
+                case Command.Run:
                     SetupKinect();
                     break;
-                case RendezVousPipeline.Command.Stop:
+                case Command.Stop:
                     StopKinect();
                     break;
-                case RendezVousPipeline.Command.Close:
+                case Command.Close:
                     StopKinect();
                     client.Stop();
                     throw new Exception("Ugly way to close");
-                case RendezVousPipeline.Command.Reset:
+                case Command.Reset:
                     if (UpdateConfigurationFromArgs(args))
                     {
                         StopKinect();

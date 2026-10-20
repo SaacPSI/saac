@@ -67,42 +67,6 @@ namespace SAAC.PipelineServices
         }
 
         /// <summary>
-        /// Command types.
-        /// </summary>
-        public enum Command
-        {
-            /// <summary>
-            /// Initialize command.
-            /// </summary>
-            Initialize,
-
-            /// <summary>
-            /// Run command.
-            /// </summary>
-            Run,
-
-            /// <summary>
-            /// Stop command.
-            /// </summary>
-            Stop,
-
-            /// <summary>
-            /// Reset command.
-            /// </summary>
-            Reset,
-
-            /// <summary>
-            /// Close command.
-            /// </summary>
-            Close,
-
-            /// <summary>
-            /// Status command.
-            /// </summary>
-            Status,
-        }
-
-        /// <summary>
         /// Delegate for command receive events.
         /// </summary>
         /// <param name="process">The process name.</param>
@@ -385,7 +349,8 @@ namespace SAAC.PipelineServices
         /// <param name="producer">The producer stream.</param>
         /// <param name="streamName">The stream name.</param>
         /// <param name="process">The process to add the endpoint to.</param>
-        public void GenerateTCPEnpoint<T>(Pipeline parent, int port, IProducer<T> producer, string streamName, ref Rendezvous.Process process)
+        /// <param name="transportKind">The transport kind for the endpoint.</param>
+        public void GenerateInteropEnpoint<T>(Pipeline parent, int port, IProducer<T> producer, string streamName, ref Rendezvous.Process process, TransportKind transportKind = TransportKind.Tcp)
         {
             Type type = typeof(T);
             if (!this.Configuration.TypesSerializers.ContainsKey(type))
@@ -393,42 +358,58 @@ namespace SAAC.PipelineServices
                 throw new Exception($"Missing serializer of type {type} in configuration.");
             }
 
-            TcpWriter<T> writer = new TcpWriter<T>(parent, port, this.Configuration.TypesSerializers[type].GetFormat());
-            producer.PipeTo(writer);
-            process.AddEndpoint(writer.ToRendezvousEndpoint(this.Configuration.RendezVousHost, streamName));
+            switch (transportKind)
+            {
+                case TransportKind.Tcp:
+                    TcpWriter<T> tcpWriter = new TcpWriter<T>(parent, port, this.Configuration.TypesSerializers[type].GetFormat());
+                    producer.PipeTo(tcpWriter);
+                    process.AddEndpoint(tcpWriter.ToRendezvousEndpoint(this.Configuration.RendezVousHost, streamName));
+                    break;
+                case TransportKind.Udp:
+                case TransportKind.UdpBroadcast:
+                    UdpWriter<T> udpWriter = new UdpWriter<T>(parent, port, this.Configuration.TypesSerializers[type].GetFormat(), transportKind == TransportKind.UdpBroadcast);
+                    producer.PipeTo(udpWriter);
+                    process.AddEndpoint(udpWriter.ToRendezvousEndpoint(this.Configuration.RendezVousHost, streamName));
+                    break;
+                case TransportKind.NamedPipes:
+                default:
+                    throw new Exception($"TransportKind {transportKind} is not supported for interop endpoints.");
+            }
         }
 
         /// <summary>
-        /// Generates a TCP process from connectors in the specified store.
+        /// Generates an Interop process from connectors in the specified store.
         /// </summary>
         /// <param name="storeName">The store name.</param>
-        /// <param name="startingPort">The starting TCP port.</param>
+        /// <param name="startingPort">The starting port.</param>
+        /// <param name="transportKind">The transport kind for the process.</param>
         /// <returns>The next available port, or 0 if failed.</returns>
-        public int GenerateTCPProcessFromConnectors(string storeName, int startingPort)
+        public int GenerateInteropProcessFromConnectors(string storeName, int startingPort, TransportKind transportKind = TransportKind.Tcp)
         {
             if (this.Connectors.ContainsKey(storeName))
             {
-                return this.GenerateTCPProcessFromConnectors(storeName, this.Connectors[storeName], startingPort);
+                return this.GenerateInteropProcessFromConnectors(storeName, this.Connectors[storeName], startingPort, transportKind);
             }
 
             return 0;
         }
 
         /// <summary>
-        /// Generates a TCP process from a dictionary of connectors.
+        /// Generates an interop process from a dictionary of connectors.
         /// </summary>
         /// <param name="processName">The process name.</param>
         /// <param name="connectors">The dictionary of connectors.</param>
-        /// <param name="startingPort">The starting TCP port.</param>
+        /// <param name="startingPort">The starting  port.</param>
+        /// <param name="transportKind">The transport kind for the process.</param>
         /// <returns>The next available port, or 0 if failed.</returns>
-        public int GenerateTCPProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort)
+        public int GenerateInteropProcessFromConnectors(string processName, Dictionary<string, ConnectorInfo> connectors, int startingPort, TransportKind transportKind = TransportKind.Tcp)
         {
             Rendezvous.Process process = new Rendezvous.Process(processName);
             Subpipeline parent = this.GetOrCreateSubpipeline(processName);
             foreach (var connector in connectors)
             {
                 var producer = typeof(ConnectorInfo).GetMethod("CreateBridge").MakeGenericMethod(connector.Value.DataType).Invoke(connector.Value,[parent]);
-                typeof(RendezVousPipeline).GetMethod("GenerateTCPEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this,[parent, startingPort++, producer, connector.Key, process]);
+                typeof(RendezVousPipeline).GetMethod("GenerateInteropEnpoint").MakeGenericMethod(connector.Value.DataType).Invoke(this,[parent, startingPort++, producer, connector.Key, process, transportKind]);
             }
 
             if (this.IsPipelineRunning)
@@ -786,42 +767,45 @@ namespace SAAC.PipelineServices
             Session? session = this.CreateOrGetSessionFromMode(process.Name);
             foreach (var endpoint in process.Endpoints)
             {
-                if (endpoint is Rendezvous.TcpSourceEndpoint)
+                switch (endpoint)
                 {
-                    Rendezvous.TcpSourceEndpoint? source = endpoint as Rendezvous.TcpSourceEndpoint;
-                    if (source == null)
-                    {
-                        continue;
-                    }
-
-                    foreach (var stream in endpoint.Streams)
-                    {
-                        this.Log($"\tStream {stream.StreamName}");
-                        if (this.Configuration.TopicsTypes.ContainsKey(stream.StreamName))
+                    case Rendezvous.UdpSourceEndpoint:
+                    case Rendezvous.TcpSourceEndpoint:
+                        foreach (var stream in endpoint.Streams)
                         {
-                            Type type = this.Configuration.TopicsTypes[stream.StreamName];
-                            if (!this.Configuration.TypesSerializers.ContainsKey(type))
+                            this.Log($"\tStream {stream.StreamName}");
+                            if (this.Configuration.TopicsTypes.ContainsKey(stream.StreamName))
                             {
-                                throw new Exception($"Missing serializer of type {type} in configuration.");
+                                Type type = this.Configuration.TopicsTypes[stream.StreamName];
+                                if (!this.Configuration.TypesSerializers.ContainsKey(type))
+                                {
+                                    throw new Exception($"Missing serializer of type {type} in configuration.");
+                                }
+
+                                this.Connection(stream.StreamName, process.Name, session, endpoint, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName), this.Configuration.TypesSerializers[type].GetFormat(), this.Configuration.Transformers.ContainsKey(stream.StreamName) ? this.Configuration.Transformers[stream.StreamName] : null);
+                                elementAdded++;
                             }
-
-                            this.Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName), this.Configuration.TypesSerializers[type].GetFormat(), this.Configuration.Transformers.ContainsKey(stream.StreamName) ? this.Configuration.Transformers[stream.StreamName] : null);
-                            elementAdded++;
                         }
-                    }
-                }
-                else if (endpoint is Rendezvous.RemoteExporterEndpoint)
-                {
-                    Rendezvous.RemoteExporterEndpoint? source = endpoint as Rendezvous.RemoteExporterEndpoint;
-                    if (source == null)
-                    {
-                        continue;
-                    }
 
-                    foreach (var stream in source.Streams)
-                    {
-                        elementAdded += this.Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
-                    }
+                        break;
+                    case Rendezvous.NetMQSourceEndpoint:
+                        this.Log($"NetMQnt Source Endpoint");
+                        break;
+                    case Rendezvous.RemoteExporterEndpoint:
+                        Rendezvous.RemoteExporterEndpoint? source = endpoint as Rendezvous.RemoteExporterEndpoint;
+                        if (source == null)
+                        {
+                            continue;
+                        }
+
+                        foreach (var stream in source.Streams)
+                        {
+                            elementAdded += this.Connection(stream.StreamName, process.Name, session, source, processSubPipeline, !this.Configuration.NotStoredTopics.Contains(stream.StreamName)) ? 1 : 0;
+                        }
+                        break;
+                    default:
+                        this.Log($"Unknown Endpoint");
+                        break;
                 }
             }
 
@@ -865,30 +849,44 @@ namespace SAAC.PipelineServices
         }
 
         /// <summary>
-        /// Creates a connection for a TCP source endpoint with optional data transformation.
+        /// Creates a connection for a TCP or UDP endpoint with optional data transformation.
         /// </summary>
         /// <typeparam name="T">The type of data in the stream.</typeparam>
         /// <param name="streamName">The stream name.</param>
         /// <param name="processName">The process name.</param>
         /// <param name="session">The session to use.</param>
-        /// <param name="source">The TCP source endpoint.</param>
+        /// <param name="endpoint">The source endpoint.</param>
         /// <param name="p">The pipeline.</param>
         /// <param name="storeSteam">Whether to store the stream.</param>
         /// <param name="deserializer">The deserializer for the data.</param>
         /// <param name="transformerType">Optional transformer type to apply to the data.</param>
-        protected void Connection<T>(string streamName, string processName, Session? session, Rendezvous.TcpSourceEndpoint source, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
+        protected void Connection<T>(string streamName, string processName, Session? session, Rendezvous.Endpoint endpoint, Pipeline p, bool storeSteam, Format<T> deserializer, Type? transformerType)
         {
             var storeName = this.GetStoreName(streamName, processName, session);
-            var tcpSource = source.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+
+            IProducer<T> source = null;
+            if (endpoint is Rendezvous.TcpSourceEndpoint tcp)
+            {
+                source = tcp.ToTcpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            }
+            else if (endpoint is Rendezvous.UdpSourceEndpoint udp)
+            {
+                source = udp.ToUdpSource<T>(p, deserializer, null, true, $"{processName}-{streamName}");
+            }
+            else
+            {
+                return;
+            }
+
             if (this.Configuration.Debug)
             {
-                tcpSource.Do((d, e) => { this.Log($"Receive {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
+                source.Do((d, e) => { this.Log($"Receive {processName}-{streamName} data @{e.OriginatingTime} : {d}"); });
             }
 
             if (transformerType != null)
             {
                 dynamic transformer = Activator.CreateInstance(transformerType,[p, $"{processName}-{streamName}_transformer"]);
-                Microsoft.Psi.Operators.PipeTo(tcpSource.Out, transformer.In);
+                Microsoft.Psi.Operators.PipeTo(source.Out, transformer.In);
                 if (transformerType.GetInterfaces().Intersect([typeof(IComplexTransformer)]).Count() > 0)
                 {
                     transformer.CreateConnections(streamName, storeName, session, p, storeSteam, this);
@@ -900,7 +898,7 @@ namespace SAAC.PipelineServices
             }
             else
             {
-                this.CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, p, typeof(T), tcpSource, storeSteam);
+                this.CreateConnectorAndStore(storeName.Item1, storeName.Item2, session, p, typeof(T), source, storeSteam);
             }
         }
 

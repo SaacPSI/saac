@@ -574,7 +574,7 @@ namespace VideoRemoteApp
         /// </summary>
         /// <param name="source">The command source.</param>
         /// <param name="message">The command message.</param>
-        private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private void CommandRecieved(string source, Message<(Command, string)> message)
         {
             if ($"{this.CommandSource}-Command" != source)
             {
@@ -591,29 +591,29 @@ namespace VideoRemoteApp
             this.datasetPipeline?.Log($"CommandRecieved with {message.Data.Item1} command, args: {message.Data.Item2}.");
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Initialize:
+                case Command.Initialize:
                     this.UpdateConfigurationFromArgs(args);
                     break;
-                case RendezVousPipeline.Command.Run:
+                case Command.Run:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.Start();
                     }));
                     break;
-                case RendezVousPipeline.Command.Stop:
+                case Command.Stop:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.Stop();
                     }));
                     break;
-                case RendezVousPipeline.Command.Close:
+                case Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.Close();
                     }));
                     break;
-                case RendezVousPipeline.Command.Status:
-                    (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.CommandSource, this.datasetPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
+                case Command.Status:
+                    (this.datasetPipeline as RendezVousPipeline)?.SendCommand(Command.Status, this.CommandSource, this.datasetPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     break;
             }
         }
@@ -705,7 +705,7 @@ namespace VideoRemoteApp
             bool hasValidCroppingArea = this.videoRemoteAppConfiguration.CroppingAreas.Any(area => !area.Value.IsEmpty && area.Value.Width > 0 && area.Value.Height > 0);
             if (!hasValidCroppingArea)
             {
-                (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Error");
+                (this.datasetPipeline as RendezVousPipeline)?.SendCommand(Command.Status, this.commandSource, "Error");
                 MessageBox.Show("At least one valid cropping area is required. Please add a cropping area in the Video tab.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.AddLog("Error: No valid cropping area configured.");
                 return;
@@ -766,7 +766,7 @@ namespace VideoRemoteApp
         private void Stop()
         {
             this.AddLog(this.State = "Stopping");
-            (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Stopping");
+            (this.datasetPipeline as RendezVousPipeline)?.SendCommand(Command.Status, this.commandSource, "Stopping");
             if (this.datasetPipeline is RendezVousPipeline)
             {
                 (this.datasetPipeline as RendezVousPipeline)?.Dispose();
@@ -792,7 +792,7 @@ namespace VideoRemoteApp
                 (this.datasetPipeline as RendezVousPipeline)?.Start((d) => { Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.AddLog(this.State = "Connected to server");
-                        (this.datasetPipeline as RendezVousPipeline)?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Waiting");
+                        (this.datasetPipeline as RendezVousPipeline)?.SendCommand(Command.Status, this.commandSource, "Waiting");
                     }));
                 });
             }
@@ -813,7 +813,7 @@ namespace VideoRemoteApp
                 {
                     remotePipeline.Start();
                     remotePipeline.RunPipelineAndSubpipelines();
-                    remotePipeline.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Running");
+                    remotePipeline.SendCommand(Command.Status, this.commandSource, "Running");
                 }
                 else
                 {

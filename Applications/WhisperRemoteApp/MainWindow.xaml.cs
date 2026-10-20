@@ -615,7 +615,7 @@ namespace WhisperRemoteApp
             this.BtnLoadConfig.IsEnabled = this.BtnSaveConfig.IsEnabled = false;
         }
 
-        private void CommandRecieved(string source, Message<(RendezVousPipeline.Command, string)> message)
+        private void CommandRecieved(string source, Message<(Command, string)> message)
         {
             if ($"{this.CommandSource}-Command" != source)
             {
@@ -631,21 +631,21 @@ namespace WhisperRemoteApp
 
             switch (message.Data.Item1)
             {
-                case RendezVousPipeline.Command.Run:
+                case Command.Run:
                     this.isMessageBoxOpen = true;
                     this.Start();
                     this.Run();
                     break;
-                case RendezVousPipeline.Command.Close:
+                case Command.Close:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.Close();
                     }));
                     break;
-                case RendezVousPipeline.Command.Status:
+                case Command.Status:
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.CommandSource, this.rendezVousPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
+                        this.rendezVousPipeline?.SendCommand(Command.Status, this.CommandSource, this.rendezVousPipeline?.Pipeline.StartTime == DateTime.MinValue ? "Waiting" : "Running");
                     }));
                     break;
             }
@@ -821,10 +821,10 @@ namespace WhisperRemoteApp
                         {
                             case WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Failed:
                                 this.setupState = SetupState.AudioInitialised;
-                                this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Error");
+                                this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, "Error");
                                 break;
                             case WhisperSpeechRecognizerConfiguration.EWhisperModelDownloadState.Completed:
-                                this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Running");
+                                this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, "Running");
                                 break;
                         }
 
@@ -874,7 +874,7 @@ namespace WhisperRemoteApp
                 }
                 catch (Exception ex)
                 {
-                    this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, $"Error");
+                    this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, $"Error");
                     this.AddLog(this.State = "Whisper initialised Failed");
                     this.AddLog($"Error setting up Whisper: {ex.Message}");
                     MessageBox.Show("Unable to setup Whisper with the current configuration. Please check the settings in 'Whisper' tab.", "Whisper setup error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
@@ -900,7 +900,7 @@ namespace WhisperRemoteApp
             }
             catch (Exception ex)
             {
-                this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, $"Error");
+                this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, $"Error");
                 this.AddLog($"Error opening/creating local dataset: {ex.Message}");
                 MessageBox.Show("Unable to create or open the local dataset. Please change the Dataset fields in 'Local Recording' tab", "Dataset error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
                 dataset = null;
@@ -950,7 +950,7 @@ namespace WhisperRemoteApp
         private void Stop()
         {
             this.AddLog(this.State = "Stopping");
-            this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Stopping");
+            this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, "Stopping");
             this.localDataset?.Save();
             this.transcriptionManager?.WriteTranscription(Path.Combine(this.TranscriptionPathTextBox.Text, this.TranscriptionFilenameTextBox.Text));
             this.rendezVousPipeline?.RemoveProcess(this.WhisperRemoteStreamsConfigurationUI.RendezVousApplicationName);
@@ -981,7 +981,7 @@ namespace WhisperRemoteApp
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         this.AddLog(this.State = "Connected to server");
-                        this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Waiting");
+                        this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, "Waiting");
                     }));
                 });
             }
@@ -1030,7 +1030,7 @@ namespace WhisperRemoteApp
 
             if (this.setupState == SetupState.AudioInitialised)
             {
-                this.rendezVousPipeline?.SendCommand(RendezVousPipeline.Command.Status, this.commandSource, "Running");
+                this.rendezVousPipeline?.SendCommand(Command.Status, this.commandSource, "Running");
             }
         }
 
