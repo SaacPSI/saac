@@ -135,6 +135,8 @@ namespace SaaCPsiStudio
             }
         }
 
+       
+
         public string GetLayout()
         {
             return null;
@@ -173,6 +175,7 @@ namespace SaaCPsiStudio
             this.Close();
         }
 
+        
         public DateTime GetStartTime()
         {
             return this.server == null ? DateTime.MinValue : this.server.Pipeline.StartTime;

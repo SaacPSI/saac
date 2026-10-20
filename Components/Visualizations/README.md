@@ -1,7 +1,14 @@
 # Visualizations
 
 ## Summary
-This project contains vizualations for PsiStudio. In order to work it need as nuget tow projects from \psi sources (https://github.com/microsoft/psi/issues/301).  
+This project contains visualizations for PsiStudio. It needs, as NuGet packages, two projects built from the \psi sources (https://github.com/microsoft/psi/issues/301).  
+
+## Use in PsiStudio
+Add `Visualizations.dll` to "Additional Assemblies" in the settings of PsiStudio and start PsiStudio again; then right-click a stream and choose the visualization.
+PsiStudio looks for the assemblies a plugin refers to in its own folder first: keep no copy of `Groups.dll`, of `Visualizations.dll` or of another SAAC assembly there.
+
+## Visualizations of a group
+Two visualizations show a group of any number of participants from what the CollaborationIndices component stores: what the group did over the last window, and what it is doing at the instant of the cursor. They are distributed separately from this repository; section 8 of `docs/wiki/CollaborationIndices-Component.md` says which streams they read.
 
 ## Files
 * [Augmented Body List Visualization Object](src/VisualizationObjects/AugmentedBodyListVisualizationObject.cs)
@@ -17,9 +24,8 @@ This project contains vizualations for PsiStudio. In order to work it need as nu
 * [Simplified Body Visualization Object](src/VisualizationObjects/SimplifiedBodyVisualizationObject.cs)
 * [Simplified Flock Group Dictionnary Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupDictionnaryVisualisationObject.cs)
 * [Simplified Flock Group Visualisation Object](src/VisualizationObjects/SimplifiedFlockGroupVisualisationObject.cs)
-* [Social Graph XY Visualization Object](src/VisualizationObjects/SocialGraphXYVisualizationObject.cs)
 
-## Curent issues
+## Current issues
 
 ## Future works
-* Intergrating 2D vizualisations displaying positions of HMD users in virtual environement.
+* Integrating 2D visualizations displaying positions of HMD users in virtual environment.

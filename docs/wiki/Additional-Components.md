@@ -711,13 +711,12 @@ plumePipeline.LoadPlumeFile(
 - `AugmentedSkeletonVisualizationObject`: Skeleton overlay
 - `SimplifiedBodyListVisualizationObject`: Multi-body view
 - `SimplifiedFlockGroupVisualisationObject`: Group visualization
-- `SocialGraphXYVisualizationObject`: Social network graph
 - `LabeledPoint2DVisualizationObject`: 2D point annotations
 - `PositionOrientationVisualizationObject`: Pose visualization
 
-**Usage**: Install as PsiStudio plugin, visualizations appear in PsiStudio visualization panel
+**Usage**: add `Visualizations.dll` to "Additional Assemblies" in the settings of PsiStudio and start it again; the visualizations then appear in the menu of the streams they can draw
 
-**Related**: [PsiStudio Modifications](PsiStudio-Modifications.md)
+**Related**: [PsiStudio Modifications](PsiStudio-Modifications.md); [CollaborationIndices Component, section 8](CollaborationIndices-Component.md#8-visualizations-in-psistudio) for the two visualizations of a group, which are distributed separately
 
 ---
 
