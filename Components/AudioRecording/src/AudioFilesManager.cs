@@ -83,10 +83,19 @@ namespace SAAC.AudioRecording
         /// <param name="file">The file path.</param>
         public void SetupAudioFromFile(string file)
         {
-            WaveFileImporter audioStream = new WaveFileImporter(this.p, Path.GetFileName(file), Path.GetDirectoryName(file), UnixSecondsToDateTime(1724332525, false));
-            this.waveFileImporters.Add(audioStream);
-            IProducer<AudioBuffer> audio = audioStream.OpenStream<AudioBuffer>("Audio");
-            int channelCount = audioStream.GetWaveFileChannelCount();
+            int channelCount = 0;
+            IProducer<AudioBuffer> audio;
+            try
+            {
+                WaveFileImporter audioStream = new WaveFileImporter(this.p, Path.GetFileName(file), Path.GetDirectoryName(file), UnixSecondsToDateTime(1724332525, false));
+                this.waveFileImporters.Add(audioStream);
+                audio = audioStream.OpenStream<AudioBuffer>("Audio");
+                channelCount = audioStream.GetWaveFileChannelCount();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while setting up audio from file '{file}': {ex.Message}", ex);
+            }
             if (channelCount > 1)
             {
                 AudioSplitter splitter = new AudioSplitter(this.p, Path.GetFileName(file), channelCount);
