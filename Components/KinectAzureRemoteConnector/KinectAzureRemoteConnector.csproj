@@ -16,7 +16,6 @@
     <PackageId>SAAC-$(AssemblyName)</PackageId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.5.192" />
     <PackageReference Include="Microsoft.Psi.Audio" Version="0.19.100.1-beta-SAAC" />
     <PackageReference Include="Microsoft.Psi.AzureKinect.x64" Version="0.19.100.1-beta" />
     <PackageReference Include="Microsoft.Psi.Imaging.Windows" Version="0.19.100.1-beta" />
