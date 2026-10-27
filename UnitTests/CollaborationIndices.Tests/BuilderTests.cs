@@ -2,16 +2,16 @@
 // This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
 // See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Microsoft.Psi;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SAAC.CollaborationIndices;
-
 namespace CollaborationIndices.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Microsoft.Psi;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using SAAC.CollaborationIndices;
+
     /// <summary>
     /// Construction of a set of indices, by the builder and by a configuration object.
     /// </summary>

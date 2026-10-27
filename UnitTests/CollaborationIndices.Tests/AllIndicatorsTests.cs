@@ -2,18 +2,18 @@
 // This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
 // See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-using Microsoft.Psi;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SAAC.CollaborationIndices;
-using SAAC.Groups;
-
 namespace CollaborationIndices.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Numerics;
+    using Microsoft.Psi;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using SAAC.CollaborationIndices;
+    using SAAC.Groups;
+
     /// <summary>
     /// The fifteen indicators of the catalogue computing together on a small scripted session,
     /// with the score, the graph and the export. It checks that every one of them publishes on

@@ -1,0 +1,348 @@
+// Licensed under the CeCILL-C License. See LICENSE.md file in the project root for full license information.
+// This software is distributed under the CeCILL-C FREE SOFTWARE LICENSE AGREEMENT.
+// See https://cecill.info/licences/Licence_CeCILL-C_V1-en.html for details.
+
+namespace SAAC.CollaborationIndices
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
+    using Microsoft.Psi;
+
+    public class PhaseGateConfiguration
+    {
+        /// <summary>
+        /// After the beginning of a phase, the indices are meaningless until the window is
+        /// filled with data of that phase. The gate stays closed for this duration.
+        /// Set it to the window duration of the indicators.
+        /// </summary>
+        public TimeSpan WarmUpDuration { get; set; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>If true, the gate closes as soon as a phase ends and reopens at the next start.</summary>
+        public bool CloseBetweenPhases { get; set; } = true;
+
+        /// <summary>Period of the tick published while the gate is open.</summary>
+        public TimeSpan TickInterval { get; set; } = TimeSpan.FromSeconds(1);
+
+        public bool RequirePhase { get; set; } = true;
+
+        public bool LogTransitions { get; set; } = false;
+    }
+
+    /// <summary>
+    /// Session and phase management. It replaces the sequence of early returns that opened the
+    /// legacy ReceiveTimer: task not started, gap between two puzzles, window not yet filled
+    /// since the phase start, phase ended.
+    ///
+    /// Inputs:
+    ///  - PhaseStartIn / PhaseEndIn: boundaries of a phase (puzzle, exercise, session);
+    ///  - ClockIn: the raw clock, typically Generators.Repeat(pipeline, true, TickInterval).
+    ///
+    /// Outputs:
+    ///  - Out: the gated tick, to be connected to the TickIn of every indicator component;
+    ///  - EnabledOut: the state of the gate, to be connected to their EnableIn;
+    ///  - PhaseIdOut: index of the current phase.
+    /// </summary>
+    public class PhaseGateComponent : IProducer<bool>
+    {
+        private readonly PhaseGateConfiguration configuration;
+        private readonly string name;
+
+        private DateTime phaseStart = DateTime.MaxValue;
+        private bool phaseRunning;
+        private int phaseId = -1;
+        private bool lastEnabled;
+        private bool clockSeen;
+
+        public PhaseGateComponent(Pipeline pipeline, PhaseGateConfiguration configuration, string name = nameof(PhaseGateComponent))
+        {
+            this.configuration = configuration ?? new PhaseGateConfiguration();
+            this.name = name;
+
+            this.PhaseStartIn = pipeline.CreateReceiver<bool>(this, this.ReceivePhaseStart, $"{name}-PhaseStart");
+            this.PhaseEndIn = pipeline.CreateReceiver<bool>(this, this.ReceivePhaseEnd, $"{name}-PhaseEnd");
+            this.ClockIn = pipeline.CreateReceiver<bool>(this, this.ReceiveClock, $"{name}-Clock");
+
+            this.Out = pipeline.CreateEmitter<bool>(this, $"{name}-Tick");
+            this.EnabledOut = pipeline.CreateEmitter<bool>(this, $"{name}-Enabled");
+            this.PhaseIdOut = pipeline.CreateEmitter<int>(this, $"{name}-PhaseId");
+        }
+
+        public Receiver<bool> PhaseStartIn { get; }
+
+        public Receiver<bool> PhaseEndIn { get; }
+
+        public Receiver<bool> ClockIn { get; }
+
+        public Emitter<bool> Out { get; }
+
+        public Emitter<bool> EnabledOut { get; }
+
+        public Emitter<int> PhaseIdOut { get; }
+
+        private void ReceivePhaseStart(bool value, Envelope envelope)
+        {
+            if (this.configuration.LogTransitions)
+            {
+                Console.WriteLine($"\n[{this.name}] phase start at {envelope.OriginatingTime:HH:mm:ss.fff}, warm-up {this.configuration.WarmUpDuration.TotalSeconds:0}s");
+            }
+
+            this.phaseStart = envelope.OriginatingTime;
+            this.phaseRunning = true;
+            this.phaseId++;
+            this.PhaseIdOut.Post(this.phaseId, envelope.OriginatingTime);
+        }
+
+        private void ReceivePhaseEnd(bool value, Envelope envelope)
+        {
+            if (this.configuration.CloseBetweenPhases)
+            {
+                this.phaseRunning = false;
+            }
+        }
+
+        private void ReceiveClock(bool value, Envelope envelope)
+        {
+            if (!this.clockSeen)
+            {
+                this.clockSeen = true;
+
+                // No phase structure required: the first tick opens the session and starts the
+                // warm-up, so the indices run even when nothing is wired to PhaseStartIn.
+                if (!this.configuration.RequirePhase && !this.phaseRunning)
+                {
+                    this.phaseStart = envelope.OriginatingTime;
+                    this.phaseRunning = true;
+                    this.phaseId++;
+                    this.PhaseIdOut.Post(this.phaseId, envelope.OriginatingTime);
+                }
+
+                if (this.configuration.LogTransitions)
+                {
+                    Console.WriteLine($"\n[{this.name}] first clock tick at {envelope.OriginatingTime:HH:mm:ss.fff}, phase running: {this.phaseRunning}");
+                }
+            }
+
+            bool enabled = this.phaseRunning
+                && this.phaseStart != DateTime.MaxValue
+                && (envelope.OriginatingTime - this.phaseStart) >= this.configuration.WarmUpDuration;
+
+            if (enabled != this.lastEnabled)
+            {
+                this.EnabledOut.Post(enabled, envelope.OriginatingTime);
+                this.lastEnabled = enabled;
+
+                if (this.configuration.LogTransitions)
+                {
+                    Console.WriteLine($"\n[{this.name}] gate {(enabled ? "OPEN" : "CLOSED")} at {envelope.OriginatingTime:HH:mm:ss.fff}");
+                }
+            }
+
+            if (enabled)
+            {
+                this.Out.Post(true, envelope.OriginatingTime);
+            }
+        }
+    }
+
+    public class IndexExportConfiguration
+    {
+        /// <summary>Destination of the rows. The component does not own it and does not close it.</summary>
+        public TextWriter Writer { get; set; }
+
+        /// <summary>Ordered list of the columns, i.e. of the index names.</summary>
+        public List<string> Columns { get; set; } = new List<string>();
+
+        public string Separator { get; set; } = ";";
+
+        /// <summary>If true, a header line is written on the first row.</summary>
+        public bool WriteHeader { get; set; } = true;
+
+        /// <summary>Value written when an index has not been received yet.</summary>
+        public string MissingValue { get; set; } = "NA";
+
+        /// <summary>Number format. The invariant culture avoids the decimal comma.</summary>
+        public string Format { get; set; } = "0.######";
+    }
+
+    /// <summary>
+    /// Writes one row per computation with every index of the session, in a stable column order.
+    ///
+    /// The legacy version built a single interpolated string of about sixty fields, which had to
+    /// be edited by hand every time an index was added and produced silent column shifts. Here a
+    /// column is declared by name and fed by its own receiver.
+    ///
+    /// Usage:
+    ///   verbalEquality.Out.PipeTo(export.GetColumnInput("SpeechEquality"));
+    ///   export.TickIn is connected to the same gated clock as the indicators.
+    /// </summary>
+    public class IndexExportComponent
+    {
+        private readonly IndexExportConfiguration configuration;
+        private readonly Pipeline pipeline;
+        private readonly string name;
+        private readonly Dictionary<string, string> values = new Dictionary<string, string>();
+
+        private bool headerWritten;
+        private DateTime lastWrite = DateTime.MinValue;
+
+        public IndexExportComponent(Pipeline pipeline, IndexExportConfiguration configuration, string name = nameof(IndexExportComponent))
+        {
+            this.pipeline = pipeline;
+            this.configuration = configuration;
+            this.name = name;
+            this.TickIn = pipeline.CreateReceiver<bool>(this, (_, envelope) => this.WriteRow(envelope.OriginatingTime), $"{name}-Tick");
+            this.SnapshotIn = pipeline.CreateReceiver<IndexSnapshot>(this, this.ReceiveSnapshot, $"{name}-SnapshotIn");
+        }
+
+        public Receiver<bool> TickIn { get; }
+
+        /// <summary>Columns of the export, in order, without the leading timestamp.</summary>
+        public IReadOnlyList<string> Columns => this.configuration.Columns;
+
+        /// <summary>
+        /// All the indices of one tick at once: one row is written per snapshot, with values
+        /// that all describe the tick of the row. Do not connect TickIn as well. Driven by
+        /// TickIn and fed column by column, a row holds whatever has arrived when the tick is
+        /// delivered, which is usually the values of the previous tick.
+        /// </summary>
+        public Receiver<IndexSnapshot> SnapshotIn { get; }
+
+        /// <summary>Name of the column of one participant.</summary>
+        public static string ParticipantColumn(string columnPrefix, uint participantId) => $"{columnPrefix}_{participantId}";
+
+        /// <summary>Name of the column of one pair.</summary>
+        public static string PairColumn(string columnPrefix, ParticipantPair pair) => $"{columnPrefix}_{pair}";
+
+        /// <summary>Name of the column of one ordered pair.</summary>
+        public static string DirectedPairColumn(string columnPrefix, DirectedParticipantPair pair) => $"{columnPrefix}_{pair}";
+
+        /// <summary>Receiver feeding one numeric column.</summary>
+        public Receiver<double> GetColumnInput(string columnName)
+        {
+            string key = columnName;
+            return this.pipeline.CreateReceiver<double>(
+                this,
+                (value, _) => this.values[key] = value.ToString(this.configuration.Format, CultureInfo.InvariantCulture),
+                $"{this.name}-Column-{key}");
+        }
+
+        /// <summary>Receiver feeding several columns at once, one per participant.</summary>
+        public Receiver<Dictionary<uint, double>> GetParticipantColumnsInput(string columnPrefix)
+        {
+            string prefix = columnPrefix;
+            return this.pipeline.CreateReceiver<Dictionary<uint, double>>(
+                this,
+                (dictionary, _) =>
+                {
+                    foreach (var entry in dictionary)
+                    {
+                        this.values[$"{prefix}_{entry.Key}"] = entry.Value.ToString(this.configuration.Format, CultureInfo.InvariantCulture);
+                    }
+                },
+                $"{this.name}-Columns-{prefix}");
+        }
+
+        /// <summary>Receiver feeding several columns at once, one per pair.</summary>
+        public Receiver<Dictionary<ParticipantPair, double>> GetPairColumnsInput(string columnPrefix)
+        {
+            string prefix = columnPrefix;
+            return this.pipeline.CreateReceiver<Dictionary<ParticipantPair, double>>(
+                this,
+                (dictionary, _) =>
+                {
+                    foreach (var entry in dictionary)
+                    {
+                        this.values[$"{prefix}_{entry.Key}"] = entry.Value.ToString(this.configuration.Format, CultureInfo.InvariantCulture);
+                    }
+                },
+                $"{this.name}-PairColumns-{prefix}");
+        }
+
+        /// <summary>
+        /// Declares the columns generated by a per participant or per pair input, so that the
+        /// header and the row order stay stable even before the first message arrives.
+        /// </summary>
+        public void DeclareColumns(IEnumerable<string> columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                if (!this.configuration.Columns.Contains(columnName))
+                {
+                    this.configuration.Columns.Add(columnName);
+                }
+            }
+        }
+
+        private string Format(double value) => value.ToString(this.configuration.Format, CultureInfo.InvariantCulture);
+
+        private void ReceiveSnapshot(IndexSnapshot snapshot, Envelope envelope)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            foreach (var entry in snapshot.Group)
+            {
+                this.values[entry.Key] = this.Format(entry.Value);
+            }
+
+            foreach (var index in snapshot.Individual)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[ParticipantColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            foreach (var index in snapshot.Pair)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[PairColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            foreach (var index in snapshot.DirectedPair)
+            {
+                foreach (var entry in index.Value)
+                {
+                    this.values[DirectedPairColumn(index.Key, entry.Key)] = this.Format(entry.Value);
+                }
+            }
+
+            this.WriteRow(envelope.OriginatingTime);
+        }
+
+        private void WriteRow(DateTime originatingTime)
+        {
+            if (this.configuration.Writer == null || originatingTime <= this.lastWrite)
+            {
+                return;
+            }
+
+            this.lastWrite = originatingTime;
+
+            if (this.configuration.WriteHeader && !this.headerWritten)
+            {
+                this.configuration.Writer.WriteLine(string.Join(this.configuration.Separator, new[] { "Timestamp" }.Concat(this.configuration.Columns)));
+                this.headerWritten = true;
+            }
+
+            var cells = new List<string>
+            {
+                originatingTime.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString(this.configuration.Format, CultureInfo.InvariantCulture),
+            };
+
+            foreach (string column in this.configuration.Columns)
+            {
+                cells.Add(this.values.TryGetValue(column, out string value) ? value : this.configuration.MissingValue);
+            }
+
+            this.configuration.Writer.WriteLine(string.Join(this.configuration.Separator, cells));
+        }
+    }
+}

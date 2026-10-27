@@ -11,10 +11,10 @@
     <BaseOutputPath>$(SolutionDir)build\bin\$(AssemblyName)</BaseOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Components\CollaborationIndices\CollaborationIndices.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <!-- The configuration read by the "config" mode of the example. -->
     <None Include="indices.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Components\CollaborationIndices\CollaborationIndices.csproj" />
   </ItemGroup>
 </Project>
