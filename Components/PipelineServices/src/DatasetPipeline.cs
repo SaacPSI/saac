@@ -350,6 +350,11 @@ namespace SAAC.PipelineServices
         /// <returns>The session if created or found; otherwise null.</returns>
         public Session? CreateOrGetSessionFromMode(string sessionName = "")
         {
+            if (sessionName == "PipelineProcess")
+            {
+                Console.WriteLine("PipelineProcess is a reserved session name, it cannot be used. Please choose another name.");
+            }
+
             switch (this.Configuration.SessionMode)
             {
                 case SessionNamingMode.Unique:

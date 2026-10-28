@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\Gestures</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(AssemblyName)</BaseIntermediateOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>SAAC-$(AssemblyName)</PackageId>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>   

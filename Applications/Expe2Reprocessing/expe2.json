@@ -1,0 +1,93 @@
+{
+  "DatasetPath": "C:\\path\\to\\session",
+  "OutputFolder": "C:\\path\\to\\results",
+  "RealTime": false,
+  "Name": "Indices",
+  "ParticipantIds": [
+    0,
+    1,
+    2
+  ],
+  "Windows": [
+    "00:00:20",
+    "00:00:30",
+    "00:00:45"
+  ],
+  "ComputationInterval": "00:00:01",
+  "RequirePhase": true,
+  "Indicators": [
+    {
+      "Type": "Movement"
+    },
+    {
+      "Type": "Synchrony"
+    },
+    {
+      "Type": "VerbalParticipation"
+    },
+    {
+      "Type": "SpeechEquality"
+    },
+    {
+      "Type": "TalkingMost"
+    },
+    {
+      "Type": "TurnTaking"
+    },
+    {
+      "Type": "Silence"
+    },
+    {
+      "Type": "CrossTalk"
+    },
+    {
+      "Type": "JointVisualAttention"
+    },
+    {
+      "Type": "GazeOnPeers"
+    },
+    {
+      "Type": "MutualGaze"
+    },
+    {
+      "Type": "TaskParticipation"
+    },
+    {
+      "Type": "TaskEquality"
+    },
+    {
+      "Type": "TaskingMost"
+    },
+    {
+      "Type": "Formation"
+    },
+    {
+      "Type": "Proximity"
+    },
+    {
+      "Type": "TimeInArea",
+      "Options": {
+        "Areas": [
+          "CentraleTableZone",
+          "Generator1",
+          "Generator2",
+          "IterationTable",
+          "Button"
+        ],
+        "PlanningAreas": [
+          "IterationTable"
+        ]
+      }
+    }
+  ],
+  "ComputeCollaborationScores": true,
+  "ComputeProfiles": true,
+  "Detectors": {
+    "Frame": "Unity",
+    "HeadForwardAxis": "+Y",
+    "TurnTakingConfirmationDelay": "00:00:05",
+    "MinimumGazeDuration": "00:00:00.2000000",
+    "RequireConvergingHeads": true,
+    "FormationTransitionDuration": "00:00:01"
+  }
+}

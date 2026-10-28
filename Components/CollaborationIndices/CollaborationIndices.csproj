@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <LangVersion>Preview</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\bin\Components\$(AssemblyName)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\obj\$(AssemblyName)</BaseIntermediateOutputPath>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>SAAC-$(AssemblyName)</PackageId>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="example\CallExample.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="example\CallExample.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalHelpers\GlobalHelpers.csproj">
+      <Project>{be76e9ce-2c9a-0ab3-2391-e6ea151c5cfb}</Project>
+      <Name>GlobalHelpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Groups\Groups.csproj">
+      <Project>{65613648-c5b7-4ad1-9fa2-6816c54239e9}</Project>
+      <Name>Groups</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Helpers\Helpers.csproj">
+      <Project>{8675a25f-bfba-72db-db02-545d0c394994}</Project>
+      <Name>Helpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PipelineServices\PipelineServices.csproj">
+      <Project>{C44CB9D8-7ACA-BBE9-F91A-3E55EC538783}</Project>
+      <Name>PipelineServices</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PsiFormats\PsiFormats.csproj">
+      <Project>{92fc3405-d625-15a4-5138-a68a1adb5b3d}</Project>
+      <Name>PsiFormats</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Whisper\Whisper.csproj">
+      <Project>{596cbac8-50bc-59d7-c91b-648303f78514}</Project>
+      <Name>Whisper</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

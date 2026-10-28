@@ -52,7 +52,7 @@
 
 ## User Interface
 
-The ServerApplication window is organized into three tabs: **Overview**, **Configuration**, and **Annotation**.
+The ServerApplication window is organized into four tabs: **Overview**, **Configuration**, **Annotation** and **Process**.
 
 [[/images/ServerApplication_MainWindow.png]]
 
@@ -563,6 +563,22 @@ Annotations stored as Psi stream:
 │   └─ Confidence (double)
 └─ Indexed for fast retrieval
 ```
+
+### Tab 4: Process
+
+The Process tab computes the collaboration indices of a session, on the streams of the connected applications ("Start Process") or on a recorded dataset ("Start Post Processing"). It reads from left to right:
+
+1. **Metrics**: one box per metric, in four categories (Conversational, Visual, Physical, Spatial)
+2. **Settings**: participants, data frame, head axis, audio streams and Whisper models, sliding windows, collaboration score and profiles
+3. **Live session**: "Start Process" and "Stop Process"
+4. **Recorded dataset**: the dataset to replay, "Start Post Processing" and "Stop"
+5. **Log**: every step of the process, also written in the folder `Logs` of the dataset
+
+The result files go to `<dataset path>/CollaborationIndices/<session id>_<date>_<time>/`, and the detections, the indices, the scores and the profiles are stored in the dataset, where PsiStudio displays them.
+
+The turn taking metrics currently require unidirectional microphones, which isolate the audio track of each participant individually.
+
+See [CollaborationIndices Component](CollaborationIndices-Component.md): section 2.9 for the tab, what its boxes select and what is stored; section 8 for the visualizations.
 
 ## Common Workflows
 

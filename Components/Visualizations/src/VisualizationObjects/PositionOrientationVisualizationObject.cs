@@ -88,7 +88,7 @@ namespace SAAC.Visualizations
         /// <inheritdoc/>
         public override void NotifyPropertyChanged(string propertyName)
         {
-            if (propertyName == nameof(this.BillboardHeightCm))
+            if (propertyName == nameof(this.BillboardHeightCm) || propertyName == nameof(this.Name))
             {
                 this.UpdateBillboard();
             }
@@ -97,6 +97,10 @@ namespace SAAC.Visualizations
                 this.UpdateVisibility();
             }
         }
+
+        // The text of the billboard: the name of the visualization object, which PsiStudio sets to
+        // the name of the stream and which its properties change; the name of the stream when it is empty.
+        private string BillboardText => string.IsNullOrWhiteSpace(this.Name) ? this.SourceStreamName : this.Name;
 
         private void UpdateVisuals()
         {
@@ -121,7 +125,7 @@ namespace SAAC.Visualizations
             {
                 var origin = this.CurrentData.Item1;
                 var pos = new Win3D.Point3D(origin.X, this.ReverseYZ ? origin.Z : origin.Y, (this.ReverseYZ ? origin.Y : origin.Z) + (this.BillboardHeightCm / 100.0));
-                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, $"{this.SourceStreamName}")));
+                this.Billboard.SetCurrentValue(this.SynthesizeMessage(Tuple.Create(pos, this.BillboardText)));
             }
         }
 

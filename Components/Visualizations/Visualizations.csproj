@@ -20,8 +20,6 @@
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Msagl.WpfGraphControl" Version="0.19.100.1-beta" />
-    <PackageReference Include="Microsoft.Psi.Runtime" Version="0.19.100.1-beta-SAAC" />
     <PackageReference Include="Microsoft.Psi.Visualization.Windows" Version="0.19.100.1-beta" />
   </ItemGroup>
   <ItemGroup>
@@ -72,7 +70,7 @@
     <!-- Log des fichiers copiés -->
     <Message Text="Copie des DLLs Azure Kinect vers $(OutputDir)" Importance="high" />
     <Message Text="Copie des DLLs des projets Bodies, GlobalHelpers, Groups vers $(OutputDir)" Importance="high" />
-    <Message Text="Copie de @(ProjectReferenceDlls->Count()) fichiers de projets référencés" Importance="high" />
-    <Message Text="Copie de @(ReferenceCopyLocalPaths->Count()) dépendances transitives" Importance="high" />
+    <Message Text="Copie de @(ProjectReferenceDlls-&gt;Count()) fichiers de projets référencés" Importance="high" />
+    <Message Text="Copie de @(ReferenceCopyLocalPaths-&gt;Count()) dépendances transitives" Importance="high" />
   </Target>
 </Project>

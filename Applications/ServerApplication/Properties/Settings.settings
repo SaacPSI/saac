@@ -53,5 +53,20 @@
     <Setting Name="LslDeviceMappingJson" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="SessionID" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="WhisperModelDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">D:\WhisperModels</Value>
+    </Setting>
+    <Setting Name="AudioStreamNames" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="HeadForwardAxis" Type="System.String" Scope="User">
+      <Value Profile="(Default)">+Z</Value>
+    </Setting>
+    <Setting Name="ProcessTabJson" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>
